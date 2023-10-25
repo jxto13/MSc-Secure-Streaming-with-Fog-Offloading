@@ -40,9 +40,13 @@ import com.example.final_test_wifiaware.databinding.FragmentHomeBinding;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.Inet6Address;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -69,6 +73,7 @@ public class HomeFragment extends Fragment {
 
 	private NetworkCapabilities networkCapabilitiesSocket;
 	private Network networkPeer;
+	private Network subscriberNetworkPeer;
 
 	/**
 	 * Initialize Wi-Fi Aware manager
@@ -320,107 +325,99 @@ public class HomeFragment extends Fragment {
 
 	public void initializeSocketConnectionPublisher() {
 
+		for (PeerHandle client: connectedClients) {
 
-		// Step 1: Start a ServerSocket on the publisher
-		ServerSocket ss = null;
-		try {
-			ss = new ServerSocket(0);
-		} catch (IOException e) {
-			throw new RuntimeException(e);
-		}
-		int port = ss.getLocalPort();
-
-
-		// Step 2: Create a WifiAwareNetworkSpecifier
-		NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(publishDiscoverySession, connectedClients.get(0))
-				.setPskPassphrase("somePassword")
-				.setPort(port)
-				.build();
-
-
-		// Step 3: Create a NetworkRequest and set up a network callback
-		NetworkRequest myNetworkRequest = new NetworkRequest.Builder()
-				.addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
-				.setNetworkSpecifier(networkSpecifier)
-				.build();
-
-		ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
-			@Override
-			public void onAvailable(Network network) {
-				Log.d("NetworkCallback", "Network is available");
-			}
-
-			@Override
-			public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
-				Log.d("NetworkCallback", "Network capabilities have changed");
-			}
-
-			@Override
-			public void onLost(Network network) {
-				Log.d("NetworkCallback", "Network is lost");
-			}
-		};
-
-
-		ConnectivityManager connMgr = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
-		connMgr.requestNetwork(myNetworkRequest, callback);
-
-		//send message to peer-handler
-		Log.d("Message", "Send message to subscriber to start network");
-		publishDiscoverySession.sendMessage(connectedClients.get(0),2,"publisherID".getBytes());
-
-
-		ServerSocket finalSs = ss;
-		Runnable networkTask = () -> {
-			Socket clientSocket = null; // Wait for a client to connect
+			// Step 1: Start a ServerSocket on the publisher
+			DatagramSocket ss = null;
 			try {
-				clientSocket = finalSs.accept();
-			} catch (IOException e) {
+				ss = new DatagramSocket(0);
+			} catch (SocketException e) {
 				throw new RuntimeException(e);
 			}
-			System.out.println("Client connected: " + clientSocket.getInetAddress());
 
-			while (true) {
-				OutputStream outputStream = null;
-				InputStream inputStream = null;
-				try {
-					outputStream = clientSocket.getOutputStream();
-					inputStream = clientSocket.getInputStream();
-				} catch (IOException e) {
-					throw new RuntimeException(e);
+
+			int port = ss.getLocalPort();
+
+
+			// Step 2: Create a WifiAwareNetworkSpecifier
+			NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(publishDiscoverySession, client)
+					.setPskPassphrase("somePassword")
+					.setPort(port)
+					.build();
+
+
+			// Step 3: Create a NetworkRequest and set up a network callback
+			NetworkRequest myNetworkRequest = new NetworkRequest.Builder()
+					.addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
+					.setNetworkSpecifier(networkSpecifier)
+					.build();
+
+			ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
+				@Override
+				public void onAvailable(Network network) {
+					Log.d("NetworkCallback", "Network is available");
 				}
-				byte[] buffer = new byte[1024];
-				int bytesRead;
 
+				@Override
+				public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
+					Log.d("NetworkCallback", "Network capabilities have changed");
+					subscriberNetworkPeer = network;
+
+				}
+
+				@Override
+				public void onLost(Network network) {
+					Log.d("NetworkCallback", "Network is lost");
+				}
+			};
+
+
+			ConnectivityManager connMgr = (ConnectivityManager) getContext().getSystemService(Context.CONNECTIVITY_SERVICE);
+			connMgr.requestNetwork(myNetworkRequest, callback);
+
+			//send message to peer-handler
+			Log.d("Message", "Send message to subscriber to start network");
+			publishDiscoverySession.sendMessage(client, 2, "publisherID".getBytes());
+
+
+			DatagramSocket finalSs = ss;
+			Runnable networkTask = () -> {
 				while (true) {
+					byte[] receiveData = new byte[2048];
+					DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 					try {
-						if (!((bytesRead = inputStream.read(buffer)) != -1)) break;
+						finalSs.receive(receivePacket);
 					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
-					Log.d("socket", "Received data: " + bytesRead + " bytes");
+
+					String message = new String(receivePacket.getData(), 0, receivePacket.getLength());
+					InetAddress clientAddress = receivePacket.getAddress();
+					int clientPort = receivePacket.getPort();
+
+					DatagramPacket sendPacket = new DatagramPacket(receivePacket.getData(), receivePacket.getLength(), clientAddress, clientPort);
 					try {
-						outputStream.write(buffer, 0, bytesRead); // Mirror data
+						finalSs.send(sendPacket);
 					} catch (IOException e) {
 						throw new RuntimeException(e);
 					}
 				}
-			}
-		};
+			};
 
-		// Create and start a new thread to run the network task
-		Thread thread = new Thread(networkTask);
-		thread.start();
+			// Create and start a new thread to run the network task
+			Thread thread = new Thread(networkTask);
+			thread.start();
+		}
 	}
 
 	public void initializeSocketConnectionSubscriver() {
 
 
 		// Step 1: Start a ServerSocket on the publisher
-		ServerSocket ss = null;
+		DatagramSocket ss = null;
 		try {
-			ss = new ServerSocket(0);
-		} catch (IOException e) {
+			ss = new DatagramSocket(0);
+		} catch (SocketException e) {
 			throw new RuntimeException(e);
 		}
 
@@ -448,6 +445,11 @@ public class HomeFragment extends Fragment {
 				Log.d("NetworkCallback", "Network capabilities have changed");
 				if(networkCapabilities != null){
 					Log.d("NetworkCallback", "Network capabilities is" + networkCapabilities.getTransportInfo());
+					Log.d("NetworkCallback", "Network UpstreamBandwidthKbps is " + networkCapabilities.getLinkUpstreamBandwidthKbps());
+					Log.d("NetworkCallback", "Network DownstreamBandwidthKbps is " + networkCapabilities.getLinkDownstreamBandwidthKbps());
+					Log.d("NetworkCallback", "Network SignalStrength is " + networkCapabilities.getSignalStrength());
+
+
 
 				}
 				networkCapabilitiesSocket = networkCapabilities;
@@ -467,6 +469,26 @@ public class HomeFragment extends Fragment {
 
 	}
 
+	private static long sendUDPRequest(DatagramSocket clientSocket, Inet6Address peerIpv6, int serverPort, String message) {
+		try {
+
+			byte[] sendData = message.getBytes();
+			DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, peerIpv6, serverPort);
+			DatagramPacket receivePacket = new DatagramPacket(new byte[1024], 1024);
+
+			long startTime = System.currentTimeMillis();
+			clientSocket.send(sendPacket);
+			clientSocket.receive(receivePacket);
+			long endTime = System.currentTimeMillis();
+
+			return endTime - startTime;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return -1;
+		}
+	}
+
+
 	public void createSocket() {
 		WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) networkCapabilitiesSocket.getTransportInfo();
 		assert peerAwareInfo != null;
@@ -475,45 +497,80 @@ public class HomeFragment extends Fragment {
 		Log.d("createSocket", "peerIpv6:" + peerIpv6 + " | " + networkCapabilitiesSocket.toString());
 
 		Runnable networkTask = () -> {
+			/*
+			int numPackets = 1000;
+			String message = "BenchmarkPacket";
+
+
+			long startTime = System.currentTimeMillis();
+			long totalLatency = 0;
+			long totalBytesSent = 0;
+
+			for (int i = 0; i < numPackets; i++) {
+				long latency = sendUDPRequest(peerIpv6, peerPort, message);
+				totalLatency += latency;
+				totalBytesSent += message.length();
+			}
+
+			long endTime = System.currentTimeMillis();
+			long totalTime = endTime - startTime;
+
+			// Calculate bandwidth in bytes per second
+			double bandwidth = (totalBytesSent * 1000.0) / totalTime;
+			double averageLatency = (double) totalLatency / numPackets;
+
+			System.out.println("Bandwidth: " + bandwidth / 1048576 + " MB/second");
+			System.out.println("Average Latency: " + averageLatency + " ms");*/
+			// Define different test parameters (number of packets and packet sizes)
+			DatagramSocket clientSocket = null;
 			try {
-				Socket socket = networkPeer.getSocketFactory().createSocket(peerIpv6, peerPort);
-				OutputStream outputStream = socket.getOutputStream();
-				InputStream inputStream = socket.getInputStream();
+				clientSocket = new DatagramSocket();
+			} catch (SocketException e) {
+				throw new RuntimeException(e);
+			}
 
-				// Create a large data buffer (e.g., 1 MB)
-				byte[] buffer = new byte[1024 * 1024];
-				long startTime = System.nanoTime();
-
-				// Send and receive data continuously for a certain duration
-				long durationMillis = 5000; // Send and receive data for 5 seconds
-				long bytesSent = 0;
-				long bytesReceived = 0;
-				long endTime = System.nanoTime() + TimeUnit.MILLISECONDS.toNanos(durationMillis);
-
-				while (System.nanoTime() < endTime) {
-					// Send data
-					outputStream.write(buffer);
-					bytesSent += buffer.length;
-					Log.d("socket", "Sent data: " + bytesSent + " bytes");
-
-					// Receive data
-					int bytesRead = inputStream.read(buffer);
-					if (bytesRead > 0) {
-						bytesReceived += bytesRead;
-						Log.d("socket", "Received data: " + bytesRead + " bytes");
-					}
-				}
-
-				socket.close();
-				long elapsedTime = System.nanoTime() - startTime;
-				double sendBandwidthMbps = (bytesSent * 8.0) / (elapsedTime / 1e6); // Mbps
-				double receiveBandwidthMbps = (bytesReceived * 8.0) / (elapsedTime / 1e6); // Mbps
-				Log.d("socket", "Send bandwidth: " + sendBandwidthMbps + " Mbps");
-				Log.d("socket", "Receive bandwidth: " + receiveBandwidthMbps + " Mbps");
-
+			try {
+				networkPeer.bindSocket(clientSocket);
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
+			int[] packetCounts = {10, 100, 1000 };
+			int[] packetSizes = {5000, 10000, 20000, 25000, 30000, 35000, 45000, 50000, 60000 };
+			List<TestResult> results = new ArrayList<>();
+
+			for (int numPackets : packetCounts) {
+				Log.d("Benchmark:", "numPackets - " + numPackets);
+				for (int packetSize : packetSizes) {
+					Log.d("Benchmark:", "packetSizes - " + packetSize);
+
+					String message = generateMessage(packetSize);
+
+					long startTime = System.currentTimeMillis();
+					long totalLatency = 0;
+					long totalBytesSent = 0;
+
+					for (int i = 0; i < numPackets; i++) {
+						long latency = sendUDPRequest(clientSocket, peerIpv6, peerPort, message);
+						totalLatency += latency;
+						totalBytesSent += message.length();
+					}
+
+					long endTime = System.currentTimeMillis();
+					long totalTime = endTime - startTime;
+
+					// Calculate bandwidth in megabytes per second
+					double bandwidthInBytesPerSecond = (totalBytesSent * 1000.0) / totalTime;
+					double bandwidthInMegabytesPerSecond = bandwidthInBytesPerSecond / 1048576; // 1 MB = 1,048,576 bytes
+					double averageLatency = (double) totalLatency / numPackets;
+
+					// Create a TestResult object and add it to the results list
+					results.add(new TestResult(numPackets, packetSize, bandwidthInMegabytesPerSecond, averageLatency));
+				}
+			}
+			System.out.print("[");
+			results.forEach((result) -> System.out.print(result+ ","));
+			System.out.print("]");
+
 		};
 
 		// Create and start a new thread to run the network task
@@ -521,6 +578,38 @@ public class HomeFragment extends Fragment {
 		thread.start();
 
 	}
+
+
+	private static String generateMessage(int size) {
+		// Create a message of the specified size
+		StringBuilder message = new StringBuilder();
+		for (int i = 0; i < size; i++) {
+			message.append("A");
+		}
+		return message.toString();
+	}
+
+	class TestResult {
+		int numPackets;
+		int packetSize;
+		double bandwidth;
+		double averageLatency;
+
+		TestResult(int numPackets, int packetSize, double bandwidth, double averageLatency) {
+			this.numPackets = numPackets;
+			this.packetSize = packetSize;
+			this.bandwidth = bandwidth;
+			this.averageLatency = averageLatency;
+		}
+		@Override
+		public String toString() {
+			return "{\"numPackets\": " + numPackets +
+					",\"packetSize\": " + packetSize +
+					",\"bandwidth\":" + bandwidth +
+					",\"averageLatency\":" + averageLatency + "}";
+		}
+	}
+
 
 
 	public void closeSocketConnection() {
