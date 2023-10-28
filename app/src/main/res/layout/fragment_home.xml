@@ -8,12 +8,13 @@
 
     <ScrollView
         android:id="@+id/scrollView"
-        android:layout_width="409dp"
-        android:layout_height="354dp"
+        android:layout_width="412dp"
+        android:layout_height="206dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.329"
         tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteX="1dp">
+        tools:layout_editor_absoluteX="-1dp">
 
         <LinearLayout
             android:id="@+id/peerHandleList"
@@ -47,14 +48,11 @@
         android:id="@+id/startSubscriverButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="44dp"
-        android:layout_marginEnd="43dp"
         android:text="Join"
-        app:layout_constraintBottom_toTopOf="@+id/socketTest"
+        app:layout_constraintBottom_toBottomOf="@+id/startPublishButton"
         app:layout_constraintEnd_toStartOf="@+id/prepareSocket"
         app:layout_constraintStart_toEndOf="@+id/startPublishButton"
-        app:layout_constraintTop_toBottomOf="@+id/scrollView"
-        app:layout_constraintVertical_bias="0.5" />
+        app:layout_constraintTop_toTopOf="@+id/startPublishButton" />
 
     <com.google.android.material.chip.Chip
         android:id="@+id/chip"
@@ -77,23 +75,57 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Prepare"
-        app:layout_constraintBottom_toTopOf="@+id/socketTest"
+        app:layout_constraintBottom_toBottomOf="@+id/startSubscriverButton"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintHorizontal_bias="0.476"
         app:layout_constraintStart_toEndOf="@+id/startSubscriverButton"
-        app:layout_constraintTop_toBottomOf="@+id/scrollView"
+        app:layout_constraintTop_toTopOf="@+id/startSubscriverButton"
         app:layout_constraintVertical_bias="0.5" />
 
     <Button
         android:id="@+id/socketTest"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginTop="48dp"
+        android:layout_marginBottom="28dp"
         android:text="Start Socket Test"
+        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.497"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/startSubscriverButton" />
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="314dp"
+        android:layout_height="152dp"
+        android:orientation="vertical"
+        android:padding="16dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/startSubscriverButton"
-        app:layout_constraintVertical_bias="0.5" />
+        app:layout_constraintTop_toBottomOf="@+id/socketTest"
+        tools:context=".MainActivity">
+
+        <Spinner
+            android:id="@+id/spinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <EditText
+            android:id="@+id/messageInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter your message" />
+
+        <Button
+            android:id="@+id/sendButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="sendMessage"
+            android:text="Send" />
+
+    </LinearLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

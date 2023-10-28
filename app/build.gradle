@@ -1,10 +1,12 @@
 plugins {
     id 'com.android.application'
+    id 'org.mozilla.rust-android-gradle.rust-android' version '0.9.3'
 }
 
 android {
     namespace 'com.example.final_test_wifiaware'
     compileSdk 34
+    ndkVersion "26.0.10792818"
 
     defaultConfig {
         applicationId "com.example.final_test_wifiaware"
@@ -44,3 +46,12 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
 }
+
+cargo {
+    module  = '../rustBackend'
+    libname = 'rustapp'
+    profile = gradle.startParameter.taskNames.any{it.toLowerCase().contains("debug")} ? "debug" : "release"
+    targets = ['arm64'] // 'arm', 'arm64', 'x86', 'x86_64'
+}
+
+preBuild.dependsOn 'cargoBuild'

@@ -24,9 +24,12 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -74,6 +77,10 @@ public class HomeFragment extends Fragment {
 	private NetworkCapabilities networkCapabilitiesSocket;
 	private Network networkPeer;
 	private Network subscriberNetworkPeer;
+
+	private ArrayAdapter<PeerHandle> adapter;
+
+	private Spinner spinner;
 
 	/**
 	 * Initialize Wi-Fi Aware manager
@@ -125,6 +132,8 @@ public class HomeFragment extends Fragment {
 				// Subscribe to the service here using the known service name or any criteria you require.
 
 				subscribeDiscoverySession.sendMessage(peerHandle,1,"subscriverID".getBytes());
+
+
 			}
 
 			@Override
@@ -163,6 +172,8 @@ public class HomeFragment extends Fragment {
 				String messageString = new String(message);
 				switch (messageString){
 					case "subscriverID":
+						adapter.add(peerHandle);
+						adapter.notifyDataSetChanged();
 						connectedClients.add(peerHandle);
 						break;
 					case "publisherID":
@@ -292,6 +303,10 @@ public class HomeFragment extends Fragment {
 					// Add the TextView to the LinearLayout
 					peerHandleList.addView(textView);
 				}
+				//TextView textView = new TextView(getContext());
+				//textView.setText("PeerHandle: " );
+				//peerHandleList.addView(textView);
+
 				// After adding or removing TextViews, scroll to the top to see the newly added content
 				scrollView.fullScroll(ScrollView.FOCUS_UP);
 			}
@@ -313,18 +328,47 @@ public class HomeFragment extends Fragment {
 			}
 		});
 
+		spinner = root.findViewById(R.id.spinner);
+		EditText messageInput = root.findViewById(R.id.messageInput);
+		Button sendButton = root.findViewById(R.id.sendButton);
+
+		// Create an array of items in code
+		List<PeerHandle> peerHandles = new ArrayList<>();
+
+		// Create an ArrayAdapter for the Spinner using the array
+		adapter = new ArrayAdapter<>(
+				getContext(), android.R.layout.simple_spinner_item, peerHandles);
+		adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+		spinner.setAdapter(adapter);
+
+		spinner.setPrompt("Select an item");
+
+		sendButton.setOnClickListener(new View.OnClickListener() {
+			int counter = 0;
+			@Override
+			public void onClick(View view) {
+				PeerHandle selectedItem = (PeerHandle) spinner.getSelectedItem();
+				String message = messageInput.getText().toString();
+
+				// Do something with the selected item and the message (e.g., send it)
+				// For this example, we'll just show a Toast message with the selected item and message.
+				String toastMessage = "Selected Item: " + selectedItem + "\nMessage: " + message;
+				publishDiscoverySession.sendMessage(selectedItem, counter++,toastMessage.getBytes() );
+				//Toast.makeText(this, toastMessage, Toast.LENGTH_SHORT).show();
+			}
+		});
+
 
 		// Observe the LiveData for discovered devices and update the UI accordingly.
-		homeViewModel.getDiscoveredDevices().observe(getViewLifecycleOwner(), deviceList -> {
-			// Update the UI to display the list of discovered devices.
-			// You can use a RecyclerView or other UI elements to show the devices.
-		});
+		// Update the UI to display the list of discovered devices.
+		// You can use a RecyclerView or other UI elements to show the devices.
+		homeViewModel.getDiscoveredDevices().observe(getViewLifecycleOwner(), System.out::println);
 
 		return root;
 	}
 
 	public void initializeSocketConnectionPublisher() {
-
+		int counter = 0;
 		for (PeerHandle client: connectedClients) {
 
 			// Step 1: Start a ServerSocket on the publisher
@@ -377,7 +421,7 @@ public class HomeFragment extends Fragment {
 
 			//send message to peer-handler
 			Log.d("Message", "Send message to subscriber to start network");
-			publishDiscoverySession.sendMessage(client, 2, "publisherID".getBytes());
+			publishDiscoverySession.sendMessage(client, counter++, "publisherID".getBytes());
 
 
 			DatagramSocket finalSs = ss;
@@ -474,7 +518,7 @@ public class HomeFragment extends Fragment {
 
 			byte[] sendData = message.getBytes();
 			DatagramPacket sendPacket = new DatagramPacket(sendData, sendData.length, peerIpv6, serverPort);
-			DatagramPacket receivePacket = new DatagramPacket(new byte[1024], 1024);
+			DatagramPacket receivePacket = new DatagramPacket(new byte[2048], 2048);
 
 			long startTime = System.currentTimeMillis();
 			clientSocket.send(sendPacket);
@@ -534,8 +578,8 @@ public class HomeFragment extends Fragment {
 			} catch (IOException e) {
 				throw new RuntimeException(e);
 			}
-			int[] packetCounts = {10, 100, 1000 };
-			int[] packetSizes = {5000, 10000, 20000, 25000, 30000, 35000, 45000, 50000, 60000 };
+			int[] packetCounts = {100, 1000 };
+			int[] packetSizes = {1500};
 			List<TestResult> results = new ArrayList<>();
 
 			for (int numPackets : packetCounts) {
