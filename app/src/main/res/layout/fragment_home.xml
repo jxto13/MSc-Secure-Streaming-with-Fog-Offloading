@@ -6,126 +6,20 @@
     android:layout_height="match_parent"
     tools:context=".ui.home.HomeFragment">
 
-    <ScrollView
-        android:id="@+id/scrollView"
-        android:layout_width="412dp"
-        android:layout_height="206dp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.329"
-        tools:ignore="MissingConstraints"
-        tools:layout_editor_absoluteX="-1dp">
-
-        <LinearLayout
-            android:id="@+id/peerHandleList"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="vertical" />
-    </ScrollView>
 
     <TextView
         android:id="@+id/textHome"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="ComponentActivity"
-        app:layout_constraintBottom_toTopOf="@+id/scrollView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-
-
-    <Button
-        android:id="@+id/startPublishButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Start"
-        app:layout_constraintBottom_toTopOf="@+id/socketTest"
-        app:layout_constraintEnd_toStartOf="@+id/startSubscriverButton"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/scrollView" />
-
-    <Button
-        android:id="@+id/startSubscriverButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Join"
-        app:layout_constraintBottom_toBottomOf="@+id/startPublishButton"
-        app:layout_constraintEnd_toStartOf="@+id/prepareSocket"
-        app:layout_constraintStart_toEndOf="@+id/startPublishButton"
-        app:layout_constraintTop_toTopOf="@+id/startPublishButton" />
-
-    <com.google.android.material.chip.Chip
-        android:id="@+id/chip"
-        android:layout_width="35dp"
-        android:layout_height="42dp"
-        android:layout_marginTop="73dp"
-        android:layout_marginEnd="32dp"
-        android:layout_marginBottom="74dp"
-        android:checkable="false"
-        app:chipIcon="@android:drawable/ic_menu_rotate"
-        app:layout_constraintBottom_toTopOf="@+id/scrollView"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
-        app:layout_constraintStart_toEndOf="@+id/textHome"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.0" />
-
-    <Button
-        android:id="@+id/prepareSocket"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Prepare"
-        app:layout_constraintBottom_toBottomOf="@+id/startSubscriverButton"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.476"
-        app:layout_constraintStart_toEndOf="@+id/startSubscriverButton"
-        app:layout_constraintTop_toTopOf="@+id/startSubscriverButton"
-        app:layout_constraintVertical_bias="0.5" />
-
-    <Button
-        android:id="@+id/socketTest"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="48dp"
-        android:layout_marginBottom="28dp"
-        android:text="Start Socket Test"
-        app:layout_constraintBottom_toTopOf="@+id/linearLayout"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.497"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/startSubscriverButton" />
-
-    <LinearLayout
-        android:id="@+id/linearLayout"
-        android:layout_width="314dp"
-        android:layout_height="152dp"
-        android:orientation="vertical"
-        android:padding="16dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="8dp"
+        android:textAlignment="center"
+        android:textSize="20sp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/socketTest"
-        tools:context=".MainActivity">
-
-        <Spinner
-            android:id="@+id/spinner"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
-        <EditText
-            android:id="@+id/messageInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Enter your message" />
-
-        <Button
-            android:id="@+id/sendButton"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:onClick="sendMessage"
-            android:text="Send" />
-
-    </LinearLayout>
+        app:layout_constraintTop_toTopOf="parent" />
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

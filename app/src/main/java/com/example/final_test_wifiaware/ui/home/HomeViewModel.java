@@ -26,27 +26,4 @@ public class HomeViewModel extends ViewModel {
 		return mText;
 	}
 
-	public LiveData<List<String>> getDiscoveredDevices() {
-		return discoveredDevices;
-	}
-
-	public void setDiscoverySession(DiscoverySession session) {
-		discoverySession = session;
-	}
-
-	public void onDeviceDiscovered(PeerHandle peerHandle, byte[] serviceSpecificInfo) {
-		// Handle the discovered device and update the LiveData.
-		List<String> updatedList = new ArrayList<>(Objects.requireNonNull(discoveredDevices.getValue()));
-		updatedList.add("Device ID: " + peerHandle.toString());
-		// You can add more information about the discovered device as needed.
-		discoveredDevices.postValue(updatedList);
-	}
-
-
-	public void stopDiscovery() {
-		if (discoverySession != null) {
-			discoverySession.close();
-			discoverySession = null;
-		}
-	}
 }
