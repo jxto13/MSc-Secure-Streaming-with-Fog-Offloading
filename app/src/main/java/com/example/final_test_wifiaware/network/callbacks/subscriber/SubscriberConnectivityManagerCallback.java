@@ -4,9 +4,10 @@ import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.example.final_test_wifiaware.network.callbacks.AbstractConnectivityManagerCallback;
 import com.example.final_test_wifiaware.network.subscriber.Subscriber;
-import com.example.final_test_wifiaware.ui.home.HomeFragment;
 
 public class SubscriberConnectivityManagerCallback extends AbstractConnectivityManagerCallback {
 	private Subscriber subscriber;
@@ -16,16 +17,14 @@ public class SubscriberConnectivityManagerCallback extends AbstractConnectivityM
 	}
 
 	@Override
-	public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
-		Log.d("NetworkCallback", "Network capabilities have changed");
-		if(networkCapabilities != null){
-			Log.d("NetworkCallback", "Network capabilities is" + networkCapabilities.getTransportInfo());
-			Log.d("NetworkCallback", "Network UpstreamBandwidthKbps is " + networkCapabilities.getLinkUpstreamBandwidthKbps());
-			Log.d("NetworkCallback", "Network DownstreamBandwidthKbps is " + networkCapabilities.getLinkDownstreamBandwidthKbps());
-			Log.d("NetworkCallback", "Network SignalStrength is " + networkCapabilities.getSignalStrength());
-		}
-		subscriber.setNetworkCapabilities(networkCapabilities);
-		//networkPeer = network;
+	public void onCapabilitiesChanged(@NonNull Network network, @NonNull NetworkCapabilities networkCapabilities) {
+		Log.d("NetworkCallback", "Subscriber Network capabilities have changed");
+		Log.d("NetworkCallback", "Subscriber Network capabilities is" + networkCapabilities.getTransportInfo());
+		Log.d("NetworkCallback", "Subscriber Network UpstreamBandwidthKbps is " + networkCapabilities.getLinkUpstreamBandwidthKbps());
+		Log.d("NetworkCallback", "Subscriber Network DownstreamBandwidthKbps is " + networkCapabilities.getLinkDownstreamBandwidthKbps());
+		Log.d("NetworkCallback", "Subscriber Network SignalStrength is " + networkCapabilities.getSignalStrength());
+		//subscriber.setNetworkCapabilities(networkCapabilities);
+		//subscriber.networkPeer = network;
 	}
 
 

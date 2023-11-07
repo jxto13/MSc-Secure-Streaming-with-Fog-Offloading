@@ -17,25 +17,38 @@ import android.util.Log;
 import com.example.final_test_wifiaware.network.callbacks.publisher.PublisherConnectivityManagerCallback;
 import com.example.final_test_wifiaware.network.callbacks.publisher.PublisherDiscoverySessionCallback;
 import com.example.final_test_wifiaware.network.callbacks.subscriber.SubscriberDiscoverySessionCallback;
+import com.example.final_test_wifiaware.network.utils.Utils;
+import com.example.final_test_wifiaware.ui.home.CustomAdapter;
+import com.example.final_test_wifiaware.utils.AppContainer;
 
 import java.net.DatagramSocket;
 import java.net.SocketException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
 
 public class Publisher {
-	private Context context;
+	private final Context context;
 	private final WifiAwareSession mWifiAwareSession;
 	private final DiscoverySessionCallback publisherSessionCallback;
 	private ConnectivityManager.NetworkCallback publisherNetworkCallback;
-
 	private PublishDiscoverySession publishDiscoverySession;
-
+	private ConnectivityManager connMgr;
+	private static UUID myUUID;
 	public Publisher(WifiAwareSession session, Context inputContext) {
 		Log.d("Publisher", "Starting Publisher");
 		this.mWifiAwareSession = session;
 		this.context = inputContext;
+		this.connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-		this.publisherSessionCallback = new PublisherDiscoverySessionCallback(context,this);
-		this.publisherNetworkCallback = new PublisherConnectivityManagerCallback();
+		this.publisherSessionCallback = new PublisherDiscoverySessionCallback(this);
+		this.publisherNetworkCallback = new PublisherConnectivityManagerCallback(this);
+
+		// Generate my UUID
+		myUUID = UUID.randomUUID();
+
+		// Set UUID to the UI
+		AppContainer.getInstance().getHomeViewModel().updateMyUUID(myUUID.toString());
 
 		// All initialized can start publisher
 		startPublisher();
@@ -46,7 +59,7 @@ public class Publisher {
 	 */
 	public static PublishConfig createPublishConfig() {
 		return new PublishConfig.Builder()
-				.setServiceSpecificInfo("Stream Video".getBytes())
+				.setServiceSpecificInfo(Utils.UUIDtoByteArray(myUUID)) // Generate random uuid and convert to bytes
 				.setServiceName("test") // Set the same service name as in publish
 				//.setRangingEnabled(true)
 				.build();
@@ -56,51 +69,45 @@ public class Publisher {
 	public void startPublisher() {
 		mWifiAwareSession.publish(Publisher.createPublishConfig(), publisherSessionCallback, null);
 	}
-/*
+
 	public void initializeSocketConnectionPublisher() {
-		int counter = 0;
-		for (PeerHandle client: connectedClients) {
 
-			// Step 1: Start a ServerSocket on the publisher
-			DatagramSocket ss = null;
-			try {
-				ss = new DatagramSocket(0);
-			} catch (SocketException e) {
-				throw new RuntimeException(e);
-			}
-
-
-			int port = ss.getLocalPort();
-
-
-			// Step 2: Create a WifiAwareNetworkSpecifier
-			NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(publishDiscoverySession, client)
+			//Create a WifiAwareNetworkSpecifier
+			NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(publishDiscoverySession)
 					.setPskPassphrase("somePassword")
-					.setPort(port)
+					.setTransportProtocol(17) // set udp transport protocol
+					.setPort(5050)
 					.build();
 
-
-			// Step 3: Create a NetworkRequest and set up a network callback
+			//Create a NetworkRequest and set up a network callback
 			NetworkRequest myNetworkRequest = new NetworkRequest.Builder()
 					.addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
 					.setNetworkSpecifier(networkSpecifier)
 					.build();
 
 
-
-			ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 			connMgr.requestNetwork(myNetworkRequest, publisherNetworkCallback);
+	}
 
-			//send message to peer-handler
-			Log.d("Message", "Send message to subscriber to start network");
-			publishDiscoverySession.sendMessage(client, counter++, "publisherID".getBytes());
-
-		}
-	}*/
+	public void destroyResources(){
+		Log.d("Destroy Resources", "unregisterNetworkCallback - publisherNetworkCallback ");
+		connMgr.unregisterNetworkCallback(publisherNetworkCallback);
+	}
 
 	// Getters and Setters
 	public void setPublishDiscoverySession(PublishDiscoverySession publishDiscoverySession) {
 		this.publishDiscoverySession = publishDiscoverySession;
 	}
 
+	public PublishDiscoverySession getPublishDiscoverySession() {
+		return publishDiscoverySession;
+	}
+
+	public ConnectivityManager.NetworkCallback getPublisherNetworkCallback() {
+		return publisherNetworkCallback;
+	}
+
+	public static UUID getMyUUID() {
+		return myUUID;
+	}
 }

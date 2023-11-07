@@ -7,39 +7,39 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkRequest;
 import android.net.NetworkSpecifier;
 import android.net.wifi.aware.DiscoverySessionCallback;
-import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.aware.SubscribeConfig;
 import android.net.wifi.aware.SubscribeDiscoverySession;
-import android.net.wifi.aware.WifiAwareNetworkInfo;
 import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.net.wifi.aware.WifiAwareSession;
 import android.util.Log;
 
 import com.example.final_test_wifiaware.network.callbacks.subscriber.SubscriberConnectivityManagerCallback;
 import com.example.final_test_wifiaware.network.callbacks.subscriber.SubscriberDiscoverySessionCallback;
-import com.example.final_test_wifiaware.ui.home.HomeFragment;
+import com.example.final_test_wifiaware.network.utils.Connection;
+import com.example.final_test_wifiaware.ui.home.HomeViewModel;
+import com.example.final_test_wifiaware.utils.AppContainer;
 
-import java.net.Inet6Address;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Subscriber {
-	private Context context;
-	private WifiAwareSession mWifiAwareSession;
-	private DiscoverySessionCallback subscriberSessionCallback;
-	private ConnectivityManager.NetworkCallback subscriberNetworkCallback;
-
-	private NetworkCapabilities networkCapabilities;
-
-	private SubscribeDiscoverySession subscribeDiscoverySession;
-
-
-
-	private PeerHandle publisherPeerHandle;
+	private final Context context;
+	private final WifiAwareSession mWifiAwareSession;
+	private final DiscoverySessionCallback subscriberSessionCallback;
+	private final ConnectivityManager.NetworkCallback subscriberNetworkCallback;
+	private SubscribeDiscoverySession subscriberDiscoverySession;
+	private ConnectivityManager connMgr ;
+	private List<Connection> connections = new ArrayList<>();
+	private HomeViewModel homeViewModel;
 	public Subscriber(WifiAwareSession session, Context inputContext) {
 		Log.d("Subscriber", "Starting Subscriber");
 		this.mWifiAwareSession = session;
 		this.context = inputContext;
+		this.connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 
-		this.subscriberSessionCallback = new SubscriberDiscoverySessionCallback(context,this);
+		homeViewModel = AppContainer.getInstance().getHomeViewModel();
+
+		this.subscriberSessionCallback = new SubscriberDiscoverySessionCallback(this);
 		this.subscriberNetworkCallback = new SubscriberConnectivityManagerCallback(this);
 
 		// All initialized can start subscriber
@@ -60,10 +60,10 @@ public class Subscriber {
 		mWifiAwareSession.subscribe(Subscriber.createSubscribeConfig(), subscriberSessionCallback, null);
 	}
 
-	public void initializeSocketConnectionSubscriber() {
+	public void initializeSocketConnectionSubscriber(Connection target) {
 
 		// Step 2: Create a WifiAwareNetworkSpecifier
-		NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(subscribeDiscoverySession, publisherPeerHandle)
+		NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(subscriberDiscoverySession, target.getTarget())
 				.setPskPassphrase("somePassword")
 				.build();
 
@@ -75,32 +75,53 @@ public class Subscriber {
 				.build();
 
 
-		ConnectivityManager connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-		connMgr.requestNetwork(myNetworkRequest, subscriberNetworkCallback);
-
-
+		// Create a new Manager Callback and add to connection
+		target.setConnectivityManagerCallback(new SubscriberConnectivityManagerCallback(this));
+		connMgr.requestNetwork(myNetworkRequest,target.getConnectivityManagerCallback());
 	}
 
-	public void createSocket() {
+	/*public void createSocket() {
 		WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) networkCapabilities.getTransportInfo();
 		assert peerAwareInfo != null;
 		Inet6Address peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
 		int peerPort = peerAwareInfo.getPort();
 		Log.d("createSocket", "peerIpv6:" + peerIpv6 + " | " + networkCapabilities.toString());
+	}
+*/
 
+	public void createConnections(){
+		for (Connection item : connections) {
+			Log.d("Starting Connections",item.toString());
+			initializeSocketConnectionSubscriber(item);
+		}
+	}
+	public void destroyResources(){
+		for (Connection item : connections ) {
+			if (item.getConnectedStatus()){
+				Log.d("Destroy Resources", "unregisterNetworkCallback - " + item.getUUID().toString());
+				connMgr.unregisterNetworkCallback(item.getConnectivityManagerCallback());
+			}
+		}
 
 	}
 
 	// Getters and Setters
-	public void setSubscribeDiscoverySession(SubscribeDiscoverySession subscribeDiscoverySession) {
-		this.subscribeDiscoverySession = subscribeDiscoverySession;
+	public void setSubscriberDiscoverySession(SubscribeDiscoverySession subscriberDiscoverySession) {
+		this.subscriberDiscoverySession = subscriberDiscoverySession;
+	}
+	public SubscribeDiscoverySession getSubscriberDiscoverySession() {
+		return subscriberDiscoverySession;
 	}
 
-	public void setNetworkCapabilities(NetworkCapabilities networkCapabilities) {
-		this.networkCapabilities = networkCapabilities;
+	public ConnectivityManager.NetworkCallback getSubscriberNetworkCallback() {
+		return subscriberNetworkCallback;
 	}
-	public void setPublisherPeerHandle(PeerHandle publisherPeerHandle) {
-		this.publisherPeerHandle = publisherPeerHandle;
+	public List<Connection> getConnections() {
+		return connections;
+	}
+
+	public HomeViewModel getHomeViewModel() {
+		return homeViewModel;
 	}
 }
 

@@ -7,16 +7,15 @@ public abstract class AbstractDiscoverySessionCallback  extends DiscoverySession
 
 	@Override
 	public void onMessageSendSucceeded(int messageId) {
-		Log.d("Message","send successfully");
+		Log.d("Message","messageId: " + messageId + " successfully");
 	}
 	@Override
 	public void onMessageSendFailed(int messageId) {
-		Log.d("Message","send failed");
+		Log.d("Message","messageId: " + messageId + " failed");
 
 	}
 	@Override
 	public void onSessionConfigFailed() {
 		Log.e("SessionConfigFailed", "Session configuration failed");
-		// Session configuration failed
 	}
 }

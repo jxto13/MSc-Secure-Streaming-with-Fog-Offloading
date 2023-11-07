@@ -1,6 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.mozilla.rust-android-gradle.rust-android' version '0.9.3'
+    id "com.google.protobuf" version "0.9.4"
 }
 
 android {
@@ -11,6 +12,7 @@ android {
     defaultConfig {
         applicationId "com.example.final_test_wifiaware"
         minSdk 31
+        //noinspection OldTargetApi
         targetSdk 31
         versionCode 1
         versionName "1.0"
@@ -31,6 +33,33 @@ android {
     buildFeatures {
         viewBinding true
     }
+
+    protobuf {
+        // Specify the source directory for your .proto files
+        protoc {
+            artifact = 'com.google.protobuf:protoc:3.15.8'
+        }
+        plugins {
+            grpc {
+                artifact = 'io.grpc:protoc-gen-grpc-java:1.38.1'
+            }
+        }
+        generateProtoTasks {
+            all().each { task ->
+                task.builtins {
+                    remove java
+                }
+                task.plugins {
+                    grpc {
+                        // Set the source directory for your .proto files
+                        option 'lite'
+                        option 'proto_path=protobuf/src/main'
+                    }
+                }
+            }
+        }
+    }
+
 }
 
 dependencies {
@@ -42,6 +71,10 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2'
     implementation 'androidx.navigation:navigation-fragment:2.7.4'
     implementation 'androidx.navigation:navigation-ui:2.7.4'
+    implementation 'io.grpc:grpc-okhttp:1.59.0'
+    implementation 'io.grpc:grpc-stub:1.59.0'
+    implementation 'io.grpc:grpc-protobuf-lite:1.59.0'
+    compileOnly 'org.apache.tomcat:annotations-api:6.0.53' // necessary for Java 9+
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'

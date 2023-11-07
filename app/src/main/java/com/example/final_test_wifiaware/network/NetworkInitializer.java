@@ -1,5 +1,6 @@
 package com.example.final_test_wifiaware.network;
 
+import android.app.Activity;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.Network;
@@ -13,12 +14,17 @@ import android.net.wifi.aware.WifiAwareManager;
 import android.net.wifi.aware.WifiAwareSession;
 import android.util.Log;
 
+import androidx.lifecycle.ViewModelProvider;
+import androidx.lifecycle.ViewModelStoreOwner;
+
 import com.example.final_test_wifiaware.network.callbacks.publisher.PublisherConnectivityManagerCallback;
 import com.example.final_test_wifiaware.network.callbacks.publisher.PublisherDiscoverySessionCallback;
 import com.example.final_test_wifiaware.network.callbacks.subscriber.SubscriberConnectivityManagerCallback;
 import com.example.final_test_wifiaware.network.callbacks.subscriber.SubscriberDiscoverySessionCallback;
 import com.example.final_test_wifiaware.network.publisher.Publisher;
 import com.example.final_test_wifiaware.network.subscriber.Subscriber;
+import com.example.final_test_wifiaware.ui.home.CustomAdapter;
+import com.example.final_test_wifiaware.ui.home.HomeViewModel;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -28,14 +34,11 @@ public class NetworkInitializer {
 	private WifiAwareManager wifiAwareManager;
 	private boolean wifiAwareManagerStatus;
 	private WifiAwareSession mWifiAwareSession;
-	public List<PeerHandle> connectedClients = new ArrayList<>();
-
-	private Subscriber subscriber;
-	private Publisher publisher;
+	public Subscriber subscriber;
+	public Publisher publisher;
 
 	public NetworkInitializer(Context context){
 		this.context = context;
-
 	}
 
 	public void start(){
@@ -55,7 +58,9 @@ public class NetworkInitializer {
 		// Check if Wi-Fi Aware is supported on this device
 		if (wifiAwareManager.isAvailable()) {
 			wifiAwareManagerStatus = true;
-			Log.d("wifiAwareManager", "available");
+			Log.d("wifiAwareManager", "available - getAvailableDataPathsCount() = " + wifiAwareManager.getAvailableAwareResources().getAvailableDataPathsCount()
+			+ " - getAvailableSubscribeSessionsCount() = "+ wifiAwareManager.getAvailableAwareResources().getAvailableSubscribeSessionsCount()
+			+ " - getAvailablePublishSessionsCount() = "+ wifiAwareManager.getAvailableAwareResources().getAvailablePublishSessionsCount() );
 		} else {
 			wifiAwareManagerStatus = false;
 			Log.d("wifiAwareManager", "not available");
@@ -70,6 +75,10 @@ public class NetworkInitializer {
 			// Close the Wi-Fi Aware session to terminate publish and subscribe sessions
 			mWifiAwareSession.close();
 		}
+
+		// Close and destroy all resource in publisher and subscriber
+		publisher.destroyResources();
+		subscriber.destroyResources();
 	}
 
 	/**
@@ -99,6 +108,5 @@ public class NetworkInitializer {
 
 
 	// Getters and Setters
-
 
 }

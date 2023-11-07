@@ -8,10 +8,13 @@ import android.view.View;
 import android.view.Menu;
 
 import com.example.final_test_wifiaware.network.NetworkInitializer;
+import com.example.final_test_wifiaware.ui.home.HomeViewModel;
+import com.example.final_test_wifiaware.utils.AppContainer;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 
 
+import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -27,8 +30,7 @@ public class MainActivity extends AppCompatActivity {
 
 	public NetworkInitializer wifiAwareNetwork;
 	private AppBarConfiguration mAppBarConfiguration;
-	private ActivityMainBinding binding;
-
+	private AppContainer appContainer;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -37,13 +39,14 @@ public class MainActivity extends AppCompatActivity {
 		// Check and request all permissions from the manifest
 		PermissionHandler.requestAppPermissions(this);
 
-		binding = ActivityMainBinding.inflate(getLayoutInflater());
+		com.example.final_test_wifiaware.databinding.ActivityMainBinding binding = ActivityMainBinding.inflate(getLayoutInflater());
 		setContentView(binding.getRoot());
 
 		setSupportActionBar(binding.appBarMain.toolbar);
 
 		DrawerLayout drawer = binding.drawerLayout;
 		NavigationView navigationView = binding.navView;
+
 		// Passing each menu ID as a set of Ids because each
 		// menu should be considered as top level destinations.
 		mAppBarConfiguration = new AppBarConfiguration.Builder(
@@ -57,6 +60,9 @@ public class MainActivity extends AppCompatActivity {
 		// Start Wifi Aware with NetworkInitializer
 		wifiAwareNetwork = new NetworkInitializer(getApplicationContext());
 		wifiAwareNetwork.start();
+
+		// Create an instance of the AppContainer
+		appContainer = AppContainer.getInstance();
 	}
 
 	@Override
@@ -77,6 +83,13 @@ public class MainActivity extends AppCompatActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 		getDelegate().onDestroy();
+		System.out.println("On destroy called");
 		wifiAwareNetwork.stopWifiAware();
+	}
+
+	// Getters and Setters
+
+	public NetworkInitializer getNetworkInitializer() {
+		return wifiAwareNetwork;
 	}
 }

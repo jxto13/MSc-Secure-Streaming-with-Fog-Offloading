@@ -10,7 +10,7 @@ public abstract class AbstractConnectivityManagerCallback extends ConnectivityMa
 
 	@Override
 	public void onAvailable(@NonNull Network network) {
-		Log.d("NetworkCallback", "Network is available");
+		Log.d("NetworkCallback", "Network is available " + network.hashCode());
 	}
 
 	@Override
