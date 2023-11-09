@@ -25,6 +25,7 @@ import com.example.final_test_wifiaware.network.publisher.Publisher;
 import com.example.final_test_wifiaware.network.subscriber.Subscriber;
 import com.example.final_test_wifiaware.ui.home.CustomAdapter;
 import com.example.final_test_wifiaware.ui.home.HomeViewModel;
+import com.example.final_test_wifiaware.utils.AppContainer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -95,6 +96,9 @@ public class NetworkInitializer {
 					// Session is created, can start the subscriber and publisher
 					subscriber = new Subscriber(mWifiAwareSession, context);
 					publisher = new Publisher(mWifiAwareSession, context);
+
+					// Add to AppContainer
+					AppContainer.getInstance().setSubscriber(subscriber);
 				}
 
 				@Override

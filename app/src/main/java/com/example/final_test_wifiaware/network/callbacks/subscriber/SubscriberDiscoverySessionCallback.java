@@ -28,13 +28,11 @@ public class SubscriberDiscoverySessionCallback extends AbstractDiscoverySession
 	@Override
 	public void onServiceDiscovered(PeerHandle peerHandle, byte[] serviceSpecificInfo, List<byte[]> matchFilter) {
 		UUID uuid = Utils.ByteArraytoUUID(serviceSpecificInfo);
+		Log.d("ServiceDiscovered", "Service name: " + uuid.toString() + " | peerHandle: " + peerHandle.hashCode());
+
+		// Create new connection from uuid service info and peer handle
 		subscriber.getConnections().add(new Connection(uuid, peerHandle));
 		subscriber.getHomeViewModel().updateConnections(subscriber.getConnections());
-		Log.d("ServiceDiscovered", "Service name: " + uuid.toString() + " | peerHandle: " + peerHandle.hashCode());
-		for (Connection item : subscriber.getConnections()) {
-			System.out.println(item);
-		}
-		//subscriber.getAdapter().notify();
 	}
 
 	@Override

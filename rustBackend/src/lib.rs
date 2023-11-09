@@ -1,4 +1,5 @@
 mod service;
+mod grpcserver;
 
 #[allow(non_snake_case)]
 pub mod android {
@@ -10,7 +11,8 @@ pub mod android {
         JNIEnv,
     };
 
-    use crate::service::{launch, watch};
+    use crate::service::{launch, watch, rperf_start};
+    use crate::grpcserver;
 
     #[no_mangle]
     pub extern "system" fn Java_com_example_final_1test_1wifiaware_services_RustService_startService(
@@ -34,5 +36,14 @@ pub mod android {
         spawn(|| {
             launch("/data/user/0/com.example.final_test_wifiaware/files/fsmon_log.yaml");
         });
+
+        spawn(|| {
+            rperf_start();
+        });
+
+        spawn(|| {
+            let _ = grpcserver::start_grpc_server();
+        });
+
     }
 }

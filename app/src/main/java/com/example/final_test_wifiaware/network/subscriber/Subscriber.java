@@ -79,22 +79,10 @@ public class Subscriber {
 		target.setConnectivityManagerCallback(new SubscriberConnectivityManagerCallback(this));
 		connMgr.requestNetwork(myNetworkRequest,target.getConnectivityManagerCallback());
 	}
-
-	/*public void createSocket() {
-		WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) networkCapabilities.getTransportInfo();
-		assert peerAwareInfo != null;
-		Inet6Address peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
-		int peerPort = peerAwareInfo.getPort();
-		Log.d("createSocket", "peerIpv6:" + peerIpv6 + " | " + networkCapabilities.toString());
+	public void destroySpecificResource(Connection connection){
+		connMgr.unregisterNetworkCallback(connection.getConnectivityManagerCallback());
 	}
-*/
 
-	public void createConnections(){
-		for (Connection item : connections) {
-			Log.d("Starting Connections",item.toString());
-			initializeSocketConnectionSubscriber(item);
-		}
-	}
 	public void destroyResources(){
 		for (Connection item : connections ) {
 			if (item.getConnectedStatus()){
@@ -123,5 +111,7 @@ public class Subscriber {
 	public HomeViewModel getHomeViewModel() {
 		return homeViewModel;
 	}
+
+
 }
 

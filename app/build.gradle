@@ -34,10 +34,18 @@ android {
         viewBinding true
     }
 
+    sourceSets {
+        main {
+            proto {
+                srcDir '../../../proto' // Change this path to your custom proto folder location
+            }
+        }
+    }
+
     protobuf {
         // Specify the source directory for your .proto files
         protoc {
-            artifact = 'com.google.protobuf:protoc:3.15.8'
+            artifact = 'com.google.protobuf:protoc:3.24.0'
         }
         plugins {
             grpc {
@@ -47,14 +55,11 @@ android {
         generateProtoTasks {
             all().each { task ->
                 task.builtins {
-                    remove java
+                    java { option 'lite' }
                 }
                 task.plugins {
-                    grpc {
-                        // Set the source directory for your .proto files
-                        option 'lite'
-                        option 'proto_path=protobuf/src/main'
-                    }
+                    grpc { // Options added to --grpc_out
+                        option 'lite' }
                 }
             }
         }
