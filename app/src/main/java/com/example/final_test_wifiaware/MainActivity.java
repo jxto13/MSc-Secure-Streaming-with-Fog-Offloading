@@ -1,20 +1,17 @@
 package com.example.final_test_wifiaware;
 
-import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
+
+import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.view.Menu;
 
 import com.example.final_test_wifiaware.network.NetworkInitializer;
-import com.example.final_test_wifiaware.ui.home.HomeViewModel;
+import com.example.final_test_wifiaware.services.GrpcClient;
+import com.example.final_test_wifiaware.services.RustService;
 import com.example.final_test_wifiaware.utils.AppContainer;
-import com.google.android.material.snackbar.Snackbar;
+
 import com.google.android.material.navigation.NavigationView;
 
-
-import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -25,16 +22,19 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.final_test_wifiaware.databinding.ActivityMainBinding;
 import com.example.final_test_wifiaware.utils.PermissionHandler;
 
+import java.util.UUID;
+
 
 public class MainActivity extends AppCompatActivity {
 
 	public NetworkInitializer wifiAwareNetwork;
 	private AppBarConfiguration mAppBarConfiguration;
 	private AppContainer appContainer;
-
+	private Intent serviceIntent;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
 
 		// Check and request all permissions from the manifest
 		PermissionHandler.requestAppPermissions(this);
@@ -63,6 +63,14 @@ public class MainActivity extends AppCompatActivity {
 
 		// Create an instance of the AppContainer
 		appContainer = AppContainer.getInstance();
+
+		// Start gRPC Client (Temporary)
+		appContainer.setGrpcClient(new GrpcClient("localhost",50051));
+
+		// Start rustService
+		//serviceIntent = new Intent(this, RustService.class);
+		//this.startService(serviceIntent);
+
 	}
 
 	@Override
@@ -81,15 +89,14 @@ public class MainActivity extends AppCompatActivity {
 
 	@Override
 	protected void onDestroy() {
+		// Stops rustBackend
+		this.stopService(serviceIntent);
+		// Destroys wifiAware resources
+		wifiAwareNetwork.stopWifiAware();
 		super.onDestroy();
 		getDelegate().onDestroy();
-		System.out.println("On destroy called");
-		wifiAwareNetwork.stopWifiAware();
 	}
 
 	// Getters and Setters
 
-	public NetworkInitializer getNetworkInitializer() {
-		return wifiAwareNetwork;
-	}
 }

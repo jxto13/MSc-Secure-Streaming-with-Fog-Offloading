@@ -85,10 +85,9 @@ pub async fn launch(fsmon_log: impl AsRef<Path> + Clone + Send + 'static) {
         .unwrap();
 }
 
-pub fn rperf_start(){
+pub fn rperf_start(args_str: &str){
 
-    let args_str = "rperf -s --format json --udp --debug --version6".to_string();
-
+    //let args_str = "rperf -s --format json --udp --debug --version6".to_string();
     let matches =  parse_args(&args_str);
 
     if matches.is_present("server") {

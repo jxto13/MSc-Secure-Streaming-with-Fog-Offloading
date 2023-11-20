@@ -3,7 +3,8 @@ package com.example.final_test_wifiaware.ui.home;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
-import com.example.final_test_wifiaware.network.utils.Connection;
+import com.example.final_test_wifiaware.network.connections.Connection;
+import com.example.final_test_wifiaware.utils.AppContainer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +16,6 @@ public class HomeViewModel extends ViewModel {
 	public HomeViewModel() {
 		connectionsLiveData = new MutableLiveData<>();
 		connectionsLiveData.setValue(new ArrayList<>());
-
 		myUUID = new MutableLiveData<>();
 	}
 
@@ -35,8 +35,8 @@ public class HomeViewModel extends ViewModel {
 	public LiveData<String> getMyUUID() {
 		return myUUID;
 	}
-	public void updateMyUUID(String uuid) {
-		myUUID.setValue(uuid);
-	}
 
+	public void updateMyUUID(String input) {
+		myUUID.setValue(input);
+	}
 }

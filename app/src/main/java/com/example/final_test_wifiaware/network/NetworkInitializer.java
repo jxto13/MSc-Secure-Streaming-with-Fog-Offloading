@@ -1,48 +1,45 @@
 package com.example.final_test_wifiaware.network;
 
-import android.app.Activity;
 import android.content.Context;
-import android.net.ConnectivityManager;
-import android.net.Network;
-import android.net.NetworkCapabilities;
 import android.net.wifi.aware.AttachCallback;
-import android.net.wifi.aware.DiscoverySessionCallback;
-import android.net.wifi.aware.PeerHandle;
-import android.net.wifi.aware.PublishDiscoverySession;
-import android.net.wifi.aware.SubscribeDiscoverySession;
 import android.net.wifi.aware.WifiAwareManager;
 import android.net.wifi.aware.WifiAwareSession;
 import android.util.Log;
 
-import androidx.lifecycle.ViewModelProvider;
-import androidx.lifecycle.ViewModelStoreOwner;
-
-import com.example.final_test_wifiaware.network.callbacks.publisher.PublisherConnectivityManagerCallback;
-import com.example.final_test_wifiaware.network.callbacks.publisher.PublisherDiscoverySessionCallback;
-import com.example.final_test_wifiaware.network.callbacks.subscriber.SubscriberConnectivityManagerCallback;
-import com.example.final_test_wifiaware.network.callbacks.subscriber.SubscriberDiscoverySessionCallback;
+import com.example.final_test_wifiaware.network.connections.ConnectionManager;
 import com.example.final_test_wifiaware.network.publisher.Publisher;
 import com.example.final_test_wifiaware.network.subscriber.Subscriber;
-import com.example.final_test_wifiaware.ui.home.CustomAdapter;
-import com.example.final_test_wifiaware.ui.home.HomeViewModel;
 import com.example.final_test_wifiaware.utils.AppContainer;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.UUID;
 
 public class NetworkInitializer {
 	private final Context context;
 	private WifiAwareManager wifiAwareManager;
 	private boolean wifiAwareManagerStatus;
 	private WifiAwareSession mWifiAwareSession;
-	public Subscriber subscriber;
-	public Publisher publisher;
+	private Subscriber subscriber;
+	private Publisher publisher;
+	private UUID myUUID;
+	private ConnectionManager connectionManager;
 
 	public NetworkInitializer(Context context){
 		this.context = context;
 	}
 
+	/**
+	 * Entrypoint for the NetworkInitializer
+	 */
 	public void start(){
+		// Generate my UUID
+		myUUID = UUID.randomUUID();
+
+		// Set global myUUID in appContainer
+		AppContainer.getInstance().setMyUUID(myUUID);
+
+		// Set UUID to the UI
+		AppContainer.getInstance().getHomeViewModel().updateMyUUID(myUUID.toString());
+
 		// Start wifiAwareManager
 		startWifiAwareManager();
 
@@ -53,7 +50,7 @@ public class NetworkInitializer {
 	/**
 	 * Initialize Wi-Fi Aware Manager
 	 */
-	public void startWifiAwareManager() {
+	private void startWifiAwareManager() {
 		wifiAwareManager = (WifiAwareManager) context.getSystemService(Context.WIFI_AWARE_SERVICE);
 
 		// Check if Wi-Fi Aware is supported on this device
@@ -68,24 +65,11 @@ public class NetworkInitializer {
 			// Wi-Fi Aware is not available on this device
 		}
 	}
-	/**
-	 * Stops Wi-Fi Aware
-	 */
-	public void stopWifiAware() {
-		if (mWifiAwareSession != null) {
-			// Close the Wi-Fi Aware session to terminate publish and subscribe sessions
-			mWifiAwareSession.close();
-		}
-
-		// Close and destroy all resource in publisher and subscriber
-		publisher.destroyResources();
-		subscriber.destroyResources();
-	}
 
 	/**
 	 * Attach to Wi-Fi Aware and create a session
 	 */
-	public void createWifiAwareSession() {
+	private void createWifiAwareSession() {
 		if (wifiAwareManagerStatus) {
 			wifiAwareManager.attach(new AttachCallback() {
 				@Override
@@ -93,12 +77,18 @@ public class NetworkInitializer {
 					mWifiAwareSession = session;
 					Log.d("AttachCallback", "Session creation successfully");
 
+					connectionManager = new ConnectionManager(context);
+					AppContainer.getInstance().setConnectionManager(connectionManager);
+
 					// Session is created, can start the subscriber and publisher
-					subscriber = new Subscriber(mWifiAwareSession, context);
-					publisher = new Publisher(mWifiAwareSession, context);
+					subscriber = new Subscriber(mWifiAwareSession, context, myUUID);
+					publisher = new Publisher(mWifiAwareSession, context, myUUID);
 
 					// Add to AppContainer
 					AppContainer.getInstance().setSubscriber(subscriber);
+					AppContainer.getInstance().setPublisher(publisher);
+
+
 				}
 
 				@Override
@@ -110,7 +100,23 @@ public class NetworkInitializer {
 		}
 	}
 
+	/**
+	 * Stops Wi-Fi Aware and destroys all resources created by it
+	 */
+	public void stopWifiAware() {
+		// Close and destroy all resource in publisher and subscriber
+		connectionManager.destroyResources();
+
+		if (mWifiAwareSession != null) {
+			// Close the Wi-Fi Aware session to terminate publish and subscribe sessions
+			mWifiAwareSession.close();
+		}
+	}
+
 
 	// Getters and Setters
 
+	public UUID getMyUUID() {
+		return myUUID;
+	}
 }

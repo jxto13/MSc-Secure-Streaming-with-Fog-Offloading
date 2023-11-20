@@ -14,11 +14,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.final_test_wifiaware.R;
 import com.example.final_test_wifiaware.databinding.FragmentHomeBinding;
-import com.example.final_test_wifiaware.network.utils.Connection;
 import com.example.final_test_wifiaware.utils.AppContainer;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class HomeFragment extends Fragment {
 	private FragmentHomeBinding binding;

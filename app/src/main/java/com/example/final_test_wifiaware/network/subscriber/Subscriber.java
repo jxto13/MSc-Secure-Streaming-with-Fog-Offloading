@@ -15,12 +15,15 @@ import android.util.Log;
 
 import com.example.final_test_wifiaware.network.callbacks.subscriber.SubscriberConnectivityManagerCallback;
 import com.example.final_test_wifiaware.network.callbacks.subscriber.SubscriberDiscoverySessionCallback;
-import com.example.final_test_wifiaware.network.utils.Connection;
+import com.example.final_test_wifiaware.network.connections.Connection;
 import com.example.final_test_wifiaware.ui.home.HomeViewModel;
 import com.example.final_test_wifiaware.utils.AppContainer;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 public class Subscriber {
 	private final Context context;
@@ -29,15 +32,15 @@ public class Subscriber {
 	private final ConnectivityManager.NetworkCallback subscriberNetworkCallback;
 	private SubscribeDiscoverySession subscriberDiscoverySession;
 	private ConnectivityManager connMgr ;
-	private List<Connection> connections = new ArrayList<>();
 	private HomeViewModel homeViewModel;
-	public Subscriber(WifiAwareSession session, Context inputContext) {
+	private UUID myUUID;
+	public Subscriber(WifiAwareSession session, Context inputContext, UUID myUUID) {
 		Log.d("Subscriber", "Starting Subscriber");
 		this.mWifiAwareSession = session;
 		this.context = inputContext;
 		this.connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-		homeViewModel = AppContainer.getInstance().getHomeViewModel();
+		this.myUUID = myUUID;
+		//homeViewModel = AppContainer.getInstance().getHomeViewModel();
 
 		this.subscriberSessionCallback = new SubscriberDiscoverySessionCallback(this);
 		this.subscriberNetworkCallback = new SubscriberConnectivityManagerCallback(this);
@@ -63,7 +66,7 @@ public class Subscriber {
 	public void initializeSocketConnectionSubscriber(Connection target) {
 
 		// Step 2: Create a WifiAwareNetworkSpecifier
-		NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(subscriberDiscoverySession, target.getTarget())
+		NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(subscriberDiscoverySession, target.getPeerHandle())
 				.setPskPassphrase("somePassword")
 				.build();
 
@@ -74,24 +77,15 @@ public class Subscriber {
 				.setNetworkSpecifier(networkSpecifier)
 				.build();
 
-
 		// Create a new Manager Callback and add to connection
-		target.setConnectivityManagerCallback(new SubscriberConnectivityManagerCallback(this));
-		connMgr.requestNetwork(myNetworkRequest,target.getConnectivityManagerCallback());
+		target.setSubscriberConnectivityManagerCallback(new SubscriberConnectivityManagerCallback(this));
+		connMgr.requestNetwork(myNetworkRequest,target.getSubscriberConnectivityManagerCallback());
 	}
 	public void destroySpecificResource(Connection connection){
-		connMgr.unregisterNetworkCallback(connection.getConnectivityManagerCallback());
+		connMgr.unregisterNetworkCallback(connection.getSubscriberConnectivityManagerCallback());
 	}
 
-	public void destroyResources(){
-		for (Connection item : connections ) {
-			if (item.getConnectedStatus()){
-				Log.d("Destroy Resources", "unregisterNetworkCallback - " + item.getUUID().toString());
-				connMgr.unregisterNetworkCallback(item.getConnectivityManagerCallback());
-			}
-		}
 
-	}
 
 	// Getters and Setters
 	public void setSubscriberDiscoverySession(SubscribeDiscoverySession subscriberDiscoverySession) {
@@ -104,14 +98,17 @@ public class Subscriber {
 	public ConnectivityManager.NetworkCallback getSubscriberNetworkCallback() {
 		return subscriberNetworkCallback;
 	}
-	public List<Connection> getConnections() {
-		return connections;
-	}
 
 	public HomeViewModel getHomeViewModel() {
 		return homeViewModel;
 	}
 
+	public ConnectivityManager getConnMgr() {
+		return connMgr;
+	}
 
+	public UUID getMyUUID() {
+		return myUUID;
+	}
 }
 

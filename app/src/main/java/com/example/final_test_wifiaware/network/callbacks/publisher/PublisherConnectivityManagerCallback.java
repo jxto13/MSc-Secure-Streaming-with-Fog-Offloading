@@ -8,7 +8,6 @@ import androidx.annotation.NonNull;
 
 import com.example.final_test_wifiaware.network.callbacks.AbstractConnectivityManagerCallback;
 import com.example.final_test_wifiaware.network.publisher.Publisher;
-import com.example.final_test_wifiaware.ui.home.HomeFragment;
 
 public class PublisherConnectivityManagerCallback extends AbstractConnectivityManagerCallback {
 	private Publisher publisher;

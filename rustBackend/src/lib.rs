@@ -38,12 +38,13 @@ pub mod android {
         });
 
         spawn(|| {
-            rperf_start();
+            rperf_start("rperf -s --format json --udp --debug --version6");
         });
 
         spawn(|| {
             let _ = grpcserver::start_grpc_server();
         });
+        
 
     }
 }

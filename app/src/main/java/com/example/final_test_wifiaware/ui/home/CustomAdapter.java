@@ -11,7 +11,7 @@ import android.widget.Switch;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.final_test_wifiaware.R;
-import com.example.final_test_wifiaware.network.utils.Connection;
+import com.example.final_test_wifiaware.network.connections.Connection;
 import com.example.final_test_wifiaware.utils.AppContainer;
 
 import java.util.List;
@@ -44,17 +44,22 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
 		holder.column1.setText(connection.getUUID().toString());
 		holder.column2.setText(connection.getConnectedStatus().toString());
 
-		holder.column3.setChecked(false);
+		if(connection.getConnectedStatus()){
+			holder.column3.setChecked(true);
+
+		}else{
+			holder.column3.setChecked(false);
+		}
 
 		holder.column3.setOnCheckedChangeListener((buttonView, isChecked) -> {
 			if (isChecked) {
 				System.out.println("Switch " + connection.getUUID().toString() + " is on");
-				AppContainer.getInstance().getSubscriber().initializeSocketConnectionSubscriber(connection);
+				AppContainer.getInstance().getPublisher().initializeSocketConnectionPublisher(connection);
 				// Handle when the Switch is checked (toggled on)
 				// You can add your logic here
 			} else {
 				System.out.println("Switch " + connection.getUUID().toString() + " is off");
-				AppContainer.getInstance().getSubscriber().destroySpecificResource(connection);
+				AppContainer.getInstance().getPublisher().initializeSocketConnectionPublisher(connection);
 
 				// Handle when the Switch is unchecked (toggled off)
 				// You can add your logic here
