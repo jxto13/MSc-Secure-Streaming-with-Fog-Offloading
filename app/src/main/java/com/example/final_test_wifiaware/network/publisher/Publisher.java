@@ -1,5 +1,7 @@
 package com.example.final_test_wifiaware.network.publisher;
 
+import static android.net.NetworkCapabilities.NET_CAPABILITY_INTERNET;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -19,11 +21,17 @@ import com.example.final_test_wifiaware.network.callbacks.publisher.PublisherDis
 import com.example.final_test_wifiaware.network.callbacks.subscriber.SubscriberConnectivityManagerCallback;
 import com.example.final_test_wifiaware.network.callbacks.subscriber.SubscriberDiscoverySessionCallback;
 import com.example.final_test_wifiaware.network.connections.Connection;
+import com.example.final_test_wifiaware.network.protocol.TCPEchoServer;
 import com.example.final_test_wifiaware.network.utils.Utils;
 import com.example.final_test_wifiaware.ui.home.CustomAdapter;
 import com.example.final_test_wifiaware.utils.AppContainer;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.DatagramSocket;
+import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +58,9 @@ public class Publisher {
 
 		// All initialized can start publisher
 		startPublisher();
+
+		// Starts the heart beat server
+		startHeartbeatHandler();
 	}
 
 	/**
@@ -67,30 +78,40 @@ public class Publisher {
 	public void startPublisher() {
 		mWifiAwareSession.publish(Publisher.createPublishConfig(), publisherSessionCallback, null);
 	}
-	@SuppressLint("NewApi")
+
+	public void startHeartbeatHandler(){
+
+		try {
+			TCPEchoServer echoServer = new TCPEchoServer(5050);
+			echoServer.start();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+
+	}
+
 	public void initializeSocketConnectionPublisher(Connection target) {
 
-			//Create a WifiAwareNetworkSpecifier
-
-			NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(publishDiscoverySession, target.getPeerHandle())
-					.setPskPassphrase("somePassword")
-					.build();
-		//.setChannelFrequencyMhz(5220, true)
-		//.setPskPassphrase("somePassword")
-
-			//Create a NetworkRequest and set up a network callback
-			NetworkRequest myNetworkRequest = new NetworkRequest.Builder()
-					.addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
-					.setNetworkSpecifier(networkSpecifier)
-					.build();
+		//Create a WifiAwareNetworkSpecifier
+		NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(publishDiscoverySession, target.getPeerHandle())
+				.setPskPassphrase("somePassword")
+				.setPort(5050)
+				.build();
 
 
-			// Create a new Manager Callback and add to connection
-			target.setPublisherConnectivityManagerCallback(new PublisherConnectivityManagerCallback(this));
-			connMgr.requestNetwork(myNetworkRequest,target.getPublisherConnectivityManagerCallback());
+		//Create a NetworkRequest and set up a network callback
+		NetworkRequest myNetworkRequest = new NetworkRequest.Builder()
+				.addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
+				.setNetworkSpecifier(networkSpecifier)
+				.build();
 
-			publishDiscoverySession.sendMessage(target.getPeerHandle(), 2,("networkCreation:"+myUUID.toString()).getBytes());
-			target.setConnectedStatus(true);
+
+		// Create a new Manager Callback and add to connection
+		target.setPublisherConnectivityManagerCallback(new PublisherConnectivityManagerCallback(this));
+		connMgr.requestNetwork(myNetworkRequest,target.getPublisherConnectivityManagerCallback());
+
+		publishDiscoverySession.sendMessage(target.getPeerHandle(), 2,("networkCreation:"+myUUID.toString()).getBytes());
+
 	}
 
 
@@ -115,4 +136,7 @@ public class Publisher {
 		return myUUID;
 	}
 
+	public Context getContext() {
+		return context;
+	}
 }

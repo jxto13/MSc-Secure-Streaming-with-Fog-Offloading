@@ -19,6 +19,8 @@ import com.example.final_test_wifiaware.network.connections.Connection;
 import com.example.final_test_wifiaware.ui.home.HomeViewModel;
 import com.example.final_test_wifiaware.utils.AppContainer;
 
+import java.io.IOException;
+import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -32,7 +34,6 @@ public class Subscriber {
 	private final ConnectivityManager.NetworkCallback subscriberNetworkCallback;
 	private SubscribeDiscoverySession subscriberDiscoverySession;
 	private ConnectivityManager connMgr ;
-	private HomeViewModel homeViewModel;
 	private UUID myUUID;
 	public Subscriber(WifiAwareSession session, Context inputContext, UUID myUUID) {
 		Log.d("Subscriber", "Starting Subscriber");
@@ -40,7 +41,6 @@ public class Subscriber {
 		this.context = inputContext;
 		this.connMgr = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
 		this.myUUID = myUUID;
-		//homeViewModel = AppContainer.getInstance().getHomeViewModel();
 
 		this.subscriberSessionCallback = new SubscriberDiscoverySessionCallback(this);
 		this.subscriberNetworkCallback = new SubscriberConnectivityManagerCallback(this);
@@ -80,6 +80,7 @@ public class Subscriber {
 		// Create a new Manager Callback and add to connection
 		target.setSubscriberConnectivityManagerCallback(new SubscriberConnectivityManagerCallback(this));
 		connMgr.requestNetwork(myNetworkRequest,target.getSubscriberConnectivityManagerCallback());
+
 	}
 	public void destroySpecificResource(Connection connection){
 		connMgr.unregisterNetworkCallback(connection.getSubscriberConnectivityManagerCallback());
@@ -99,9 +100,6 @@ public class Subscriber {
 		return subscriberNetworkCallback;
 	}
 
-	public HomeViewModel getHomeViewModel() {
-		return homeViewModel;
-	}
 
 	public ConnectivityManager getConnMgr() {
 		return connMgr;
@@ -109,6 +107,9 @@ public class Subscriber {
 
 	public UUID getMyUUID() {
 		return myUUID;
+	}
+	public Context getContext() {
+		return context;
 	}
 }
 

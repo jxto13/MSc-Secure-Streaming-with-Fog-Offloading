@@ -25,8 +25,6 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-use clap::ArgMatches;
-
 use mio::net::TcpStream;
 
 use crate::protocol::communication::{receive, send, KEEPALIVE_DURATION};
@@ -115,55 +113,39 @@ fn prepare_test_results(is_udp: bool, stream_count: u8) -> Mutex<Box<dyn TestRes
     }
 }
 
-pub fn execute(args: ArgMatches) -> BoxResult<()> {
+pub fn execute(ipv6: &str) -> BoxResult<()> {
     let mut complete = false;
 
     //config-parsing and pre-connection setup
     let mut tcp_port_pool = tcp::receiver::TcpPortPool::new(
-        args.value_of("tcp_port_pool").unwrap().to_string(),
-        args.value_of("tcp6_port_pool").unwrap().to_string(),
+        "".to_string(),
+        "".to_string(),
     );
     let mut udp_port_pool = udp::receiver::UdpPortPool::new(
-        args.value_of("udp_port_pool").unwrap().to_string(),
-        args.value_of("udp6_port_pool").unwrap().to_string(),
+        "".to_string(),
+        "".to_string(),
     );
 
     let cpu_affinity_manager = Arc::new(Mutex::new(
-        crate::utils::cpu_affinity::CpuAffinityManager::new(args.value_of("affinity").unwrap())?,
+        crate::utils::cpu_affinity::CpuAffinityManager::new("")?,
     ));
 
     let display_json: bool;
     let display_bit: bool;
-    match args.value_of("format").unwrap() {
-        "json" => {
-            display_json = true;
-            display_bit = false;
-        }
-        "megabit" => {
-            display_json = false;
-            display_bit = true;
-        }
-        "megabyte" => {
-            display_json = false;
-            display_bit = false;
-        }
-        _ => {
-            log::error!("unsupported display-mode; defaulting to JSON");
-            display_json = true;
-            display_bit = false;
-        }
-    }
 
-    let is_udp = args.is_present("udp");
+    display_json = true;
+    display_bit = false;
+
+    let is_udp = true;
 
     let test_id = uuid::Uuid::new_v4();
-    let mut upload_config = prepare_upload_configuration(&args, test_id.as_bytes())?;
-    let mut download_config = prepare_download_configuration(&args, test_id.as_bytes())?;
+    let mut upload_config = prepare_upload_configuration(test_id.as_bytes())?;
+    let mut download_config = prepare_download_configuration(test_id.as_bytes())?;
 
     //connect to the server
     let mut stream = connect_to_server(
-        &args.value_of("client").unwrap(),
-        &(args.value_of("port").unwrap().parse()?),
+        ipv6,
+        &5199,
     )?;
     let server_addr = stream.peer_addr()?;
 
@@ -231,66 +213,12 @@ pub fn execute(args: ArgMatches) -> BoxResult<()> {
     };
 
     //depending on whether this is a forward- or reverse-test, the order of configuring test-streams will differ
-    if args.is_present("reverse") {
-        log::debug!("running in reverse-mode: server will be uploading data");
+    log::debug!("running in forward-mode: server will be receiving data");
 
-        //when we're receiving data, we're also responsible for letting the server know where to send it
-        let mut stream_ports = Vec::with_capacity(stream_count);
-
-        if is_udp {
-            //UDP
-            log::info!(
-                "preparing for reverse-UDP test with {} streams...",
-                stream_count
-            );
-
-            let test_definition = udp::UdpTestDefinition::new(&download_config)?;
-            for stream_idx in 0..stream_count {
-                log::debug!("preparing UDP-receiver for stream {}...", stream_idx);
-                let test = udp::receiver::UdpReceiver::new(
-                    test_definition.clone(),
-                    &(stream_idx as u8),
-                    &mut udp_port_pool,
-                    &server_addr.ip(),
-                    &(download_config["receive_buffer"].as_i64().unwrap() as usize),
-                )?;
-                stream_ports.push(test.get_port()?);
-                parallel_streams.push(Arc::new(Mutex::new(test)));
-            }
-        } else {
-            //TCP
-            log::info!(
-                "preparing for reverse-TCP test with {} streams...",
-                stream_count
-            );
-
-            let test_definition = tcp::TcpTestDefinition::new(&download_config)?;
-            for stream_idx in 0..stream_count {
-                log::debug!("preparing TCP-receiver for stream {}...", stream_idx);
-                let test = tcp::receiver::TcpReceiver::new(
-                    test_definition.clone(),
-                    &(stream_idx as u8),
-                    &mut tcp_port_pool,
-                    &server_addr.ip(),
-                    &(download_config["receive_buffer"].as_i64().unwrap() as usize),
-                )?;
-                stream_ports.push(test.get_port()?);
-                parallel_streams.push(Arc::new(Mutex::new(test)));
-            }
-        }
-
-        //add the port-list to the upload-config that the server will receive; this is in stream-index order
-        upload_config["stream_ports"] = serde_json::json!(stream_ports);
-
-        //let the server know what we're expecting
-        send(&mut stream, &upload_config)?;
-    } else {
-        log::debug!("running in forward-mode: server will be receiving data");
-
-        //let the server know to prepare for us to connect
-        send(&mut stream, &download_config)?;
-        //NOTE: we don't prepare to send data at this point; that happens in the loop below, after the server signals that it's ready
-    }
+    //let the server know to prepare for us to connect
+    send(&mut stream, &download_config)?;
+    //NOTE: we don't prepare to send data at this point; that happens in the loop below, after the server signals that it's ready
+    
 
     //now that the server knows what we need to do, we have to wait for its response
     let connection_payload = receive(&mut stream, is_alive, &mut results_handler)?;
@@ -567,7 +495,7 @@ pub fn execute(args: ArgMatches) -> BoxResult<()> {
     }
 
     log::debug!("displaying test results");
-    let omit_seconds: usize = args.value_of("omit").unwrap().parse()?;
+    let omit_seconds: usize = 0;
     {
         let tr = test_results.lock().unwrap();
         if display_json {
@@ -584,7 +512,7 @@ pub fn execute(args: ArgMatches) -> BoxResult<()> {
                             IpAddr::V4(_) => 4,
                             IpAddr::V6(_) => 6,
                         },
-                        "reverse": args.is_present("reverse"),
+                        "reverse": false,
                     })
                 )
             );

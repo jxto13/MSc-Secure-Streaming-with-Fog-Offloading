@@ -1,7 +1,5 @@
 package com.example.final_test_wifiaware.network.callbacks.publisher;
 
-import android.annotation.SuppressLint;
-import android.net.wifi.aware.PeerHandle;
 import android.net.wifi.aware.PublishDiscoverySession;
 import android.util.Log;
 

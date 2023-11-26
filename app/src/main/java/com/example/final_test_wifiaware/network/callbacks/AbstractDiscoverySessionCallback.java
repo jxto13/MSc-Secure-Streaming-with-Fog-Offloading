@@ -28,5 +28,6 @@ public abstract class AbstractDiscoverySessionCallback  extends DiscoverySession
 	@Override
 	public void onServiceLost(@NonNull PeerHandle peerHandle, int reason) {
 		Log.d("ServiceLost", String.valueOf(peerHandle.hashCode()));
+		messageHandler.parseMessage(peerHandle,"serviceLost:0".getBytes());
 	}
 }

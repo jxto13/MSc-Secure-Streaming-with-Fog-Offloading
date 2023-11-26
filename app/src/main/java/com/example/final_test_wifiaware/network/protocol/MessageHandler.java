@@ -7,12 +7,8 @@ import com.example.final_test_wifiaware.network.connections.ConnectionManager;
 import com.example.final_test_wifiaware.network.utils.Utils;
 import com.example.final_test_wifiaware.utils.AppContainer;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class MessageHandler {
 	private final ConnectionManager connectionManager = AppContainer.getInstance().getConnectionManager();
-
 
 	public void parseMessage(PeerHandle peerHandle, byte[] message){
 		// message always in format of "protocolID:uuid"

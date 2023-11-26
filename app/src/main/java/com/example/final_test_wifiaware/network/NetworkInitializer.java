@@ -1,17 +1,40 @@
 package com.example.final_test_wifiaware.network;
 
+import android.Manifest;
 import android.content.Context;
+import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
+import android.net.Network;
+import android.net.NetworkCapabilities;
+import android.net.NetworkRequest;
+import android.net.NetworkSpecifier;
 import android.net.wifi.aware.AttachCallback;
+import android.net.wifi.aware.DiscoverySessionCallback;
+import android.net.wifi.aware.PeerHandle;
+import android.net.wifi.aware.PublishConfig;
+import android.net.wifi.aware.PublishDiscoverySession;
+import android.net.wifi.aware.SubscribeConfig;
+import android.net.wifi.aware.SubscribeDiscoverySession;
 import android.net.wifi.aware.WifiAwareManager;
+import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.net.wifi.aware.WifiAwareSession;
 import android.util.Log;
+
+import androidx.annotation.Nullable;
+import androidx.core.app.ActivityCompat;
 
 import com.example.final_test_wifiaware.network.connections.ConnectionManager;
 import com.example.final_test_wifiaware.network.publisher.Publisher;
 import com.example.final_test_wifiaware.network.subscriber.Subscriber;
 import com.example.final_test_wifiaware.utils.AppContainer;
 
+import java.io.IOException;
+import java.net.ServerSocket;
+import java.util.List;
+import java.util.PriorityQueue;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class NetworkInitializer {
 	private final Context context;
@@ -23,20 +46,15 @@ public class NetworkInitializer {
 	private UUID myUUID;
 	private ConnectionManager connectionManager;
 
-	public NetworkInitializer(Context context){
+	public NetworkInitializer(Context context) {
 		this.context = context;
 	}
 
 	/**
 	 * Entrypoint for the NetworkInitializer
 	 */
-	public void start(){
-		// Generate my UUID
-		myUUID = UUID.randomUUID();
-
-		// Set global myUUID in appContainer
-		AppContainer.getInstance().setMyUUID(myUUID);
-
+	public void start() {
+		this.myUUID = AppContainer.getInstance().getMyUUID();
 		// Set UUID to the UI
 		AppContainer.getInstance().getHomeViewModel().updateMyUUID(myUUID.toString());
 
@@ -57,8 +75,8 @@ public class NetworkInitializer {
 		if (wifiAwareManager.isAvailable()) {
 			wifiAwareManagerStatus = true;
 			Log.d("wifiAwareManager", "available - getAvailableDataPathsCount() = " + wifiAwareManager.getAvailableAwareResources().getAvailableDataPathsCount()
-			+ " - getAvailableSubscribeSessionsCount() = "+ wifiAwareManager.getAvailableAwareResources().getAvailableSubscribeSessionsCount()
-			+ " - getAvailablePublishSessionsCount() = "+ wifiAwareManager.getAvailableAwareResources().getAvailablePublishSessionsCount() );
+					+ " - getAvailableSubscribeSessionsCount() = " + wifiAwareManager.getAvailableAwareResources().getAvailableSubscribeSessionsCount()
+					+ " - getAvailablePublishSessionsCount() = " + wifiAwareManager.getAvailableAwareResources().getAvailablePublishSessionsCount());
 		} else {
 			wifiAwareManagerStatus = false;
 			Log.d("wifiAwareManager", "not available");
@@ -104,10 +122,11 @@ public class NetworkInitializer {
 	 * Stops Wi-Fi Aware and destroys all resources created by it
 	 */
 	public void stopWifiAware() {
-		// Close and destroy all resource in publisher and subscriber
-		connectionManager.destroyResources();
 
 		if (mWifiAwareSession != null) {
+			// Close and destroy all resource in publisher and subscriber
+			connectionManager.destroyResources();
+
 			// Close the Wi-Fi Aware session to terminate publish and subscribe sessions
 			mWifiAwareSession.close();
 		}

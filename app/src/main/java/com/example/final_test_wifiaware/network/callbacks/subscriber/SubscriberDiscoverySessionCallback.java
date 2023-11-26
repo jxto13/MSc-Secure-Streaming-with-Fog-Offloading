@@ -5,15 +5,10 @@ import android.net.wifi.aware.SubscribeDiscoverySession;
 import android.util.Log;
 
 import com.example.final_test_wifiaware.network.callbacks.AbstractDiscoverySessionCallback;
-import com.example.final_test_wifiaware.network.connections.ConnectionManager;
-import com.example.final_test_wifiaware.network.protocol.MessageHandler;
 import com.example.final_test_wifiaware.network.subscriber.Subscriber;
-import com.example.final_test_wifiaware.network.connections.Connection;
 import com.example.final_test_wifiaware.network.utils.Utils;
-import com.example.final_test_wifiaware.utils.AppContainer;
 
 import java.util.List;
-import java.util.UUID;
 
 public class SubscriberDiscoverySessionCallback extends AbstractDiscoverySessionCallback {
 

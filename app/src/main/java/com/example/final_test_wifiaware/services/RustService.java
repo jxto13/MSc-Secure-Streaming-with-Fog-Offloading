@@ -27,8 +27,8 @@ public class RustService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
-        createNotificationChannel();
-        startForeground(NOTIFICATION_ID, buildNotification());
+        //createNotificationChannel();
+        //startForeground(NOTIFICATION_ID, buildNotification());
 
         startService(this.getFilesDir().toString());
 

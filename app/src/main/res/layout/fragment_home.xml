@@ -38,26 +38,6 @@
             android:text="UUID"
             android:textSize="16sp" />
 
-
-        <TextView
-            android:id="@+id/column2"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="Status"
-            android:textSize="16sp" />
-
-        <TextView
-            android:id="@+id/column3"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:text="Connect"
-            android:textSize="16sp" />
-
-
     </LinearLayout>
     <View
         android:layout_width="match_parent"

@@ -42,29 +42,6 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
 		Connection connection = connections.get(position);
 
 		holder.column1.setText(connection.getUUID().toString());
-		holder.column2.setText(connection.getConnectedStatus().toString());
-
-		if(connection.getConnectedStatus()){
-			holder.column3.setChecked(true);
-
-		}else{
-			holder.column3.setChecked(false);
-		}
-
-		holder.column3.setOnCheckedChangeListener((buttonView, isChecked) -> {
-			if (isChecked) {
-				System.out.println("Switch " + connection.getUUID().toString() + " is on");
-				AppContainer.getInstance().getPublisher().initializeSocketConnectionPublisher(connection);
-				// Handle when the Switch is checked (toggled on)
-				// You can add your logic here
-			} else {
-				System.out.println("Switch " + connection.getUUID().toString() + " is off");
-				AppContainer.getInstance().getPublisher().initializeSocketConnectionPublisher(connection);
-
-				// Handle when the Switch is unchecked (toggled off)
-				// You can add your logic here
-			}
-		});
 	}
 
 	@Override
@@ -74,15 +51,10 @@ public class CustomAdapter extends RecyclerView.Adapter<CustomAdapter.ViewHolder
 
 	public static class ViewHolder extends RecyclerView.ViewHolder {
 		public TextView column1;
-		public TextView column2;
-		@SuppressLint("UseSwitchCompatOrMaterialCode")
-		public Switch column3;
 
 		public ViewHolder(View itemView) {
 			super(itemView);
 			column1 = itemView.findViewById(R.id.column1);
-			column2 = itemView.findViewById(R.id.column2);
-			column3 = itemView.findViewById(R.id.column3);
 		}
 	}
 }

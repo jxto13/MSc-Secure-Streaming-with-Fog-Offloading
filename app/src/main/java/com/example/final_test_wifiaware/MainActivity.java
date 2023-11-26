@@ -1,8 +1,11 @@
 package com.example.final_test_wifiaware;
 
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 
 import com.example.final_test_wifiaware.network.NetworkInitializer;
@@ -31,10 +34,22 @@ public class MainActivity extends AppCompatActivity {
 	private AppBarConfiguration mAppBarConfiguration;
 	private AppContainer appContainer;
 	private Intent serviceIntent;
+
+	private static final String PREFS_NAME = "MyPrefsFile";
+	private static final String UUID_KEY = "uuid";
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
+		// Generate or retrieve the UUID
+		String uuid = getOrCreateUUID();
+
+		// Set global myUUID in appContainer
+		AppContainer.getInstance().setMyUUID(UUID.fromString(uuid));
+
+		// Save the UUID to SharedPreferences
+		saveUUIDToSharedPreferences(uuid);
 
 		// Check and request all permissions from the manifest
 		PermissionHandler.requestAppPermissions(this);
@@ -65,11 +80,11 @@ public class MainActivity extends AppCompatActivity {
 		appContainer = AppContainer.getInstance();
 
 		// Start gRPC Client (Temporary)
-		appContainer.setGrpcClient(new GrpcClient("localhost",50051));
+		appContainer.setGrpcClient(new GrpcClient("[::1]",50051));
 
 		// Start rustService
-		//serviceIntent = new Intent(this, RustService.class);
-		//this.startService(serviceIntent);
+		serviceIntent = new Intent(this, RustService.class);
+		this.startService(serviceIntent);
 
 	}
 
@@ -87,14 +102,30 @@ public class MainActivity extends AppCompatActivity {
 				|| super.onSupportNavigateUp();
 	}
 
+	private String getOrCreateUUID() {
+		SharedPreferences preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+		String uuid = preferences.getString(UUID_KEY, null);
+
+		if (uuid == null) {
+			// Generate a new UUID
+			uuid = UUID.randomUUID().toString();
+		}
+
+		return uuid;
+	}
+
+	private void saveUUIDToSharedPreferences(String uuid) {
+		SharedPreferences preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = preferences.edit();
+		editor.putString(UUID_KEY, uuid);
+		editor.apply();
+	}
+
 	@Override
 	protected void onDestroy() {
-		// Stops rustBackend
-		this.stopService(serviceIntent);
-		// Destroys wifiAware resources
-		wifiAwareNetwork.stopWifiAware();
 		super.onDestroy();
 		getDelegate().onDestroy();
+
 	}
 
 	// Getters and Setters

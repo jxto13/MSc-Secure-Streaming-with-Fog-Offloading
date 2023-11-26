@@ -20,14 +20,12 @@
 
 use std::error::Error;
 use std::io;
-use std::net::{IpAddr, Ipv4Addr, Ipv6Addr, Shutdown, SocketAddr};
+use std::net::{IpAddr, Ipv6Addr, Shutdown, SocketAddr};
 use std::sync::atomic::{AtomicBool, AtomicU16, Ordering};
 use std::sync::mpsc::channel;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Duration;
-
-use clap::ArgMatches;
 
 use mio::net::{TcpListener, TcpStream};
 use mio::{Events, Poll, PollOpt, Ready, Token};
@@ -385,36 +383,33 @@ impl Drop for ClientThreadMonitor {
     }
 }
 
-pub fn serve(args: ArgMatches) -> BoxResult<()> {
+pub fn serve() -> BoxResult<()> {
     //config-parsing and pre-connection setup
     let tcp_port_pool = Arc::new(Mutex::new(tcp::receiver::TcpPortPool::new(
-        args.value_of("tcp_port_pool").unwrap().to_string(),
-        args.value_of("tcp6_port_pool").unwrap().to_string(),
+        "".to_string(),
+        "".to_string(),
     )));
     let udp_port_pool = Arc::new(Mutex::new(udp::receiver::UdpPortPool::new(
-        args.value_of("udp_port_pool").unwrap().to_string(),
-        args.value_of("udp6_port_pool").unwrap().to_string(),
+        "".to_string(),
+        "".to_string(),
     )));
 
     let cpu_affinity_manager = Arc::new(Mutex::new(
-        crate::utils::cpu_affinity::CpuAffinityManager::new(args.value_of("affinity").unwrap())?,
+        crate::utils::cpu_affinity::CpuAffinityManager::new("")?,
     ));
 
-    let client_limit: u16 = args.value_of("client_limit").unwrap().parse()?;
+    let client_limit: u16 = 8;
     if client_limit > 0 {
         log::debug!("limiting service to {} concurrent clients", client_limit);
     }
 
     //start listening for connections
-    let port: u16 = args.value_of("port").unwrap().parse()?;
+    let port: u16 = 5199;
     let mut listener: TcpListener;
-    if args.is_present("version6") {
-        listener = TcpListener::bind(&SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), port))
-            .expect(format!("failed to bind TCP socket, port {}", port).as_str());
-    } else {
-        listener = TcpListener::bind(&SocketAddr::new(IpAddr::V4(Ipv4Addr::UNSPECIFIED), port))
-            .expect(format!("failed to bind TCP socket, port {}", port).as_str());
-    }
+    listener = TcpListener::bind(&SocketAddr::new(IpAddr::V6(Ipv6Addr::UNSPECIFIED), port))
+        .expect(format!("failed to bind TCP socket, port {}", port).as_str());
+
+    
     log::info!("server listening on {}", listener.local_addr()?);
 
     let mio_token = Token(0);

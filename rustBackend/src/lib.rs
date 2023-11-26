@@ -11,7 +11,7 @@ pub mod android {
         JNIEnv,
     };
 
-    use crate::service::{launch, watch, rperf_start};
+    use crate::service::{launch, watch};
     use crate::grpcserver;
 
     #[no_mangle]
@@ -27,22 +27,11 @@ pub mod android {
         );
         
         spawn(|| {
-            watch(
-                "/data/user/0/com.example.final_test_wifiaware/files/fsmon_log.yaml",
-                vec!["/storage/emulated/0/Documents"],
-            );
-        });
-
-        spawn(|| {
-            launch("/data/user/0/com.example.final_test_wifiaware/files/fsmon_log.yaml");
-        });
-
-        spawn(|| {
-            rperf_start("rperf -s --format json --udp --debug --version6");
-        });
-
-        spawn(|| {
             let _ = grpcserver::start_grpc_server();
+        });
+
+        spawn(|| {
+            rperf::start_server();
         });
         
 

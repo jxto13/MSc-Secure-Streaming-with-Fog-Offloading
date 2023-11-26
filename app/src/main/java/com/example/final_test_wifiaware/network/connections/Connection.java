@@ -9,29 +9,24 @@ import androidx.annotation.NonNull;
 
 import com.example.final_test_wifiaware.network.callbacks.publisher.PublisherConnectivityManagerCallback;
 import com.example.final_test_wifiaware.network.callbacks.subscriber.SubscriberConnectivityManagerCallback;
-import com.google.errorprone.annotations.FormatString;
 
 import java.util.UUID;
 public class Connection {
 	private final UUID uuid;
 	private PeerHandle peerHandle;
-	private Boolean connected;
 	private Network network;
-	private NetworkCapabilities networkCapabilities;
-
 	private PublisherConnectivityManagerCallback publisherConnectivityManagerCallback;
 	private SubscriberConnectivityManagerCallback subscriberConnectivityManagerCallback;
 	public Connection(UUID uuid, PeerHandle client) {
 		this.uuid = uuid;
 		this.peerHandle = client;
-		this.connected = false;
 	}
 
 	@NonNull
 	@Override
 	public String toString() {
-		return String.format("Connection { uuid = %s, connected = %s, connectedClient = %s}" ,
-				uuid.toString(), connected, peerHandle.hashCode());
+		return String.format("Connection { uuid = %s, connectedClient = %s}" ,
+				uuid.toString(), peerHandle.hashCode());
 	}
 
 	// Getters and Setters
@@ -59,25 +54,12 @@ public class Connection {
 		return peerHandle;
 	}
 
-	public void setPeerHandle(PeerHandle peerHandle) {
-		this.peerHandle = peerHandle;
-	}
-
 	public void setNetwork(Network network) {
 		this.network = network;
 	}
 
-	public void setNetworkCapabilities(NetworkCapabilities networkCapabilities) {
-		this.networkCapabilities = networkCapabilities;
+	public Network getNetwork() {
+		return network;
 	}
-
-	public Boolean getConnectedStatus() {
-		return connected;
-	}
-
-	public void setConnectedStatus(Boolean status){
-		connected = status;
-	}
-
 
 }
