@@ -125,6 +125,7 @@ public class MainActivity extends AppCompatActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 		getDelegate().onDestroy();
+		wifiAwareNetwork.closeSessions();
 
 	}
 

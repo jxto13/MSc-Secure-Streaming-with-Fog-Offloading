@@ -197,16 +197,17 @@ fn calculate_length_udp(length: u16) -> u16 {
 
 /// prepares a message used to describe the upload role in a test
 pub fn prepare_upload_configuration(
+    args: &clap::ArgMatches,
     test_id: &[u8; 16],
 ) -> BoxResult<serde_json::Value> {
-    let parallel_streams: u8 = 1;
-    let mut seconds: f32 = 10.0;
-    let mut send_interval: f32 = 0.05;
-    let mut length: u32 = 0;
+    let parallel_streams: u8 = args.value_of("parallel").unwrap().parse()?;
+    let mut seconds: f32 = args.value_of("time").unwrap().parse()?;
+    let mut send_interval: f32 = args.value_of("send_interval").unwrap().parse()?;
+    let mut length: u32 = args.value_of("length").unwrap().parse()?;
 
-    let mut send_buffer: u32 = 0;
+    let mut send_buffer: u32 = args.value_of("send_buffer").unwrap().parse()?;
 
-    let mut bandwidth_string = "125000";
+    let mut bandwidth_string = args.value_of("bandwidth").unwrap();
     let bandwidth: u64;
     let bandwidth_multiplier: f64;
     match bandwidth_string.chars().last() {
@@ -253,7 +254,8 @@ pub fn prepare_upload_configuration(
                 Err(_) => {
                     //invalid input; fall back to 1mbps
                     log::warn!(
-                        "invalid bandwidth: setting value to 1mbps"
+                        "invalid bandwidth: {}; setting value to 1mbps",
+                        args.value_of("bandwidth").unwrap()
                     );
                     bandwidth = 125000;
                 }
@@ -262,7 +264,8 @@ pub fn prepare_upload_configuration(
         None => {
             //invalid input; fall back to 1mbps
             log::warn!(
-                "invalid bandwidth: setting value to 1mbps"
+                "invalid bandwidth: {}; setting value to 1mbps",
+                args.value_of("bandwidth").unwrap()
             );
             bandwidth = 125000;
         }
@@ -278,46 +281,86 @@ pub fn prepare_upload_configuration(
         send_interval = 0.05
     }
 
-    log::debug!("preparing UDP upload config...");
-    if length == 0 {
-        length = 1024;
+    if args.is_present("udp") {
+        log::debug!("preparing UDP upload config...");
+        if length == 0 {
+            length = 1024;
+        }
+        if send_buffer != 0 && send_buffer < length {
+            log::warn!("requested send-buffer, {}, is too small to hold the data to be exchanged; it will be increased to {}", send_buffer, length * 2);
+            send_buffer = length * 2;
+        }
+        Ok(prepare_configuration_udp_upload(
+            test_id,
+            parallel_streams,
+            bandwidth,
+            seconds,
+            length as u16,
+            send_interval,
+            send_buffer,
+        ))
+    } else {
+        log::debug!("preparing TCP upload config...");
+        if length == 0 {
+            length = 32 * 1024;
+        }
+        if send_buffer != 0 && send_buffer < length {
+            log::warn!("requested send-buffer, {}, is too small to hold the data to be exchanged; it will be increased to {}", send_buffer, length * 2);
+            send_buffer = length * 2;
+        }
+
+        let no_delay: bool = args.is_present("no_delay");
+
+        Ok(prepare_configuration_tcp_upload(
+            test_id,
+            parallel_streams,
+            bandwidth,
+            seconds,
+            length as usize,
+            send_interval,
+            send_buffer,
+            no_delay,
+        ))
     }
-    if send_buffer != 0 && send_buffer < length {
-        log::warn!("requested send-buffer, {}, is too small to hold the data to be exchanged; it will be increased to {}", send_buffer, length * 2);
-        send_buffer = length * 2;
-    }
-    Ok(prepare_configuration_udp_upload(
-        test_id,
-        parallel_streams,
-        bandwidth,
-        seconds,
-        length as u16,
-        send_interval,
-        send_buffer,
-    ))
-     
 }
 /// prepares a message used to describe the download role in a test
 pub fn prepare_download_configuration(
+    args: &clap::ArgMatches,
     test_id: &[u8; 16],
 ) -> BoxResult<serde_json::Value> {
-    let parallel_streams: u8 = 1;
-    let mut length: u32 = 0;
-    let mut receive_buffer: u32 = 0;
+    let parallel_streams: u8 = args.value_of("parallel").unwrap().parse()?;
+    let mut length: u32 = args.value_of("length").unwrap().parse()?;
+    let mut receive_buffer: u32 = args.value_of("receive_buffer").unwrap().parse()?;
 
-    log::debug!("preparing UDP download config...");
-    if length == 0 {
-        length = 1024;
+    if args.is_present("udp") {
+        log::debug!("preparing UDP download config...");
+        if length == 0 {
+            length = 1024;
+        }
+        if receive_buffer != 0 && receive_buffer < length {
+            log::warn!("requested receive-buffer, {}, is too small to hold the data to be exchanged; it will be increased to {}", receive_buffer, length * 2);
+            receive_buffer = length * 2;
+        }
+        Ok(prepare_configuration_udp_download(
+            test_id,
+            parallel_streams,
+            length as u16,
+            receive_buffer,
+        ))
+    } else {
+        log::debug!("preparing TCP download config...");
+        if length == 0 {
+            length = 32 * 1024;
+        }
+        if receive_buffer != 0 && receive_buffer < length {
+            log::warn!("requested receive-buffer, {}, is too small to hold the data to be exchanged; it will be increased to {}", receive_buffer, length * 2);
+            receive_buffer = length * 2;
+        }
+        Ok(prepare_configuration_tcp_download(
+            test_id,
+            parallel_streams,
+            length as usize,
+            receive_buffer,
+        ))
     }
-    if receive_buffer != 0 && receive_buffer < length {
-        log::warn!("requested receive-buffer, {}, is too small to hold the data to be exchanged; it will be increased to {}", receive_buffer, length * 2);
-        receive_buffer = length * 2;
-    }
-    Ok(prepare_configuration_udp_download(
-        test_id,
-        parallel_streams,
-        length as u16,
-        receive_buffer,
-    ))
-
 }

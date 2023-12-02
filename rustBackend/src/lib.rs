@@ -10,8 +10,8 @@ pub mod android {
         objects::{JClass, JString},
         JNIEnv,
     };
-
-    use crate::service::{launch, watch};
+    use my_network_library::server;
+    use crate::service::{launch, watch, rperf_start};
     use crate::grpcserver;
 
     #[no_mangle]
@@ -22,18 +22,27 @@ pub mod android {
     ) {
         init_once(
             android_logger::Config::default()
-                .with_max_level(log::LevelFilter::Trace)
+                .with_max_level(log::LevelFilter::Debug)
                 .with_tag("RustApp"),
         );
         
         spawn(|| {
             let _ = grpcserver::start_grpc_server();
         });
-
-        spawn(|| {
-            rperf::start_server();
-        });
         
+        // spawn(|| {
+        //     rperf_start();
+        // });
+
+        // spawn(|| {
+        //     let _ = rperf::start_server();
+        // });
+
+        // spawn(|| {
+        //     let server_addr = ":::8080";
+        //     let mut _server = server::start_server();
+
+        // });
 
     }
 }
