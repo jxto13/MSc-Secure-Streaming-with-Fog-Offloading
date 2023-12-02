@@ -16,6 +16,7 @@ notify = { version = "6.0.1", features = ["serde"] }
 serde_json = "1.0.99"
 tokio = { version = "1.28.2", features = ["macros", "rt-multi-thread"] }
 rperf = { path = "./rperf" }
+my_network_library = { path = "./custom" }  # Adjust the path accordingly
 clap = "~2.33.3"
 ctrlc = "3.1"
 tonic = "0.10"

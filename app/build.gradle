@@ -7,7 +7,7 @@ plugins {
 android {
     namespace 'com.example.final_test_wifiaware'
     compileSdk 34
-    ndkVersion "26.0.10792818"
+    ndkVersion "26.1.10909125"
 
     defaultConfig {
         applicationId "com.example.final_test_wifiaware"
@@ -26,10 +26,12 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     buildFeatures {
         viewBinding true
     }
@@ -37,19 +39,19 @@ android {
     sourceSets {
         main {
             proto {
-                srcDir '../../../proto' // Change this path to your custom proto folder location
+                // In addition to the default 'src/main/proto'
+                srcDir '../proto'
             }
         }
     }
 
     protobuf {
-        // Specify the source directory for your .proto files
         protoc {
-            artifact = 'com.google.protobuf:protoc:3.24.0'
+            artifact = 'com.google.protobuf:protoc:3.22.3'
         }
         plugins {
             grpc {
-                artifact = 'io.grpc:protoc-gen-grpc-java:1.38.1'
+                artifact = 'io.grpc:protoc-gen-grpc-java:1.59.0'
             }
         }
         generateProtoTasks {
@@ -58,13 +60,23 @@ android {
                     java { option 'lite' }
                 }
                 task.plugins {
-                    grpc { // Options added to --grpc_out
-                        option 'lite' }
+                    grpc { option 'lite' }
                 }
             }
-        }
+        }/*
+        generateProtoTasks {
+            all()*.plugins {
+                grpc {}
+            }
+            all().configureEach { task ->
+                task.builtins {
+                    java {
+                        option "lite"
+                    }
+                }
+            }
+        }*/
     }
-
 }
 
 dependencies {
@@ -76,9 +88,13 @@ dependencies {
     implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2'
     implementation 'androidx.navigation:navigation-fragment:2.7.4'
     implementation 'androidx.navigation:navigation-ui:2.7.4'
+
     implementation 'io.grpc:grpc-okhttp:1.59.0'
     implementation 'io.grpc:grpc-stub:1.59.0'
     implementation 'io.grpc:grpc-protobuf-lite:1.59.0'
+
+    //implementation 'com.google.protobuf:protobuf-javalite:3.24.0'
+
     compileOnly 'org.apache.tomcat:annotations-api:6.0.53' // necessary for Java 9+
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'

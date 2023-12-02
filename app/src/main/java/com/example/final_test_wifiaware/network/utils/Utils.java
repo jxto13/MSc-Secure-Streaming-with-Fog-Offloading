@@ -15,4 +15,13 @@ public class Utils {
 		ByteBuffer wrapped = ByteBuffer.wrap(input);
 		return new UUID(wrapped.getLong(), wrapped.getLong());
 	}
+
+	public static byte[] StringToBytes(String input){
+		return input.getBytes();
+	}
+	public static UUID StringToUUID(String input){
+		return UUID.fromString(input);
+	}
+
+
 }

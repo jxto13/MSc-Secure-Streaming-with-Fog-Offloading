@@ -407,7 +407,7 @@ pub fn execute(args: ArgMatches) -> BoxResult<()> {
                                 }
                             },
                             Err(e) => {
-                                log::error!("unable to process stream: {}", e);
+                                log::error!("unable to process stream2: {}", e);
                                 match c_results_tx.send(Box::new(
                                     crate::protocol::results::ClientFailedResult {
                                         stream_idx: test.get_idx(),

@@ -43,7 +43,7 @@ public class GalleryFragment extends Fragment {
 		final TextView textView = binding.textGallery;
 		galleryViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
 
-		@SuppressLint("UseSwitchCompatOrMaterialCode")
+		/*@SuppressLint("UseSwitchCompatOrMaterialCode")
 		Switch serviceToggleSwitch = root.findViewById(R.id.serviceToggle);
 		serviceToggleSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
 			Intent serviceIntent = new Intent(getContext(), RustService.class);
@@ -56,6 +56,9 @@ public class GalleryFragment extends Fragment {
 				}
 			}
 		});
+
+		// Set the initial state of the switch to checked
+		serviceToggleSwitch.setChecked(true);*/
 
 		return root;
 	}

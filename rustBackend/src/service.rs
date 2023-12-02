@@ -13,12 +13,12 @@ use clap::{App, Arg, ArgMatches};
 extern crate rperf;
 // -----
 
-
 use axum::{routing::get, Router, Server};
 use chrono::Local;
 use log::{error, trace};
 use notify::{recommended_watcher, RecursiveMode, Watcher};
 use serde_json::to_string;
+
 
 pub fn watch<P>(fsmon_log: P, watch_paths: Vec<P>)
 where
@@ -85,9 +85,10 @@ pub async fn launch(fsmon_log: impl AsRef<Path> + Clone + Send + 'static) {
         .unwrap();
 }
 
+
 pub fn rperf_start(){
 
-    let args_str = "rperf -s --format json --udp --debug --version6".to_string();
+    let args_str = "rperf -s --debug --version6".to_string();
 
     let matches =  parse_args(&args_str);
 
@@ -137,7 +138,7 @@ pub fn rperf_start(){
 }
 
 
-fn parse_args(args_str: &str) -> ArgMatches {
+pub fn parse_args(args_str: &str) -> ArgMatches {
     return App::new("rperf")
         .about(clap::crate_description!())
         .author("https://github.com/opensource-3d-p/rperf")
@@ -339,3 +340,7 @@ fn parse_args(args_str: &str) -> ArgMatches {
         )
         .get_matches_from(args_str.split_whitespace());
 }
+
+
+
+

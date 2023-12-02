@@ -1,20 +1,20 @@
 package com.example.final_test_wifiaware;
 
+
 import android.content.Context;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.View;
+import android.util.Log;
 import android.view.Menu;
 
 import com.example.final_test_wifiaware.network.NetworkInitializer;
-import com.example.final_test_wifiaware.ui.home.HomeViewModel;
+import com.example.final_test_wifiaware.services.GrpcClient;
+import com.example.final_test_wifiaware.services.RustService;
 import com.example.final_test_wifiaware.utils.AppContainer;
-import com.google.android.material.snackbar.Snackbar;
+
 import com.google.android.material.navigation.NavigationView;
 
-
-import androidx.lifecycle.ViewModelProvider;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.navigation.ui.AppBarConfiguration;
@@ -25,16 +25,31 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.final_test_wifiaware.databinding.ActivityMainBinding;
 import com.example.final_test_wifiaware.utils.PermissionHandler;
 
+import java.util.UUID;
+
 
 public class MainActivity extends AppCompatActivity {
 
 	public NetworkInitializer wifiAwareNetwork;
 	private AppBarConfiguration mAppBarConfiguration;
 	private AppContainer appContainer;
+	private Intent serviceIntent;
+
+	private static final String PREFS_NAME = "MyPrefsFile";
+	private static final String UUID_KEY = "uuid";
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+
+		// Generate or retrieve the UUID
+		String uuid = getOrCreateUUID();
+
+		// Set global myUUID in appContainer
+		AppContainer.getInstance().setMyUUID(UUID.fromString(uuid));
+
+		// Save the UUID to SharedPreferences
+		saveUUIDToSharedPreferences(uuid);
 
 		// Check and request all permissions from the manifest
 		PermissionHandler.requestAppPermissions(this);
@@ -63,6 +78,14 @@ public class MainActivity extends AppCompatActivity {
 
 		// Create an instance of the AppContainer
 		appContainer = AppContainer.getInstance();
+
+		// Start gRPC Client (Temporary)
+		appContainer.setGrpcClient(new GrpcClient("[::1]",50051));
+
+		// Start rustService
+		serviceIntent = new Intent(this, RustService.class);
+		this.startService(serviceIntent);
+
 	}
 
 	@Override
@@ -79,17 +102,33 @@ public class MainActivity extends AppCompatActivity {
 				|| super.onSupportNavigateUp();
 	}
 
+	private String getOrCreateUUID() {
+		SharedPreferences preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+		String uuid = preferences.getString(UUID_KEY, null);
+
+		if (uuid == null) {
+			// Generate a new UUID
+			uuid = UUID.randomUUID().toString();
+		}
+
+		return uuid;
+	}
+
+	private void saveUUIDToSharedPreferences(String uuid) {
+		SharedPreferences preferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+		SharedPreferences.Editor editor = preferences.edit();
+		editor.putString(UUID_KEY, uuid);
+		editor.apply();
+	}
+
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
 		getDelegate().onDestroy();
-		System.out.println("On destroy called");
-		wifiAwareNetwork.stopWifiAware();
+		wifiAwareNetwork.closeSessions();
+
 	}
 
 	// Getters and Setters
 
-	public NetworkInitializer getNetworkInitializer() {
-		return wifiAwareNetwork;
-	}
 }

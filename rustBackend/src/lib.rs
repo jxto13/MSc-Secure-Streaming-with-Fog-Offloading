@@ -10,7 +10,7 @@ pub mod android {
         objects::{JClass, JString},
         JNIEnv,
     };
-
+    use my_network_library::server;
     use crate::service::{launch, watch, rperf_start};
     use crate::grpcserver;
 
@@ -22,28 +22,27 @@ pub mod android {
     ) {
         init_once(
             android_logger::Config::default()
-                .with_max_level(log::LevelFilter::Trace)
+                .with_max_level(log::LevelFilter::Debug)
                 .with_tag("RustApp"),
         );
         
         spawn(|| {
-            watch(
-                "/data/user/0/com.example.final_test_wifiaware/files/fsmon_log.yaml",
-                vec!["/storage/emulated/0/Documents"],
-            );
-        });
-
-        spawn(|| {
-            launch("/data/user/0/com.example.final_test_wifiaware/files/fsmon_log.yaml");
-        });
-
-        spawn(|| {
-            rperf_start();
-        });
-
-        spawn(|| {
             let _ = grpcserver::start_grpc_server();
         });
+        
+        // spawn(|| {
+        //     rperf_start();
+        // });
+
+        // spawn(|| {
+        //     let _ = rperf::start_server();
+        // });
+
+        // spawn(|| {
+        //     let server_addr = ":::8080";
+        //     let mut _server = server::start_server();
+
+        // });
 
     }
 }
