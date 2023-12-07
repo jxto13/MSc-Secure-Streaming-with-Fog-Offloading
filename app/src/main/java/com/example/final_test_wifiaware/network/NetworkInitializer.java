@@ -14,6 +14,9 @@ import android.net.wifi.aware.SubscribeConfig;
 import android.net.wifi.aware.SubscribeDiscoverySession;
 import android.net.wifi.aware.WifiAwareManager;
 import android.net.wifi.aware.WifiAwareSession;
+import android.nfc.Tag;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.Message;
@@ -23,17 +26,23 @@ import androidx.annotation.NonNull;
 import com.example.final_test_wifiaware.network.protocol.Client;
 import com.example.final_test_wifiaware.network.protocol.Server;
 
+import com.example.final_test_wifiaware.network.utils.Utils;
 import com.example.final_test_wifiaware.utils.AppContainer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import android.net.wifi.aware.Characteristics;
+
 @SuppressLint("MissingPermission")
 public class NetworkInitializer {
+	private static final String TAG = "NetworkInitializer";
+
 	private final Context context;
 	private WifiAwareManager wifiAwareManager;
 	private boolean wifiAwareManagerStatus;
@@ -45,7 +54,7 @@ public class NetworkInitializer {
 	private PublishDiscoverySession publishSession;
 	private SubscribeDiscoverySession subscribeSession;
 	private Server publishServer;
-	private Client subscriberClient;
+	private List<Client> subscriberClientList;
 	private HandlerThread worker;
 	private Handler workerHandle;
 	public NetworkInitializer(Context context) {
@@ -66,26 +75,49 @@ public class NetworkInitializer {
 		// Start wifiAwareManager
 		startWifiAwareManager();
 
-		// Start WifiAwareSession
-		createWifiAwareSession();
-
+		// Create and start a worker thread for background tasks
 		worker = new HandlerThread("Worker");
 		worker.start();
 		workerHandle = new Handler(worker.getLooper());
+
+		// Initialize the list to store subscriber client instances
+		subscriberClientList = new ArrayList<>();
+
+		// Start WifiAwareSession
+		createWifiAwareSession();
 	}
 
 	/**
 	 * Initialize Wi-Fi Aware Manager
 	 */
+	@SuppressLint("DefaultLocale")
 	private void startWifiAwareManager() {
 		wifiAwareManager = (WifiAwareManager) context.getSystemService(Context.WIFI_AWARE_SERVICE);
 
 		// Check if Wi-Fi Aware is supported on this device
 		if (wifiAwareManager.isAvailable()) {
 			wifiAwareManagerStatus = true;
-			Log.d("wifiAwareManager", "available - getAvailableDataPathsCount() = " + wifiAwareManager.getAvailableAwareResources().getAvailableDataPathsCount()
-					+ " - getAvailableSubscribeSessionsCount() = " + wifiAwareManager.getAvailableAwareResources().getAvailableSubscribeSessionsCount()
-					+ " - getAvailablePublishSessionsCount() = " + wifiAwareManager.getAvailableAwareResources().getAvailablePublishSessionsCount());
+
+			Characteristics characteristics = wifiAwareManager.getCharacteristics();
+
+			if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+
+				assert characteristics != null;
+				Log.d(TAG,String.format(
+						"isSetChannelOnDataPathSupported() - %b \n" +
+						"getNumberOfSupportedDataInterfaces - %d \n" +
+						"getNumberOfSupportedDataPaths - %d \n",
+						wifiAwareManager.isSetChannelOnDataPathSupported(),
+						characteristics.getNumberOfSupportedDataInterfaces(),
+						characteristics.getNumberOfSupportedDataPaths()
+				));
+			}
+			Log.d(TAG, String.format("getAvailableDataPathsCount() = %d \n" +
+							"getAvailableSubscribeSessionsCount() = %d \n" +
+							"getAvailablePublishSessionsCount() = %d\n",
+					wifiAwareManager.getAvailableAwareResources().getAvailableDataPathsCount(),
+					wifiAwareManager.getAvailableAwareResources().getAvailableSubscribeSessionsCount(),
+					wifiAwareManager.getAvailableAwareResources().getAvailablePublishSessionsCount()));
 		} else {
 			wifiAwareManagerStatus = false;
 			Log.d("wifiAwareManager", "not available");
@@ -101,73 +133,97 @@ public class NetworkInitializer {
 			wifiAwareManager.attach(new AttachCallback() {
 				@Override
 				public void onAttached(WifiAwareSession session) {
+					// Wi-Fi Aware session successfully attached
 					mWifiAwareSession = session;
 					Log.d("AttachCallback", "Session creation successfully");
 
-					PublishConfig publishConfig = new PublishConfig.Builder().setServiceName("serviceName")
-							.setServiceSpecificInfo(asBytes(myUUID)).build();
+					// Configuring and starting the publication session
+					PublishConfig publishConfig = new PublishConfig.Builder()
+							.setServiceName("serviceName")
+							.setServiceSpecificInfo(Utils.asBytes(myUUID))
+							.build();
 
-					session.publish(publishConfig, new DiscoverySessionCallback(){
+					session.publish(publishConfig, new DiscoverySessionCallback() {
+						private int messageID;
+
 						@Override
 						public void onPublishStarted(@NonNull PublishDiscoverySession session) {
-								publishSession = session;
-								try {
-									publishServer = new Server(connectivityManager);
-									publishServer.start();
-								} catch (IOException e) {
-									session.close();
-									publishSession = null;
-								}
+							// Publication session started successfully
+							publishSession = session;
+							messageID = 0;
+
+							// Starting the server for handling incoming connections
+							try {
+								publishServer = new Server(connectivityManager);
+								publishServer.start();
+							} catch (IOException e) {
+								// Closing the session if server start fails
+								session.close();
+								publishSession = null;
 							}
+						}
 
 						@Override
 						public void onSessionConfigFailed() {
-
+							// Handling failed session configuration
 						}
 
 						@Override
 						public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
+							// Processing received messages and managing connections
 							boolean connectionAttemptStatus = publishServer.addNewConnection(publishSession, peerHandle);
-							Log.d("wifiAwareManager", "available - getAvailableDataPathsCount() = "
-									+ wifiAwareManager.getAvailableAwareResources().getAvailableDataPathsCount());
-							Log.d("Publisher onMessageReceived",String.format(
-									"From: %s \\s Attempt Connection Status: %b",
-									new String(message),
-									connectionAttemptStatus ));
 
+							Log.d("onMessageReceived", String.format("Publisher: Received Message from: %s", Utils.asUuid(message)));
+
+							// Sending a response if connection attempt was successful
 							if (connectionAttemptStatus)
-								publishSession.sendMessage(peerHandle,parseInt(new String(message)),message);
+								publishSession.sendMessage(peerHandle, messageID++, Utils.asBytes(myUUID));
 						}
-
 					}, workerHandle);
 
-					SubscribeConfig subscribeConfig = new SubscribeConfig.Builder().setServiceName("serviceName").build();
-					session.subscribe(subscribeConfig, new DiscoverySessionCallback(){
+					// Configuring and starting the subscription session
+					SubscribeConfig subscribeConfig = new SubscribeConfig.Builder()
+							.setServiceName("serviceName")
+							.build();
+
+					session.subscribe(subscribeConfig, new DiscoverySessionCallback() {
 						private int messageID;
-						private Map<Integer, PeerHandle> peerHandleMessageMap;
+						private Map<UUID, PeerHandle> peerHandleMessageMap;
+
 						@Override
 						public void onSubscribeStarted(@NonNull SubscribeDiscoverySession session) {
-								subscribeSession = session;
-								messageID = 0;
-								peerHandleMessageMap = new HashMap<>();
+							// Subscription session started successfully
+							subscribeSession = session;
+							messageID = 0;
+							peerHandleMessageMap = new HashMap<>();
 						}
 
 						@Override
 						public void onSessionConfigFailed() {
-								subscribeSession = null;
+							// Handling failed session configuration for subscription
+							subscribeSession = null;
 						}
 
 						@Override
 						public void onServiceDiscovered(PeerHandle peerHandle, byte[] serviceSpecificInfo, List<byte[]> matchFilter) {
+							// Handling the discovery of a service and initiating communication
+							Log.d("uuid compare", String.format("%s to %s is %d",
+									Utils.asUuid(serviceSpecificInfo),
+									myUUID,
+									Utils.asUuid(serviceSpecificInfo).compareTo(myUUID)));
 
-							Log.d("uuid compare",
-									String.format("%s to %s is %d",
-									asUuid(serviceSpecificInfo), myUUID,
-									asUuid(serviceSpecificInfo).compareTo(myUUID)));
+							// Check if the discovered service's UUID is less than the local UUID
+							if (Utils.asUuid(serviceSpecificInfo).compareTo(myUUID) < 0) {
+								// Store the PeerHandle associated with the discovered UUID in the map
+								peerHandleMessageMap.put(Utils.asUuid(serviceSpecificInfo), peerHandle);
 
-							if(asUuid(serviceSpecificInfo).compareTo(myUUID) < 0){
-								peerHandleMessageMap.put(messageID,peerHandle);
-								subscribeSession.sendMessage(peerHandle, messageID, String.valueOf(messageID).getBytes());
+								// Send a message to the discovered peer with a unique message ID and the local UUID
+								subscribeSession.sendMessage(peerHandle, messageID, Utils.asBytes(myUUID));
+
+								// Log the successful message send to the specified peer
+								Log.d("onMessageSendSucceeded", String.format("Subscribe: Sent Message to %s", myUUID));
+
+								// Increment the message ID for the next message
 								messageID++;
 							}
 
@@ -175,16 +231,15 @@ public class NetworkInitializer {
 
 						@Override
 						public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
-							subscriberClient = new Client(connectivityManager, subscribeSession, peerHandleMessageMap.get(parseInt(new String(message))));
+							// Handling received messages for subscription and creating client instances
+							subscriberClientList.add(new Client(connectivityManager, subscribeSession, peerHandleMessageMap.get(Utils.asUuid(message))));
+							Log.d("onMessageReceived", String.format("Subscribe: Received Message from: %s", Utils.asUuid(message)));
 						}
 
 						@Override
 						public void onMessageSendSucceeded(int messageId) {
-							Log.d("Message send",
-									String.format("%d %d",messageId, peerHandleMessageMap.get(messageId).hashCode()));
+							// Handling successful message send
 						}
-
-
 					}, workerHandle);
 
 				}
@@ -198,18 +253,8 @@ public class NetworkInitializer {
 		}
 	}
 
-	public static UUID asUuid(byte[] bytes) {
-		ByteBuffer bb = ByteBuffer.wrap(bytes);
-		long firstLong = bb.getLong();
-		long secondLong = bb.getLong();
-		return new UUID(firstLong, secondLong);
-	}
-	public static byte[] asBytes(UUID uuid) {
-		ByteBuffer bb = ByteBuffer.wrap(new byte[16]);
-		bb.putLong(uuid.getMostSignificantBits());
-		bb.putLong(uuid.getLeastSignificantBits());
-		return bb.array();
-	}
+
+
 
 	/**
 	 * Stops Wi-Fi Aware and destroys all resources created by it
@@ -224,8 +269,10 @@ public class NetworkInitializer {
 		}
 		if(subscribeSession != null){
 			subscribeSession.close();
-			subscriberClient.stop();
-			subscriberClient = null;
+			for (Client client : subscriberClientList ) {
+				client.stop();
+				client = null;
+			}
 			subscribeSession = null;
 		}
 		if(mWifiAwareSession != null){

@@ -1,65 +1,48 @@
 package com.example.final_test_wifiaware.services;
 
-import android.app.Notification;
-import android.app.NotificationChannel;
-import android.app.NotificationManager;
 import android.app.Service;
 import android.content.Intent;
-import android.os.Build;
 import android.os.IBinder;
-import com.example.final_test_wifiaware.R;
-public class RustService extends Service {
-    private static final String CHANNEL_ID = "RustServiceChannel";
-    private static final int NOTIFICATION_ID = 1;
 
+public class RustService extends Service {
+
+    // Load the native library when the class is loaded
     static {
         System.loadLibrary("rustapp");
     }
 
-    private static native void startService(String filesDir);
+    /**
+     * Native method declaration to start the Rust service.
+     */
+    private static native void startService();
 
     @Override
     public void onCreate() {
         super.onCreate();
+        // Service initialization logic can be added here
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
-        //createNotificationChannel();
-        //startForeground(NOTIFICATION_ID, buildNotification());
+        // Start the Rust service with the path to the files directory
+        startService();
 
-        startService(this.getFilesDir().toString());
-
+        // Indicate that the service should be restarted if it gets terminated
         return START_STICKY;
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+        // Cleanup or resource release logic can be added here
     }
 
     @Override
     public IBinder onBind(Intent intent) {
+        // Return null as this service does not support binding
         return null;
     }
 
-    private void createNotificationChannel() {
-        NotificationChannel channel = new NotificationChannel(CHANNEL_ID,
-                "Rust Service Channel", NotificationManager.IMPORTANCE_DEFAULT);
-
-        NotificationManager manager = getSystemService(NotificationManager.class);
-        manager.createNotificationChannel(channel);
-    }
-
-    private Notification buildNotification() {
-        Notification.Builder builder;
-        builder = new Notification.Builder(this, CHANNEL_ID);
-
-        builder.setContentTitle("Rust Service").setContentText("Running...")
-                .setSmallIcon(R.mipmap.ic_launcher);
-
-        return builder.build();
-    }
 }

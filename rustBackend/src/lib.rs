@@ -1,4 +1,3 @@
-mod service;
 mod grpcserver;
 
 #[allow(non_snake_case)]
@@ -11,7 +10,6 @@ pub mod android {
         JNIEnv,
     };
     use my_network_library::server;
-    use crate::service::{launch, watch, rperf_start};
     use crate::grpcserver;
 
     #[no_mangle]
@@ -26,23 +24,25 @@ pub mod android {
                 .with_tag("RustApp"),
         );
         
+        // Log that the Rust app is starting
+        log::info!("Rust app is starting...");
+
         spawn(|| {
+            // Log that the gRPC server is starting
+            log::info!("Starting gRPC server...");
             let _ = grpcserver::start_grpc_server();
+            log::info!("gRPC server started");
         });
-        
-        // spawn(|| {
-        //     rperf_start();
-        // });
 
-        // spawn(|| {
-        //     let _ = rperf::start_server();
-        // });
+        spawn(|| {
+            // Log that the network server is starting
+            log::info!("Starting network server...");
+            let mut _server = server::start_server();
+            log::info!("Network server started");
+        });
 
-        // spawn(|| {
-        //     let server_addr = ":::8080";
-        //     let mut _server = server::start_server();
-
-        // });
+        // Log that the Rust app has finished starting
+        log::info!("Rust app started.");
 
     }
 }
