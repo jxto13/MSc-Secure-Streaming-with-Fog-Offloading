@@ -66,7 +66,6 @@ public class Client implements Runnable {
 
         // Build network specifier for the connection
         WifiAwareNetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(subscribeSession, handle)
-                .setPskPassphrase("wifiawaretest")
                 .build();
 
         // Build network request for the connection

@@ -32,6 +32,13 @@ public class HomeFragment extends Fragment {
 		final TextView textView = binding.titleTextView;
 		homeViewModel.getMyUUID().observe(getViewLifecycleOwner(), textView::setText);
 
+		// Change UUID Title
+		final TextView textView2 = binding.textView2;
+		homeViewModel.getPublisherSessionID().observe(getViewLifecycleOwner(), textView2::setText);
+
+		// Change UUID Title
+		final TextView textView2Subscribe = binding.textView2Subscribe;
+		homeViewModel.getSubscriberSessionID().observe(getViewLifecycleOwner(), textView2Subscribe::setText);
 		return root;
 	}
 

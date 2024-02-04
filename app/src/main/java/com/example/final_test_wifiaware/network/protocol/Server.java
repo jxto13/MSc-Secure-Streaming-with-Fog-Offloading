@@ -165,9 +165,6 @@ public class Server implements Runnable {
 
             // Build network specifier for the connection
             WifiAwareNetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(discoverySession, handle)
-                    .setPskPassphrase("wifiawaretest")
-                    .setPort(mServerPort)
-                    .setTransportProtocol(17)
                     .build();
 
             // Build network request for the connection

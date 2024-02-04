@@ -152,6 +152,9 @@ public class NetworkInitializer {
 							publishSession = session;
 							messageID = 0;
 
+							AppContainer.getInstance().getHomeViewModel().updatePublisherSessionID("seasonId: " + session.hashCode());
+
+
 							// Starting the server for handling incoming connections
 							try {
 								publishServer = new Server(connectivityManager);
@@ -196,6 +199,9 @@ public class NetworkInitializer {
 							subscribeSession = session;
 							messageID = 0;
 							peerHandleMessageMap = new HashMap<>();
+
+							AppContainer.getInstance().getHomeViewModel().updateSubscriberSessionID("seasonId: " + session.hashCode());
+
 						}
 
 						@Override
@@ -249,7 +255,7 @@ public class NetworkInitializer {
 					// Wi-Fi Aware attachment failed
 					Log.d("AttachCallback", "Session creation failed");
 				}
-			}, workerHandle);
+			},new IdentityChangedListenerCallbacks(), workerHandle);
 		}
 	}
 
