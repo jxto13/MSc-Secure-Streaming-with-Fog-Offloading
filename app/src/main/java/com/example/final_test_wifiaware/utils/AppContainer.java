@@ -1,5 +1,7 @@
 package com.example.final_test_wifiaware.utils;
 
+import android.widget.Switch;
+
 import com.example.final_test_wifiaware.network.utils.Utils;
 import com.example.final_test_wifiaware.services.GrpcClient;
 import com.example.final_test_wifiaware.ui.home.HomeViewModel;
@@ -11,6 +13,11 @@ public class AppContainer {
 	private UUID myUUID;
 	private final HomeViewModel homeViewModel;
 	private GrpcClient grpcClient;
+
+	private Switch switchPublisher;
+	private Switch switchSubscribe;
+	private Switch switchPingAll;
+
 	private AppContainer() {
 		homeViewModel = new HomeViewModel();
 	}
@@ -37,5 +44,26 @@ public class AppContainer {
 		this.myUUID = myUUID;
 	}
 
+	public void setSwitchPublisher(Switch input){
+		switchPublisher = input;
+	}
+	public void setPingSwitch(Switch pingAll) {
+		this.switchPingAll = pingAll;
+	}
+	public void setSwitchSubscribe(Switch input){
+		switchSubscribe = input;
+	}
+
+	public Switch getSwitchPublisher() {
+		return switchPublisher;
+	}
+
+	public Switch getSwitchSubscribe() {
+		return switchSubscribe;
+	}
+
+	public Switch getSwitchPingAll() {
+		return switchPingAll;
+	}
 }
 
