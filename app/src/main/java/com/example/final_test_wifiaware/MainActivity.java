@@ -126,9 +126,6 @@ public class MainActivity extends AppCompatActivity {
 		super.onDestroy();
 		getDelegate().onDestroy();
 		wifiAwareNetwork.closeSessions();
-
 	}
-
-	// Getters and Setters
 
 }

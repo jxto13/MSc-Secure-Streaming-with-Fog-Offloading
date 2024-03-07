@@ -1,13 +1,11 @@
 package com.example.final_test_wifiaware.ui.home;
 
+import android.widget.Switch;
+
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import androidx.lifecycle.ViewModel;
 
-import com.example.final_test_wifiaware.network.utils.Connection;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class HomeViewModel extends ViewModel {
 	private final MutableLiveData<String> myUUID;
@@ -17,7 +15,10 @@ public class HomeViewModel extends ViewModel {
 	private final MutableLiveData<String> dataPaths;
 	private final MutableLiveData<String> sessionPub;
 	private final MutableLiveData<String> sessionSub;
-	private final MutableLiveData<List<Connection>> connectionsLiveData;
+
+	private Switch switchPublisher;
+	private Switch switchSubscribe;
+
 	public HomeViewModel() {
 		myUUID = new MutableLiveData<>();
 		subscriberSessionID = new MutableLiveData<>();
@@ -26,9 +27,6 @@ public class HomeViewModel extends ViewModel {
 		dataPaths = new MutableLiveData<>();
 		sessionPub = new MutableLiveData<>();
 		sessionSub = new MutableLiveData<>();
-		connectionsLiveData = new MutableLiveData<>();
-		connectionsLiveData.setValue(new ArrayList<>());
-
 	}
 
 	public LiveData<String> getMyUUID() {
@@ -65,16 +63,15 @@ public class HomeViewModel extends ViewModel {
 		sessionSub.postValue(input);
 	}
 	public void updateSessionPub(String input) {sessionPub.postValue(input);}
-	public LiveData<List<Connection>> getConnectionsLiveData() {
-		return connectionsLiveData;
+	public void setSwitchPublisher(Switch input){switchPublisher = input;}
+	public void setSwitchSubscribe(Switch input){
+		switchSubscribe = input;
 	}
-	// Add a method to update the connections list in the ViewModel
-	public void updateConnections(List<Connection> newConnections) {
-		connectionsLiveData.setValue(newConnections);
+	public Switch getSwitchPublisher() {
+		return switchPublisher;
 	}
-
-	public List<Connection> getConnectionsList() {
-		return connectionsLiveData.getValue();
+	public Switch getSwitchSubscribe() {
+		return switchSubscribe;
 	}
 
 
