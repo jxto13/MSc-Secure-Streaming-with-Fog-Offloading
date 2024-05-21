@@ -10,10 +10,12 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
-        maven { url "https://devserver3.ustadmobile.com/maven2/" }
+        maven {
+            url "https://dl.bintray.com/videolan/Android"
+        }
+
     }
 }
 
 rootProject.name = "Final-Test-WifiAware"
 include ':app'
-include ':lib-meshrabiya'

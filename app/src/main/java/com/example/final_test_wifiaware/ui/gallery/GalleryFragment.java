@@ -25,12 +25,15 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.nio.ByteBuffer;
 import java.util.Objects;
 
 
 public class GalleryFragment extends Fragment {
 
 	private FragmentGalleryBinding binding;
+	private Thread test;
+	private volatile boolean isRunning = true; // Flag to control the thread
 
 	public View onCreateView(@NonNull LayoutInflater inflater,
 							 ViewGroup container, Bundle savedInstanceState) {
@@ -43,6 +46,24 @@ public class GalleryFragment extends Fragment {
 		final TextView textView = binding.textGallery;
 		galleryViewModel.getText().observe(getViewLifecycleOwner(), textView::setText);
 
+
+		test = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				RustService.tmpFile();
+
+				/*while (isRunning) {
+					byte[] test = RustService.helloByte();
+					System.out.print("[");
+					for (int i = 0; i < test.length ; i++) {
+						System.out.print(test[i] + ", ");
+					}
+					System.out.println("]");
+				}*/
+
+			}
+		});
+		test.start();
 		/*@SuppressLint("UseSwitchCompatOrMaterialCode")
 		Switch serviceToggleSwitch = root.findViewById(R.id.serviceToggle);
 		serviceToggleSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
@@ -67,5 +88,6 @@ public class GalleryFragment extends Fragment {
 	public void onDestroyView() {
 		super.onDestroyView();
 		binding = null;
+		isRunning = false;
 	}
 }

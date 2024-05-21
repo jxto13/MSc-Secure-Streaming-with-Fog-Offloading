@@ -25,6 +25,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.final_test_wifiaware.databinding.ActivityMainBinding;
 import com.example.final_test_wifiaware.utils.PermissionHandler;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.UUID;
 
 
@@ -85,6 +88,7 @@ public class MainActivity extends AppCompatActivity {
 		// Start rustService
 		serviceIntent = new Intent(this, RustService.class);
 		this.startService(serviceIntent);
+
 
 	}
 

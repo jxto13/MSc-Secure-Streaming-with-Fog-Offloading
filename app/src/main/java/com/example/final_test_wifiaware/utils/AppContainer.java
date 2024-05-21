@@ -1,6 +1,7 @@
 package com.example.final_test_wifiaware.utils;
 
 import com.example.final_test_wifiaware.services.GrpcClient;
+import com.example.final_test_wifiaware.services.RustService;
 import com.example.final_test_wifiaware.ui.home.HomeViewModel;
 
 import java.util.UUID;
@@ -10,6 +11,7 @@ public class AppContainer {
 	private UUID myUUID;
 	private final HomeViewModel homeViewModel;
 	private GrpcClient grpcClient;
+	private RustService rustService;
 
 	private AppContainer() {
 		homeViewModel = new HomeViewModel();
@@ -28,6 +30,15 @@ public class AppContainer {
 	public GrpcClient getGrpcClient() {
 		return grpcClient;
 	}
+
+	public RustService getRustService() {
+		return rustService;
+	}
+
+	public void setRustService(RustService rustService) {
+		this.rustService = rustService;
+	}
+
 	public void setGrpcClient(GrpcClient grpcClient) {
 		this.grpcClient = grpcClient;
 	}

@@ -4,6 +4,10 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 
+import java.io.FileDescriptor;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 public class RustService extends Service {
 
     // Load the native library when the class is loaded
@@ -15,6 +19,10 @@ public class RustService extends Service {
      * Native method declaration to start the Rust service.
      */
     private static native void startService();
+    public static native void writeToDirectBuffer(ByteBuffer buffer);
+    public static native byte[] helloByte(int size);
+    public static native void tmpFile();
+    public static native void fdTest(String input);
 
     @Override
     public void onCreate() {
