@@ -1,0 +1,36 @@
+[package]
+name = "iris"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+log = "0.4.21"
+env_logger = "0.11.3"
+tokio-util = { version = "0.7.0", features = ["full"] }
+tokio = { version = "1.28.2", features = ["macros", "rt-multi-thread"] }
+tonic-reflection = "0.11.0"
+tonic = { version =  "0.11.0", features = ["transport", "tls"] }
+mio = "0.8.11"
+openssl = "0.10.64"
+prost = "0.12" # tonic uses this, but needs a trait implementation todo!()
+reed-solomon-16  = "0.1.0"
+grid = "0.14.0"
+rayon = "1.10"
+mpeg2ts = "0.3.1"
+
+# This compiles openssl for android using NDK
+[target.'cfg(target_arch = "aarch64")'.dependencies]
+openssl = { version = "0.10.64", features = ["vendored"] }
+
+[build-dependencies]
+tonic-build = "0.11"
+
+[[bin]]
+name = "streaming_server"
+path = "./src/streaming_server/main.rs"
+
+[[bin]]
+name = "edge_client"
+path = "./src/edge_client/main.rs"

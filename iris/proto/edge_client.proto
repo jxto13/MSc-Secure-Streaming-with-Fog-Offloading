@@ -1,0 +1,6 @@
+syntax = "proto3";
+package edge_client;
+
+message Data {
+    bytes data = 1;
+}

@@ -1,0 +1,44 @@
+syntax = "proto3";
+package streaming_server;
+
+// Certicastes and  symmetric keys
+service CertificateService {
+    rpc SignCertificate(CertificateRequest) returns (CertificateResponse);
+    rpc VerifyCertificate(SignedCertificateRequest) returns (ValidationCertificateResponse);
+}
+
+message SignedCertificateRequest {
+    bytes cert = 1; 
+}
+
+message ValidationCertificateResponse { 
+    bool auth = 1;
+}
+
+message CertificateRequest {
+    bytes csr = 1;
+}
+
+message CertificateResponse {
+    bytes signed_cert = 1;
+}
+
+// ----------------------------------------------------------------------------------------------------------- //
+
+// Multicast UDP Packet
+message DataPacket {
+    int32 matrix = 1;
+    int32 index = 2;
+    int32 width = 3;
+    int32 height = 4;
+    bool fec = 5;
+    bytes data = 6;
+    // bytes signature = 7;
+}
+
+message IrisPacket {
+    repeated DataPacket payload = 1;
+    // bytes signature = 7;
+}
+
+// ----------------------------------------------------------------------------------------------------------- //
