@@ -24,7 +24,7 @@ pub mod android {
     static mut DATA_RECEIVER: Option<Receiver<Vec<u8>>> = None;
 
     #[no_mangle]
-    pub extern "system" fn Java_com_example_final_1test_1wifiaware_services_RustService_startService(
+    pub extern "system" fn Java_pt_iris_services_RustService_startService(
         _: JNIEnv,
         _: JClass,
         _: JString,
@@ -67,7 +67,7 @@ pub mod android {
     }
 
     #[no_mangle]
-    pub extern "system" fn Java_com_example_final_1test_1wifiaware_services_RustService_helloByte<'a>(
+    pub extern "system" fn Java_pt_iris_services_RustService_helloByte<'a>(
         env: JNIEnv<'a>,
         _class: JClass<'a>,
         size: usize,
