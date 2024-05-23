@@ -2,7 +2,10 @@ use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
 use std::sync::mpsc::Receiver;
 use std::net::{Ipv4Addr, SocketAddr};
+use std::thread::{sleep, Thread};
 use std::time::Duration;
+
+use log::{info,error};
 
 // A token to allow us to identify which event is for the `UdpSocket`.
 const SERVER: Token = Token(0);
@@ -23,7 +26,7 @@ impl WiFiMulticast {
     /// * `data_receiver` - A receiver for receiving data to be sent over multicast.
     pub fn start_multicast_sender(&self, data_receiver: Receiver<Vec<u8>>) {
         // Setup the UDP socket.
-        let addr = "0.0.0.0:0".parse().unwrap();
+        let addr = "0.0.0.0:9000".parse().unwrap();
         let mut socket = UdpSocket::bind(addr).unwrap();
 
         // Define the multicast address and port.
@@ -65,8 +68,9 @@ impl WiFiMulticast {
                         if let Ok(data) = data_receiver.recv() {
                             // Send the data over multicast.
                             if let Err(e) = socket.send(&data) {
-                                eprintln!("Failed to send data over multicast: {}", e);
+                                error!("Failed to send data over multicast: {}", e);
                             }
+                            sleep(Duration::from_micros(1_000_00));
                         }
                     }
                     // We don't expect any events with tokens other than those we provided.

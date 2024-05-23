@@ -10,7 +10,6 @@ public class AppContainer {
 	private static AppContainer instance;
 	private UUID myUUID;
 	private final HomeViewModel homeViewModel;
-	//private GrpcClient grpcClient;
 	private RustService rustService;
 
 	private AppContainer() {
@@ -27,9 +26,6 @@ public class AppContainer {
 	public HomeViewModel getHomeViewModel() {
 		return homeViewModel;
 	}
-	/*public GrpcClient getGrpcClient() {
-		return grpcClient;
-	}*/
 
 	public RustService getRustService() {
 		return rustService;
@@ -39,9 +35,6 @@ public class AppContainer {
 		this.rustService = rustService;
 	}
 
-	/*public void setGrpcClient(GrpcClient grpcClient) {
-		this.grpcClient = grpcClient;
-	}*/
 	public UUID getMyUUID() {
 		return myUUID;
 	}

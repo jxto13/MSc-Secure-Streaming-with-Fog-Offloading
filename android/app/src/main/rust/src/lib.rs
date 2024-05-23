@@ -1,9 +1,14 @@
+use log::info;
+
 #[allow(non_snake_case)]
 pub mod android {
+    use std::sync::mpsc;
+    use std::thread;
+
     use android_logger::{self, init_once};
-    use jni::objects::{JByteArray, JClass, JObject, JString};
-    use jni::{objects::JByteBuffer, JNIEnv};
-    use log::{error, info};
+    use jni::objects::{JClass, JString};
+    use jni::JNIEnv;
+    use log::info;
 
     use iris::edge_client;
 
@@ -22,7 +27,18 @@ pub mod android {
         // Log that the Rust app is starting
         info!("Rust app is starting...");
         
-        edge_client::test();
+        // Start the Rust processing thread and receive the receiver
+        if let Ok(receiver) = edge_client::core::start() {
+
+            thread::spawn(||{
+                for item in receiver {
+                    info!("{}", item.len());
+                }
+            });
+        } else {
+            eprintln!("Failed to start Rust processing thread");
+        }
+
 
     }
 }

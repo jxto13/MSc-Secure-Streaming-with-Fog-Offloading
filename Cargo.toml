@@ -1,0 +1,6 @@
+[workspace]
+members = [
+    "iris",
+    "linux",
+    "android/app/src/main/rust"
+]

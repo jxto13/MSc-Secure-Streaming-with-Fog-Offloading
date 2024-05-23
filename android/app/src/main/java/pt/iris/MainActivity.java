@@ -80,14 +80,9 @@ public class MainActivity extends AppCompatActivity {
 		// Create an instance of the AppContainer
 		appContainer = AppContainer.getInstance();
 
-		// Start gRPC Client (Temporary)
-		//appContainer.setGrpcClient(new GrpcClient("[::1]",50051));
-
 		// Start rustService
 		serviceIntent = new Intent(this, RustService.class);
 		this.startService(serviceIntent);
-
-
 	}
 
 	@Override

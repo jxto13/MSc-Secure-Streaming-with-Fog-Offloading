@@ -3,8 +3,13 @@ mod crypto;
 mod network_scheduler;
 mod source_handler;
 
+use std::process::Stdio;
+use std::io::BufRead;
+use std::io::BufReader;
+use std::io::ErrorKind;
+
 // Standard
-use std::sync::mpsc;
+use std::{process::Command, sync::mpsc};
 use std::thread;
 
 use proto::FILE_DESCRIPTOR_SET;

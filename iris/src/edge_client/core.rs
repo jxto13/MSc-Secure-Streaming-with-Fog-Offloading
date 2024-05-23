@@ -1,8 +1,9 @@
-mod decoder;
-mod receiver;
-mod utils;
 
+
+use std::process::Command;
 use std::sync::mpsc;
+use std::thread::{self, sleep};
+use std::time::Duration;
 
 use openssl::pkey::{PKey, Private};
 use openssl::rsa::Rsa;
@@ -21,6 +22,10 @@ use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
 use log::{debug, error, log_enabled, info, Level};
 
+
+use super::receiver;
+use super::decoder;
+
 pub const GRPC_SERVICE_PORT: u16 = 50052;
 
 // Global variables
@@ -31,26 +36,8 @@ pub mod proto {
     pub(crate) const FILE_DESCRIPTOR_SET: &[u8] =
         tonic::include_file_descriptor_set!("edge_client_descriptor");
 }
-#[tokio::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    // Initialize the logger conditionally
-    #[cfg(not(target_arch = "aarch64-linux-android"))]
-    {
-        env_logger::builder()
-        .filter_level(log::LevelFilter::Debug)
-        .format_target(true)
-        .format_timestamp_millis()
 
-        .init();
-
-        debug!("this is a debug {}", "message");
-        error!("this is printed by default");
-
-        if log_enabled!(Level::Info) {
-            let x = 3 * 4; // expensive computation
-            info!("the answer was: {}", x);
-        }
-    }
+pub fn start() -> Result<mpsc::Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     // // Connect to the server
     // let mut client = CertificateServiceClient::connect("http://127.0.0.1:50051").await?;
 
@@ -88,27 +75,31 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     return Err("An error occurred".into());
     // }
 
-    iris::edge_client::test();
     let (listener_sender, matrix_decoder_receiver) = mpsc::channel();
+    let (decoded_data_sender, decoded_data_receiver) = mpsc::channel();
 
     // Creates new thread for multicast receiver
     let listener_handler = std::thread::spawn(|| {
-        receiver::multicast_receiver::start(
+        let _ = receiver::multicast_receiver::start(
             "224.0.0.123".to_string(),
             "12345".to_string(),
             listener_sender,
         );
     });
 
-    let matrix_decoder_handler = std::thread::spawn(|| {
-        decoder::matrix::start(matrix_decoder_receiver);
+    std::thread::sleep(Duration::from_secs(1));
+
+    let matrix_decoder_handler = thread::spawn( || {
+        let _ = decoder::matrix::start(matrix_decoder_receiver, decoded_data_sender);
     });
 
-    // Join all the threads to ensure they complete before exiting
-    listener_handler.join().expect("listener_handler panicked");
-    matrix_decoder_handler
-        .join()
-        .expect("matrix_decoder_handler panicked");
+    // Spawn a separate thread for joining and returning the sender
+    thread::spawn(move || {
+        // Join all the threads to ensure they complete before returning
+        listener_handler.join().expect("listener_handler panicked");
+        matrix_decoder_handler.join().expect("matrix_decoder_handler panicked");
+    });
 
-    Ok(())
+    Ok(decoded_data_receiver)
+    
 }

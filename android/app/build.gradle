@@ -111,6 +111,8 @@ dependencies {
 cargo {
     module  = './src/main/rust'
     libname = 'irislinker'
+    // Because we use Cargo Workspaces the target directory is in the root of repo
+    targetDirectory = '../../target'
     profile = gradle.startParameter.taskNames.any{it.toLowerCase().contains("debug")} ? "debug" : "release"
     targets = ['arm64'] // 'arm', 'arm64', 'x86', 'x86_64'
     prebuiltToolchains = true

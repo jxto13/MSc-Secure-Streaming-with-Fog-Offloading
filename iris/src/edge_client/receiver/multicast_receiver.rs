@@ -1,5 +1,3 @@
-use crate::proto::{self, IrisPacket};
-
 use std::error::Error;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 use std::sync::mpsc::Sender;
@@ -7,23 +5,25 @@ use std::sync::mpsc::Sender;
 use std::io::{self, Cursor, Write};
 use std::time::Duration;
 
+use log::info;
 use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
 
-use mpeg2ts::ts::{ReadTsPacket, TsPacketReader};
 use prost::Message;
-use proto::{DataPacket};
+
+use crate::edge_client::core::proto;
 // A token to allow us to identify which event is for the `UdpSocket`.
 const CLIENT: Token = Token(0);
 
 pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Box<dyn Error>> {
+    info!("Starting the multicast receiver");
 
     // Parse the string into an Ipv4Addr struct in one line
     let multicast_address = ip.parse::<Ipv4Addr>().map(|ip| {
-        println!("Parsed IPv4 address: {}", ip);
+        info!("Parsed IPv4 address: {}", ip);
         ip
     }).unwrap_or_else(|e| {
-        println!("Error parsing IPv4 address: {}", e);
+        info!("Error parsing IPv4 address: {}", e);
         // You can provide a default value or handle the error as needed here
         Ipv4Addr::new(224, 0, 0, 123)
     });
@@ -31,22 +31,26 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Bo
     let multicast_port = port.parse().unwrap(); //need to handle error 
     let multicast_dest: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(multicast_address), multicast_port);
 
+    info!("Binding to multicast destination: {}", multicast_dest);
     // Setup the UDP socket.
     let mut socket = UdpSocket::bind(multicast_dest).unwrap();
+    info!("Socket bound successfully");
 
     // Join the multicast group.
     socket.join_multicast_v4(&multicast_address, &Ipv4Addr::UNSPECIFIED).map_err(|err| {
-        eprintln!("Failed to join multicast group: {}", err);
+        info!("Failed to join multicast group: {}", err);
         err
     })?;
-
+    info!("Joined multicast group successfully");
     
     // Create a poll instance.
     let mut poll = Poll::new().unwrap();
+    info!("Poll instance created");
 
     // Register the socket with the poll instance.
     poll.registry()
         .register(&mut socket, CLIENT, Interest::READABLE).unwrap();
+    info!("Socket registered with poll instance");
 
     // Create storage for events.
     let mut events = Events::with_capacity(1024 * 10);
@@ -59,7 +63,7 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Bo
     // Start an event loop.
     loop {
         // Poll Mio for events, blocking until we get an event.
-        poll.poll(&mut events, Some(Duration::from_nanos(100_000))).unwrap();
+        poll.poll(&mut events, None).unwrap();
 
         // Process each event.
         for event in events.iter() {
@@ -70,40 +74,24 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Bo
                     // In this loop we receive all packets queued for the socket.
                     match socket.recv_from(&mut buf) {
                         Ok((size, source_address)) => {
-                            // Send data to matrix decoder
-                            sender.send(buf[..size].to_vec())?;
-                            println!("Packet received number: {} from {}", index, source_address);
+                            info!("Packet received number: {} from {}. Size: {}", index, source_address, size);
                             index +=1;
                             
-                            // let deserialized_matrix_cell = IrisPacket::decode(&buf[..size]).unwrap_or_else(|err| {
-                            //     // Handle the error if creating the runtime fails
-                            //     eprintln!("Error decoding packet: {}", err);
-                            //     // create and empty cell, will discart latter
-                            //     IrisPacket {
-                            //         payload: vec![DataPacket {
-                            //             matrix: 0,
-                            //             index: 0,
-                            //             width: 0,
-                            //             height: 0,
-                            //             fec: false,
-                            //             data: vec![0, 0],
-                            //         }],
-                            //     }
-                            // });
-                            // println!("Matrix: {:?} ", deserialized_matrix_cell.payload.get(0).unwrap().matrix);
+                            // Send data to matrix decoder
+                            sender.send(buf[..size].to_vec())?;
                     
-                                           
                         }
                         Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                            info!("WouldBlock error, no more packets queued");
                             // If we get a `WouldBlock` error we know our socket
                             // has no more packets queued, so we can return to
                             // polling and wait for some more.
                             break;
                         }
                         Err(e) => {
+                            info!("Error receiving packet: {}", e);
                             // If it was any other kind of error, something went
                             // wrong and we terminate with an error.
-                            println!("{}",e);
                             break;
                         }
                     }
