@@ -1,4 +1,5 @@
-use std::sync::mpsc::Receiver;
+
+use crossbeam_channel::Receiver;
 use std::sync::{Arc, Mutex};
 use std::thread;
 

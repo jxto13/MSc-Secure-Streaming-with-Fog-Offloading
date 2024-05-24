@@ -9,7 +9,8 @@ use std::io::BufReader;
 use std::io::ErrorKind;
 
 // Standard
-use std::{process::Command, sync::mpsc};
+use crossbeam_channel::{unbounded, Receiver, Sender};
+
 use std::thread;
 
 use proto::FILE_DESCRIPTOR_SET;
@@ -39,7 +40,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let url_stream = "./public/demo.ts";
 
     // Channel communication between threads
-    let (source_handler_sender, source_handler_receiver) = mpsc::channel();
+    let (source_handler_sender, source_handler_receiver) = unbounded();
     // -------------------------------------
 
     let source_handler = thread::spawn(|| {

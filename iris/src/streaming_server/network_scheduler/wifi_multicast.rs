@@ -1,6 +1,6 @@
 use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
-use std::sync::mpsc::Receiver;
+use crossbeam_channel::Receiver;
 use std::net::{Ipv4Addr, SocketAddr};
 use std::thread::{sleep, Thread};
 use std::time::Duration;

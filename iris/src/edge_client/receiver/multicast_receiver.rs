@@ -1,21 +1,18 @@
-use std::error::Error;
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
-use std::sync::mpsc::Sender;
 
-use std::io::{self, Cursor, Write};
-use std::time::Duration;
+use std::io;
+use crossbeam_channel::Sender;
 
 use log::info;
 use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
 
-use prost::Message;
 
-use crate::edge_client::core::proto;
 // A token to allow us to identify which event is for the `UdpSocket`.
 const CLIENT: Token = Token(0);
 
-pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Box<dyn Error>> {
+pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>, callback: Sender<()>) -> Result<(), Box<dyn std::error::Error>> {
+    
     info!("Starting the multicast receiver");
 
     // Parse the string into an Ipv4Addr struct in one line
@@ -33,7 +30,7 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Bo
 
     info!("Binding to multicast destination: {}", multicast_dest);
     // Setup the UDP socket.
-    let mut socket = UdpSocket::bind(multicast_dest).unwrap();
+    let mut socket = UdpSocket::bind(format!("{}:{}", multicast_address, multicast_port).parse().unwrap()).unwrap();
     info!("Socket bound successfully");
 
     // Join the multicast group.
@@ -59,6 +56,7 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Bo
     // packet, which is the maximum value of 16 a bit integer.
     let mut buf = [0; 1 << 16];   
     let mut index = 1;
+    let mut callback_sent = false;  // To track if the callback has been sent
     
     // Start an event loop.
     loop {
@@ -79,6 +77,13 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Bo
                             
                             // Send data to matrix decoder
                             sender.send(buf[..size].to_vec())?;
+
+                            // Notify that the multicast_receiver has started
+                            // Send callback notification after the first packet
+                            if !callback_sent {
+                                callback.send(()).unwrap();
+                                callback_sent = true;
+                            }
                     
                         }
                         Err(e) if e.kind() == io::ErrorKind::WouldBlock => {

@@ -1,8 +1,7 @@
-
-
+use crossbeam_channel::{bounded, unbounded, Receiver};
 use std::process::Command;
-use std::sync::mpsc;
-use std::thread::{self, sleep};
+
+use std::thread;
 use std::time::Duration;
 
 use openssl::pkey::{PKey, Private};
@@ -20,11 +19,10 @@ use tokio::task;
 use tonic::transport::server::Server;
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
-use log::{debug, error, log_enabled, info, Level};
+use log::{debug, error, info, log_enabled, Level};
 
-
-use super::receiver;
 use super::decoder;
+use super::receiver;
 
 pub const GRPC_SERVICE_PORT: u16 = 50052;
 
@@ -37,7 +35,7 @@ pub mod proto {
         tonic::include_file_descriptor_set!("edge_client_descriptor");
 }
 
-pub fn start() -> Result<mpsc::Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
+pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     // // Connect to the server
     // let mut client = CertificateServiceClient::connect("http://127.0.0.1:50051").await?;
 
@@ -54,7 +52,7 @@ pub fn start() -> Result<mpsc::Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
 
     // // Make a CertificateRequest with the CSR
     // let csr_request = CertificateRequest {
-    //     csr: csr_vec, 
+    //     csr: csr_vec,
     // };
 
     // // Send the CSR to the server to get it signed
@@ -75,31 +73,61 @@ pub fn start() -> Result<mpsc::Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     //     return Err("An error occurred".into());
     // }
 
-    let (listener_sender, matrix_decoder_receiver) = mpsc::channel();
-    let (decoded_data_sender, decoded_data_receiver) = mpsc::channel();
+    let (listener_sender, matrix_decoder_receiver) = unbounded();
+    let (decoded_data_sender, decoded_data_receiver) = unbounded();
+    let (callback_sender, callback_receiver) = bounded(1);
 
-    // Creates new thread for multicast receiver
-    let listener_handler = std::thread::spawn(|| {
-        let _ = receiver::multicast_receiver::start(
+    // Clone channel to sender thread
+    let thread_tx = callback_sender.clone();
+
+     // Creates new thread for multicast receiver
+     let listener_handler = std::thread::spawn(move || {
+        info!("Starting multicast receiver on address 224.0.0.123:12345.");
+        match receiver::multicast_receiver::start(
             "224.0.0.123".to_string(),
             "12345".to_string(),
             listener_sender,
-        );
+            thread_tx,
+        ) {
+            Ok(_) => {
+                info!("Multicast receiver exited successfully.");
+            }
+            Err(e) => {
+                error!("Multicast receiver failed with error: {}", e);
+            }
+        }
     });
 
-    std::thread::sleep(Duration::from_secs(1));
+    // Clone channel to receiver thread
+    let thread_rx = callback_receiver.clone();
 
-    let matrix_decoder_handler = thread::spawn( || {
-        let _ = decoder::matrix::start(matrix_decoder_receiver, decoded_data_sender);
+    let matrix_decoder_handler = thread::spawn(move || {
+        // Wait for the callback notification
+        debug!("Waiting for callback notification to start matrix decoder.");
+        match thread_rx.recv() {
+            Ok(_) => {
+                info!("Callback received, starting matrix decoder.");
+                if let Err(e) = decoder::matrix::start(matrix_decoder_receiver, decoded_data_sender) {
+                    error!("Matrix decoder failed to start: {}", e);
+                }
+            }
+            Err(e) => {
+                error!("Failed to receive callback notification: {}", e);
+            }
+        }
     });
+
+    // Drop channel used in callback
+    drop(callback_sender);
 
     // Spawn a separate thread for joining and returning the sender
     thread::spawn(move || {
         // Join all the threads to ensure they complete before returning
         listener_handler.join().expect("listener_handler panicked");
-        matrix_decoder_handler.join().expect("matrix_decoder_handler panicked");
+        matrix_decoder_handler
+            .join()
+            .expect("matrix_decoder_handler panicked");
     });
 
     Ok(decoded_data_receiver)
-    
 }

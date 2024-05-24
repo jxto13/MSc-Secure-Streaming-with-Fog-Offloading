@@ -2,7 +2,6 @@ use log::info;
 
 #[allow(non_snake_case)]
 pub mod android {
-    use std::sync::mpsc;
     use std::thread;
 
     use android_logger::{self, init_once};

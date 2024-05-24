@@ -4,11 +4,11 @@ use std::fs::File;
 use std::io::{self, BufRead, BufReader, Cursor, Read};
 
 use std::process::{Command, Stdio};
-use std::sync::mpsc::Sender;
+use crossbeam_channel::Sender;
+
 use std::thread::{sleep, Thread};
 use std::time::{Duration, Instant};
 
-use mpeg2ts::ts::{ReadTsPacket, TsPacketReader};
 use prost::Message;
 
 use grid::Grid as TransmitionMatrix;

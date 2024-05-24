@@ -1,6 +1,7 @@
 
-use std::sync::mpsc::{Receiver, Sender};
 use std::error::Error;
+
+use crossbeam_channel::{Receiver, Sender};
 
 use log::error;
 use prost::Message;

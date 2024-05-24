@@ -17,9 +17,7 @@ prost = "0.12" # tonic uses this, but needs a trait implementation todo!()
 reed-solomon-16  = "0.1.0"
 grid = "0.14.0"
 rayon = "1.10"
-mpeg2ts = "0.3.1"
-socket2 = "0.5.7"
-lazy_static = "1.4.0"
+crossbeam-channel = "0.5.13"
 
 # This compiles openssl for android using NDK
 [target.'cfg(target_os = "android")'.dependencies]
