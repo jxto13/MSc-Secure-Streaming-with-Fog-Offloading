@@ -4,3 +4,5 @@ members = [
     "linux",
     "android/app/src/main/rust"
 ]
+
+resolver = "2"

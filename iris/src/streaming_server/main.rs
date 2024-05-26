@@ -34,6 +34,13 @@ pub mod proto {
 
 // Main app, can be changed depending on platform
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Init the logger
+    env_logger::builder()
+        .filter_level(log::LevelFilter::Debug)
+        .format_target(true)
+        .format_timestamp_millis()
+        .init();
+    
     // Generate CA Certificates and stores in memory
     let (ca_cert, ca_key_pair) = crypto::utils::mk_ca_cert()?;
 

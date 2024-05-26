@@ -8,8 +8,12 @@ use prost::Message;
 
 use crate::edge_client::core::proto::IrisPacket;
 
+use crossbeam_queue::SegQueue;
+
 pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>) -> Result<(), Box<dyn Error>> {
     
+    // let q = SegQueue::new();
+
     loop {
 
         // Blocking until cells in the channel
@@ -31,11 +35,12 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>) -
 
         for packet in deserialized_matrix_cell.payload {
             if !packet.fec {
-                if let Err(err) = decode_data_sender.send(packet.data) {
-                    error!("Error sending data: {}", err);
-                    // Optionally handle the error, such as logging it or returning it
-                    return Err(Box::new(err));
-                }
+                // q.push(packet.data);
+                // if let Err(err) = decode_data_sender.send(packet.data) {
+                //     error!("Error sending data: {}", err);
+                //     // Optionally handle the error, such as logging it or returning it
+                //     return Err(Box::new(err));
+                // }
             }
         }
     }

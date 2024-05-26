@@ -1,6 +1,8 @@
 use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
 use crossbeam_channel::Receiver;
+use std::cmp::Reverse;
+use std::io;
 use std::net::{Ipv4Addr, SocketAddr};
 use std::thread::{sleep, Thread};
 use std::time::Duration;
@@ -24,20 +26,20 @@ impl WiFiMulticast {
     /// # Arguments
     ///
     /// * `data_receiver` - A receiver for receiving data to be sent over multicast.
-    pub fn start_multicast_sender(&self, data_receiver: Receiver<Vec<u8>>) {
+    pub fn start_multicast_sender(&self, data_receiver: Receiver<Vec<u8>>)-> Result<(), Box<dyn std::error::Error>> {
         // Setup the UDP socket.
         let addr = "0.0.0.0:9000".parse().unwrap();
         let mut socket = UdpSocket::bind(addr).unwrap();
 
         // Define the multicast address and port.
-        let multicast_address = Ipv4Addr::new(224, 0, 0, 123);
+        let multicast_address = Ipv4Addr::new(239, 1, 1, 10);
         let multicast_port = 12345;
         let multicast_dest: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(multicast_address), multicast_port);
 
         // Join the multicast group.
         if let Err(e) = socket.join_multicast_v4(&multicast_address, &Ipv4Addr::UNSPECIFIED) {
             eprintln!("Failed to join multicast group: {}", e);
-            return;
+            return Err(Box::new(e));
         };
 
         socket.connect(multicast_dest);
@@ -52,10 +54,17 @@ impl WiFiMulticast {
         // Create storage for events.
         let mut events = Events::with_capacity(1024);
 
+        let mut packets_send = 0;
         // Start an event loop.
         loop {
             // Poll Mio for events, blocking until we get an event.
-            poll.poll(&mut events, Some(Duration::from_nanos(100_000))).unwrap();
+            // Poll to check if we have events waiting for us.
+            if let Err(err) = poll.poll(&mut events, None) {
+                if err.kind() == io::ErrorKind::Interrupted {
+                    continue;
+                }
+                return Err(Box::new(err));
+            }
 
             // Process each event.
             for event in events.iter() {
@@ -65,12 +74,19 @@ impl WiFiMulticast {
                     SERVER => {
                         // Check if there is data to be sent over multicast.
                         // If there's data available, send it over multicast.
-                        if let Ok(data) = data_receiver.recv() {
-                            // Send the data over multicast.
-                            if let Err(e) = socket.send(&data) {
-                                error!("Failed to send data over multicast: {}", e);
+                        
+                        match data_receiver.recv() {
+                            Ok(data) => {
+                                // Send the data over multicast.
+                                if let Err(e) = socket.send(&data) {
+                                    error!("Failed to send data over multicast: {}", e);
+                                }
                             }
-                            sleep(Duration::from_micros(1_000_00));
+                            Err(_) => {
+                                // Channel is closed, handle the error or break out of the loop.
+                                error!("Data channel closed, exiting loop");
+                                break; // Exit the loop if the channel is closed
+                            }
                         }
                     }
                     // We don't expect any events with tokens other than those we provided.

@@ -34,16 +34,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     };
 
-    for data in receiver {
-        // Write data to mpv's stdin
-        if let Err(e) = mpv_stdin.write_all(&data) {
-            debug!("Failed to write to mpv stdin: {}", e);
-            return Err(Box::new(e));
-        }
-    }
+    // for data in receiver {
+    //     // Write data to mpv's stdin
+    //     if let Err(e) = mpv_stdin.write_all(&data) {
+    //         debug!("Failed to write to mpv stdin: {}", e);
+    //         return Err(Box::new(e));
+    //     }
+    // }
 
-    // Ensure all data is flushed before closing the pipe
-    drop(mpv_stdin);
+    // // Ensure all data is flushed before closing the pipe
+    // drop(mpv_stdin);
 
     // Wait for the command to finish
     match mpv.wait() {

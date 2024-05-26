@@ -1,6 +1,7 @@
 use std::net::{Ipv4Addr, SocketAddr, SocketAddrV4};
 
 use std::io;
+use std::time::{Duration, Instant};
 use crossbeam_channel::Sender;
 
 use log::info;
@@ -11,7 +12,7 @@ use mio::net::UdpSocket;
 // A token to allow us to identify which event is for the `UdpSocket`.
 const CLIENT: Token = Token(0);
 
-pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>, callback: Sender<()>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     
     info!("Starting the multicast receiver");
 
@@ -56,12 +57,21 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>, callback: Sender
     // packet, which is the maximum value of 16 a bit integer.
     let mut buf = [0; 1 << 16];   
     let mut index = 1;
-    let mut callback_sent = false;  // To track if the callback has been sent
-    
+
+    let mut total_bytes = 0;
+    let mut start_time = Instant::now();
+
+
     // Start an event loop.
     loop {
         // Poll Mio for events, blocking until we get an event.
-        poll.poll(&mut events, None).unwrap();
+        // Poll to check if we have events waiting for us.
+        if let Err(err) = poll.poll(&mut events, None) {
+            if err.kind() == io::ErrorKind::Interrupted {
+                continue;
+            }
+            return Err(Box::new(err));
+        }
 
         // Process each event.
         for event in events.iter() {
@@ -69,37 +79,53 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>, callback: Sender
             // determine for which socket the event is.
             match event.token() {
                 CLIENT => {
-                    // In this loop we receive all packets queued for the socket.
-                    match socket.recv_from(&mut buf) {
-                        Ok((size, source_address)) => {
-                            info!("Packet received number: {} from {}. Size: {}", index, source_address, size);
-                            index +=1;
-                            
-                            // Send data to matrix decoder
-                            sender.send(buf[..size].to_vec())?;
-
-                            // Notify that the multicast_receiver has started
-                            // Send callback notification after the first packet
-                            if !callback_sent {
-                                callback.send(()).unwrap();
-                                callback_sent = true;
+                    loop {
+                        
+                        // In this loop we receive all packets queued for the socket.
+                        match socket.recv_from(&mut buf) {
+                            Ok((size, source_address)) => {
+                                
+                                // info!("Packet received number: {} from {}. Size: {}", index, source_address, size);
+                                
+                                index +=1;
+                                
+                                total_bytes += size;
+                                
+                                let elapsed = start_time.elapsed();
+                                if elapsed >= Duration::from_secs(1) {
+                                    let bitrate_mbps = (total_bytes as f64 * 8.0) / 1_000_000.0 / elapsed.as_secs_f64();
+                                    info!("Bitrate: {:.2} Mbps", bitrate_mbps);
+                                    total_bytes = 0;
+                                    start_time = Instant::now();
+                                    info!("packets_received {}",index);
+                                }
+                                
+                                // Send data to matrix decoder
+                                // sender.send(buf[..size].to_vec())?;
+                                
+                                // Notify that the multicast_receiver has started
+                                // Send callback notification after the first packet
+                                // if !callback_sent {
+                                    //     callback.send(()).unwrap();
+                                    //     callback_sent = true;
+                                    // }
+                                    
+                                }
+                                Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
+                                    // info!("WouldBlock error, no more packets queued");
+                                    // If we get a `WouldBlock` error we know our socket
+                                    // has no more packets queued, so we can return to
+                                    // polling and wait for some more.
+                                    break;
+                                }
+                                Err(e) => {
+                                    info!("Error receiving packet: {}", e);
+                                    // If it was any other kind of error, something went
+                                    // wrong and we terminate with an error.
+                                    break;
+                                }
                             }
-                    
                         }
-                        Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-                            info!("WouldBlock error, no more packets queued");
-                            // If we get a `WouldBlock` error we know our socket
-                            // has no more packets queued, so we can return to
-                            // polling and wait for some more.
-                            break;
-                        }
-                        Err(e) => {
-                            info!("Error receiving packet: {}", e);
-                            // If it was any other kind of error, something went
-                            // wrong and we terminate with an error.
-                            break;
-                        }
-                    }
                 }
                 // We don't expect any events with tokens other than those we provided.
                 _ => unreachable!(),

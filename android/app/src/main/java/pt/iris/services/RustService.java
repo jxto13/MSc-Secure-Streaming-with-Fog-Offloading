@@ -17,10 +17,7 @@ public class RustService extends Service {
      * Native method declaration to start the Rust service.
      */
     private static native void startService();
-    public static native void writeToDirectBuffer(ByteBuffer buffer);
     public static native byte[] helloByte(int size);
-    public static native void tmpFile();
-    public static native void fdTest(String input);
 
     @Override
     public void onCreate() {
@@ -32,11 +29,11 @@ public class RustService extends Service {
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
 
-        // Start the Rust service with the path to the files directory
+        // Start the Rust service
         startService();
 
-        // Indicate that the service should be restarted if it gets terminated
-        return START_STICKY;
+        // Indicate that the service should NOT be restarted if it gets terminated
+        return START_NOT_STICKY;
     }
 
     @Override

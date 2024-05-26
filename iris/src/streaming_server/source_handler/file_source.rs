@@ -5,6 +5,7 @@ use std::io::{self, BufRead, BufReader, Cursor, Read};
 
 use std::process::{Command, Stdio};
 use crossbeam_channel::Sender;
+use log::{error, info};
 
 use std::thread::{sleep, Thread};
 use std::time::{Duration, Instant};
@@ -79,7 +80,11 @@ pub fn start(file_path: &str, tx: Sender<Vec<u8>>) {
                 // Fill buffer with contents of file 
                 match reader.read(&mut buffer) {
                     Ok(0) => {
-                        println!("END OF FILE");
+                        info!("END OF FILE");
+
+                        loop {
+                            
+                        }
 
                         // End of file reached break the reading loop
                         break 'main_loop;
@@ -252,7 +257,8 @@ pub fn start(file_path: &str, tx: Sender<Vec<u8>>) {
 
                 // Send the buffer
                 tx.send(serialized_data).unwrap_or_else(|e| {
-                    println!("error sending data {:?}", e.0);
+                    error!("error sending data {:?}", e);
+                    return;
                 });
 
                 // Reset buffer
@@ -278,7 +284,7 @@ pub fn start(file_path: &str, tx: Sender<Vec<u8>>) {
 
             // Send the buffer
             tx.send(serialized_data).unwrap_or_else(|e| {
-                println!("error sending data {:?}", e);
+                error!("error sending data {:?}", e);
             });
 
         }
@@ -290,7 +296,7 @@ pub fn start(file_path: &str, tx: Sender<Vec<u8>>) {
     let end_time = Instant::now();
     let duration = end_time.duration_since(start_time);
 
-    println!("Time taken: {:?}", duration);
-    println!("Last Matrix: {:?}", global_matrix.last().unwrap().get(0, 0).unwrap().matrix);
+    info!("Time taken: {:?}", duration);
+    info!("Last Matrix: {:?}", global_matrix.last().unwrap().get(0, 0).unwrap().matrix);
 
 }

@@ -75,19 +75,15 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
 
     let (listener_sender, matrix_decoder_receiver) = unbounded();
     let (decoded_data_sender, decoded_data_receiver) = unbounded();
-    let (callback_sender, callback_receiver) = bounded(1);
 
-    // Clone channel to sender thread
-    let thread_tx = callback_sender.clone();
 
      // Creates new thread for multicast receiver
-     let listener_handler = std::thread::spawn(move || {
+    let listener_handler = std::thread::spawn(move || {
         info!("Starting multicast receiver on address 224.0.0.123:12345.");
         match receiver::multicast_receiver::start(
-            "224.0.0.123".to_string(),
+            "239.1.1.10".to_string(),
             "12345".to_string(),
             listener_sender,
-            thread_tx,
         ) {
             Ok(_) => {
                 info!("Multicast receiver exited successfully.");
@@ -99,26 +95,15 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     });
 
     // Clone channel to receiver thread
-    let thread_rx = callback_receiver.clone();
 
     let matrix_decoder_handler = thread::spawn(move || {
-        // Wait for the callback notification
-        debug!("Waiting for callback notification to start matrix decoder.");
-        match thread_rx.recv() {
-            Ok(_) => {
-                info!("Callback received, starting matrix decoder.");
-                if let Err(e) = decoder::matrix::start(matrix_decoder_receiver, decoded_data_sender) {
-                    error!("Matrix decoder failed to start: {}", e);
-                }
-            }
-            Err(e) => {
-                error!("Failed to receive callback notification: {}", e);
-            }
+        
+        if let Err(e) = decoder::matrix::start(matrix_decoder_receiver, decoded_data_sender) {
+            error!("Matrix decoder failed to start: {}", e);
         }
+            
     });
 
-    // Drop channel used in callback
-    drop(callback_sender);
 
     // Spawn a separate thread for joining and returning the sender
     thread::spawn(move || {
