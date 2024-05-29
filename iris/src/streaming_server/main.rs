@@ -1,4 +1,4 @@
-#![allow(unused)]
+
 mod crypto;
 mod network_scheduler;
 mod source_handler;
@@ -7,9 +7,16 @@ use std::process::Stdio;
 use std::io::BufRead;
 use std::io::BufReader;
 use std::io::ErrorKind;
+use std::sync::Arc;
+use std::sync::Mutex;
 
 // Standard
 use crossbeam_channel::{unbounded, Receiver, Sender};
+use log::info;
+use mio::unix::pipe;
+use network_scheduler::pipeline;
+use network_scheduler::wifi_multicast;
+use network_scheduler::wifi_multicast::WiFiMulticast;
 
 use std::thread;
 
@@ -31,6 +38,17 @@ pub mod proto {
     pub(crate) const FILE_DESCRIPTOR_SET: &[u8] =
         tonic::include_file_descriptor_set!("streaming_server_descriptor");
 }
+
+fn ui (wifi_multicast: Arc<Mutex<WiFiMulticast>>){
+    // draw ui 
+
+    let mutex_guard = wifi_multicast.lock().unwrap();
+
+    info!("{}", mutex_guard.bandwidth_manager.bitrate);
+
+}
+// unlock the mutex guard
+
 
 // Main app, can be changed depending on platform
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -92,9 +110,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Join all the threads to ensure they complete before exiting
     source_handler.join().expect("source_handler panicked");
     pipeline_handler.join().expect("pipeline_handler panicked");
-    grpc_server_handler
-        .join()
-        .expect("grpc_server_handler panicked");
+    grpc_server_handler.join().expect("grpc_server_handler panicked");
 
     Ok(())
 }

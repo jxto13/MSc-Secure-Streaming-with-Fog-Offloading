@@ -82,10 +82,6 @@ pub fn start(file_path: &str, tx: Sender<Vec<u8>>) {
                     Ok(0) => {
                         info!("END OF FILE");
 
-                        loop {
-                            
-                        }
-
                         // End of file reached break the reading loop
                         break 'main_loop;
                     }
@@ -94,8 +90,8 @@ pub fn start(file_path: &str, tx: Sender<Vec<u8>>) {
                         let data = DataPacket {
                             matrix: matrix_index,
                             index: 0,
-                            width: COLS as i32,
-                            height: ROWS as i32,
+                            width: (COLS + COLS_FEC) as i32,
+                            height: (ROWS + ROW_FEC) as i32,
                             fec: false,
                             data: buffer[..n].to_vec(),
                         };

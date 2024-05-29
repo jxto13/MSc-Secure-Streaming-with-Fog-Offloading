@@ -29,11 +29,11 @@ pub mod android {
         // Start the Rust processing thread and receive the receiver
         if let Ok(receiver) = edge_client::core::start() {
 
-            // thread::spawn(||{
-            //     for item in receiver {
-            //         // info!("{}", item.len());
-            //     }
-            // });
+            thread::spawn(||{
+                for item in receiver {
+                    // info!("{}", item.len());
+                }
+            });
         } else {
             eprintln!("Failed to start Rust processing thread");
         }

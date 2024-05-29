@@ -1,6 +1,7 @@
 use std::error::Error;
 use std::process::{Command, Stdio};
-use std::io::{self, Write};
+use std::io::{self, Write, BufRead, BufReader};
+use std::thread;
 
 use log::{debug, info};
 
@@ -21,39 +22,38 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     };
 
-    let mut mpv = Command::new("mpv")
-        .args(&["-"])
+    let mut ffplay = Command::new("mpv")
+        .args(&["-","--force-seekable=yes"])
         .stdin(Stdio::piped())
         .spawn()?;
     
-    // Get handle to mpv's stdin
-    let mut mpv_stdin = match mpv.stdin.take() {
+    // Get handles to ffplay's stdin and stdout
+    let mut ffplay_stdin = match ffplay.stdin.take() {
         Some(stdin) => stdin,
         None => {
-            return Err(io::Error::new(io::ErrorKind::Other, "Failed to open mpv stdin").into());
+            return Err(io::Error::new(io::ErrorKind::Other, "Failed to open ffplay stdin").into());
         }
     };
 
-    // for data in receiver {
-    //     // Write data to mpv's stdin
-    //     if let Err(e) = mpv_stdin.write_all(&data) {
-    //         debug!("Failed to write to mpv stdin: {}", e);
-    //         return Err(Box::new(e));
-    //     }
-    // }
-
-    // // Ensure all data is flushed before closing the pipe
-    // drop(mpv_stdin);
-
-    // Wait for the command to finish
-    match mpv.wait() {
-        Ok(status) => debug!("mpv exited with: {}", status),
-        Err(e) => {
-            debug!("Failed to wait on mpv process: {}", e);
+    for data in receiver {
+        // Write data to ffplay's stdin
+        if let Err(e) = ffplay_stdin.write_all(&data) {
+            debug!("Failed to write to ffplay stdin: {}", e);
             return Err(Box::new(e));
-
         }
     }
+
+    // Wait for the command to finish
+    match ffplay.wait() {
+        Ok(status) => debug!("ffplay exited with: {}", status),
+        Err(e) => {
+            debug!("Failed to wait on ffplay process: {}", e);
+            return Err(Box::new(e));
+        }
+    }
+
+    // Ensure all data is flushed before closing the pipe
+    drop(ffplay_stdin);
 
     Ok(())
 }

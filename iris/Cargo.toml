@@ -20,7 +20,6 @@ grid = "0.14.0"
 rayon = "1.10"
 crossbeam-channel = "0.5.13"
 crossbeam-queue = "0.3.11"
-socket2 = "0.5.7"
 
 # This compiles openssl for android using NDK
 [target.'cfg(target_os = "android")'.dependencies]
@@ -32,7 +31,3 @@ tonic-build = "0.11"
 [[bin]]
 name = "streaming_server"
 path = "./src/streaming_server/main.rs"
-
-[[bin]]
-name = "edge_client"
-path = "./src/edge_client/main.rs"

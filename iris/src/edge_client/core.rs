@@ -1,6 +1,7 @@
 use crossbeam_channel::{bounded, unbounded, Receiver};
 use std::process::Command;
 
+use std::sync::{Arc, Barrier};
 use std::thread;
 use std::time::Duration;
 
@@ -23,6 +24,7 @@ use log::{debug, error, info, log_enabled, Level};
 
 use super::decoder;
 use super::receiver;
+use super::session;
 
 pub const GRPC_SERVICE_PORT: u16 = 50052;
 
@@ -76,14 +78,20 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     let (listener_sender, matrix_decoder_receiver) = unbounded();
     let (decoded_data_sender, decoded_data_receiver) = unbounded();
 
+    // Create a Barrier for thread synchronization
+    let barrier = Arc::new(Barrier::new(2));
 
-     // Creates new thread for multicast receiver
+    // Clone the Barrier for the listener thread
+    let listener_barrier = Arc::clone(&barrier);
+
+    // Creates new thread for multicast receiver
     let listener_handler = std::thread::spawn(move || {
         info!("Starting multicast receiver on address 224.0.0.123:12345.");
         match receiver::multicast_receiver::start(
             "239.1.1.10".to_string(),
             "12345".to_string(),
             listener_sender,
+            listener_barrier,
         ) {
             Ok(_) => {
                 info!("Multicast receiver exited successfully.");
@@ -94,14 +102,24 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
         }
     });
 
-    // Clone channel to receiver thread
+    // Clone the Barrier for the decoder thread
+    let decoder_barrier = Arc::clone(&barrier);
 
     let matrix_decoder_handler = thread::spawn(move || {
-        
+        // Wait at the barrier before starting the decoder
+        decoder_barrier.wait();
         if let Err(e) = decoder::matrix::start(matrix_decoder_receiver, decoded_data_sender) {
             error!("Matrix decoder failed to start: {}", e);
         }
-            
+    });
+
+    // Spawn Client Report Thread
+
+    let client_report_handler = thread::spawn(move || {
+
+        let mut client_report = session::report::ClientReport::new();
+        client_report.start_report_client().unwrap();
+
     });
 
 
@@ -109,9 +127,8 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     thread::spawn(move || {
         // Join all the threads to ensure they complete before returning
         listener_handler.join().expect("listener_handler panicked");
-        matrix_decoder_handler
-            .join()
-            .expect("matrix_decoder_handler panicked");
+        matrix_decoder_handler.join().expect("matrix_decoder_handler panicked");
+        client_report_handler.join().expect("client_report_handler panicked");
     });
 
     Ok(decoded_data_receiver)
