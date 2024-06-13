@@ -108,7 +108,7 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     let matrix_decoder_handler = thread::spawn(move || {
         // Wait at the barrier before starting the decoder
         decoder_barrier.wait();
-        if let Err(e) = decoder::matrix::start(matrix_decoder_receiver, decoded_data_sender) {
+        if let Err(e) = decoder::start(matrix_decoder_receiver, decoded_data_sender) {
             error!("Matrix decoder failed to start: {}", e);
         }
     });
