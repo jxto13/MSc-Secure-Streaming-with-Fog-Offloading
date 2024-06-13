@@ -15,3 +15,5 @@ Cargo.lock
 
 .vscode
 .git-old
+
+config.toml

@@ -25,20 +25,28 @@ message CertificateResponse {
 
 // ----------------------------------------------------------------------------------------------------------- //
 
-// Multicast UDP Packet
-message DataPacket {
+message VideoData {
+    bytes data = 1;
+    // bytes signature = 2;
+}
+
+message ItemType {
+    /// Type of FEC, 0 = ROW | 1 = COL | 2 = Data
+    int32 code = 1;
+    int32 index = 2;
+}
+
+message TransmitionPacket {
     int32 matrix = 1;
     int32 index = 2;
-    int32 width = 3;
-    int32 height = 4;
-    bool fec = 5;
-    bytes data = 6;
-    // bytes signature = 7;
+    int32 rows = 3;
+    int32 cols = 4;
+    repeated ItemType item_type = 5;
+    bytes payload = 6;
 }
 
+// Multicast UDP Packet
 message IrisPacket {
-    repeated DataPacket payload = 1;
+    repeated TransmitionPacket payload = 1;
     // bytes signature = 7;
 }
-
-// ----------------------------------------------------------------------------------------------------------- //

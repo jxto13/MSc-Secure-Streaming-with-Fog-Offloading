@@ -69,7 +69,7 @@ impl ClientReport {
                             // For demonstration, let's just send an empty UDP packet
                             match socket.send_to(&empty_buf, remote_addr) {
                                 Ok(_) => {
-                                    info!("Data sent.");
+                                    // info!("Data sent.");
                                     self.last_send_time = Instant::now();
                                 }
                                 Err(e) => {

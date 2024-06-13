@@ -79,7 +79,7 @@ impl WiFiMulticast {
     /// # Arguments
     ///
     /// * `data_receiver` - A receiver for receiving data to be sent over multicast.
-    pub fn start_multicast_sender(&mut self, data_receiver: Receiver<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn server(&mut self, data_receiver: Receiver<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
         // Setup the UDP socket.
         let addr = "0.0.0.0:0".parse().unwrap();
         let mut socket = UdpSocket::bind(addr).unwrap();

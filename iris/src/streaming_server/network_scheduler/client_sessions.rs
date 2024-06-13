@@ -41,7 +41,7 @@ impl ClientSessions {
         // info!("Clients after timeout removal: {:?}", *clients);
     }
 
-    pub fn start_receiver_server(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn server(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         // Create a poll instance.
         let mut poll = Poll::new()?;
         // Create storage for events. Since we will only register a single socket, a

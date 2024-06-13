@@ -1,0 +1,6 @@
+grpc_service_port = 50051
+multicast_ip = "239.255.0.1"
+
+[[sessions]]
+url_stream = "./public/demo.ts"
+port = 1234

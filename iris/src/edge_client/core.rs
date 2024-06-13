@@ -115,12 +115,12 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
 
     // Spawn Client Report Thread
 
-    let client_report_handler = thread::spawn(move || {
+    // let client_report_handler = thread::spawn(move || {
 
-        let mut client_report = session::report::ClientReport::new();
-        client_report.start_report_client().unwrap();
+    //     let mut client_report = session::report::ClientReport::new();
+    //     client_report.start_report_client().unwrap();
 
-    });
+    // });
 
 
     // Spawn a separate thread for joining and returning the sender
@@ -128,7 +128,7 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
         // Join all the threads to ensure they complete before returning
         listener_handler.join().expect("listener_handler panicked");
         matrix_decoder_handler.join().expect("matrix_decoder_handler panicked");
-        client_report_handler.join().expect("client_report_handler panicked");
+        // client_report_handler.join().expect("client_report_handler panicked");
     });
 
     Ok(decoded_data_receiver)

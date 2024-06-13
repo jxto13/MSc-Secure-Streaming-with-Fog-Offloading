@@ -9,41 +9,191 @@ fn insert_value<T>(matrix: &mut Vec<Vec<T>>, position: usize, matrix_size: usize
      }
 }
 
+
 #[cfg(test)]
 mod tests {
-
+    
+    
+    
     #[test]
-    fn serialize_and_deserialize_data_packet(){
+    fn test_reed_solomon() {
+        use reed_solomon_16::{ReedSolomonDecoder, ReedSolomonEncoder};
+        
         // use prost instead of tonic custom trait implementation
         use prost::Message;
+        use grid::Grid as Matrix;
+
+        use std::sync::mpsc;
+        use std::thread;
 
         // Import protobuff for testing
         mod proto {
             tonic::include_proto!("streaming_server");
         }
+        
+        const ROW : usize = 3;
+        const COL : usize = 4;
 
-        // Create a DataPacket instance
-        let original_video_frame = proto::DataPacket {
-            matrix: 1,
-            index: 2,
-            width: 3,
-            height: 3,
-            fec: false,
-            data: b"sample_data".to_vec(), // Example byte array
-        };
+        const ROW_FEC : usize = 2;
+        const COL_FEC : usize = 1;
 
-        // Serialize using prost
-        let mut serialized_video_frame = Vec::new();
-        Message::encode(&original_video_frame, &mut serialized_video_frame).unwrap_or_else(|error| {
-            eprintln!("Error: {}", error);
+        const SHARD_SIZE : usize = 64;
+
+        // This is the matrix we will save globally
+        let mut matrix: Matrix<Vec<u8>> = Matrix::new(0, 0);
+
+        let data = b"hello data".to_vec();
+
+        for _ in 0..ROW {
+            let mut row : Vec<Vec<u8>> = vec![vec![0; SHARD_SIZE]; COL];
+
+            for j in 0..COL {
+                // Replace row index with encoded data 
+                row[j][0..data.len()].copy_from_slice(&data);
+            }
+            matrix.push_row(row);
+        }
+
+        println!("{:?}", matrix.size());
+
+        // Create transmittion matrix
+
+        let mut row_encoder = ReedSolomonEncoder::new(
+            COL, // total number of col, witch gives the length of row
+            ROW_FEC, // total number of row recovery shards
+            SHARD_SIZE, // shard size in bytes
+        ).unwrap();
+
+        let mut col_encoder = ReedSolomonEncoder::new(
+            ROW, // total number of col, witch gives the length of row
+            COL_FEC, // total number of row recovery shards
+            SHARD_SIZE, // shard size in bytes
+        ).unwrap();
+
+
+        let mut trasmition_matrix: Matrix<proto::TransmitionPacket> = Matrix::new(0, 0);
+
+        let mut matrix_counter = 0;
+        let mut matrix_index = 0;
+
+        for rows in matrix.iter_rows() {
+
+            let mut row: Vec<proto::TransmitionPacket> = Vec::new();
+
+            for (item_index, item) in rows.enumerate() {
+
+                // All this packets are DataPackets 
+                row.push(proto::TransmitionPacket {
+                    matrix: matrix_counter,
+                    index: matrix_index,
+                    rows: (ROW + COL_FEC) as i32,
+                    cols: (COL + ROW_FEC) as i32,
+                    item_type: vec![
+                        proto::ItemType{ 
+                            code: 2, // its data packet
+                            index: item_index as i32 // index of the shard in the row
+                        }],
+                    payload: item.to_vec(), // copy data to TransmitionPacket
+                });
+
+                row_encoder.add_original_shard(item).unwrap();
+                matrix_index += 1;
+            }
+
+            // Create FEC Shards for the ROW
+            let result = row_encoder.encode().unwrap();
+
+            for (item_index, item) in result.recovery_iter().enumerate() {
+
+                // create TransmitionPacket with FEC
+                row.push(proto::TransmitionPacket {
+                    matrix: matrix_counter,
+                    index: matrix_index,
+                    rows: (ROW + COL_FEC) as i32,
+                    cols: (COL + ROW_FEC) as i32,
+                    item_type: vec![
+                        proto::ItemType{ 
+                            code: 0, // its row FEC packet
+                            index: item_index as i32 // index of the shard in the row
+                        }],
+                    payload: item.to_vec(), // copy data to TransmitionPacket
+                });
+                matrix_index += 1;
+            }
+            trasmition_matrix.push_row(row);
+        }
+
+        // Add COL_FEC as empty rows
+        for _ in 0..COL_FEC {
+            trasmition_matrix.push_row(vec![proto::TransmitionPacket { matrix: 0, index: 0, rows: 0 , cols: 0, item_type: vec![proto::ItemType { code: 0, index: 0 };0],  payload: vec![0;0]} ; COL + ROW_FEC]);
+        }
+
+        let column_data: Vec<Vec<proto::TransmitionPacket>> = trasmition_matrix.iter_cols().map(|col| col.cloned().collect()).collect();
+
+        // Iterate over collumns of trasmition matrix to update the extra FEC info 
+        for (col_index, col) in column_data.iter().enumerate() {
+            
+            for item in col.iter().take(ROW) {
+                // update col paridy index
+                col_encoder.add_original_shard(&item.payload.to_vec()).unwrap();
+            }
+
+            // Create FEC Shards for the ROW
+            let result = col_encoder.encode().unwrap();
+
+            for (item_index, item) in result.recovery_iter().enumerate() {
+                // create TransmitionPacket with FEC
+                trasmition_matrix[(ROW + item_index, col_index)] = proto::TransmitionPacket {
+                    matrix: matrix_counter,
+                    index: ((ROW + item_index) * (COL + ROW_FEC) + col_index) as i32 ,                    
+                    rows: (ROW + COL_FEC) as i32,
+                    cols: (COL + ROW_FEC) as i32,
+                    item_type: vec![
+                        proto::ItemType{ 
+                            code: 1, // its col FEC packet
+                            index: item_index as i32 // index of the shard in the row
+                        }],
+                    payload: item.to_vec(), // copy data to TransmitionPacket
+                };             
+                matrix_counter += 1;
+   
+            }
+        }
+        
+        for (row_index, row) in trasmition_matrix.iter_rows().enumerate(){
+            for (col_index, col) in trasmition_matrix.iter_cols().enumerate() {
+                println!("({:?}, {:?}) = {:?}", row_index, col_index, trasmition_matrix[(row_index, col_index)].index);
+            }
+        }
+        println!("{:?}", trasmition_matrix.size());
+
+        // Channel for communication between threads
+        let (tx, rx) = mpsc::channel();
+
+        // Sender thread
+        let sender = thread::spawn(move || {
+            for row in trasmition_matrix.iter_rows() {
+                for packet in row {
+                    let mut buf = Vec::new();
+                    packet.encode(&mut buf).unwrap();
+                    tx.send(buf).unwrap();
+                }
+            }
         });
-        
-        // Deserialize the bytes back into a DataPacket
-        let deserialized_video_frame = proto::DataPacket::decode(&serialized_video_frame[..]).unwrap();
-        
-        // Assert that the deserialized DataPacket matches the original one
-        assert_eq!(original_video_frame, deserialized_video_frame);
+
+        // Receiver thread
+        let receiver = thread::spawn(move || {
+            while let Ok(received) = rx.recv() {
+                let packet = proto::TransmitionPacket::decode(&*received).unwrap();
+                println!("Received packet: {:?}", packet);
+            }
+        });
+
+        sender.join().unwrap();
+        receiver.join().unwrap();
+
     }
+
 
     #[test]
     fn reed_solomon_16_default() {

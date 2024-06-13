@@ -21,6 +21,13 @@ rayon = "1.10"
 crossbeam-channel = "0.5.13"
 crossbeam-queue = "0.3.11"
 
+serde = { version = "1.0", features = ["derive"] }
+toml = "0.8.13"
+clap = "4.5.4"
+fern = "0.6.2"
+chrono = "0.4.38"
+rand = "0.8.5"
+
 # This compiles openssl for android using NDK
 [target.'cfg(target_os = "android")'.dependencies]
 openssl = { version = "0.10.64", features = ["vendored"] }
