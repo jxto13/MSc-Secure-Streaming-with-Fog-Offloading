@@ -1,5 +1,4 @@
-use crossbeam_channel::{bounded, unbounded, Receiver};
-use std::process::Command;
+use crossbeam_channel::{unbounded, Receiver};
 
 use std::sync::{Arc, Barrier};
 use std::thread;
@@ -13,7 +12,6 @@ use proto::certificate_service_client::CertificateServiceClient;
 use proto::Data;
 use proto::{CertificateRequest, SignedCertificateRequest};
 
-use proto::FILE_DESCRIPTOR_SET;
 use tokio::runtime::Runtime;
 use tokio::task;
 
@@ -22,20 +20,11 @@ use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
 use log::{debug, error, info, log_enabled, Level};
 
-use super::decoder;
+use super::{decoder, proto};
 use super::receiver;
 use super::session;
 
 pub const GRPC_SERVICE_PORT: u16 = 50052;
-
-// Global variables
-pub mod proto {
-    tonic::include_proto!("streaming_server");
-    tonic::include_proto!("edge_client");
-
-    pub(crate) const FILE_DESCRIPTOR_SET: &[u8] =
-        tonic::include_file_descriptor_set!("edge_client_descriptor");
-}
 
 pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     // // Connect to the server
@@ -105,8 +94,9 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     // Clone the Barrier for the decoder thread
     let decoder_barrier = Arc::clone(&barrier);
 
-    let matrix_decoder_handler = thread::spawn(move || {
-        // Wait at the barrier before starting the decoder
+    // dont need handler because when the listener goes out of scope, i want the decoder to also go out of scoupe
+    thread::spawn(move || {
+        // Wait for the listener multicast with a barrier before starting the decoder
         decoder_barrier.wait();
         if let Err(e) = decoder::start(matrix_decoder_receiver, decoded_data_sender) {
             error!("Matrix decoder failed to start: {}", e);
@@ -127,7 +117,6 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     thread::spawn(move || {
         // Join all the threads to ensure they complete before returning
         listener_handler.join().expect("listener_handler panicked");
-        matrix_decoder_handler.join().expect("matrix_decoder_handler panicked");
         // client_report_handler.join().expect("client_report_handler panicked");
     });
 

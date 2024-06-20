@@ -38,7 +38,7 @@ impl BandwidthMonitor {
         if elapsed >= Duration::from_secs(1) {
             let bitrate_mbps = (self.total_bytes as f64 * 8.0) / 1_000_000.0 / elapsed.as_secs_f64();
             let pps = self.packet_count as f64 / elapsed.as_secs_f64();
-            info!("Bitrate: {:.2} Mbps, Packets per second: {:.2} pps, Total packets received: {}", bitrate_mbps, pps, self.total_packets_received);
+            info!("Bitrate: {:.6} Mbit/s, Packets per second: {:.2} pps, Total packets received: {}", bitrate_mbps, pps, self.total_packets_received);
 
             // Reset counters
             self.total_bytes = 0;
@@ -108,7 +108,9 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>, barrier: Arc<Bar
         }
 
         // Report bandwidth metrics
-        bandwidth_monitor.report();
+        if bandwidth_monitor.total_packets_received != 0 && bandwidth_monitor.total_bytes != 0 {
+            bandwidth_monitor.report();
+        }
 
         // Process each event.
         for event in events.iter() {

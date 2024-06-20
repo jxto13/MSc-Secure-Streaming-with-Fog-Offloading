@@ -17,3 +17,4 @@ Cargo.lock
 .git-old
 
 config.toml
+public/file_path

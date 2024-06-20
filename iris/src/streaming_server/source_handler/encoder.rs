@@ -1,11 +1,15 @@
-use crate::proto::{IrisPacket, TransmitionPacket, ItemType};
-use crossbeam_channel::{Receiver, Sender};
-use log::{error, info};
-use prost::Message;
-use grid::Grid as Matrix;
-use reed_solomon_16::{ReedSolomonDecoder, ReedSolomonEncoder};
+use crate::proto::{IrisPacket, TransmitionPacket};
 
-use std::time::Instant;
+use crossbeam_channel::{Receiver, Sender};
+use rand::Rng;
+use reed_solomon_16::ReedSolomonEncoder;
+use grid::Grid as Matrix;
+use prost::Message;
+
+use std::{fmt::format, fs::{File, OpenOptions}, time::Instant};
+use std::io::Write;
+
+use log::{error, info};
 
 pub const ROW: usize = 6;
 pub const COL: usize = 6;
@@ -44,25 +48,19 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         for rows in matrix.iter_rows() {
             let mut row: Vec<TransmitionPacket> = Vec::new();
 
-            for (item_index, item) in rows.enumerate() {
+            for item in rows {
                 let packet = TransmitionPacket {
                     matrix: matrix_counter,
                     index: matrix_index as i32,
-                    rows: (ROW + COL_FEC) as i32,
-                    cols: (COL + ROW_FEC) as i32,
-                    item_type: vec![
-                        ItemType {
-                            code: 2, // its data packet
-                            index: item_index as i32 // index of the shard in the row
-                        }],
-                    payload: item.to_vec(), // copy data to TransmitionPacket
+                    rows: ROW as i32,
+                    cols: COL as i32,
+                    rows_fec: ROW_FEC as i32,
+                    cols_fec: COL_FEC as i32,
+                    fec: false,
+                    payload: item.to_vec(), // copy data to TransmitionPacket, this will be VideoData encrypted
                 };
 
-                // Serialize Data
-                let mut serialized_data = Vec::new();
-                Message::encode(&packet, &mut serialized_data).unwrap_or_else(|error| {
-                    eprintln!("Error: {}", error);
-                });
+                let mut serialized_data = packet.encode_length_delimited_to_vec();
 
                 // Pad the serialized data to SHARD_SIZE len
                 serialized_data.resize(SHARD_SIZE, 0);
@@ -76,30 +74,20 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
             // Create FEC Shards for the ROW
             let result = row_encoder.encode().unwrap();
 
-            for (item_index, item) in result.recovery_iter().enumerate() {
+            for item in result.recovery_iter() {
                 let packet = TransmitionPacket {
                     matrix: matrix_counter,
                     index: matrix_index,
-                    rows: (ROW + COL_FEC) as i32,
-                    cols: (COL + ROW_FEC) as i32,
-                    item_type: vec![
-                        ItemType {
-                            code: 0, // its row FEC packet
-                            index: item_index as i32 // index of the shard in the row
-                        }],
+                    rows: ROW as i32,
+                    cols: COL as i32,
+                    rows_fec: ROW_FEC as i32,
+                    cols_fec: COL_FEC as i32,
+                    fec: true,
                     payload: item.to_vec(), // copy data to TransmitionPacket
                 };
 
-                // Serialize Data
-                let mut serialized_data = Vec::new();
-                Message::encode(&packet, &mut serialized_data).unwrap_or_else(|error| {
-                    eprintln!("Error: {}", error);
-                });
-
-                // Pad the serialized data to SHARD_SIZE len
-                serialized_data.resize(SHARD_SIZE, 0);
-
                 row.push(packet);
+
                 matrix_index += 1;
             }
             transmission_matrix.push_row(row);
@@ -112,7 +100,9 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                 index: 0,
                 rows: 0,
                 cols: 0,
-                item_type: vec![ItemType { code: 0, index: 0 }; 0],
+                rows_fec: 0,
+                cols_fec: 0,
+                fec: false,
                 payload: vec![0; 0]
             }; COL + ROW_FEC]);
         }
@@ -122,11 +112,12 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         // Iterate over columns of transmission matrix to update the extra FEC info
         for (col_index, col) in column_data.iter().enumerate() {
             for item in col.iter().take(ROW) {
-                // Serialize Data
-                let mut serialized_data = Vec::new();
-                Message::encode(item, &mut serialized_data).unwrap_or_else(|error| {
-                    eprintln!("Error: {}", error);
-                });
+
+                let mut serialized_data = item.encode_length_delimited_to_vec();
+
+                if serialized_data.len() > 256 {
+                    info!("col_index: {}, index: {}, length: {}",col_index, item.index, serialized_data.len());
+                }
 
                 // Pad the serialized data to SHARD_SIZE len
                 serialized_data.resize(SHARD_SIZE, 0);
@@ -142,24 +133,13 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                 let packet = TransmitionPacket {
                     matrix: matrix_counter,
                     index: ((ROW + item_index) * (COL + ROW_FEC) + col_index) as i32,
-                    rows: (ROW + COL_FEC) as i32,
-                    cols: (COL + ROW_FEC) as i32,
-                    item_type: vec![
-                        ItemType {
-                            code: 1, // its col FEC packet
-                            index: item_index as i32 // index of the shard in the row
-                        }],
+                    rows: ROW as i32,
+                    cols: COL as i32,
+                    rows_fec: ROW_FEC as i32,
+                    cols_fec: COL_FEC as i32,
+                    fec: true,
                     payload: item.to_vec(), // copy data to TransmitionPacket
                 };
-
-                // Serialize Data
-                let mut serialized_data = Vec::new();
-                Message::encode(&packet, &mut serialized_data).unwrap_or_else(|error| {
-                    eprintln!("Error: {}", error);
-                });
-
-                // Pad the serialized data to SHARD_SIZE len
-                serialized_data.resize(SHARD_SIZE, 0);
 
                 transmission_matrix[(ROW + item_index, col_index)] = packet;
             }
@@ -167,6 +147,10 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
         matrix_counter += 1;
 
+        // Define the packet loss percentage
+        const PACKET_LOSS_PERCENTAGE: f64 = 2.0; // 2% packet loss
+
+        // Group the TransmitionPacket to create a IrisPacket with a number of bytes close to MTU
         let mut group = Vec::new();
         for item in transmission_matrix.iter() {
 
@@ -189,10 +173,18 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                     eprintln!("Error: {}", error);
                 });
 
-                // Send the buffer
-                tx.send(iris_serialized_data).unwrap_or_else(|e| {
-                    error!("error sending data {:?}", e);
-                });
+                // // Send the buffer
+                // tx.send(iris_serialized_data).unwrap_or_else(|e| {
+                //     error!("error sending data {:?}", e);
+                // });
+                
+                // Simulate packet loss
+                if rand::thread_rng().gen::<f64>() * 100.0 >= PACKET_LOSS_PERCENTAGE {
+                    // Send the buffer
+                    tx.send(iris_serialized_data).unwrap_or_else(|e| {
+                        error!("error sending data {:?}", e);
+                    });
+                }
 
                 group.clear();
             }
@@ -211,16 +203,25 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                 eprintln!("Error: {}", error);
             });
 
-            // Send the buffer
-            tx.send(iris_serialized_data).unwrap_or_else(|e| {
-                error!("error sending data {:?}", e);
-            });
+            // // Send the buffer
+            // tx.send(iris_serialized_data).unwrap_or_else(|e| {
+            //     error!("error sending data {:?}", e);
+            // });
+            
+            // Simulate packet loss
+            if rand::thread_rng().gen::<f64>() * 100.0 >= PACKET_LOSS_PERCENTAGE {
+                // Send the buffer
+                tx.send(iris_serialized_data).unwrap_or_else(|e| {
+                    error!("error sending data {:?}", e);
+                });
+            }
         }
+        
     }
-    info!("Transmission Matrix Index = {:?}", matrix_counter);
+    info!("Last Transmission Matrix Index = {:?}", matrix_counter);
 
     let end_time = Instant::now();
     let duration = end_time.duration_since(start_time);
 
-    info!("Time taken: {:?}", duration);
+    info!("Time taken to encode and send the data to multicast sender: {:?}", duration);
 }

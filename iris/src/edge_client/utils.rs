@@ -11,7 +11,7 @@ use openssl::x509::extension::{
 };
 use openssl::x509::{X509NameBuilder, X509Ref, X509Req, X509ReqBuilder, X509VerifyResult, X509};
 
-use crate::edge_client::core::proto;
+use crate::edge_client::proto;
 
 /// Make a X509 request with the given private key
 pub fn mk_request(key_pair: &PKey<Private>) -> Result<X509Req, ErrorStack> {

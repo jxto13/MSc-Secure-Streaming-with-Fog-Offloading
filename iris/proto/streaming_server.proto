@@ -25,15 +25,10 @@ message CertificateResponse {
 
 // ----------------------------------------------------------------------------------------------------------- //
 
+// This will be the payload of TransmitionPacket
 message VideoData {
     bytes data = 1;
     // bytes signature = 2;
-}
-
-message ItemType {
-    /// Type of FEC, 0 = ROW | 1 = COL | 2 = Data
-    int32 code = 1;
-    int32 index = 2;
 }
 
 message TransmitionPacket {
@@ -41,8 +36,10 @@ message TransmitionPacket {
     int32 index = 2;
     int32 rows = 3;
     int32 cols = 4;
-    repeated ItemType item_type = 5;
-    bytes payload = 6;
+    bool fec = 5;
+    int32 rows_fec = 7;
+    int32 cols_fec = 8;
+    bytes payload = 9; // this payload is encrypted
 }
 
 // Multicast UDP Packet

@@ -2,60 +2,25 @@ mod crypto;
 mod network_scheduler;
 mod source_handler;
 
-use std::process::Stdio;
-use std::io::BufRead;
-use std::io::BufReader;
-use std::io::ErrorKind;
-use std::sync::Arc;
-use std::sync::Mutex;
-use std::fs;
 use std::thread;
 use std::path::PathBuf;
 
 // Standard
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use crossbeam_channel::unbounded;
+use iris::streaming_server::proto::{self, FILE_DESCRIPTOR_SET};
 use log::info;
-use mio::unix::pipe;
-use network_scheduler::pipeline;
-use network_scheduler::wifi_multicast;
-use network_scheduler::wifi_multicast::WiFiMulticast;
 use source_handler::data_handler::{DataHandler,DataSource};
-use serde::Deserialize;
 
-use proto::FILE_DESCRIPTOR_SET;
 use tonic::transport::{Identity, Server, ServerTlsConfig};
 use tokio::runtime::Runtime;
 
+use iris::streaming_server::read_config;
+
 // Custom
 use network_scheduler::pipeline::Pipeline;
-use clap::{arg, command, Command};
+use clap::{arg, Command};
 
-// Import protobuff
-pub mod proto {
-    tonic::include_proto!("streaming_server");
 
-    pub(crate) const FILE_DESCRIPTOR_SET: &[u8] =
-        tonic::include_file_descriptor_set!("streaming_server_descriptor");
-}
-
-#[derive(Deserialize)]
-struct Config {
-    grpc_service_port: u16,
-    multicast_ip: String,
-    sessions: Vec<SessionConfig>,
-}
-
-#[derive(Deserialize)]
-struct SessionConfig {
-    url_stream: String,
-    port: u16,
-}
-
-fn read_config(filename: &str) -> Result<Config, Box<dyn std::error::Error>> {
-    let config_content = fs::read_to_string(filename)?;
-    let config: Config = toml::from_str(&config_content)?;
-    Ok(config)
-}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Define the command structure
