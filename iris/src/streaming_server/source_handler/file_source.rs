@@ -4,7 +4,7 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use grid::Grid as Matrix;
 
-const DATA_SIZE: usize = 188;
+const DATA_SIZE: usize = 256;
 const ROW: usize = 6;
 const COL: usize = 6;
 

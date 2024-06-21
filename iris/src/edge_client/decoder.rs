@@ -1,9 +1,12 @@
 use std::collections::HashSet;
 use std::error::Error;
+use std::fs::OpenOptions;
 use std::sync::{Arc, Mutex};
-
+use std::io::Write;
 use crossbeam_channel::{Receiver, Sender};
 use log::{debug, error, info};
+use mpeg2ts::pes::{PesPacketReader, ReadPesPacket};
+use mpeg2ts::ts::{ReadTsPacket, TsPacketReader, TsPacketWriter, WriteTsPacket};
 use prost::Message;
 
 use crate::edge_client::proto::{IrisPacket, TransmitionPacket};
@@ -59,6 +62,14 @@ impl MatrixTracker {
             .collect()
     }
 
+    fn update_indexes(&mut self, list_index: &[i32]) {
+        for &index in list_index {
+            // info!("recovered - {}", index);
+            self.received_indexes.insert(index);
+        }
+    }
+    
+
     // Groups the indexes by row and collumn to apply FEC decoder
     fn group_missing_indexes(&self) -> (Vec<Vec<i32>>, Vec<Vec<i32>>) {
         let mut rows: Vec<Vec<i32>> = vec![Vec::new(); self.rows as usize];
@@ -74,28 +85,18 @@ impl MatrixTracker {
         (rows, cols)
     }
 
-    fn remove_restored_indexes(&self, rows: &mut Vec<Vec<i32>>, cols: &mut Vec<Vec<i32>>, indexes: Vec<i32>) {
-        
-        for &index in indexes.iter() {
-            let row = index / self.cols;
-            let col = index % self.cols;
-    
-            if let Some(pos) = rows[row as usize].iter().position(|&x| x == index) {
-                rows[row as usize].remove(pos);
-            }
-    
-            if let Some(pos) = cols[col as usize].iter().position(|&x| x == index) {
-                cols[col as usize].remove(pos);
-            }
+    fn remove_index(&self, rows: &mut Vec<Vec<i32>>, cols: &mut Vec<Vec<i32>>, index: i32) {
+        let row = index / self.cols;
+        let col = index % self.cols;
+
+        // Remove the index from the specified row in rows vector
+        if let Some(pos) = rows[row as usize].iter().position(|&x| x == index) {
+            rows[row as usize].remove(pos);
         }
-    }
 
-    fn update_with_restored_packets(&mut self, restored_packets: Vec<TransmitionPacket>) {
-        let mut indexes_restored = Vec::new();
-
-        for packet in restored_packets {
-            indexes_restored.push(packet.index);
-            self.add_packet(packet);
+        // Remove the index from the specified column in cols vector
+        if let Some(pos) = cols[col as usize].iter().position(|&x| x == index) {
+            cols[col as usize].remove(pos);
         }
     }
 
@@ -121,215 +122,175 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>) -
                     if let Some(ref mut tracker) = *tracker_guard {
                         if tracker.matrix_index != packet.matrix {
 
-                            // if tracker.matrix_index == 0 {
-                            //     info!("{:?}", tracker.matrix);
-                            //     let mut original_shards = Vec::new();
-                            //     let mut recovery_shards = Vec::new();
-
-                            //     let original_index = [0,1,3,4];
-                            //     let recovery_index = [6,8];
-
-                            //     // get first row and simulate packet lost
-                            //     for (index, item) in tracker.matrix.iter_row(0).enumerate() {
-
-                            //         if original_index.contains(&index){
-                            //             // Serialize Data
-                            //             // let mut serialized_data = Vec::new();
-                            //             let mut serialized_data = item.encode_length_delimited_to_vec();
-                                        
-                            //             // let mut serialized_data = item.encode_length_delimited_to_vec();
-                            //             // let size_option = serialized_data.get(0..2);
-                            //             // let size = match size_option {
-                            //             //     Some(size_in_bytes) => {
-                                                
-                            //             //     },
-                            //             //     None => error!("array dosnt have 2 elements"),
-                            //             // };
-                            //             info!("serialized_data - {}",   serialized_data.len());
-                            //             serialized_data.resize(SHARD_SIZE, 0);
-                                        
-                            //             original_shards.push((index, serialized_data))
-                            //         }
-
-                            //         if recovery_index.contains(&index){
-                            //             recovery_shards.push((index - 6, item.payload.clone()));
-                            //         }
-                            //     }
-
-                            //     match reed_solomon_16::decode(
-                            //         tracker.cols as usize - tracker.rows_fec as usize, // total number of original shards
-                            //         tracker.rows_fec as usize, // total number of recovery shards
-                            //         original_shards,
-                            //         recovery_shards,
-                            //     ) {
-                            //         Ok(recovered) => {
-                            //             for item in recovered {
-
-                            //                 info!("recovered: {} - {:?}",item.0, item.1);
-
-                            //                 match TransmitionPacket::decode_length_delimited(&*item.1) {
-                            //                     Ok(packet) => {
-                            //                         info!("recovered: {:?}",packet);
-                                                    
-                            //                     },
-                            //                     Err(err) => {
-                            //                         error!("Error decoding packet: {}", err);
-                            //                     }
-                            //                 };
-                            //             }
-                            //         },
-                            //         Err(err) => error!("{}",err),
-                            //     };
-                            // }
-
                             // Check for missing packets
                             if !tracker.is_complete()  {
                                 // Record the start time
                                 let start = std::time::Instant::now();
-
                                 
-                                // this can be optimized 
-                                let missing_indexes = tracker.missing_indexes();
-                                error!("Missing indexes from matrix {}: {:?}", tracker.matrix_index, missing_indexes);
+                                for iteration in 0..2 {
+                                    // info!("iteration number - {}", iteration);
 
-                                // this can be optimized 
-                                let (missing_rows, missing_cols) = tracker.group_missing_indexes();
+                                    // this can be optimized 
+                                    let missing_indexes = tracker.missing_indexes();
+                                    // error!("Missing indexes from matrix {}: {:?}", tracker.matrix_index, missing_indexes);
 
-                                // Handle missing indexes in the same column
-                                for col in missing_cols {
-                                    if col.len() >= 1 {
-                                        info!("Missing indexes in the same column: {:?}", col);
+                                    // this can be optimized 
+                                    let (mut missing_rows, mut missing_cols) = tracker.group_missing_indexes();
 
-                                        let mut original_shards = Vec::new();
-                                        let mut recovery_shards = Vec::new();
+                                    let mut recoverd_indexes = Vec::new();
+                                    // Handle missing indexes in the same column
+                                    for col in missing_cols.iter() {
+                                        if col.len() >= 1 {
+                                            // info!("Missing indexes in the same column: {:?}", col);
 
-                                        for (col_position, item) in tracker.matrix.iter_col(col[0] as usize % tracker.cols as usize).enumerate() {
-                                            // if index is not in missing array and its not an empty packet (len of payload is not 0)
-                                            if !col.contains(&item.index) && item.payload.len() != 0 {
+                                            let mut original_shards = Vec::new();
+                                            let mut recovery_shards = Vec::new();
 
-                                                // if less the data row length is an original shard
-                                                if item.index / tracker.cols < (tracker.rows - tracker.cols_fec) {
-                                                    // info!("col_position = {}, original_shard = {:?}", col_position, item);
+                                            for (col_position, item) in tracker.matrix.iter_col(col[0] as usize % tracker.cols as usize).enumerate() {
+                                                // if index is not in missing array and its not an empty packet (len of payload is not 0)
+                                                if !col.contains(&item.index) && item.payload.len() != 0 {
 
-                                                    let mut serialized_data = item.encode_length_delimited_to_vec();
+                                                    // if less the data row length is an original shard
+                                                    if item.index / tracker.cols < (tracker.rows - tracker.cols_fec) {
+                                                        original_shards.push((col_position, item.payload.clone()));
+                                                    }
 
-                                                    // Pad the serialized data to SHARD_SIZE len
-                                                    serialized_data.resize(SHARD_SIZE, 0);
-
-                                                    original_shards.push((col_position, serialized_data));
-                                                }
-
-                                                // if index is not in missing array and is larger then data row length is a recovery shard
-                                                if item.index / tracker.cols >= (tracker.rows - tracker.cols_fec) {
-                                                    // info!("position = {}, recovery_shard = {:?}", col_position % (tracker.rows - tracker.cols_fec) as usize, item.payload);
-
-                                                    recovery_shards.push((col_position % (tracker.rows - tracker.cols_fec) as usize, item.payload.clone()));
+                                                    // if index is not in missing array and is larger then data row length is a recovery shard
+                                                    if item.index / tracker.cols >= (tracker.rows - tracker.cols_fec) {
+                                                        recovery_shards.push((col_position % (tracker.rows - tracker.cols_fec) as usize, item.payload.clone()));
+                                                    }
                                                 }
                                             }
+
+                                            match reed_solomon_16::decode(
+                                                tracker.rows as usize - tracker.cols_fec as usize, // total number of original shards
+                                                tracker.cols_fec as usize, // total number of recovery shards
+                                                original_shards,
+                                                recovery_shards,
+                                            ) {
+                                                Ok(recovered) => {
+                                                    let col_index = col[0] as usize % tracker.cols as usize;
+
+                                                    for (col_enumerator, item) in tracker.matrix.iter_col_mut(col_index).enumerate() {
+                                                        if let Some(value) = recovered.get(&col_enumerator) {
+
+                                                            let packet_index = col_index as i32 + tracker.cols * col_enumerator as i32;
+
+                                                            // Update Matrix with the recovered data value
+                                                            item.matrix = tracker.matrix_index;
+                                                            item.index = packet_index;
+                                                            item.rows = tracker.rows - tracker.cols_fec;
+                                                            item.cols = tracker.cols - tracker.rows_fec;
+                                                            item.rows_fec = tracker.rows_fec;
+                                                            item.cols_fec = tracker.cols_fec;
+                                                            item.fec = false;
+                                                            item.payload = value.clone();
+
+                                                            // Update tracker for missing indexes
+                                                            recoverd_indexes.push(packet_index);
+
+                                                            // info!("col - The value for {} is {:?}", col_index as i32 + tracker.cols * col_enumerator as i32, value);
+                                                        } 
+                                                    }
+                                                    tracker.update_indexes(&recoverd_indexes);
+
+                                                   
+
+                                                },
+                                                Err(err) => {
+                                                    // error!("{}", err);
+                                                },
+                                            };
                                         }
-
-                                        match reed_solomon_16::decode(
-                                            tracker.rows as usize - tracker.cols_fec as usize, // total number of original shards
-                                            tracker.cols_fec as usize, // total number of recovery shards
-                                            original_shards,
-                                            recovery_shards,
-                                        ) {
-                                            Ok(recovered) => {
-                                                for (index, item) in recovered {
-                                                    
-                                                    match TransmitionPacket::decode_length_delimited(&*item) {
-                                                        Ok(packet) => {
-                                                            info!("recovered: {:?}", packet);
-                                                        },
-                                                        Err(err) => {
-                                                            error!("Error decoding packet index {}: {}", index, err);
-                                                        }
-                                                    };
-                                                }
-                                            },
-                                            Err(err) => error!("{}", err),
-                                        };
                                     }
-                                }
 
-                                // Handle missing indexes in the same row
-                                for row in missing_rows {
-                                    if row.len() >= 1 {
-                                        info!("Missing indexes in the same row: {:?}", row);
+                                    for index in recoverd_indexes  {
+                                        tracker.remove_index(&mut missing_rows, &mut missing_cols, index);
+                                    }
 
-                                        let mut original_shards =  Vec::new();
-                                        let mut recovery_shards = Vec::new();
+                                    // Handle missing indexes in the same row
+                                    for row in missing_rows.iter() {
+                                        if row.len() >= 1 {
+                                            // info!("Missing indexes in the same row: {:?}", row);
 
-                                        for (row_position, item) in tracker.matrix.iter_row(row[0] as usize / tracker.cols as usize).enumerate() {
+                                            let mut original_shards =  Vec::new();
+                                            let mut recovery_shards = Vec::new();
 
-                                            // if index is not in missing array and its not an empty packet (len of payload is not 0)
-                                            if !row.contains(&item.index) && item.payload.len() != 0 {
+                                            for (row_position, item) in tracker.matrix.iter_row(row[0] as usize / tracker.cols as usize).enumerate() {
 
-                                                // info!("row = {:?}, &item.index = {}, row.contains(&item.index) = {}", row, &item.index, row.contains(&item.index));
-                                                // if less the data row length is an original shard
-                                                if item.index % tracker.cols < (tracker.cols - tracker.rows_fec) {
-                                                    // info!("row_position = {}, original_shard = {:?}", row_position, item);
-                                                    
-                                                    // Serialize Data
-                                                    // let mut serialized_data = Vec::new();
-                                                    // Message::encode(item, &mut serialized_data).unwrap_or_else(|error| {
-                                                    //     eprintln!("Error: {}", error);
-                                                    // });
+                                                // if index is not in missing array and its not an empty packet (len of payload is not 0)
+                                                if !row.contains(&item.index) && item.payload.len() != 0 {
 
-                                                    let mut serialized_data = item.encode_length_delimited_to_vec();
-                                                    
+                                                    // if less the data row length is an original shard
+                                                    if item.index % tracker.cols < (tracker.cols - tracker.rows_fec) {
+                                                        original_shards.push((row_position, item.payload.clone()));
+                                                    }
 
-                                                    // Pad the serialized data to SHARD_SIZE len
-                                                    serialized_data.resize(SHARD_SIZE, 0);
-
-                                                    original_shards.push((row_position, serialized_data));
+                                                    // if index is not in missing array and is larger then data row length is an recovery shard
+                                                    if item.index % tracker.cols >= (tracker.cols - tracker.rows_fec) {    
+                                                        // The recovery shard is fully inside payload of Packet, this way it recovers the original packet
+                                                        recovery_shards.push((row_position % (tracker.cols - tracker.rows_fec) as usize, item.payload.clone()));
+                                                    }
                                                 }
-
-                                                // if index is not in missing array and is larger then data row length is an recovery shard
-                                                if item.index % tracker.cols >= (tracker.cols - tracker.rows_fec) {
-                                                    // info!("position = {}, recovery_shard = {:?}", row_position % (tracker.cols - tracker.rows_fec) as usize, item.payload);
-    
-                                                    // The recovery shard is fully inside payload of Packet, this way it recovers the original packet
-                                                    recovery_shards.push((row_position % (tracker.cols - tracker.rows_fec) as usize, item.payload.clone()));
-                                                }
+                                                
                                             }
                                             
-                                            // debug!("original = {:?}, recovery = {:?}", original_shards, recovery_shards);
-                                            // info!("row = {}, item = {:?}", row_position, item);
+                                            match reed_solomon_16::decode(
+                                                tracker.cols as usize - tracker.rows_fec as usize, // total number of original shards
+                                                tracker.rows_fec as usize, // total number of recovery shards
+                                                original_shards,
+                                                recovery_shards,
+                                            ) {
+                                                Ok(recovered) => {
+                                                    let row_index = row[0] as usize / tracker.cols as usize;
+                                                    let mut recoverd_indexes = Vec::new();
+
+                                                    for (row_enumerator, item) in tracker.matrix.iter_row_mut(row_index).enumerate() {
+                                                        if let Some(value) = recovered.get(&row_enumerator) {
+
+                                                            let packet_index = row_index as i32 * tracker.cols + row_enumerator as i32;
+                                                            // Update Matrix with the recovered data value
+                                                            item.matrix = tracker.matrix_index;
+                                                            item.index = packet_index;
+                                                            item.rows = tracker.rows - tracker.cols_fec;
+                                                            item.cols = tracker.cols - tracker.rows_fec;
+                                                            item.rows_fec = tracker.rows_fec;
+                                                            item.cols_fec = tracker.cols_fec;
+                                                            item.fec = false;
+                                                            item.payload = value.clone();
+
+                                                            // Update tracker for missing indexes
+                                                            recoverd_indexes.push(packet_index);
+
+                                                            // info!("row - The value for {} is {:?}",row_index as i32 * tracker.cols + row_enumerator as i32, value);
+                                                        } 
+                                                    }
+
+                                                    tracker.update_indexes(&recoverd_indexes);
+
+                                                },
+                                                Err(err) => {
+                                                    // error!("{}",err);
+                                                },
+                                            };
                                         }
-                                        // info!("original = {:?}", original_shards);
-
-                                        
-                                        match reed_solomon_16::decode(
-                                            tracker.cols as usize - tracker.rows_fec as usize, // total number of original shards
-                                            tracker.rows_fec as usize, // total number of recovery shards
-                                            original_shards,
-                                            recovery_shards,
-                                        ) {
-                                            Ok(recovered) => {
-                                                for item in recovered {
-
-                                                    match TransmitionPacket::decode_length_delimited(&*item.1) {
-                                                        Ok(packet) => {
-                                                            info!("recovered: {:?}",packet);
-                                                            
-                                                        },
-                                                        Err(err) => {
-                                                            // error!("Error decoding packet: {}", err);
-                                                        }
-                                                    };
-                                                }
-                                            },
-                                            Err(err) => error!("{}",err),
-                                        };
                                     }
                                 }
 
-                                
-
-                                
                                 // Print the elapsed time
                                 info!("Time elapsed for reconstructing matrix {:?}: {:?}", tracker.matrix_index, start.elapsed());
+                            }
+
+                            for _ in 0..tracker.rows_fec {
+                                tracker.matrix.pop_col();
+                            }
+
+                            for _ in 0..tracker.cols_fec {
+                                tracker.matrix.pop_row();
+                            }
+
+                            for item in tracker.matrix.iter(){
+                                decode_data_sender.send(item.payload.clone()).unwrap();
                             }
 
                             // Update tracker for new matrix
@@ -340,8 +301,10 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>) -
                     }
 
                     if let Some(ref mut tracker) = *tracker_guard {
-                        tracker.add_packet(packet);
+                        tracker.add_packet(packet.clone());
                     }
+
+                    
                 }
             },
             Err(err) => {

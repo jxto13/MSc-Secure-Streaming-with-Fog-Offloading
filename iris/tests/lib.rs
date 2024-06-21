@@ -48,6 +48,15 @@ mod tests {
         assert_eq!(restored[&0], original[0]);
         assert_eq!(restored[&2], original[2]);
     }
+
+    #[test]
+    fn grid_row_iter () {
+        use grid::*;
+        let grid: Grid<u8> = grid![[1,2][3,4]];
+        for ((row, col), i) in grid.indexed_iter() {
+            println!("value at row {row} and column {col} is: {i}");
+        }
+    }
     
     #[test]
     fn insertion() {
