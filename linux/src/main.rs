@@ -23,8 +23,10 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Start the ffplay (mpv) process
     let mut ffplay = Command::new("mpv")
-        .args(&["-", "--force-seekable=yes"])
+        .args(&["-", "--force-seekable=yes", "2>&1"])
         .stdin(Stdio::piped())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .spawn()
         .map_err(|e| {
             error!("Failed to start ffplay process: {}", e);

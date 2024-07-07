@@ -14,6 +14,28 @@ fn insert_value<T>(matrix: &mut Vec<Vec<T>>, position: usize, matrix_size: usize
 mod tests {
 
     #[test]
+    fn enumerate(){
+        let n = 10;  // The total count
+        let start = 5; // The starting point
+        let end = n;  // The endpoint
+
+        // Calculate m dynamically, for example, based on the range from start to end
+        let m = end - start;
+
+        for i in 0..n {
+            if i < start {
+                continue;
+            } else {
+                if i == 8 {
+                    continue;
+                }
+                let enumerated_value = (i - start) % m;
+                println!("i: {}, enumerated_value: {}", i, enumerated_value);
+            }
+        }
+    }
+
+    #[test]
     fn reed_solomon_16_default() {
         let original = [
             b"Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do ",

@@ -15,13 +15,8 @@ pub const COL: usize = 6;
 pub const ROW_FEC: usize = 3;
 pub const COL_FEC: usize = 3;
 
-const SHARD_SIZE: usize = 256;
+const SHARD_SIZE: usize = 256 * 4;
 const MTU_SIZE: usize = 1500;
-
-const PACKET_PAYLOAD: usize = MTU_SIZE / SHARD_SIZE;
-
-// Define the packet loss percentage
-const PACKET_LOSS_PERCENTAGE: f64 = 0.0; // 2% packet loss
 
 // This is running inside a separate task
 pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
@@ -135,50 +130,12 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
         matrix_counter += 1;
 
-        // Group the TransmitionPacket to create a IrisPacket with a number of bytes close to MTU
-        let mut group = Vec::new();
-        for item in transmission_matrix.iter() {
+        
+        for col in transmission_matrix.iter_cols() {
 
-            // Serialize Data
-            let mut serialized_data = Vec::new();
-            Message::encode(item, &mut serialized_data).unwrap_or_else(|error| {
-                eprintln!("Error: {}", error);
-            });
-
-            group.push(item.clone());
-
-            if group.len() == PACKET_PAYLOAD {
-                let iris_packet = IrisPacket {
-                    payload: group.clone(),
-                };
-
+            for item in col {
                 // Serialize IrisPacket
-                let iris_serialized_data = iris_packet.encode_to_vec();
-                
-                // Simulate packet loss
-                if rand::thread_rng().gen::<f64>() * 100.0 >= PACKET_LOSS_PERCENTAGE {
-                    // Send the buffer
-                    tx.send(iris_serialized_data).unwrap_or_else(|e| {
-                        error!("error sending data {:?}", e);
-                    });
-                }
-
-                group.clear();
-            }
-        }
-
-        // Send any remaining packets
-        if !group.is_empty() {
-
-            let iris_packet = IrisPacket {
-                payload: group.clone(),
-            };
-
-            // Serialize IrisPacket
-            let iris_serialized_data = iris_packet.encode_to_vec();
-            
-            // Simulate packet loss
-            if rand::thread_rng().gen::<f64>() * 100.0 >= PACKET_LOSS_PERCENTAGE {
+                let iris_serialized_data = item.encode_to_vec();
                 // Send the buffer
                 tx.send(iris_serialized_data).unwrap_or_else(|e| {
                     error!("error sending data {:?}", e);
