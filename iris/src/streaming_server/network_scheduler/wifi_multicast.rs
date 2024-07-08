@@ -43,7 +43,7 @@ impl BandwidthManager {
             let now = Instant::now();
             if now.duration_since(self.last_check) >= self.interval {
                 self.last_check = now;
-                info!("Bandwidth Usage: {} Mbit/s", (self.bytes_sent * 8) as f64 / 1_000_000.0);
+                // info!("Bandwidth Usage: {} Mbit/s", (self.bytes_sent * 8) as f64 / 1_000_000.0);
                 // Reset bytes_sent outside of the loop
                 self.bytes_sent = 0;
             }
@@ -91,7 +91,7 @@ impl WiFiMulticast {
 
         // Join the multicast group.
         if let Err(e) = socket.join_multicast_v4(&multicast_address, &Ipv4Addr::UNSPECIFIED) {
-            eprintln!("Failed to join multicast group: {}", e);
+            error!("Failed to join multicast group: {}", e);
             return Err(Box::new(e));
         };
 

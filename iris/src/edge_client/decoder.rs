@@ -9,6 +9,8 @@ use std::sync::{Arc, Mutex};
 use crate::edge_client::proto::TransmitionPacket;
 use grid::Grid as Matrix;
 
+use super::proto::ClientReport;
+
 #[derive(Default)]
 struct MatrixTracker {
     matrix_index: i32,
@@ -68,7 +70,7 @@ impl MatrixTracker {
 
 }
 
-pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>) -> Result<(), Box<dyn Error>> {
+pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>, client_report_sender: tokio::sync::mpsc::Sender<ClientReport>) -> Result<(), Box<dyn Error>> {
     let current_tracker: Arc<Mutex<Option<MatrixTracker>>> = Arc::new(Mutex::new(None));
 
     loop {
@@ -110,9 +112,8 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>) -
                             // }
                             // info!("-----------------------------");
                             
-                            for iteration in 0..2 {
-                                info!("Iteration - {}", iteration);
-                                
+                            // Two iteration with collumn recovery helps row recovery in the second iteration
+                            for _ in 0..2 {                                
                                 let mut updates = Vec::new();
                                 
                                 for (row_index, row) in tracker.matrix.iter_rows().enumerate() {
@@ -145,12 +146,11 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>) -
                                     ) {
                                         Ok(recovered) => {
                                             for (position, data) in recovered {
-                                                info!("row {} - recovered index {}", row_index, position);
                                                 // To avoid simultaneous mutable and immutable borrows, collect positions to update later
                                                 updates.push((row_index, position, data));
                                             }
                                         }
-                                        Err(error) => error!("{}", error),
+                                        Err(_) => (),
                                     }
                                 }
 
@@ -167,7 +167,6 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>) -
                                             cols: tracker.cols,
                                             rows_fec: tracker.rows_fec,
                                             cols_fec: tracker.cols_fec,
-                                            fec: false,
                                             payload: data,
                                         });
                                         
@@ -209,11 +208,10 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>) -
                                     ) {
                                         Ok(recovered) => {
                                             for (position, data) in recovered {
-                                                info!("col {} - recovered index {}", col_index, position);
                                                 updates.push((col_index, position, data));
                                             }
                                         }
-                                        Err(error) => error!("{}", error),
+                                        Err(error) => (),
                                     }
                                 }
 
@@ -228,7 +226,6 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>) -
                                             cols: tracker.cols,
                                             rows_fec: tracker.rows_fec,
                                             cols_fec: tracker.cols_fec,
-                                            fec: false,
                                             payload: data,
                                         });
                                         tracker.update_index(index);
@@ -236,8 +233,6 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>) -
                                         error!("Failed to access matrix at position ({},{})", col_index, position);
                                     }
                                 }
-
-
                             }
 
                             // Print the elapsed time
@@ -277,7 +272,33 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>) -
                             tracker.matrix.pop_row();
                         }
                         
-                        // send to the player (needs to put this somewhere else)
+                        let missing_packet = tracker.missing_indexes();
+
+                        if missing_packet.len() != 0 {
+                            info!("Missing packets for matrix {}: {:?}",tracker.matrix_index, tracker.missing_indexes());
+                        }
+
+                        // Create Bitmap for matrix
+                        let mut report_bitmap = Vec::new();
+
+                        for item in tracker.matrix.iter() {
+                            if item.is_none() {
+                                report_bitmap.push(0);
+                            } else {
+                                report_bitmap.push(1);
+                            }
+                        }
+
+                        // Create ClientReport
+                        let report = ClientReport {
+                            index: tracker.matrix_index,
+                            payload: report_bitmap,
+                        };
+                        
+                        // Send ClientReport of matrix
+                        client_report_sender.blocking_send(report).unwrap();
+
+                        // send to the player (need to put this somewhere else)
                         for item in tracker.matrix.iter() {
                             if let Some(value) = item {
                                 decode_data_sender.send(value.payload.clone()).unwrap();

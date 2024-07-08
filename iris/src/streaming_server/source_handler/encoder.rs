@@ -1,7 +1,6 @@
-use crate::proto::{IrisPacket, TransmitionPacket};
+use crate::proto::TransmitionPacket;
 
 use crossbeam_channel::{Receiver, Sender};
-use rand::Rng;
 use reed_solomon_16::ReedSolomonEncoder;
 use grid::Grid as Matrix;
 use prost::Message;
@@ -20,6 +19,8 @@ const MTU_SIZE: usize = 1500;
 
 // This is running inside a separate task
 pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
+    assert!(SHARD_SIZE < MTU_SIZE);
+
     // Create counters
     let start_time = Instant::now();
     let mut matrix_counter = 0;
@@ -54,7 +55,6 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                     cols: COL as i32,
                     rows_fec: ROW_FEC as i32,
                     cols_fec: COL_FEC as i32,
-                    fec: false,
                     payload: item.clone(), // copy data to TransmitionPacket, this will be VideoData encrypted
                 };
 
@@ -75,7 +75,6 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                     cols: COL as i32,
                     rows_fec: ROW_FEC as i32,
                     cols_fec: COL_FEC as i32,
-                    fec: true,
                     payload: item.to_vec(), // copy data to TransmitionPacket
                 };
 
@@ -95,7 +94,6 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                 cols: 0,
                 rows_fec: 0,
                 cols_fec: 0,
-                fec: false,
                 payload: vec![0; 0]
             }; COL + ROW_FEC]);
         }
@@ -120,7 +118,6 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                     cols: COL as i32,
                     rows_fec: ROW_FEC as i32,
                     cols_fec: COL_FEC as i32,
-                    fec: true,
                     payload: item.to_vec(), // copy data to TransmitionPacket
                 };
 
@@ -143,7 +140,6 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
             }
         }
     }
-    info!("Last Transmission Matrix Index = {:?}", matrix_counter);
 
     let end_time = Instant::now();
     let duration = end_time.duration_since(start_time);

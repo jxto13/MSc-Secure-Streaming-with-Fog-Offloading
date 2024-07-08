@@ -14,11 +14,6 @@ pub mod proto {
 pub struct Config {
     pub grpc_service_port: u16,
     pub multicast_ip: String,
-    pub sessions: Vec<SessionConfig>,
-}
-
-#[derive(Deserialize)]
-pub struct SessionConfig {
     pub url_stream: String,
     pub port: u16,
 }

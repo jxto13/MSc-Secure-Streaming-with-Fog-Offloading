@@ -12,6 +12,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         .format_timestamp_millis()
         .init();
 
+
     // Attempt to start the receiver
     let receiver = match iris::edge_client::core::start() {
         Ok(receiver) => receiver,

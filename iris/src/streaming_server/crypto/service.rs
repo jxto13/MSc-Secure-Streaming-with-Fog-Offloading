@@ -1,6 +1,7 @@
 use crate::crypto::utils;
 use crate::proto;
 
+use log::info;
 use tonic::{Request, Response, Status};
 use proto::certificate_service_server::{CertificateService, CertificateServiceServer};
 
@@ -56,13 +57,15 @@ impl CertificateService for MyCertificateService {
 
     async fn verify_certificate(
         &self,
-        request: Request<proto::SignedCertificateRequest>
+        mut request: Request<proto::SignedCertificateRequest>
     ) -> Result<Response<proto::ValidationCertificateResponse>, Status> {
+        let request_ref = request.get_mut();
+
         // Extract Certificate from the request
-        let cert_vec = request.into_inner().cert;
+        let cert_vec = &request_ref.cert;
 
         // Convert the CSR from Vec<u8> to X509Req
-        let cert = match X509::from_pem(&cert_vec) {
+        let cert = match X509::from_pem(cert_vec) {
             Ok(cert) => cert,
             Err(_) => return Err(Status::invalid_argument("Invalid Certificate")),
         };
@@ -72,8 +75,8 @@ impl CertificateService for MyCertificateService {
 
         // Verify that this cert was issued by this ca
         match ca_cert.issued(&cert) {
-            X509VerifyResult::OK => println!("Certificate verified!"),
-            ver_err => println!("Failed to verify certificate: {}", ver_err),
+            X509VerifyResult::OK => info!("Certificate verified for client: {:?}", request.remote_addr().unwrap()),
+            ver_err => info!("Failed to verify certificate for client: {} - {}", request.remote_addr().unwrap(), ver_err),
         };
 
         // For demonstration, let's assume it always succeeds

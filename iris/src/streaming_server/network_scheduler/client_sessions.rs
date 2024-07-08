@@ -1,21 +1,53 @@
 use std::collections::HashMap;
-use std::net::{Ipv4Addr, SocketAddr};
+use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
-use log::{info, warn, error};
-use mio::net::UdpSocket;
+
+use crossbeam_channel::{Receiver, Sender};
+use iris::streaming_server::proto::report_service_server::ReportService;
+use iris::streaming_server::proto::{ClientReport, Empty};
+
+use log::{info, error};
+
+use tonic::{Request, Response, Status};
 
 use std::time::{Duration, Instant};
-use std::io;
 
-use mio::{Events, Interest, Poll, Token};
+#[derive(Debug)]
+pub struct MyReportService {
+    client_sessions: Arc<Mutex<ClientSessions>>,
+}
 
-// Time interval for checking and removing timed-out clients
-const CLEANUP_INTERVAL: Duration = Duration::from_secs(5); // Adjust as needed
+impl MyReportService {
+    pub fn new(client_sessions: Arc<Mutex<ClientSessions>>) -> Self {
+        Self { client_sessions }
+    }
+}
 
+#[tonic::async_trait]
+impl ReportService for MyReportService {
+    async fn send_report(
+        &self,
+        request: Request<ClientReport>,
+    ) -> Result<Response<Empty>, Status> {
 
-// A token to allow us to identify which event is for the `UdpSocket`.
-const UDP_SOCKET: Token = Token(0);
+        // Get the client address from the request metadata
+        if let Some(client_addr) = request.remote_addr() {
+            // Update the client session
+            self.client_sessions.lock().unwrap().update_client(client_addr);
+        } else {
+            error!("Client address not found in request metadata");
+        }
 
+        let report = request.into_inner();
+        // info!("Received report: index = {}, payload length = {}", report.index, report.payload.len());
+
+        // Here you can handle the report (e.g., save it, process it, etc.)
+
+        Ok(Response::new(Empty {}))  // Respond with an empty message
+    }
+}
+
+#[derive(Debug)]
 pub struct ClientSessions {
     clients: Arc<Mutex<HashMap<SocketAddr, Instant>>>,
 }
@@ -27,13 +59,12 @@ impl ClientSessions {
         }
     }
 
-    fn update_client(&mut self, client_addr: SocketAddr) {
+    pub fn update_client(&mut self, client_addr: SocketAddr) {
         let mut clients = self.clients.lock().unwrap();
         clients.insert(client_addr, Instant::now());
-        // info!("Updated clients: {:?}", *clients);
     }
 
-    fn remove_timed_out_clients(&mut self) {
+    pub fn remove_timed_out_clients(&mut self) {
         let timeout = Duration::from_secs(5);
         let now = Instant::now();
         let mut clients = self.clients.lock().unwrap();
@@ -41,73 +72,8 @@ impl ClientSessions {
         // info!("Clients after timeout removal: {:?}", *clients);
     }
 
-    pub fn server(&mut self) -> Result<(), Box<dyn std::error::Error>> {
-        // Create a poll instance.
-        let mut poll = Poll::new()?;
-        // Create storage for events. Since we will only register a single socket, a
-        // capacity of 1 will do.
-        let mut events = Events::with_capacity(1);
-
-        // Setup the UDP socket.
-        let addr = "0.0.0.0:9000".parse().unwrap();
-
-        let mut socket = UdpSocket::bind(addr)?;
-
-        // Register our socket with the token defined above and an interest in being
-        // `READABLE`.
-        poll.registry()
-            .register(&mut socket, UDP_SOCKET, Interest::READABLE)?;
-
-        // Initialize a buffer for the UDP packet. We use the maximum size of a UDP
-        // packet, which is the maximum value of 16 a bit integer.
-        let mut buf = [0; 1 << 16];
-
-        // Our event loop.
-        loop {
-
-            // Poll to check if we have events waiting for us.
-            if let Err(err) = poll.poll(&mut events, None) {
-                if err.kind() == io::ErrorKind::Interrupted {
-                    continue;
-                }
-                return Err(Box::new(err));
-            }
-
-            // Process each event.
-            for event in events.iter() {
-                // Validate the token we registered our socket with,
-                // in this example it will only ever be one but we
-                // make sure it's valid none the less.
-                match event.token() {
-                    UDP_SOCKET => loop {
-                        // In this loop we receive all packets queued for the socket.
-                        match socket.recv_from(&mut buf) {
-                            Ok((_, source_address)) => {
-                                info!("packet received {}",source_address);
-                                // Insert or update client in the hashmap
-                                self.update_client(source_address);
-                            }
-                            Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
-                                // If we get a `WouldBlock` error we know our socket
-                                // has no more packets queued, so we can return to
-                                // polling and wait for some more.
-                                break;
-                            }
-                            Err(e) => {
-                                // If it was any other kind of error, something went
-                                // wrong and we terminate with an error.
-                                return Err(Box::new(e));
-                            }
-                        }
-                    },
-                    _ => {
-                        // This should never happen as we only registered our
-                        // `UdpSocket` using the `UDP_SOCKET` token, but if it ever
-                        // does we'll log it.
-                        warn!("Got event for unexpected token: {:?}", event);
-                    }
-                }
-            }
-        }
+    // Getter for the clients hashmap
+    pub fn get_clients(&self) -> Arc<Mutex<HashMap<SocketAddr, Instant>>> {
+        Arc::clone(&self.clients)
     }
 }

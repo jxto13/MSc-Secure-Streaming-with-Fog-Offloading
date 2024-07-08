@@ -1,13 +1,17 @@
-use crossbeam_channel::Receiver;
-use std::thread;
+use crossbeam_channel::{unbounded, Receiver};
+use iris::streaming_server::proto::report_service_server::ReportServiceServer;
+use log::info;
+use std::sync::{Arc, Mutex};
+use std::{io, thread};
+use std::time::Duration;
 
 use super::wifi_multicast::WiFiMulticast;
-use super::client_sessions::{self, ClientSessions};
+use super::client_sessions::{self, ClientSessions, MyReportService};
 
 // Struct representing the pipeline composed of the components
 pub struct Pipeline {
-    client_sessions: ClientSessions,
-    wifi_multicast: WiFiMulticast,
+    client_sessions: Arc<Mutex<ClientSessions>>,
+    wifi_multicast: Arc<Mutex<WiFiMulticast>>,
     // wifi_unicast: Option<WiFiUnicast> // Optional
 }
 
@@ -15,26 +19,43 @@ impl Pipeline {
     // Constructor to create a new instance of Pipeline
     pub fn new() -> Self {
         Pipeline {
-            client_sessions: ClientSessions::new(),
-            wifi_multicast: WiFiMulticast::new(10_000_000)
+            client_sessions: Arc::new(Mutex::new(ClientSessions::new())),
+            wifi_multicast: Arc::new(Mutex::new(WiFiMulticast::new(10_000_000))),
         }
     }
 
-    /// Starts the pipeline with the provided source handler receiver.
-    pub fn start(self, source_handler_receiver: Receiver<Vec<u8>>) {
-        // Destructure self to take ownership of the components
-        let Pipeline { mut client_sessions, mut wifi_multicast } = self;
+    pub fn get_client_sessions_service(&self) -> ReportServiceServer<MyReportService>{
+        ReportServiceServer::new(MyReportService::new(Arc::clone(&self.client_sessions)))
+    }
 
+    /// Starts the pipeline with the provided source handler receiver.
+    pub fn start(&self, source_handler_receiver: Receiver<Vec<u8>>) {
+        let client_sessions = Arc::clone(&self.client_sessions);
+        let wifi_multicast = Arc::clone(&self.wifi_multicast);
+
+        info!("Press Enter to continue...");
+        
+        // Create a buffer to hold the input
+        let mut buffer = String::new();
+        
+        // Wait for the user to press Enter
+        io::stdin().read_line(&mut buffer).unwrap();
+        
+        info!("Key pressed. Continuing execution...");
+        
         // Start client_sessions thread
         let client_sessions_handler = thread::spawn(move || {
-            // Start client receiver reports server
-            client_sessions.server();
+            // Check every second for timeout clients
+            loop {
+                client_sessions.lock().unwrap().remove_timed_out_clients();
+                thread::sleep(Duration::from_secs(1));
+            }
         });
 
         // Start wifi_multicast thread
         let wifi_multicast_handler = thread::spawn(move || {
             // Start multicast sender with the received data
-            wifi_multicast.server(source_handler_receiver);
+            wifi_multicast.lock().unwrap().server(source_handler_receiver).unwrap();
         });
 
         // Wait for the threads to finish execution

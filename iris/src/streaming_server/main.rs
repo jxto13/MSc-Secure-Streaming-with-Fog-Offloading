@@ -2,13 +2,14 @@ mod crypto;
 mod network_scheduler;
 mod source_handler;
 
-use std::thread;
+use std::io;
+use std::{sync::Arc, thread};
 use std::path::PathBuf;
 
 // Standard
 use crossbeam_channel::unbounded;
 use iris::streaming_server::proto::{self, FILE_DESCRIPTOR_SET};
-use log::info;
+use log::{error, info};
 use source_handler::data_handler::{DataHandler,DataSource};
 
 use tonic::transport::{Identity, Server, ServerTlsConfig};
@@ -52,35 +53,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Generate CA Certificates and stores in memory
     let (ca_cert, ca_key_pair) = crypto::utils::mk_ca_cert()?;
 
-    let multicast_ip = config.multicast_ip.clone();
+    let multicast_ip = config.multicast_ip;
 
-    let mut session_handlers = vec![];
+    let port = config.port;
+    let (source_handler_sender, source_handler_receiver) = unbounded();
+    
+    // Choose the data source
+    let source = DataSource::File(config.url_stream);
 
-    for session in config.sessions {
-        let url_stream = session.url_stream.clone();
-        let port = session.port;
-        let (source_handler_sender, source_handler_receiver) = unbounded();
-
-        // Choose the data source
-        let source = DataSource::File(url_stream);
-
-        // Create a DataHandler instance
-        let data_handler = DataHandler::new(source, source_handler_sender);        
-        
-        let source_handler = thread::spawn(move || {
-            data_handler.start();
-        });
-
-        // Create the pipeline
-        let pipeline = Pipeline::new();
-
-        let pipeline_handler = thread::spawn(move || {
+    // Create a DataHandler instance
+    let data_handler = DataHandler::new(source, source_handler_sender);        
+    
+    let source_handler = thread::spawn(move || {
+        data_handler.start();
+    });
+    
+    // Create the pipeline
+    let pipeline = Arc::new(Pipeline::new());
+    
+    let pipeline_handler = {
+        let pipeline = Arc::clone(&pipeline);
+        thread::spawn(move || {
             pipeline.start(source_handler_receiver);
-        });
-
-        session_handlers.push(source_handler);
-        session_handlers.push(pipeline_handler);
-    }
+        })
+    };
 
     // Create a std thread and setup tokio for gRPC Server with tokio runtime
     let grpc_server_handler = thread::spawn(move || {
@@ -102,21 +98,18 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             Server::builder()
                 .add_service(service)
                 .add_service(crypto::service::get_service(ca_cert, ca_key_pair)) // Responsible for signing the client certificates
+                .add_service(pipeline.get_client_sessions_service())
                 .serve(addr)
                 .await
                 .unwrap_or_else(|err| {
                     // Handle the error if creating the runtime fails
-                    eprintln!("Error creating gRPC server: {}", err);
+                    error!("Error creating gRPC server: {}", err);
                 });
         });
     });
 
-    // Join all the session handlers to ensure they complete before exiting
-    for handler in session_handlers {
-        handler.join().expect("source_handler or pipeline_handler panicked");
-    }
-
+    source_handler.join().expect("source_handler panicked");
+    pipeline_handler.join().expect("pipeline_handler panicked");
     grpc_server_handler.join().expect("grpc_server_handler panicked");
-
     Ok(())
 }

@@ -36,14 +36,21 @@ message TransmitionPacket {
     int32 index = 2;
     int32 rows = 3;
     int32 cols = 4;
-    bool fec = 5;
     int32 rows_fec = 7;
     int32 cols_fec = 8;
     bytes payload = 9; // this payload is encrypted
 }
 
-// Multicast UDP Packet
-message IrisPacket {
-    repeated TransmitionPacket payload = 1;
-    // bytes signature = 7;
+// ----------------------------------------------------------------------------------------------------------- //
+
+
+service ReportService {
+    rpc SendReport (ClientReport) returns (Empty);
+}
+
+message Empty {}
+
+message ClientReport {
+    int32 index = 1;
+    bytes payload = 2;
 }
