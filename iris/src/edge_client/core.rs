@@ -1,8 +1,8 @@
 use crossbeam_channel::{unbounded, Receiver};
-use tokio::sync::mpsc;
 use std::sync::{Arc, Barrier, Mutex};
-use std::thread;
 use std::time::Duration;
+use std::{fs, thread};
+use tokio::sync::mpsc;
 
 use openssl::pkey::{PKey, Private};
 use openssl::rsa::Rsa;
@@ -13,34 +13,35 @@ use proto::{CertificateRequest, SignedCertificateRequest};
 use tokio::runtime::Runtime;
 use tokio::time::sleep;
 
-use tonic::transport::{Certificate, Channel, ClientTlsConfig};
+use tonic::transport::{channel, Certificate, Channel, ClientTlsConfig};
 
 use log::{error, info};
 
-use super::{decoder, proto, utils};
 use super::receiver;
 use super::session;
+use super::{decoder, proto, utils};
+
+const CA_PUBLIC_CERTIFICATE: &[u8] = include_bytes!("../../certs/ca_certificate.pem");
 
 pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
-
     // Set up a Tokio runtime
     let rt = Arc::new(Runtime::new().unwrap());
 
     // Create a shared Arc<Mutex<Option<CertificateServiceClient>>>
-    let client = Arc::new(Mutex::new(None));
+    let channel_arc = Arc::new(Mutex::new(None));
 
     {
         let runtime = Arc::clone(&rt);
         // Clone the Arc for use inside the async block
-        let client = Arc::clone(&client);
+        let channel_arc = Arc::clone(&channel_arc);
 
         // Run async code using the Tokio runtime
         runtime.block_on(async move {
             loop {
-                let connection = CertificateServiceClient::connect("http://razer15:50051").await;
-                
-                match connection {
-                    Ok(mut connected_client) => {
+                match create_channel().await {
+                    Ok(channel) => {
+                        let mut connection = CertificateServiceClient::new(channel.clone());
+
                         info!("Connected to GRPC Server");
 
                         // Generate an RSA key pair
@@ -55,19 +56,23 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
                         let csr_vec = request.to_pem().unwrap();
 
                         // Make a CertificateRequest with the CSR
-                        let csr_request = CertificateRequest {
-                            csr: csr_vec,
-                        };
+                        let csr_request = CertificateRequest { csr: csr_vec };
 
                         // Send the CSR to the server to get it signed
-                        let response = connected_client.sign_certificate(csr_request).await.unwrap();
+                        let response = connection
+                            .sign_certificate(csr_request)
+                            .await
+                            .unwrap();
                         let signed_cert = response.into_inner().signed_cert;
 
                         // Assuming cert_bytes is the bytes of the received certificate
                         let cert_request = SignedCertificateRequest { cert: signed_cert };
 
                         // Send the signed certificate to the server for verification
-                        let validation_response = connected_client.verify_certificate(cert_request).await.unwrap();
+                        let validation_response = connection
+                            .verify_certificate(cert_request)
+                            .await
+                            .unwrap();
                         let auth = validation_response.into_inner().auth;
 
                         if auth {
@@ -77,8 +82,8 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
                         }
 
                         // Save the client for use after the loop
-                        let mut client_lock = client.lock().unwrap();
-                        *client_lock = Some(connected_client);
+                        let mut channel_lock = channel_arc.lock().unwrap();
+                        *channel_lock = Some(channel);
                         break; // Exit the loop once connected
                     }
                     Err(e) => {
@@ -90,7 +95,7 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
         });
     }
 
-    // If we arrive here we have certificates signed from PKI 
+    // If we arrive here we have certificates signed from PKI
 
     // Create channels for thread comunication
     let (listener_sender, matrix_decoder_receiver) = unbounded();
@@ -128,7 +133,11 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     thread::spawn(move || {
         // Wait for the listener multicast with a barrier before starting the decoder
         decoder_barrier.wait();
-        if let Err(e) = decoder::start(matrix_decoder_receiver, decoded_data_sender,client_report_sender) {
+        if let Err(e) = decoder::start(
+            matrix_decoder_receiver,
+            decoded_data_sender,
+            client_report_sender,
+        ) {
             error!("Matrix decoder failed to start: {}", e);
         }
     });
@@ -138,9 +147,8 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     thread::spawn(move || {
         // Wait for the listener multicast with a barrier before starting the decoder
         let mut client_report = session::ClientSession::new(runtime);
-        client_report.start_report_client(client_report_receiver);
+        client_report.start_report_client(client_report_receiver,channel_arc);
     });
-
 
     // Spawn a separate thread for joining and returning the sender
     thread::spawn(move || {
@@ -149,4 +157,20 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     });
 
     Ok(decoded_data_receiver)
+}
+
+async fn create_channel() -> Result<Channel, Box<dyn std::error::Error>> {
+    // Configure the TLS settings for the channel
+    let tls_config = ClientTlsConfig::new()
+        .ca_certificate(Certificate::from_pem(&CA_PUBLIC_CERTIFICATE))
+        .domain_name("www.example.com");
+
+    // Create the channel with the TLS configuration
+    let channel = Channel::from_static("https://192.168.1.127:50051")
+        .tls_config(tls_config)?
+        .connect()
+        .await?;
+
+    // If we reach here, connection was successful
+    Ok(channel)
 }

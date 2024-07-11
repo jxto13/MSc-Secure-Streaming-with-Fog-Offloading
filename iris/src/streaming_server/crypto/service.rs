@@ -10,14 +10,14 @@ use openssl::x509::{X509Req, X509, X509VerifyResult};
 
 pub struct MyCertificateService {
     ca_cert: X509,
-    ca_key_pair: PKey<Private>,
+    ca_private_key: PKey<Private>,
 }
 
 impl MyCertificateService {
     pub fn new(ca_cert: X509, ca_key_pair: PKey<Private>) -> Self {
         MyCertificateService {
             ca_cert,
-            ca_key_pair,
+            ca_private_key: ca_key_pair,
         }
     }
 }
@@ -38,7 +38,7 @@ impl CertificateService for MyCertificateService {
         };
         
         // Sign the certificate with the CA
-        let signed_cert = utils::sign_request_with_ca(&csr, &self.ca_cert, &self.ca_key_pair);
+        let signed_cert = utils::sign_request_with_ca(&csr, &self.ca_cert, &self.ca_private_key);
 
         // Serialize the signed certificate
         let cert_pem = match signed_cert {

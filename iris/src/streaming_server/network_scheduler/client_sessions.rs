@@ -1,25 +1,30 @@
 use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
+use std::time::{Duration, Instant};
+use std::fs::OpenOptions;
+use std::io::Write;
 
 use crossbeam_channel::{Receiver, Sender};
 use iris::streaming_server::proto::report_service_server::ReportService;
 use iris::streaming_server::proto::{ClientReport, Empty};
 
 use log::{info, error};
-
+use serde::{Serialize, Deserialize};
 use tonic::{Request, Response, Status};
-
-use std::time::{Duration, Instant};
 
 #[derive(Debug)]
 pub struct MyReportService {
     client_sessions: Arc<Mutex<ClientSessions>>,
+    report_counts: Arc<Mutex<HashMap<i32, i32>>>,
 }
 
 impl MyReportService {
     pub fn new(client_sessions: Arc<Mutex<ClientSessions>>) -> Self {
-        Self { client_sessions }
+        Self { 
+            client_sessions,
+            report_counts: Arc::new(Mutex::new(HashMap::new())),
+        }
     }
 }
 
@@ -41,7 +46,10 @@ impl ReportService for MyReportService {
         let report = request.into_inner();
         // info!("Received report: index = {}, payload length = {}", report.index, report.payload.len());
 
-        // Here you can handle the report (e.g., save it, process it, etc.)
+        // Save the report to the count hashmap
+        if let Err(e) = save_report_to_file(report, &self.report_counts).await {
+            error!("Failed to save report: {}", e);
+        }
 
         Ok(Response::new(Empty {}))  // Respond with an empty message
     }
@@ -76,4 +84,42 @@ impl ClientSessions {
     pub fn get_clients(&self) -> Arc<Mutex<HashMap<SocketAddr, Instant>>> {
         Arc::clone(&self.clients)
     }
+}
+
+#[derive(Serialize, Deserialize)]
+struct ReportEntry {
+    index: i32,
+    reports: i32,
+}
+
+async fn save_report_to_file(report: ClientReport, report_counts: &Arc<Mutex<HashMap<i32, i32>>>) -> Result<(), Box<dyn std::error::Error>> {
+    // Count the number of zeros in the payload
+    let zero_count = report.payload.iter().filter(|&&byte| byte == 0).count() as i32;
+
+    // Update the report counts
+    let mut counts = report_counts.lock().unwrap();
+    *counts.entry(report.index).or_insert(0) += zero_count;
+
+    // Convert the counts to a vector of ReportEntry
+    let mut entries: Vec<ReportEntry> = counts.iter().map(|(&index, &reports)| ReportEntry { index, reports }).collect();
+
+    // Sort the entries by index
+    entries.sort_by_key(|entry| entry.index);
+
+    // Path to the JSON file
+    let file_path = "./stats/reports.json";
+
+    // Open the file in write mode
+    let mut file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .open(file_path)?;
+
+    // Serialize the entries to JSON
+    let json = serde_json::to_string(&entries)?;
+
+    // Write the JSON to the file
+    writeln!(file, "{}", json)?;
+
+    Ok(())
 }

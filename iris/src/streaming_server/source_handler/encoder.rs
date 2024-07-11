@@ -11,10 +11,10 @@ use log::{error, info};
 
 pub const ROW: usize = 6;
 pub const COL: usize = 6;
-pub const ROW_FEC: usize = 3;
-pub const COL_FEC: usize = 3;
+pub const ROW_FEC: usize = 0;
+pub const COL_FEC: usize = 0;
 
-const SHARD_SIZE: usize = 256 * 4;
+const SHARD_SIZE: usize = 256 * 5;
 const MTU_SIZE: usize = 1500;
 
 // This is running inside a separate task
@@ -26,17 +26,27 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     let mut matrix_counter = 0;
     
     // Create encoders objects
-    let mut row_encoder = ReedSolomonEncoder::new(
-        COL, // total number of col, which gives the length of row
-        ROW_FEC, // total number of row recovery shards
-        SHARD_SIZE, // shard size in bytes
-    ).unwrap();
+    let mut row_encoder = match ReedSolomonEncoder::new(
+        COL,       // total number of col, which gives the length of row
+        ROW_FEC,   // total number of row recovery shards
+        SHARD_SIZE // shard size in bytes
+    ) {
+        Ok(encoder) => Some(encoder),
+        Err(e) => {
+            None
+        }
+    };
     
-    let mut col_encoder = ReedSolomonEncoder::new(
-        ROW, // total number of col, which gives the length of row
-        COL_FEC, // total number of row recovery shards
-        SHARD_SIZE, // shard size in bytes
-    ).unwrap();
+    let mut col_encoder = match ReedSolomonEncoder::new(
+        ROW,       // total number of col, which gives the length of row
+        COL_FEC,   // total number of row recovery shards
+        SHARD_SIZE // shard size in bytes
+    ) {
+        Ok(encoder) => Some(encoder),
+        Err(e) => {
+            None
+        }
+    };
     
     // Create transmission matrix
     while let Ok(matrix) = rx.recv() {
@@ -60,68 +70,80 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
                 row.push(packet);
 
-                row_encoder.add_original_shard(&item).unwrap();
+                // Check if we have a row_encoder
+                if let Some(ref mut row_encoder) = row_encoder {
+                    row_encoder.add_original_shard(&item).unwrap();
+                }
+
                 matrix_index += 1;
             }
 
-            // Create FEC Shards for the ROW
-            let result = row_encoder.encode().unwrap();
 
-            for item in result.recovery_iter() {
-                let packet = TransmitionPacket {
-                    matrix: matrix_counter,
-                    index: matrix_index,
-                    rows: ROW as i32,
-                    cols: COL as i32,
-                    rows_fec: ROW_FEC as i32,
-                    cols_fec: COL_FEC as i32,
-                    payload: item.to_vec(), // copy data to TransmitionPacket
-                };
+            if let Some(ref mut row_encoder) = row_encoder {
 
-                row.push(packet);
+                // Create FEC Shards for the ROW
+                let result = row_encoder.encode().unwrap();
 
-                matrix_index += 1;
+                for item in result.recovery_iter() {
+                    let packet = TransmitionPacket {
+                        matrix: matrix_counter,
+                        index: matrix_index,
+                        rows: ROW as i32,
+                        cols: COL as i32,
+                        rows_fec: ROW_FEC as i32,
+                        cols_fec: COL_FEC as i32,
+                        payload: item.to_vec(), // copy data to TransmitionPacket
+                    };
+
+                    row.push(packet);
+
+                    matrix_index += 1;
+                }
             }
             transmission_matrix.push_row(row);
         }
 
-        // Add COL_FEC as empty rows
-        for _ in 0..COL_FEC {
-            transmission_matrix.push_row(vec![TransmitionPacket {
-                matrix: 0,
-                index: 0,
-                rows: 0,
-                cols: 0,
-                rows_fec: 0,
-                cols_fec: 0,
-                payload: vec![0; 0]
-            }; COL + ROW_FEC]);
-        }
-
-        let column_data: Vec<Vec<TransmitionPacket>> = transmission_matrix.iter_cols().map(|col| col.cloned().collect()).collect();
-
-        // Iterate over columns of transmission matrix to update the extra FEC info
-        for (col_index, col) in column_data.iter().enumerate() {
-            for item in col.iter().take(ROW) {
-                // update col parity index
-                col_encoder.add_original_shard(&item.payload).unwrap();
+        // Check if we have a col_encoder
+        if let Some(ref mut col_encoder) = col_encoder {
+           
+            // Add COL_FEC as empty rows
+            for _ in 0..COL_FEC {
+                transmission_matrix.push_row(vec![TransmitionPacket {
+                    matrix: 0,
+                    index: 0,
+                    rows: 0,
+                    cols: 0,
+                    rows_fec: 0,
+                    cols_fec: 0,
+                    payload: vec![0; 0]
+                }; COL + ROW_FEC]);
             }
 
-            // Create FEC Shards for the ROW
-            let result = col_encoder.encode().unwrap();
+            let column_data: Vec<Vec<TransmitionPacket>> = transmission_matrix.iter_cols().map(|col| col.cloned().collect()).collect();
 
-            for (item_index, item) in result.recovery_iter().enumerate() {
-                let packet = TransmitionPacket {
-                    matrix: matrix_counter,
-                    index: ((ROW + item_index) * (COL + ROW_FEC) + col_index) as i32,
-                    rows: ROW as i32,
-                    cols: COL as i32,
-                    rows_fec: ROW_FEC as i32,
-                    cols_fec: COL_FEC as i32,
-                    payload: item.to_vec(), // copy data to TransmitionPacket
-                };
+            // Iterate over columns of transmission matrix to update the extra FEC info
+            for (col_index, col) in column_data.iter().enumerate() {
+                for item in col.iter().take(ROW) {
+                    // update col parity index
+                    col_encoder.add_original_shard(&item.payload).unwrap();
+                }
 
-                transmission_matrix[(ROW + item_index, col_index)] = packet;
+                // Create FEC Shards for the ROW
+                let result = col_encoder.encode().unwrap();
+
+                for (item_index, item) in result.recovery_iter().enumerate() {
+                    let packet = TransmitionPacket {
+                        matrix: matrix_counter,
+                        index: ((ROW + item_index) * (COL + ROW_FEC) + col_index) as i32,
+                        rows: ROW as i32,
+                        cols: COL as i32,
+                        rows_fec: ROW_FEC as i32,
+                        cols_fec: COL_FEC as i32,
+                        payload: item.to_vec(), // copy data to TransmitionPacket
+                    };
+
+                    transmission_matrix[(ROW + item_index, col_index)] = packet;
+                }
             }
         }
 

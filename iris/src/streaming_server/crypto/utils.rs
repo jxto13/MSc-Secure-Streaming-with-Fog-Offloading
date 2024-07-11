@@ -11,6 +11,11 @@ use openssl::x509::extension::{
 };
 use openssl::x509::{X509NameBuilder, X509Ref, X509Req, X509ReqBuilder, X509};
 
+use std::fs;
+use std::fs::File;
+use std::io::{self, Write, Read};
+use std::path::Path;
+
 /// Make a CA certificate and private key
 pub fn mk_ca_cert() -> Result<(X509, PKey<Private>), ErrorStack> {
     let rsa = Rsa::generate(2048)?;
@@ -187,4 +192,36 @@ pub fn mk_ca_signed_cert(
 }
 
 
+pub fn save_certificate_to_file(cert: &X509, file_path: &str) -> io::Result<()> {
+    let pem = cert.to_pem()?;
+    let mut file = File::create(file_path)?;
+    file.write_all(&pem)?;
+    Ok(())
+}
 
+pub fn load_certificate_from_file(file_path: &str) -> io::Result<X509> {
+    let mut file = File::open(file_path)?;
+    let mut pem = Vec::new();
+    file.read_to_end(&mut pem)?;
+    let cert = X509::from_pem(&pem)?;
+    Ok(cert)
+}
+
+pub fn save_private_key_to_file(pkey: &PKey<Private>, file_path: &str) -> io::Result<()> {
+    let pem = pkey.private_key_to_pem_pkcs8()?;
+    let mut file = File::create(file_path)?;
+    file.write_all(&pem)?;
+    Ok(())
+}
+
+pub fn load_private_key_from_file(file_path: &str) -> io::Result<PKey<Private>> {
+    let mut file = File::open(file_path)?;
+    let mut pem = Vec::new();
+    file.read_to_end(&mut pem)?;
+    let pkey = PKey::private_key_from_pem(&pem)?;
+    Ok(pkey)
+}
+
+pub fn file_exists(file_path: &str) -> bool {
+    Path::new(file_path).exists()
+}

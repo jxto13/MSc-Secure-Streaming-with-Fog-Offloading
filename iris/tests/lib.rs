@@ -13,6 +13,47 @@ fn insert_value<T>(matrix: &mut Vec<Vec<T>>, position: usize, matrix_size: usize
 #[cfg(test)]
 mod tests {
 
+
+    #[test]
+    fn tst_signature(){
+        use openssl::{ec::EcKey, nid::Nid};
+        use openssl::sign::{Signer, Verifier};
+        use openssl::rsa::Rsa;
+        use openssl::pkey::PKey;
+        use openssl::hash::MessageDigest;
+        use openssl::ec::EcGroup;
+        use openssl::ecdsa::EcdsaSig;
+
+        // Generate a keypair
+        let keypair = Rsa::generate(2048).unwrap();
+        let keypair = PKey::from_rsa(keypair).unwrap();
+        
+        let data = b"hello, world!";
+        let data2 = b"hola, mundo!";
+
+        // // Create EC key from a specific curve (e.g., NID_secp256k1 for Bitcoin)
+        // let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
+        // let key = EcKey::generate(&group).unwrap();
+
+        // // Sign the message
+        // let digest = MessageDigest::sha256();
+        // let signature = EcdsaSig::sign(data, &key).unwrap();
+
+        // // Sign the data
+        let mut signer = Signer::new(MessageDigest::sha256(), &keypair).unwrap();
+        signer.update(data).unwrap();
+        signer.update(data2).unwrap();
+        let signature = signer.sign_to_vec().unwrap();
+        println!("{:?}", signature.len());
+        
+        
+        // Verify the data
+        let mut verifier = Verifier::new(MessageDigest::sha256(), &keypair).unwrap();
+        verifier.update(data).unwrap();
+        verifier.update(data2).unwrap();
+        assert!(verifier.verify(&signature).unwrap());
+    }
+
     #[test]
     fn enumerate(){
         let n = 10;  // The total count

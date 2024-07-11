@@ -7,8 +7,6 @@ import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.Menu;
 
-import pt.iris.R;
-
 import pt.iris.network.NetworkInitializer;
 //import pt.iris.services.GrpcClient;
 import pt.iris.services.RustService;
@@ -24,8 +22,10 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 
 import pt.iris.databinding.ActivityMainBinding;
+import pt.iris.utils.CertificateUtil;
 import pt.iris.utils.PermissionHandler;
 
+import java.io.IOException;
 import java.util.UUID;
 
 
@@ -43,7 +43,14 @@ public class MainActivity extends AppCompatActivity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 
-		// Generate or retrieve the UUID
+		// Copy public key certificate to data folder of app
+        try {
+            CertificateUtil.copyCertificateToDataFolder(this);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        // Generate or retrieve the UUID
 		String uuid = getOrCreateUUID();
 
 		// Set global myUUID in appContainer
