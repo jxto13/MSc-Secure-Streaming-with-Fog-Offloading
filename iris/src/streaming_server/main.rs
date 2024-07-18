@@ -10,6 +10,7 @@ use std::path::PathBuf;
 use crossbeam_channel::unbounded;
 use iris::streaming_server::proto::{self, FILE_DESCRIPTOR_SET};
 use log::{error, info};
+use once_cell::sync::OnceCell;
 use openssl::pkey::{PKey, Private};
 use openssl::rsa::Rsa;
 use openssl::x509::X509;
@@ -18,7 +19,10 @@ use source_handler::data_handler::{DataHandler,DataSource};
 use tonic::transport::{Identity, Server, ServerTlsConfig};
 use tokio::runtime::Runtime;
 
-use iris::streaming_server::read_config;
+use iris::streaming_server::{read_config, Config};
+
+// Define the global static instance of Config using OnceCell
+static CONFIG: OnceCell<Config> = OnceCell::new();
 
 // Custom
 use network_scheduler::pipeline::Pipeline;
@@ -51,6 +55,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Read configuration file
     let config = read_config(config_filename.to_str().unwrap())?;
+
+    // Set the global CONFIG instance
+    CONFIG.set(config).expect("Failed to set CONFIG");
 
     // Certificates file path
     let cert_file_path = "./certs/ca_certificate.pem";
@@ -105,15 +112,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cert = std::fs::read_to_string("./certs/server_certificate.pem")?;
     let key = std::fs::read_to_string("./certs/server_private_key.pem")?;
 
-    info!("{:?} \n\n\n {}",signed_cert,  String::from_utf8(signed_cert.to_pem().unwrap()).unwrap());
-
-    let multicast_ip = config.multicast_ip;
-
-    let port = config.port;
     let (source_handler_sender, source_handler_receiver) = unbounded();
     
     // Choose the data source
-    let source = DataSource::File(config.url_stream);
+    // let source = DataSource::File(config.url_stream);
+    let source = DataSource::FFMPEG();
 
     // Create a DataHandler instance
     let data_handler = DataHandler::new(source, source_handler_sender);        
@@ -141,9 +144,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         rt.block_on(async {
             
             // listen to all ipv6 addresses
-            let addr = format!("0.0.0.0:{}", config.grpc_service_port).parse().unwrap();
+            let addr = format!("0.0.0.0:{}", CONFIG.get().unwrap().grpc.port).parse().unwrap();
             
-            let private_key = pkey.private_key_to_pem_pkcs8().unwrap();
             // Start grpc server this will block execution because of await
             Server::builder()
                 .tls_config(ServerTlsConfig::new()

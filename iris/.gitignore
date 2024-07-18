@@ -20,6 +20,7 @@ config.toml
 public/file_path
 public/decode_matrix
 public/encoded_matrix
-certs
+certs/*
+!certs/.empty
 stats/*
 !stats/graph_draw.py

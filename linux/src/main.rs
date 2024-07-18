@@ -22,9 +22,14 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     };
 
+    let args: Vec<_> = "- -fflags nobuffer -flags low_delay".split_whitespace().collect();
+    // let args: Vec<_> = " - --no-cache --untimed  --no-demuxer-thread --video-sync=audio --vd-lavc-threads=1".split_whitespace().collect();
     // Start the ffplay (mpv) process
-    let mut ffplay = Command::new("mpv")
-        .args(&["-", "--force-seekable=yes", "2>&1"])
+    // let mut ffplay = Command::new("mpv")
+    let mut ffplay = Command::new("ffplay")
+
+        // .args(&["-", "--cache=yes", "--cache-secs=5", "--speed=1"])
+        .args(&args)
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
         .stderr(Stdio::null())

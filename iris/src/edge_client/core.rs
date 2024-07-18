@@ -166,7 +166,7 @@ async fn create_channel() -> Result<Channel, Box<dyn std::error::Error>> {
         .domain_name("www.example.com");
 
     // Create the channel with the TLS configuration
-    let channel = Channel::from_static("https://192.168.1.127:50051")
+    let channel = Channel::from_static("https://192.168.0.66:50051")
         .tls_config(tls_config)?
         .connect()
         .await?;

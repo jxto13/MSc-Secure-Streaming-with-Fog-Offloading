@@ -20,7 +20,7 @@ impl Pipeline {
     pub fn new() -> Self {
         Pipeline {
             client_sessions: Arc::new(Mutex::new(ClientSessions::new())),
-            wifi_multicast: Arc::new(Mutex::new(WiFiMulticast::new(1_000_000_000))),
+            wifi_multicast: Arc::new(Mutex::new(WiFiMulticast::new())),
         }
     }
 

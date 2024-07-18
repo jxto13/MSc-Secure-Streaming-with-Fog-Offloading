@@ -12,47 +12,107 @@ fn insert_value<T>(matrix: &mut Vec<Vec<T>>, position: usize, matrix_size: usize
 
 #[cfg(test)]
 mod tests {
+    
+    #[test]
+    fn slices() {
+        let slices: Vec<_> = "-r 30 -video_size 640x480 -i /dev/video0 -c:v libx264 -b:a 2048k -preset ultrafast -tune zerolatency -f mpegts".split_whitespace().collect();
+        println!("{:?}", slices);
+        
+    }
+
+    #[test]
+    fn tst_signature_2(){
+        use openssl::ec::{EcGroup, EcKey, EcPoint};
+        use openssl::nid::Nid;
+        use openssl::pkey::PKey;
+        use openssl::pkey::Private;
+        use openssl::sha::sha256;
+        use openssl::bn::BigNumContext;
+        use openssl::sign::{Signer, Verifier};
+
+        // Generate an EC key pair
+        let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
+        let ec_key = EcKey::generate(&group).unwrap();
+        
+        let mut ctx = BigNumContext::new().unwrap();
+
+        // Get public key bytes in DER format
+        let public_key = ec_key.public_key_to_der().unwrap();
+
+        // Create an EcKey from the binary form of a EcPoint
+        let point = EcPoint::from_bytes(&group, &public_key, &mut ctx).unwrap();
+        let key = EcKey::from_public_key(&group, &point).unwrap();
+
+        // Convert EcKey to PKey for signing
+        let pkey = PKey::from_ec_key(ec_key).unwrap();
+
+        // Message to be signed
+        let message = b"Hello, world!";
+        
+        // Hash the message
+        let message_hash = sha256(message);
+
+        // Sign the message
+        let mut signer = Signer::new_without_digest(&pkey).unwrap();
+        signer.update(&message_hash).unwrap();
+        let signature = signer.sign_to_vec().unwrap();
+
+        // Verify the signature
+        let pkey_pub = PKey::from_ec_key(key).unwrap();
+        let mut verifier = Verifier::new_without_digest(&pkey_pub).unwrap();
+        verifier.update(&message_hash).unwrap();
+        let is_verified = verifier.verify(&signature).unwrap();
+
+        // Assert that the signature is valid
+        assert!(is_verified);
+    }
 
 
     #[test]
-    fn tst_signature(){
-        use openssl::{ec::EcKey, nid::Nid};
-        use openssl::sign::{Signer, Verifier};
-        use openssl::rsa::Rsa;
-        use openssl::pkey::PKey;
-        use openssl::hash::MessageDigest;
-        use openssl::ec::EcGroup;
-        use openssl::ecdsa::EcdsaSig;
+    // fn tst_signature(){
+    //     use openssl::ec::EcPoint;
+    //     use openssl::ecdsa::EcdsaSig;
+    //     use openssl::ec::{EcKey, EcGroup};
+    //     use openssl::nid::Nid;
+    //     use openssl::pkey::PKey;
+    //     use openssl::sha::sha256;
+    //     use openssl::bn::BigNumContext;
 
-        // Generate a keypair
-        let keypair = Rsa::generate(2048).unwrap();
-        let keypair = PKey::from_rsa(keypair).unwrap();
+    //     // Generate an EC key pair
+    //     let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
+    //     let ec_key = EcKey::generate(&group).unwrap();
         
-        let data = b"hello, world!";
-        let data2 = b"hola, mundo!";
 
-        // // Create EC key from a specific curve (e.g., NID_secp256k1 for Bitcoin)
-        // let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
-        // let key = EcKey::generate(&group).unwrap();
+    //     let mut ctx = BigNumContext::new().unwrap();
 
-        // // Sign the message
-        // let digest = MessageDigest::sha256();
-        // let signature = EcdsaSig::sign(data, &key).unwrap();
+    //     // get bytes from somewhere
+    //     let public_key = ec_key.public_key_to_der().unwrap();
 
-        // // Sign the data
-        let mut signer = Signer::new(MessageDigest::sha256(), &keypair).unwrap();
-        signer.update(data).unwrap();
-        signer.update(data2).unwrap();
-        let signature = signer.sign_to_vec().unwrap();
-        println!("{:?}", signature.len());
+    //     // create an EcKey from the binary form of a EcPoint
+    //     let point = EcPoint::from_bytes(&group, &public_key, &mut ctx).unwrap();
+    //     let key = EcKey::from_public_key(&group, &point).unwrap();
+
+    //     // Message to be signed
+    //     let message = b"Hello, world!";
         
+    //     // Hash the message
+    //     let message_hash = sha256(message);
+
+    //     // Sign the message hash
+    //     let signature = EcdsaSig::sign(&message_hash, &key).unwrap();
+
+    //     // Extract r and s from the signature
+    //     let r = signature.r().to_vec();
+    //     let s = signature.s().to_vec();
         
-        // Verify the data
-        let mut verifier = Verifier::new(MessageDigest::sha256(), &keypair).unwrap();
-        verifier.update(data).unwrap();
-        verifier.update(data2).unwrap();
-        assert!(verifier.verify(&signature).unwrap());
-    }
+    //     println!("Signature (r): {:?}", r);
+    //     println!("Signature (s): {:?}", s);
+
+    //     // Verify the signature
+    //     let is_valid = signature.verify(&message_hash, &ec_key).is_ok();
+
+    //     println!("Signature is valid: {}", is_valid);
+    // }
 
     #[test]
     fn enumerate(){

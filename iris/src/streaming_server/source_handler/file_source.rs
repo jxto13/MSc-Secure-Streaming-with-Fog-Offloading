@@ -1,14 +1,19 @@
+use crate::CONFIG;
+
 use crossbeam_channel::Sender;
 use log::{info, error};
 use std::fs::File;
 use std::io::{BufReader, Read};
 use grid::Grid as Matrix;
 
-const DATA_SIZE: usize = 256 * 5;
-const ROW: usize = 6;
-const COL: usize = 6;
-
+#[allow(non_snake_case)]
 pub fn read_file_and_send(file_path: &str, tx: Sender<Matrix<Vec<u8>>>) {
+    let config = &CONFIG.get().unwrap().multicast;
+
+    let ROW: usize = config.row;
+    let COL: usize = config.col;
+    let DATA_SIZE: usize = config.shard_size;
+
     // Open the file
     let file = match File::open(file_path) {
         Ok(file) => file,
@@ -20,7 +25,7 @@ pub fn read_file_and_send(file_path: &str, tx: Sender<Matrix<Vec<u8>>>) {
     let mut reader = BufReader::new(file);
 
     // Buffer to store the read bytes
-    let mut buffer = [0; DATA_SIZE];
+    let mut buffer = vec![0; DATA_SIZE];
 
     'main_loop: loop {
         // This is the matrix we will save globally

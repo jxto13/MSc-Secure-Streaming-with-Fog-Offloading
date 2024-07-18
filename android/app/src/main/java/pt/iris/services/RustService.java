@@ -18,6 +18,7 @@ public class RustService extends Service {
      */
     private static native void startService();
     public static native byte[] helloByte(int size);
+    public static native void checkWritePermission(String path);
 
     @Override
     public void onCreate() {

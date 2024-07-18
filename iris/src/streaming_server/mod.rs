@@ -1,4 +1,4 @@
-use std::fs;
+use std::{fs, ops::Mul};
 
 use serde::Deserialize;
 
@@ -10,12 +10,42 @@ pub mod proto {
     pub const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("streaming_server_descriptor");
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct Config {
-    pub grpc_service_port: u16,
-    pub multicast_ip: String,
-    pub url_stream: String,
+    pub ca: CA,
+    pub grpc: GRPC,
+    pub multicast: Multicast
+}
+
+#[derive(Deserialize, Debug)]
+pub struct CA {
+    pub c: String,
+    pub st: String,
+    pub o: String,
+    pub cn: String,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct GRPC {
     pub port: u16,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Multicast {
+    // Strean Config
+    pub data_source: String,
+    pub file_path: String,
+    pub interface: String,
+    pub ip: String,
+    pub port: u16,
+    // Matrix Config
+    pub row: usize,
+    pub col: usize,
+    pub row_fec: usize,
+    pub col_fec: usize,
+    
+    pub shard_size: usize,
+    pub mtu_size: usize
 }
 
 pub fn read_config(filename: &str) -> Result<Config, Box<dyn std::error::Error>> {

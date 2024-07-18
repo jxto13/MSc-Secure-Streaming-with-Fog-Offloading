@@ -1,4 +1,5 @@
 use crate::proto::TransmitionPacket;
+use crate::CONFIG;
 
 use crossbeam_channel::{Receiver, Sender};
 use reed_solomon_16::ReedSolomonEncoder;
@@ -6,19 +7,21 @@ use grid::Grid as Matrix;
 use prost::Message;
 
 use std::time::Instant;
-
 use log::{error, info};
 
-pub const ROW: usize = 6;
-pub const COL: usize = 6;
-pub const ROW_FEC: usize = 0;
-pub const COL_FEC: usize = 0;
-
-const SHARD_SIZE: usize = 256 * 5;
-const MTU_SIZE: usize = 1500;
-
+#[allow(non_snake_case)]
 // This is running inside a separate task
 pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
+    let config = &CONFIG.get().unwrap().multicast;
+    
+    let ROW: usize = config.row;
+    let COL: usize = config.col;
+    let ROW_FEC: usize = config.row_fec;
+    let COL_FEC: usize = config.col_fec;
+    
+    let SHARD_SIZE: usize = config.shard_size;
+    let MTU_SIZE: usize = config.mtu_size;
+    
     assert!(SHARD_SIZE < MTU_SIZE);
 
     // Create counters
@@ -32,7 +35,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         SHARD_SIZE // shard size in bytes
     ) {
         Ok(encoder) => Some(encoder),
-        Err(e) => {
+        Err(_) => {
             None
         }
     };
@@ -43,7 +46,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         SHARD_SIZE // shard size in bytes
     ) {
         Ok(encoder) => Some(encoder),
-        Err(e) => {
+        Err(_) => {
             None
         }
     };

@@ -1,6 +1,25 @@
-grpc_service_port = 50051
-multicast_ip = "239.255.0.1"
+[ca]
+c = "PT"
+st = "Porto"
+o = "DCC"
+cn = "www.iris.dcc.fc.up.pt"
 
-[[sessions]]
-url_stream = "./public/demo.ts"
+[grpc]
+port = 50051
+
+[multicast]
+# Stream Config
+data_source = "ffmpeg" # can be 'ffmpeg' or 'file'
+file_path = "./public/the_simpsons_trailer_1000k.ts"
+interface = "enp0s13f0u1u2"
+ip = "239.255.0.1"
 port = 1234
+
+# Matrix Config
+row = 10
+col = 10
+row_fec = 5
+col_fec = 5
+
+shard_size = 256 # must be a multiple of 64
+mtu_size = 1500 # default in all AP or routers

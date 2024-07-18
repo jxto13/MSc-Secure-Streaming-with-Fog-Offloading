@@ -1,12 +1,16 @@
 use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
 use crossbeam_channel::Receiver;
+use pnet::ipnetwork::IpNetwork;
 use std::io;
 use std::net::{Ipv4Addr, SocketAddr};
+use std::str::FromStr;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
-
+use pnet_datalink;
 use log::{info, error};
+
+use crate::CONFIG;
 
 // A token to allow us to identify which event is for the `UdpSocket`.
 const SERVER: Token = Token(0);
@@ -68,9 +72,9 @@ pub struct WiFiMulticast {
 
 impl WiFiMulticast {
     /// Creates a new instance of `WiFiMulticast` with a specified bitrate.
-    pub fn new(bitrate: usize) -> Self {
+    pub fn new() -> Self {
         Self {
-            bandwidth_manager: BandwidthManager::new(bitrate),
+            bandwidth_manager: BandwidthManager::new(100_000_000),
         }
     }
 
@@ -85,12 +89,31 @@ impl WiFiMulticast {
         let mut socket = UdpSocket::bind(addr).unwrap();
 
         // Define the multicast address and port.
-        let multicast_address = Ipv4Addr::new(239, 1, 1, 10);
-        let multicast_port = 12345;
+        let multicast_address = Ipv4Addr::from_str(&CONFIG.get().unwrap().multicast.ip).unwrap();
+        let multicast_port = CONFIG.get().unwrap().multicast.port;
         let multicast_dest: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(multicast_address), multicast_port);
 
+        let interfaces = pnet_datalink::interfaces();
+
+        let interface = interfaces.into_iter()
+            .find(|iface| iface.name == CONFIG.get().unwrap().multicast.interface)
+            .expect("Failed to get the network interface");
+
+        let mut ipv4_address = None;
+
+        for ip in interface.ips {
+            match ip {
+                IpNetwork::V4(ipv4) => {
+                    ipv4_address = Some(ipv4.ip());
+                }
+                IpNetwork::V6(_) => (),
+            }
+        }
+    
+        let ipv4_address = ipv4_address.expect("No IPv4 address found for the interface");
+    
         // Join the multicast group.
-        if let Err(e) = socket.join_multicast_v4(&multicast_address, &Ipv4Addr::UNSPECIFIED) {
+        if let Err(e) = socket.join_multicast_v4(&multicast_address, &ipv4_address) {
             error!("Failed to join multicast group: {}", e);
             return Err(Box::new(e));
         };

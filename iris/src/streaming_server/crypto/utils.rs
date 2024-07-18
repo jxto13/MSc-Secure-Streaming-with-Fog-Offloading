@@ -16,16 +16,20 @@ use std::fs::File;
 use std::io::{self, Write, Read};
 use std::path::Path;
 
+use crate::CONFIG;
+
 /// Make a CA certificate and private key
 pub fn mk_ca_cert() -> Result<(X509, PKey<Private>), ErrorStack> {
     let rsa = Rsa::generate(2048)?;
     let key_pair = PKey::from_rsa(rsa)?;
 
+    let config = &CONFIG.get().unwrap().ca;
+
     let mut x509_name = X509NameBuilder::new()?;
-    x509_name.append_entry_by_text("C", "US")?;
-    x509_name.append_entry_by_text("ST", "TX")?;
-    x509_name.append_entry_by_text("O", "Some CA organization")?;
-    x509_name.append_entry_by_text("CN", "ca test")?;
+    x509_name.append_entry_by_text("C", &config.c)?;
+    x509_name.append_entry_by_text("ST", &config.st)?;
+    x509_name.append_entry_by_text("O", &config.o)?;
+    x509_name.append_entry_by_text("CN", &config.cn)?;
     let x509_name = x509_name.build();
 
     let mut cert_builder = X509::builder()?;
