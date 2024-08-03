@@ -4,19 +4,22 @@ use crossbeam_channel::Sender;
 use log::{info, error};
 use std::process::{Command, Stdio};
 use std::io::{BufReader, Read};
+use std::ptr::read;
 use std::thread;
 use grid::Grid as Matrix;
 
-#[allow(non_snake_case)]
+// #[allow(non_snake_case)]
 pub fn read_ffmpeg_and_send(tx: Sender<Matrix<Vec<u8>>>) {
     let config = &CONFIG.get().unwrap().multicast;
 
     let ROW: usize = config.row;
     let COL: usize = config.col;
-    let DATA_SIZE: usize = config.shard_size;
+    let DATA_SIZE: usize = config.data_size;
 
+    // let args: Vec<_> = "-loglevel quiet -f v4l2 -i /dev/video0 -c:v libx264 -streaming 1 -f mpegts pipe:1"
+    // let args: Vec<_> = "-loglevel quiet -f v4l2 -video_size 1280x720 -i /dev/video0 -c:v libx264 -b:v 5000k -preset ultrafast -tune zerolatency -streaming 1 -f mpegts pipe:1"
 
-    let args: Vec<_> = "-loglevel quiet -f v4l2 -video_size 1280x720 -i /dev/video0 -c:v libx264 -b:v 5000k -maxrate 5000k -bufsize 10000k -preset ultrafast -tune zerolatency -streaming 1 -f mpegts pipe:1"
+    let args: Vec<_> = "-loglevel quiet -i /home/jx23/Desktop/FinalTestWifiAware/iris/public/the_simpsons_trailer_2000k.ts -c:v copy -c:a copy -f mpegts pipe:1"
         .split_whitespace()
         .collect();
     
@@ -42,22 +45,23 @@ pub fn read_ffmpeg_and_send(tx: Sender<Matrix<Vec<u8>>>) {
                 let mut row: Vec<Vec<u8>> = Vec::with_capacity(COL);
 
                 for _ in 0..COL {
-                    let mut total_read = 0;
-                    while total_read < DATA_SIZE {
-                        match reader.read(&mut buffer[total_read..]) {
-                            Ok(0) => {
-                                info!("END OF FILE");
-                                break 'main_loop;
-                            }
-                            Ok(n) => {
-                                total_read += n;
-                            }
-                            Err(e) => {
-                                error!("Error reading data from ffmpeg output: {}", e);
-                                return;
-                            }
-                        }
-                    }
+                    reader.read_exact(&mut buffer).unwrap();
+                    // let mut total_read = 0;
+                    // while total_read < DATA_SIZE {
+                    //     match reader.read(&mut buffer[total_read..]) {
+                    //         Ok(0) => {
+                    //             info!("END OF FILE");
+                    //             break 'main_loop;
+                    //         }
+                    //         Ok(n) => {
+                    //             total_read += n;
+                    //         }
+                    //         Err(e) => {
+                    //             error!("Error reading data from ffmpeg output: {}", e);
+                    //             return;
+                    //         }
+                    //     }
+                    // }
                     row.push(buffer.clone());
                 }
                 matrix.push_row(row);

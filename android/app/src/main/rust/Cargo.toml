@@ -12,6 +12,7 @@ android_logger = "0.14.1"
 log = "0.4.19"
 iris = { version = "0.1.0", path = "../../../../../iris" }
 mio = "0.8.11"
+libc = "0.2.155"
 
 
 [profile.release]

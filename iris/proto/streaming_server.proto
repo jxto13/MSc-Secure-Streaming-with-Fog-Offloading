@@ -1,10 +1,11 @@
 syntax = "proto3";
 package streaming_server;
 
-// Certicastes and  symmetric keys
+// Certicastes
 service CertificateService {
     rpc SignCertificate(CertificateRequest) returns (CertificateResponse);
     rpc VerifyCertificate(SignedCertificateRequest) returns (ValidationCertificateResponse);
+
 }
 
 message SignedCertificateRequest {
@@ -22,13 +23,33 @@ message CertificateRequest {
 message CertificateResponse {
     bytes signed_cert = 1;
 }
+// ----------------------------------------------------------------------------------------------------------- //
+
+// Symmetric keys
+service KeyService {
+    rpc RequestCurrentKey(RequestKey) returns (KeyResponse);
+}
+
+message RequestKey {}
+
+message KeyResponse {
+    SessionKey current_key = 1;
+    bytes certificate = 2;
+}
 
 // ----------------------------------------------------------------------------------------------------------- //
+
+// Session Key
+message SessionKey {
+    bytes key = 1;
+    bytes iv = 2;
+}
 
 // This will be the payload of TransmitionPacket
 message VideoData {
     bytes data = 1;
-    // bytes signature = 2;
+    bytes signature = 2;
+    SessionKey next_key = 3;
 }
 
 message TransmitionPacket {
@@ -39,11 +60,12 @@ message TransmitionPacket {
     int32 rows_fec = 7;
     int32 cols_fec = 8;
     bytes payload = 9; // this payload is encrypted
+    bytes packet_signature = 10; // signed sha256
 }
 
 // ----------------------------------------------------------------------------------------------------------- //
 
-
+// Reporting Service
 service ReportService {
     rpc SendReport (ClientReport) returns (Empty);
 }

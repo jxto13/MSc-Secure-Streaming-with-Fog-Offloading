@@ -1,10 +1,16 @@
 use crossbeam_channel::{unbounded, Receiver};
+use once_cell::sync::OnceCell;
+use openssl::bn::BigNumContext;
+use openssl::ec::{EcGroup, EcKey, EcPoint};
+use openssl::nid::Nid;
+use openssl::x509::X509;
+use prost::Message;
 use std::sync::{Arc, Barrier, Mutex};
 use std::time::Duration;
 use std::{fs, thread};
 use tokio::sync::mpsc;
 
-use openssl::pkey::{PKey, Private};
+use openssl::pkey::{PKey, Private, Public};
 use openssl::rsa::Rsa;
 
 use proto::certificate_service_client::CertificateServiceClient;
@@ -17,23 +23,25 @@ use tonic::transport::{channel, Certificate, Channel, ClientTlsConfig};
 
 use log::{error, info};
 
+use crate::edge_client::proto::SessionKey;
+
+use super::proto::key_service_client::KeyServiceClient;
+use super::proto::{RequestKey,KeyResponse};
 use super::receiver;
 use super::session;
 use super::{decoder, proto, utils};
 
 const CA_PUBLIC_CERTIFICATE: &[u8] = include_bytes!("../../certs/ca_certificate.pem");
 
+pub static CHANNEL: OnceCell<Channel> = OnceCell::new();
+pub static ECDSA_KEY: OnceCell<Arc<Mutex<EcKey<Public>>>> = OnceCell::new();
+
 pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     // Set up a Tokio runtime
     let rt = Arc::new(Runtime::new().unwrap());
 
-    // Create a shared Arc<Mutex<Option<CertificateServiceClient>>>
-    let channel_arc = Arc::new(Mutex::new(None));
-
     {
         let runtime = Arc::clone(&rt);
-        // Clone the Arc for use inside the async block
-        let channel_arc = Arc::clone(&channel_arc);
 
         // Run async code using the Tokio runtime
         runtime.block_on(async move {
@@ -82,8 +90,8 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
                         }
 
                         // Save the client for use after the loop
-                        let mut channel_lock = channel_arc.lock().unwrap();
-                        *channel_lock = Some(channel);
+                        CHANNEL.set(channel).unwrap();
+
                         break; // Exit the loop once connected
                     }
                     Err(e) => {
@@ -92,6 +100,37 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
                     }
                 }
             }
+        });
+    }
+
+    let current_session_key: Arc<Mutex<SessionKey>> = Arc::new(Mutex::new(SessionKey { key: vec![0, 0], iv: vec![0, 0] }));
+    let certificate: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(vec![0,0]));
+    
+    {
+        let runtime = Arc::clone(&rt);
+        let current_session_key = Arc::clone(&current_session_key);
+        let certificate = Arc::clone(&certificate);
+
+        // Run async code using the Tokio runtime
+        runtime.block_on(async move {
+
+            let mut connection = KeyServiceClient::new(CHANNEL.get().unwrap().clone());
+
+            let key_response = connection.request_current_key(RequestKey {}).await.unwrap();
+
+            let reponse = key_response.into_inner();
+
+            info!("key: {:?}, certificate: {:?}", reponse.current_key, reponse.certificate);
+
+            if let Some(current_key) = reponse.current_key {
+                let mut current_session_key = current_session_key.lock().unwrap();
+                current_session_key.key = current_key.key;
+                current_session_key.iv = current_key.iv;
+            }
+
+            let mut certificate_mutex = certificate.lock().unwrap();
+            *certificate_mutex = reponse.certificate;
+
         });
     }
 
@@ -110,9 +149,9 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
 
     // Creates new thread for multicast receiver
     let listener_handler = std::thread::spawn(move || {
-        info!("Starting multicast receiver on address 239.1.1.10:12345.");
+        info!("Starting multicast receiver on address 239.255.0.1:12345.");
         match receiver::multicast_receiver::start(
-            "239.1.1.10".to_string(),
+            "239.255.0.1".to_string(),
             "12345".to_string(),
             listener_sender,
             listener_barrier,
@@ -126,6 +165,18 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
         }
     });
 
+    // Cloning the value inside the current_session_key Mutex
+    let cloned_session_key: SessionKey = {
+        let session_key = current_session_key.lock().unwrap();
+        session_key.clone()
+    };
+
+    // Cloning the value inside the certificate Mutex
+    let cloned_certificate: Vec<u8> = {
+        let cert = certificate.lock().unwrap();
+        cert.clone()
+    };
+
     // Clone the Barrier for the decoder thread
     let decoder_barrier = Arc::clone(&barrier);
 
@@ -137,6 +188,8 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
             matrix_decoder_receiver,
             decoded_data_sender,
             client_report_sender,
+            cloned_session_key,
+            cloned_certificate
         ) {
             error!("Matrix decoder failed to start: {}", e);
         }
@@ -147,7 +200,7 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     thread::spawn(move || {
         // Wait for the listener multicast with a barrier before starting the decoder
         let mut client_report = session::ClientSession::new(runtime);
-        client_report.start_report_client(client_report_receiver,channel_arc);
+        client_report.start_report_client(client_report_receiver);
     });
 
     // Spawn a separate thread for joining and returning the sender
@@ -166,7 +219,7 @@ async fn create_channel() -> Result<Channel, Box<dyn std::error::Error>> {
         .domain_name("www.example.com");
 
     // Create the channel with the TLS configuration
-    let channel = Channel::from_static("https://192.168.0.66:50051")
+    let channel = Channel::from_static("https://razer15:50051")
         .tls_config(tls_config)?
         .connect()
         .await?;

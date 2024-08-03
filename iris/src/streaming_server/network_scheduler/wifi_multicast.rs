@@ -74,7 +74,7 @@ impl WiFiMulticast {
     /// Creates a new instance of `WiFiMulticast` with a specified bitrate.
     pub fn new() -> Self {
         Self {
-            bandwidth_manager: BandwidthManager::new(100_000_000),
+            bandwidth_manager: BandwidthManager::new(4_000_000),
         }
     }
 

@@ -1,15 +1,26 @@
-use crate::proto::TransmitionPacket;
-use crate::CONFIG;
+use crate::crypto::key_manager::KeyManager;
+
+
+use crate::{CONFIG, MANAGER};
 
 use crossbeam_channel::{Receiver, Sender};
+use iris::crypto_utils::encrypt;
+use iris::streaming_server;
+use iris::streaming_server::proto::{SessionKey, TransmitionPacket, VideoData};
+use openssl::ecdsa::EcdsaSig;
+use openssl::symm::Cipher;
 use reed_solomon_16::ReedSolomonEncoder;
 use grid::Grid as Matrix;
 use prost::Message;
 
+use std::io::Cursor;
 use std::time::Instant;
 use log::{error, info};
 
-#[allow(non_snake_case)]
+use openssl::sha::sha256;
+
+
+// #[allow(non_snake_case)]
 // This is running inside a separate task
 pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     let config = &CONFIG.get().unwrap().multicast;
@@ -23,6 +34,11 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     let MTU_SIZE: usize = config.mtu_size;
     
     assert!(SHARD_SIZE < MTU_SIZE);
+
+    let manager = MANAGER.get().unwrap();
+
+    let binding = manager.lock().unwrap();
+    let ec_key = binding.get_ec_key();
 
     // Create counters
     let start_time = Instant::now();
@@ -56,26 +72,50 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         let mut transmission_matrix: Matrix<TransmitionPacket> = Matrix::new(0, 0);
 
         let mut matrix_index = 0;
+        
+        // encrypt the data with rotating key
+        let current_key = binding.get_current_key();
+        let next_key = binding.get_next_key();
 
         for rows in matrix.iter_rows() {
             let mut row: Vec<TransmitionPacket> = Vec::new();
 
             for item in rows {
-                let packet = TransmitionPacket {
+                let mut video_data = VideoData {
+                    data: item.clone(),
+                    signature: vec![0,0],
+                    next_key: Some(next_key.clone()),
+                };
+
+                // Create hash of message and sign
+                let message_hash = sha256(&video_data.encode_to_vec());
+                let signature = EcdsaSig::sign(&message_hash, ec_key).unwrap().to_der().unwrap();
+
+                video_data.signature = signature;
+
+                assert!(video_data.encode_to_vec().len() < SHARD_SIZE);
+                
+                let mut packet = TransmitionPacket {
                     matrix: matrix_counter,
                     index: matrix_index as i32,
                     rows: ROW as i32,
                     cols: COL as i32,
                     rows_fec: ROW_FEC as i32,
                     cols_fec: COL_FEC as i32,
-                    payload: item.clone(), // copy data to TransmitionPacket, this will be VideoData encrypted
+                    payload: encrypt(&video_data.encode_length_delimited_to_vec(), &current_key.key, &current_key.iv, SHARD_SIZE),
+                    packet_signature: vec![0,255],
                 };
+                
+                let message_hash = sha256(&packet.encode_to_vec());
+                let signature = EcdsaSig::sign(&message_hash, ec_key).unwrap().to_der().unwrap();
 
-                row.push(packet);
+                packet.packet_signature = signature;
+
+                row.push(packet.clone());
 
                 // Check if we have a row_encoder
                 if let Some(ref mut row_encoder) = row_encoder {
-                    row_encoder.add_original_shard(&item).unwrap();
+                    row_encoder.add_original_shard(&packet.payload).unwrap();                    
                 }
 
                 matrix_index += 1;
@@ -88,15 +128,22 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                 let result = row_encoder.encode().unwrap();
 
                 for item in result.recovery_iter() {
-                    let packet = TransmitionPacket {
+
+                    let mut packet = TransmitionPacket {
                         matrix: matrix_counter,
                         index: matrix_index,
                         rows: ROW as i32,
                         cols: COL as i32,
                         rows_fec: ROW_FEC as i32,
                         cols_fec: COL_FEC as i32,
-                        payload: item.to_vec(), // copy data to TransmitionPacket
+                        payload: item.to_vec(),
+                        packet_signature: vec![0,255],
                     };
+
+                    let message_hash = sha256(&packet.encode_to_vec());
+                    let signature = EcdsaSig::sign(&message_hash, ec_key).unwrap().to_der().unwrap();
+
+                    packet.packet_signature = signature;
 
                     row.push(packet);
 
@@ -118,7 +165,8 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                     cols: 0,
                     rows_fec: 0,
                     cols_fec: 0,
-                    payload: vec![0; 0]
+                    payload: vec![0,0],
+                    packet_signature: vec![0,255]
                 }; COL + ROW_FEC]);
             }
 
@@ -135,15 +183,22 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                 let result = col_encoder.encode().unwrap();
 
                 for (item_index, item) in result.recovery_iter().enumerate() {
-                    let packet = TransmitionPacket {
+
+                    let mut packet = TransmitionPacket {
                         matrix: matrix_counter,
                         index: ((ROW + item_index) * (COL + ROW_FEC) + col_index) as i32,
                         rows: ROW as i32,
                         cols: COL as i32,
                         rows_fec: ROW_FEC as i32,
                         cols_fec: COL_FEC as i32,
-                        payload: item.to_vec(), // copy data to TransmitionPacket
+                        payload: item.to_vec(),
+                        packet_signature: vec![0,255],
                     };
+
+                    let message_hash = sha256(&packet.encode_to_vec());
+                    let signature = EcdsaSig::sign(&message_hash, ec_key).unwrap().to_der().unwrap();
+
+                    packet.packet_signature = signature;
 
                     transmission_matrix[(ROW + item_index, col_index)] = packet;
                 }

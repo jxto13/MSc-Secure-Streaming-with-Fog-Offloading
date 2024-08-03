@@ -44,6 +44,7 @@ pub struct Multicast {
     pub row_fec: usize,
     pub col_fec: usize,
     
+    pub data_size: usize,
     pub shard_size: usize,
     pub mtu_size: usize
 }
@@ -53,3 +54,5 @@ pub fn read_config(filename: &str) -> Result<Config, Box<dyn std::error::Error>>
     let config: Config = toml::from_str(&config_content)?;
     Ok(config)
 }
+
+

@@ -6,13 +6,13 @@ use std::fs::File;
 use std::io::{BufReader, Read};
 use grid::Grid as Matrix;
 
-#[allow(non_snake_case)]
+// #[allow(non_snake_case)]
 pub fn read_file_and_send(file_path: &str, tx: Sender<Matrix<Vec<u8>>>) {
     let config = &CONFIG.get().unwrap().multicast;
 
     let ROW: usize = config.row;
     let COL: usize = config.col;
-    let DATA_SIZE: usize = config.shard_size;
+    let DATA_SIZE: usize = config.data_size;
 
     // Open the file
     let file = match File::open(file_path) {

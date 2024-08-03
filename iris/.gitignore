@@ -22,5 +22,6 @@ public/decode_matrix
 public/encoded_matrix
 certs/*
 !certs/.empty
+!certs/ca_certificate.pem
 stats/*
 !stats/graph_draw.py

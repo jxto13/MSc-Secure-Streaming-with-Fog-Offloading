@@ -1,13 +1,20 @@
 use crossbeam_channel::{Receiver, Sender};
 use log::{error, info};
+use openssl::sha::sha256;
+use openssl::x509::X509;
 use prost::Message;
 
 use std::collections::HashSet;
 use std::error::Error;
+use std::io::Cursor;
 use std::sync::{Arc, Mutex};
 
-use crate::edge_client::proto::TransmitionPacket;
+use crate::edge_client::proto::{SessionKey, TransmitionPacket, VideoData};
 use grid::Grid as Matrix;
+
+use openssl::ecdsa::EcdsaSig;
+
+use crate::crypto_utils::decrypt;
 
 use super::proto::ClientReport;
 
@@ -69,20 +76,36 @@ impl MatrixTracker {
     }
 
 }
-
-pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>, client_report_sender: tokio::sync::mpsc::Sender<ClientReport>) -> Result<(), Box<dyn Error>> {
+#[ignore]
+pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>, client_report_sender: tokio::sync::mpsc::Sender<ClientReport>, current_key: SessionKey, certificate: Vec<u8>) -> Result<(), Box<dyn Error>> {
     let current_tracker: Arc<Mutex<Option<MatrixTracker>>> = Arc::new(Mutex::new(None));
+
+    let x509_public_key = X509::from_pem(&certificate).unwrap().public_key().unwrap();
 
     loop {
         match receiver.try_recv() {
             Ok(matrix_cell) => {
-                let packet = match TransmitionPacket::decode(&*matrix_cell) {
+                let mut packet = match TransmitionPacket::decode(&*matrix_cell) {
                     Ok(packet) => packet,
                     Err(err) => {
                         error!("Error decoding packet: {}", err);
                         continue;
                     }
                 };
+
+
+                let signature = EcdsaSig::from_der(&packet.packet_signature).unwrap();
+
+                packet.packet_signature = vec![0,255];
+
+                let message_hash = sha256(&packet.encode_to_vec());
+                
+                // Verify the signature
+                let is_valid = signature.verify(&message_hash, &x509_public_key.ec_key().unwrap()).unwrap();
+                
+                if !is_valid {
+                    continue;
+                }
 
                 let mut tracker_guard = current_tracker.lock().unwrap();
 
@@ -93,24 +116,6 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>, c
 
                             // Record the start time
                             let start = std::time::Instant::now();
-
-                            // info!("------------START-------------");
-                            // for row in tracker.matrix.iter_rows() {
-                            //     let mut string : String = "".to_owned();
-                            //     for col in row {
-                            //         if let Some(value) = col {
-                            //             if value.index < 10 {
-                            //                 string.push_str(&format!(" {} ",value.index));
-                            //             } else {
-                            //                 string.push_str(&format!("{} ",value.index));
-                            //             }
-                            //         } else {
-                            //             string.push_str("-1 ");
-                            //         }
-                            //     }
-                            //     info!("{}",string);
-                            // }
-                            // info!("-----------------------------");
                             
                             // Two iteration with collumn recovery helps row recovery in the second iteration
                             for _ in 0..2 {                                
@@ -146,7 +151,6 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>, c
                                     ) {
                                         Ok(recovered) => {
                                             for (position, data) in recovered {
-                                                // To avoid simultaneous mutable and immutable borrows, collect positions to update later
                                                 updates.push((row_index, position, data));
                                             }
                                         }
@@ -168,6 +172,7 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>, c
                                             rows_fec: tracker.rows_fec,
                                             cols_fec: tracker.cols_fec,
                                             payload: data,
+                                            packet_signature: vec![0,255], // need to add signature of edge client
                                         });
                                         
                                         tracker.update_index(index);
@@ -211,7 +216,7 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>, c
                                                 updates.push((col_index, position, data));
                                             }
                                         }
-                                        Err(error) => (),
+                                        Err(_) => (),
                                     }
                                 }
 
@@ -227,6 +232,7 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>, c
                                             rows_fec: tracker.rows_fec,
                                             cols_fec: tracker.cols_fec,
                                             payload: data,
+                                            packet_signature: vec![0,255],
                                         });
                                         tracker.update_index(index);
                                     } else {
@@ -239,26 +245,8 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>, c
                             info!(
                                 "Time elapsed for reconstructing matrix {:?}: {:?}",
                                 tracker.matrix_index,
-                                start.elapsed()
+                                start.elapsed(),
                             );
-                            
-                            // info!("------------FINAL----------------");
-                            // for row in tracker.matrix.iter_rows() {
-                            //     let mut string : String = "".to_owned();
-                            //     for col in row {
-                            //         if let Some(value) = col {
-                            //             if value.index < 10 {
-                            //                 string.push_str(&format!(" {} ",value.index));
-                            //             } else {
-                            //                 string.push_str(&format!("{} ",value.index));
-                            //             }
-                            //         } else {
-                            //             string.push_str("-1 ");
-                            //         }
-                            //     }
-                            //     info!("{}",string);
-                            // }
-                            // info!("--------------------------------");
 
                         }
 
@@ -301,7 +289,15 @@ pub fn start(receiver: Receiver<Vec<u8>>, decode_data_sender: Sender<Vec<u8>>, c
                         // send to the player (need to put this somewhere else)
                         for item in tracker.matrix.iter() {
                             if let Some(value) = item {
-                                decode_data_sender.send(value.payload.clone()).unwrap();
+                                let decrypted_plaintext = decrypt(&value.payload, &current_key.key, &current_key.iv);
+
+                                let decoded = VideoData::decode_length_delimited(&mut Cursor::new(decrypted_plaintext)).unwrap();
+
+                                decode_data_sender.send(decoded.data.clone()).unwrap();
+
+                                // if let Some(video_data) = &value.payload {
+                                //     decode_data_sender.send(video_data.data.clone()).unwrap();
+                                // }
                             }
                         }
 

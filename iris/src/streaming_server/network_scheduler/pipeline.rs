@@ -32,16 +32,6 @@ impl Pipeline {
     pub fn start(&self, source_handler_receiver: Receiver<Vec<u8>>) {
         let client_sessions = Arc::clone(&self.client_sessions);
         let wifi_multicast = Arc::clone(&self.wifi_multicast);
-
-        info!("Press Enter to continue...");
-        
-        // Create a buffer to hold the input
-        let mut buffer = String::new();
-        
-        // Wait for the user to press Enter
-        io::stdin().read_line(&mut buffer).unwrap();
-        
-        info!("Key pressed. Continuing execution...");
         
         // Start client_sessions thread
         let client_sessions_handler = thread::spawn(move || {

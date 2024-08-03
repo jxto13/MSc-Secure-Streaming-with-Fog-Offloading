@@ -14,61 +14,434 @@ fn insert_value<T>(matrix: &mut Vec<Vec<T>>, position: usize, matrix_size: usize
 mod tests {
     
     #[test]
+    fn test_encryption_decryption() {
+
+        use openssl::symm::{Cipher, Crypter, Mode};
+        use openssl::rand::rand_bytes;
+
+        fn generate_random_bytes(length: usize) -> Vec<u8> {
+            let mut bytes = vec![0; length];
+            rand_bytes(&mut bytes).unwrap();
+            bytes
+        }
+
+        fn encrypt(plaintext: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {
+            let cipher = Cipher::aes_256_cbc();
+            let mut crypter = Crypter::new(cipher, Mode::Encrypt, key, Some(iv)).unwrap();
+            crypter.pad(true); // Enable PKCS7 padding
+
+            let block_size = cipher.block_size();
+            let mut ciphertext = vec![0; plaintext.len() + block_size];
+
+            let mut count = crypter.update(plaintext, &mut ciphertext).unwrap();
+            count += crypter.finalize(&mut ciphertext[count..]).unwrap();
+
+            ciphertext.truncate(count);
+            ciphertext
+        }
+
+        fn decrypt(ciphertext: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {
+            let cipher = Cipher::aes_256_cbc();
+            let mut crypter = Crypter::new(cipher, Mode::Decrypt, key, Some(iv)).unwrap();
+            crypter.pad(true); // Enable PKCS7 padding
+
+            let block_size = cipher.block_size();
+            let mut plaintext = vec![0; ciphertext.len() + block_size];
+
+            let mut count = crypter.update(ciphertext, &mut plaintext).unwrap();
+            count += crypter.finalize(&mut plaintext[count..]).unwrap();
+
+            plaintext.truncate(count);
+            plaintext
+        }
+
+        let key = generate_random_bytes(32); // 32 bytes for AES-256
+        let iv = generate_random_bytes(16);  // 16 bytes for AES block size
+
+        let plaintext = b"Hello, OpenSSL in Rust WDAWDAWD AFWA!adwawdaw";
+
+        let ciphertext = encrypt(plaintext, &key, &iv);
+        println!("Ciphertext: {:?}", ciphertext.len());
+
+        let decrypted_plaintext = decrypt(&ciphertext, &key, &iv);
+        println!("Decrypted plaintext: {:?}", String::from_utf8(decrypted_plaintext.clone()).unwrap());
+
+        assert_eq!(plaintext.to_vec(), decrypted_plaintext);
+    }
+
+    #[test]
     fn slices() {
         let slices: Vec<_> = "-r 30 -video_size 640x480 -i /dev/video0 -c:v libx264 -b:a 2048k -preset ultrafast -tune zerolatency -f mpegts".split_whitespace().collect();
         println!("{:?}", slices);
         
     }
 
+    // #[test]
+    // fn slices_2() {
+    //     use iris::streaming_server::proto::TransmitionPacket;
+    //     use prost::Message;
+    //     use std::io::Cursor;
+
+    //     let packet = TransmitionPacket {
+    //         matrix: 0,
+    //         index: 0,
+    //         rows: 0,
+    //         cols: 0,
+    //         rows_fec: 0,
+    //         cols_fec: 0,
+    //         payload: None,
+    //         packet_signature: vec![0,0],
+    //     } ;
+
+    //     let mut encoded = packet.encode_length_delimited_to_vec();
+    //     encoded.resize(10, 0);
+    //     println!("{:?}", encoded);
+
+    //     let decoded = TransmitionPacket::decode_length_delimited(&mut Cursor::new(encoded)).unwrap();
+    //     println!("{:?}", decoded);
+        
+    // }
+
     #[test]
-    fn tst_signature_2(){
-        use openssl::ec::{EcGroup, EcKey, EcPoint};
-        use openssl::nid::Nid;
-        use openssl::pkey::PKey;
-        use openssl::pkey::Private;
-        use openssl::sha::sha256;
-        use openssl::bn::BigNumContext;
-        use openssl::sign::{Signer, Verifier};
+    fn test_encrypt_decrypt_2() {
+        use openssl::symm::{Cipher, Crypter, Mode};
 
-        // Generate an EC key pair
-        let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
-        let ec_key = EcKey::generate(&group).unwrap();
+        pub fn pad_to_size(data: &[u8], target_size: usize) -> Vec<u8> {
+            let padding_len = target_size - data.len();
+            let mut padded_data = data.to_vec();
+            padded_data.extend(vec![padding_len as u8; padding_len]);
+            padded_data
+        }
         
-        let mut ctx = BigNumContext::new().unwrap();
-
-        // Get public key bytes in DER format
-        let public_key = ec_key.public_key_to_der().unwrap();
-
-        // Create an EcKey from the binary form of a EcPoint
-        let point = EcPoint::from_bytes(&group, &public_key, &mut ctx).unwrap();
-        let key = EcKey::from_public_key(&group, &point).unwrap();
-
-        // Convert EcKey to PKey for signing
-        let pkey = PKey::from_ec_key(ec_key).unwrap();
-
-        // Message to be signed
-        let message = b"Hello, world!";
+        pub fn encrypt(plaintext: &[u8], key: &[u8], iv: &[u8], target_size: usize) -> Vec<u8> {
+            let cipher = Cipher::aes_256_cbc();
+            let mut crypter = Crypter::new(cipher, Mode::Encrypt, key, Some(iv)).unwrap();
+            crypter.pad(false); // Disable PKCS7 padding
         
-        // Hash the message
-        let message_hash = sha256(message);
+            // Pad plaintext to target size
+            let padded_plaintext = pad_to_size(plaintext, target_size);
+        
+            let mut ciphertext = vec![0; target_size + cipher.block_size()];
+        
+            let mut count = crypter.update(&padded_plaintext, &mut ciphertext).unwrap();
+            count += crypter.finalize(&mut ciphertext[count..]).unwrap();
+        
+            ciphertext.truncate(count);
+            ciphertext
+        }
+        
+        pub fn decrypt(ciphertext: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {
+            let cipher = Cipher::aes_256_cbc();
+            let mut crypter = Crypter::new(cipher, Mode::Decrypt, key, Some(iv)).unwrap();
+            crypter.pad(false); // Disable PKCS7 padding
+        
+            let mut plaintext = vec![0; ciphertext.len() + cipher.block_size()];
+        
+            let mut count = crypter.update(ciphertext, &mut plaintext).unwrap();
+            count += crypter.finalize(&mut plaintext[count..]).unwrap();
+        
+            plaintext.truncate(count);
+        
+            // Remove custom padding
+            let padding_len = *plaintext.last().unwrap() as usize;
+            plaintext.truncate(plaintext.len() - padding_len);
+        
+            plaintext
+        }
 
-        // Sign the message
-        let mut signer = Signer::new_without_digest(&pkey).unwrap();
-        signer.update(&message_hash).unwrap();
-        let signature = signer.sign_to_vec().unwrap();
+        let key = b"an example very very secret key."; // 32 bytes for AES-256
+        let iv = b"unique iv!            "; // 16 bytes for AES-256
+        let plaintext = b"this is a test plaintext message";
 
-        // Verify the signature
-        let pkey_pub = PKey::from_ec_key(key).unwrap();
-        let mut verifier = Verifier::new_without_digest(&pkey_pub).unwrap();
-        verifier.update(&message_hash).unwrap();
-        let is_verified = verifier.verify(&signature).unwrap();
+        let target_size = 1408;
+        let ciphertext = encrypt(plaintext, key, iv, target_size);
+        
+        // Ensure the ciphertext length is 1408 bytes
+        assert_eq!(ciphertext.len(), target_size);
 
-        // Assert that the signature is valid
-        assert!(is_verified);
+        // Decrypt the ciphertext
+        let decrypted_plaintext = decrypt(&ciphertext, key, iv);
+
+        // Verify that the decrypted plaintext matches the original plaintext
+        assert_eq!(&decrypted_plaintext[..plaintext.len()], plaintext);
     }
 
 
     #[test]
+    fn test_sign_message() {
+
+        use openssl::bn::BigNumContext;
+        use openssl::ec::{EcGroup, EcKey, EcPoint};
+        use openssl::nid::Nid;
+        use openssl::pkey::Private;
+        use openssl::sign::Signer;
+        use openssl::hash::MessageDigest;
+        use openssl::pkey::PKey;
+        use openssl::sign::Verifier;
+
+        // Generate EC key pair
+        let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
+        let key = EcKey::generate(&group).unwrap();
+
+        // Message to sign
+        let message = b"Hello, world!";
+
+        // Sign the message
+        let pkey = PKey::from_ec_key(key.clone()).unwrap();
+        let mut signer = Signer::new(MessageDigest::sha256(), &pkey).unwrap();
+        signer.update(message).unwrap();
+        let signature = signer.sign_to_vec().unwrap();
+
+        // Print the length of the signature
+        println!("Signature length: {}", signature.len());
+        
+        // Verify the signature
+        let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey).unwrap();
+        verifier.update(message).unwrap();
+        let is_valid = verifier.verify(&signature).unwrap();
+
+        // Assert the signature is valid
+        assert!(is_valid);
+    }
+
+    #[test]
+    fn tst_signature_3(){
+        use openssl::hash::MessageDigest;
+        use openssl::ecdsa::EcdsaSig;
+        use openssl::ec::{EcGroup, EcKey};
+        use openssl::nid::Nid;
+        use openssl::sha::sha256;
+        use openssl::error::ErrorStack;
+        use openssl::x509::X509Req;
+        use openssl::pkey::Private;
+        use openssl::pkey::PKey;
+        use openssl::x509::X509ReqBuilder;
+        use openssl::x509::X509NameBuilder;
+
+        // Generate EC key pair
+        let group: EcGroup = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
+        let ec_key: EcKey<Private> = EcKey::generate(&group).unwrap();
+
+        // Extract the public key
+        let public_key = EcKey::from_public_key(&group, ec_key.public_key()).unwrap();
+
+        // Message to be signed
+        let message = b"Hello, world! awdawfawfawe";
+
+        // Hash the message using SHA-256
+        let message_hash = sha256(message);
+
+        // Sign the hashed message
+        let signature = EcdsaSig::sign(&message_hash, &ec_key).unwrap();
+
+        // Get the r and s components of the signature
+        let r = signature.r().to_vec();
+        let s = signature.s().to_vec();
+
+        // Ensure r and s are of fixed length (32 bytes for P-256 curve)
+        let mut fixed_r = vec![0; 32];
+        let mut fixed_s = vec![0; 32];
+        fixed_r[32 - r.len()..].copy_from_slice(&r);
+        fixed_s[32 - s.len()..].copy_from_slice(&s);
+
+        // Combine r and s into a fixed-size signature vector
+        let mut fixed_signature = vec![];
+        fixed_signature.extend_from_slice(&fixed_r);
+        fixed_signature.extend_from_slice(&fixed_s);
+
+        // Verify the signature
+        let signature = EcdsaSig::from_private_components(
+            openssl::bn::BigNum::from_slice(&fixed_signature[..32]).unwrap(),
+            openssl::bn::BigNum::from_slice(&fixed_signature[32..]).unwrap(),
+        )
+        .unwrap();
+
+        // Verify the signature
+        let is_valid = signature.verify(&message_hash, &public_key).unwrap();
+
+        // Assert that the signature is valid
+        assert!(is_valid);
+    }
+    
+    #[test]
+    fn tst_signature_2(){
+        use openssl::hash::MessageDigest;
+        use openssl::ecdsa::EcdsaSig;
+        use openssl::ec::{EcGroup, EcKey};
+        use openssl::nid::Nid;
+        use openssl::sha::sha256;
+        use openssl::error::ErrorStack;
+        use openssl::x509::X509Req;
+        use openssl::pkey::Private;
+        use openssl::pkey::PKey;
+        use openssl::x509::X509ReqBuilder;
+        use openssl::x509::X509NameBuilder;
+
+        // Generate EC key pair
+        let group: EcGroup = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
+        let ec_key: EcKey<Private> = EcKey::generate(&group).unwrap();
+
+        // Extract the public key
+        let public_key = EcKey::from_public_key(&group, ec_key.public_key()).unwrap();
+
+        // Message to be signed
+        let message = b"Hello, world! awdawfawfawe";
+
+        // Hash the message using SHA-256
+        let message_hash = sha256(message);
+
+        /// Make a X509 request with the given private key
+        pub fn mk_request(key_pair: &PKey<Private>) -> Result<X509Req, ErrorStack> {
+            let mut req_builder = X509ReqBuilder::new()?;
+            req_builder.set_pubkey(key_pair)?;
+
+            let mut x509_name = X509NameBuilder::new()?;
+            x509_name.append_entry_by_text("C", "US")?;
+            x509_name.append_entry_by_text("ST", "TX")?;
+            x509_name.append_entry_by_text("O", "Some organization")?;
+            x509_name.append_entry_by_text("CN", "www.example.com")?;
+            let x509_name = x509_name.build();
+            req_builder.set_subject_name(&x509_name)?;
+
+            req_builder.sign(key_pair, MessageDigest::sha256())?;
+            let req = req_builder.build();
+            Ok(req)
+        }
+
+        let pkey = PKey::from_ec_key(ec_key.clone()).unwrap();
+        let request = mk_request(&pkey).unwrap();
+        println!("{:?}", String::from_utf8(request.to_pem().unwrap()));
+
+        // Sign the hashed message
+        let signature = EcdsaSig::sign(&message_hash, &ec_key).unwrap();
+
+        // Get the r and s components of the signature
+        let r = signature.r().to_vec();
+        let s = signature.s().to_vec();
+
+        // Ensure r and s are of fixed length (32 bytes for P-256 curve)
+        let mut fixed_r = vec![0; 32];
+        let mut fixed_s = vec![0; 32];
+        fixed_r[32 - r.len()..].copy_from_slice(&r);
+        fixed_s[32 - s.len()..].copy_from_slice(&s);
+
+        // Combine r and s into a fixed-size signature vector
+        let mut fixed_signature = vec![];
+        fixed_signature.extend_from_slice(&fixed_r);
+        fixed_signature.extend_from_slice(&fixed_s);
+
+        // Verify the signature
+        let signature = EcdsaSig::from_private_components(
+            openssl::bn::BigNum::from_slice(&fixed_signature[..32]).unwrap(),
+            openssl::bn::BigNum::from_slice(&fixed_signature[32..]).unwrap(),
+        )
+        .unwrap();
+
+        // Verify the signature
+        let is_valid = signature.verify(&message_hash, &public_key).unwrap();
+
+        // Assert that the signature is valid
+        assert!(is_valid);
+    }
+
+    #[test]
+    fn crypto_manager() {
+
+        use openssl::base64;
+        use openssl::symm::{encrypt, decrypt, Cipher};
+        use serde::{Serialize, Deserialize};
+        use std::fs::{self, File};
+        use std::io::{self, Read, Write};
+
+        #[derive(Serialize, Deserialize)]
+        struct KeyFile {
+            keys: Vec<String>,
+        }
+
+        pub struct CryptoManager {
+            current_key: Vec<u8>,
+            previous_keys: Vec<Vec<u8>>,
+        }
+
+        impl CryptoManager {
+            pub fn new(current_key: Vec<u8>, previous_keys: Vec<Vec<u8>>) -> Self {
+                CryptoManager {
+                    current_key,
+                    previous_keys,
+                }
+            }
+
+            pub fn encrypt(&self, plaintext: &[u8]) -> Vec<u8> {
+                encrypt(Cipher::aes_256_cbc(), &self.current_key, None, plaintext).unwrap()
+            }
+
+            pub fn decrypt(&self, ciphertext: &[u8]) -> Result<Vec<u8>, ()> {
+                // Try with current key
+                if let Ok(plaintext) = decrypt(Cipher::aes_256_cbc(), &self.current_key, None, ciphertext) {
+                    return Ok(plaintext);
+                }
+                // Try with previous keys
+                for key in &self.previous_keys {
+                    if let Ok(plaintext) = decrypt(Cipher::aes_256_cbc(), key, None, ciphertext) {
+                        return Ok(plaintext);
+                    }
+                }
+                Err(())
+            }
+
+            pub fn rotate_key(&mut self, new_key: Vec<u8>) {
+                self.previous_keys.push(self.current_key.clone());
+                self.current_key = new_key;
+            }
+
+        }
+
+
+        // If key file doesn't exist, create a new CryptoManager with a random key
+        // let new_key = openssl::rand::rand_bytes(32).unwrap();
+        // CryptoManager::new(new_key, Vec::new())
+    }
+
+    #[test]
+    fn encrypt() {
+        use openssl::encrypt::{Encrypter, Decrypter};
+        use openssl::rsa::{Rsa, Padding};
+        use openssl::pkey::PKey;
+        
+        // Generate a keypair
+        let keypair = Rsa::generate(2048).unwrap();
+        let keypair = PKey::from_rsa(keypair).unwrap();
+        
+        let data = b"hello, world!";
+        
+        // Encrypt the data with RSA PKCS1
+        let mut encrypter = Encrypter::new(&keypair).unwrap();
+        encrypter.set_rsa_padding(Padding::PKCS1).unwrap();
+
+        // Create an output buffer
+        let buffer_len = encrypter.encrypt_len(data).unwrap();
+        let mut encrypted = vec![0; buffer_len];
+        
+        // Encrypt and truncate the buffer
+        let encrypted_len = encrypter.encrypt(data, &mut encrypted).unwrap();
+        encrypted.truncate(encrypted_len);
+        
+        // Decrypt the data
+        let mut decrypter = Decrypter::new(&keypair).unwrap();
+        decrypter.set_rsa_padding(Padding::PKCS1).unwrap();
+
+        // Create an output buffer
+        let buffer_len = decrypter.decrypt_len(&encrypted).unwrap();
+        let mut decrypted = vec![0; buffer_len];
+        // Encrypt and truncate the buffer
+
+        let decrypted_len = decrypter.decrypt(&encrypted, &mut decrypted).unwrap();
+        decrypted.truncate(decrypted_len);
+        assert_eq!(&*decrypted, data);
+    }
+
+
+    // #[test]
     // fn tst_signature(){
     //     use openssl::ec::EcPoint;
     //     use openssl::ecdsa::EcdsaSig;
@@ -242,11 +615,15 @@ mod tests {
        
         let data = b"Hello, OpenSSL with Rust!";
         
+        println!("original data size: {:?}", data.len());
+        
         let key = generate_random_bytes(32); // 256 bits for AES-256
         let iv = generate_random_bytes(16);  // 128 bits for AES block size
         
         let encrypted_data = encrypt(Cipher::aes_256_cbc(), data, &key, &iv)
             .expect("Failed to encrypt data");
+
+        println!("encrypted data size: {:?}", encrypted_data.len());
         
         
         let decrypted_data = decrypt(Cipher::aes_256_cbc(), &encrypted_data, &key, &iv)

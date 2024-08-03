@@ -1,6 +1,8 @@
 package pt.iris.network;
 
 
+import static pt.iris.network.protocol.NodeType.RELAY;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -139,16 +141,17 @@ public class NetworkInitializer {
 					VirtualNodeWifiAware node = new VirtualNodeWifiAware(mWifiAwareSession, context, myUUID, MAX_INTERFACES);
 
 					switch (node.getNodeType()) {
-						case CLIENT -> {
+						case CLIENT:
 							System.out.println("This is a Client Node");
 							node.startClient();
-						}
-						case RELAY -> {
+
+						case RELAY:
 							System.out.println("This is a Relay Node");
 							node.startRelay();
 							node.startClient();
-						}
-						default -> System.out.println("Unknown Node Type");
+
+						default:
+							System.out.println("Unknown Node Type");
 					}
 				}
 
