@@ -3,11 +3,11 @@ use mio::net::UdpSocket;
 use crossbeam_channel::Receiver;
 use pnet::ipnetwork::IpNetwork;
 use std::io;
-use std::net::{Ipv4Addr, SocketAddr};
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::str::FromStr;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
-use pnet_datalink;
+use pnet_datalink::interfaces;
 use log::{info, error};
 
 use crate::CONFIG;
@@ -18,11 +18,11 @@ const SERVER: Token = Token(0);
 /// A struct representing a simple bandwidth manager.
 pub struct BandwidthManager {
     pub bitrate: usize,              // Maximum bits per second
-    bytes_per_second: usize,     // Maximum bytes per second
-    interval: Duration,          // Time interval for rate limiting
-    last_check: Instant,         // Last time we checked the bandwidth usage
-    bytes_sent: usize,           // Bytes sent in the current interval
-    packets_sent: usize,         // Number of packets sent
+    bytes_per_second: usize,         // Maximum bytes per second
+    interval: Duration,              // Time interval for rate limiting
+    last_check: Instant,             // Last time we checked the bandwidth usage
+    bytes_sent: usize,               // Bytes sent in the current interval
+    packets_sent: usize,             // Number of packets sent
 }
 
 impl BandwidthManager {
@@ -73,8 +73,9 @@ pub struct WiFiMulticast {
 impl WiFiMulticast {
     /// Creates a new instance of `WiFiMulticast` with a specified bitrate.
     pub fn new() -> Self {
+        let max_bandwidth = CONFIG.get().unwrap().multicast.max_bandwidth * 1_000_000;
         Self {
-            bandwidth_manager: BandwidthManager::new(4_000_000),
+            bandwidth_manager: BandwidthManager::new(max_bandwidth),
         }
     }
 
@@ -84,33 +85,39 @@ impl WiFiMulticast {
     ///
     /// * `data_receiver` - A receiver for receiving data to be sent over multicast.
     pub fn server(&mut self, data_receiver: Receiver<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
-        // Setup the UDP socket.
-        let addr = "0.0.0.0:0".parse().unwrap();
-        let mut socket = UdpSocket::bind(addr).unwrap();
+        // Get the list of network interfaces.
+        let interfaces = interfaces();
 
-        // Define the multicast address and port.
-        let multicast_address = Ipv4Addr::from_str(&CONFIG.get().unwrap().multicast.ip).unwrap();
-        let multicast_port = CONFIG.get().unwrap().multicast.port;
-        let multicast_dest: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(multicast_address), multicast_port);
-
-        let interfaces = pnet_datalink::interfaces();
-
+        // Find the specific network interface by name.
         let interface = interfaces.into_iter()
             .find(|iface| iface.name == CONFIG.get().unwrap().multicast.interface)
             .expect("Failed to get the network interface");
 
+        // Initialize the IPv4 address variable.
         let mut ipv4_address = None;
 
+        // Iterate through the IPs of the interface to find the IPv4 address.
         for ip in interface.ips {
             match ip {
                 IpNetwork::V4(ipv4) => {
                     ipv4_address = Some(ipv4.ip());
+                    break; // Exit the loop once an IPv4 address is found.
                 }
                 IpNetwork::V6(_) => (),
             }
         }
-    
+
+        // Ensure an IPv4 address was found.
         let ipv4_address = ipv4_address.expect("No IPv4 address found for the interface");
+
+        // Setup the UDP socket and bind it to the specific IPv4 address.
+        let addr = SocketAddr::new(IpAddr::V4(ipv4_address), 0);
+        let mut socket = UdpSocket::bind(addr)?;
+
+        // Define the multicast address and port.
+        let multicast_address = Ipv4Addr::from_str(&CONFIG.get().unwrap().multicast.ip).unwrap();
+        let multicast_port = CONFIG.get().unwrap().multicast.port;
+        let multicast_dest = SocketAddr::new(std::net::IpAddr::V4(multicast_address), multicast_port);
     
         // Join the multicast group.
         if let Err(e) = socket.join_multicast_v4(&multicast_address, &ipv4_address) {
@@ -174,7 +181,3 @@ impl WiFiMulticast {
         }
     }
 }
-
-// Usage example:
-// let mut wifi_multicast = WiFiMulticast::new(10_000_000); // 10 Mbit/s
-// wifi_multicast.start_multicast_sender(data_receiver);

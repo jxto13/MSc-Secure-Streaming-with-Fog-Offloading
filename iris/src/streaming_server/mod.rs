@@ -43,6 +43,10 @@ pub struct Multicast {
     pub col: usize,
     pub row_fec: usize,
     pub col_fec: usize,
+
+    pub epoch: usize,
+    
+    pub max_bandwidth: usize,
     
     pub data_size: usize,
     pub shard_size: usize,

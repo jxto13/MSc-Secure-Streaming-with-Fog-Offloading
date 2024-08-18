@@ -1,18 +1,13 @@
 use crossbeam_channel::{unbounded, Sender};
 use log::info;
 
-use crate::source_handler::network_handler::udp_receiver_and_send;
-
 // Importing necessary modules and functions from other parts of the project.
 use super::file_source::read_file_and_send;
-use super::ffmpeg_source::read_ffmpeg_and_send;
 use super::encoder;
 
 // Define an enum for different types of data sources. Currently, it only supports file-based sources.
 pub enum DataSource {
     File(String), // A variant representing a file data source with the file path as a string.
-    FFMPEG(),
-    Network(String)
     // Add more variants here if needed, e.g., Network(String), etc.
 }
 
@@ -45,8 +40,6 @@ impl DataHandler {
         // Match on the data source type and read the data accordingly.
         match &self.source {
             DataSource::File(file_path) => read_file_and_send(file_path, data_source_sender), // Read from file and send data through the channel.
-            DataSource::FFMPEG() => read_ffmpeg_and_send( data_source_sender), // Read from ffmpeg and send data through the channel.
-            DataSource::Network(_) => udp_receiver_and_send(data_source_sender),
             // Handle other data sources here, e.g., Network(String) => read_network_and_send(url, data_source_sender),
         }
 

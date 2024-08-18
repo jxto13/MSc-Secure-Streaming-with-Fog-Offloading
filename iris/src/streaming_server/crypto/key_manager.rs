@@ -5,6 +5,7 @@ use openssl::pkey::Private;
 use openssl::rand::rand_bytes;
 use openssl::symm::{Cipher, Crypter, Mode};
 
+#[derive(Debug)]
 pub struct KeyManager {
     current_key: SessionKey,
     next_key: SessionKey,

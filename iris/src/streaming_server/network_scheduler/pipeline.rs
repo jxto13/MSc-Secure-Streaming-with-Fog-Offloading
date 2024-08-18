@@ -1,12 +1,11 @@
-use crossbeam_channel::{unbounded, Receiver};
-use iris::streaming_server::proto::report_service_server::ReportServiceServer;
-use log::info;
+use crossbeam_channel::Receiver;
+
 use std::sync::{Arc, Mutex};
-use std::{io, thread};
+use std::thread;
 use std::time::Duration;
 
 use super::wifi_multicast::WiFiMulticast;
-use super::client_sessions::{self, ClientSessions, MyReportService};
+use super::client_sessions::ClientSessions;
 
 // Struct representing the pipeline composed of the components
 pub struct Pipeline {
@@ -22,10 +21,6 @@ impl Pipeline {
             client_sessions: Arc::new(Mutex::new(ClientSessions::new())),
             wifi_multicast: Arc::new(Mutex::new(WiFiMulticast::new())),
         }
-    }
-
-    pub fn get_client_sessions_service(&self) -> ReportServiceServer<MyReportService>{
-        ReportServiceServer::new(MyReportService::new(Arc::clone(&self.client_sessions)))
     }
 
     /// Starts the pipeline with the provided source handler receiver.
@@ -51,5 +46,9 @@ impl Pipeline {
         // Wait for the threads to finish execution
         wifi_multicast_handler.join().expect("wifi_multicast_handler panicked");
         client_sessions_handler.join().expect("client_sessions_handler panicked");
+    }
+
+    pub fn get_arc_client_sessions(&self) -> Arc<Mutex<ClientSessions>>{
+        self.client_sessions.clone()
     }
 }

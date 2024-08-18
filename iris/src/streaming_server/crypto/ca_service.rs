@@ -75,16 +75,23 @@ impl CertificateService for MyCertificateService {
 
         // Verify that this cert was issued by this ca
         match ca_cert.issued(&cert) {
-            X509VerifyResult::OK => info!("Certificate verified for client: {:?}", request.remote_addr().unwrap()),
-            ver_err => info!("Failed to verify certificate for client: {} - {}", request.remote_addr().unwrap(), ver_err),
-        };
+            X509VerifyResult::OK => {
+                info!("Certificate verified for client: {:?}", request.remote_addr().unwrap());
 
-        // For demonstration, let's assume it always succeeds
-        let response = proto::ValidationCertificateResponse {
-            auth: true,
-        };
-
-        Ok(Response::new(response))
+                let response = proto::ValidationCertificateResponse {
+                    auth: true,
+                };
+                Ok(Response::new(response))
+            } 
+            ver_err => {
+                info!("Failed to verify certificate for client: {} - {}", request.remote_addr().unwrap(), ver_err);
+                // For demonstration, let's assume it always succeeds
+                let response = proto::ValidationCertificateResponse {
+                    auth: false,
+                };
+                Ok(Response::new(response))
+            }
+        }
     }
 }
 

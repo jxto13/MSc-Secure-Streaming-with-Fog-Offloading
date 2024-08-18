@@ -11,9 +11,9 @@ port = 50051
 # Stream Config
 data_source = "ffmpeg" # can be 'ffmpeg' or 'file'
 file_path = "./public/the_simpsons_trailer_1000k.ts"
-interface = "enp0s13f0u1u2"
+interface = "wlp92s0"
 ip = "239.255.0.1"
-port = 1234
+port = 12345
 
 # Matrix Config
 row = 10
@@ -21,5 +21,6 @@ col = 10
 row_fec = 5
 col_fec = 5
 
-shard_size = 256 # must be a multiple of 64
-mtu_size = 1500 # default in all AP or routers
+data_size = 1128 # 188 x 6, this is 6 ts packets
+shard_size = 1280 # must be a multiple of 64 but needs to be bigger then data and have space for signatures and next_key, max size of signature is 65 bytes and key is 48 bytes, so data_size + 113 < shard_size
+mtu_size = 1472 # default in all AP or routers

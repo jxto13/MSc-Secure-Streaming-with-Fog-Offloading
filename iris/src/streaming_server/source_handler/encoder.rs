@@ -1,4 +1,4 @@
-use crate::crypto::key_manager::KeyManager;
+use crate::crypto::key_manager::{self, KeyManager};
 
 
 use crate::{CONFIG, MANAGER};
@@ -19,8 +19,6 @@ use log::{error, info};
 
 use openssl::sha::sha256;
 
-
-// #[allow(non_snake_case)]
 // This is running inside a separate task
 pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     let config = &CONFIG.get().unwrap().multicast;
@@ -35,14 +33,10 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     
     assert!(SHARD_SIZE < MTU_SIZE);
 
-    let manager = MANAGER.get().unwrap();
-
-    let binding = manager.lock().unwrap();
-    let ec_key = binding.get_ec_key();
-
     // Create counters
     let start_time = Instant::now();
     let mut matrix_counter = 0;
+    let mut epoch = 0;
     
     // Create encoders objects
     let mut row_encoder = match ReedSolomonEncoder::new(
@@ -72,10 +66,24 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         let mut transmission_matrix: Matrix<TransmitionPacket> = Matrix::new(0, 0);
 
         let mut matrix_index = 0;
+        let manager = MANAGER.get().unwrap();
+        let mut binding = manager.lock().unwrap();
+
+        // If epoch is equal to config, rotate keys and reset counter
+        if epoch == config.epoch {
+            info!("Key rotation performed after {} epochs", config.epoch);
+            binding.rotate_key();
         
-        // encrypt the data with rotating key
-        let current_key = binding.get_current_key();
-        let next_key = binding.get_next_key();
+            epoch = 0;
+        }
+        
+        // Get keys outside the loop
+        let (ec_key, current_key, next_key) = {
+            let ec_key = binding.get_ec_key().clone();
+            let current_key = binding.get_current_key().clone();
+            let next_key = binding.get_next_key().clone();
+            (ec_key, current_key, next_key)
+        };
 
         for rows in matrix.iter_rows() {
             let mut row: Vec<TransmitionPacket> = Vec::new();
@@ -89,7 +97,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
                 // Create hash of message and sign
                 let message_hash = sha256(&video_data.encode_to_vec());
-                let signature = EcdsaSig::sign(&message_hash, ec_key).unwrap().to_der().unwrap();
+                let signature = EcdsaSig::sign(&message_hash, &ec_key).unwrap().to_der().unwrap();
 
                 video_data.signature = signature;
 
@@ -105,14 +113,13 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                     payload: encrypt(&video_data.encode_length_delimited_to_vec(), &current_key.key, &current_key.iv, SHARD_SIZE),
                     packet_signature: vec![0,255],
                 };
-                
                 let message_hash = sha256(&packet.encode_to_vec());
-                let signature = EcdsaSig::sign(&message_hash, ec_key).unwrap().to_der().unwrap();
-
+                let signature = EcdsaSig::sign(&message_hash, &ec_key).unwrap().to_der().unwrap();
+                
                 packet.packet_signature = signature;
-
+                
                 row.push(packet.clone());
-
+                
                 // Check if we have a row_encoder
                 if let Some(ref mut row_encoder) = row_encoder {
                     row_encoder.add_original_shard(&packet.payload).unwrap();                    
@@ -141,7 +148,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                     };
 
                     let message_hash = sha256(&packet.encode_to_vec());
-                    let signature = EcdsaSig::sign(&message_hash, ec_key).unwrap().to_der().unwrap();
+                    let signature = EcdsaSig::sign(&message_hash, &ec_key).unwrap().to_der().unwrap();
 
                     packet.packet_signature = signature;
 
@@ -196,7 +203,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                     };
 
                     let message_hash = sha256(&packet.encode_to_vec());
-                    let signature = EcdsaSig::sign(&message_hash, ec_key).unwrap().to_der().unwrap();
+                    let signature = EcdsaSig::sign(&message_hash, &ec_key).unwrap().to_der().unwrap();
 
                     packet.packet_signature = signature;
 
@@ -207,7 +214,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
         matrix_counter += 1;
 
-        
+        // Loop the matrix col by col
         for col in transmission_matrix.iter_cols() {
 
             for item in col {
@@ -215,10 +222,15 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                 let iris_serialized_data = item.encode_to_vec();
                 // Send the buffer
                 tx.send(iris_serialized_data).unwrap_or_else(|e| {
-                    error!("error sending data {:?}", e);
+                    panic!("error sending data {:?}", e);
                 });
             }
         }
+
+        // Increment epoch
+        epoch += 1;
+
+        
     }
 
     let end_time = Instant::now();

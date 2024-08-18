@@ -1,4 +1,4 @@
-use crossbeam_channel::{unbounded, Receiver};
+use crossbeam_channel::{bounded, unbounded, Receiver};
 use once_cell::sync::OnceCell;
 use openssl::bn::BigNumContext;
 use openssl::ec::{EcGroup, EcKey, EcPoint};
@@ -19,7 +19,7 @@ use proto::{CertificateRequest, SignedCertificateRequest};
 use tokio::runtime::Runtime;
 use tokio::time::sleep;
 
-use tonic::transport::{channel, Certificate, Channel, ClientTlsConfig};
+use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
 use log::{error, info};
 
@@ -40,11 +40,18 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     // Set up a Tokio runtime
     let rt = Arc::new(Runtime::new().unwrap());
 
+    let current_session_key: Arc<Mutex<SessionKey>> = Arc::new(Mutex::new(SessionKey { key: vec![0, 0], iv: vec![0, 0] }));
+    let certificate: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(vec![0,0]));
+    
     {
         let runtime = Arc::clone(&rt);
 
         // Run async code using the Tokio runtime
-        runtime.block_on(async move {
+        runtime.block_on(async {
+
+            let current_session_key = Arc::clone(&current_session_key);
+            let certificate = Arc::clone(&certificate);
+
             loop {
                 match create_channel().await {
                     Ok(channel) => {
@@ -54,6 +61,7 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
 
                         // Generate an RSA key pair
                         let rsa = Rsa::generate(2048).unwrap();
+
                         // Create a PKey object from the RSA key pair
                         let key_pair = PKey::from_rsa(rsa).unwrap();
 
@@ -81,6 +89,7 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
                             .verify_certificate(cert_request)
                             .await
                             .unwrap();
+
                         let auth = validation_response.into_inner().auth;
 
                         if auth {
@@ -91,6 +100,24 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
 
                         // Save the client for use after the loop
                         CHANNEL.set(channel).unwrap();
+
+
+                        let mut connection = KeyServiceClient::new(CHANNEL.get().unwrap().clone());
+
+                        let key_response = connection.request_current_key(RequestKey {}).await.unwrap();
+
+                        let reponse = key_response.into_inner();
+
+                        info!("key: {:?}, certificate: {:?}", reponse.current_key, reponse.certificate);
+
+                        if let Some(current_key) = reponse.current_key {
+                            let mut current_session_key = current_session_key.lock().unwrap();
+                            current_session_key.key = current_key.key;
+                            current_session_key.iv = current_key.iv;
+                        }
+
+                        let mut certificate_mutex = certificate.lock().unwrap();
+                        *certificate_mutex = reponse.certificate;
 
                         break; // Exit the loop once connected
                     }
@@ -103,43 +130,12 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
         });
     }
 
-    let current_session_key: Arc<Mutex<SessionKey>> = Arc::new(Mutex::new(SessionKey { key: vec![0, 0], iv: vec![0, 0] }));
-    let certificate: Arc<Mutex<Vec<u8>>> = Arc::new(Mutex::new(vec![0,0]));
-    
-    {
-        let runtime = Arc::clone(&rt);
-        let current_session_key = Arc::clone(&current_session_key);
-        let certificate = Arc::clone(&certificate);
-
-        // Run async code using the Tokio runtime
-        runtime.block_on(async move {
-
-            let mut connection = KeyServiceClient::new(CHANNEL.get().unwrap().clone());
-
-            let key_response = connection.request_current_key(RequestKey {}).await.unwrap();
-
-            let reponse = key_response.into_inner();
-
-            info!("key: {:?}, certificate: {:?}", reponse.current_key, reponse.certificate);
-
-            if let Some(current_key) = reponse.current_key {
-                let mut current_session_key = current_session_key.lock().unwrap();
-                current_session_key.key = current_key.key;
-                current_session_key.iv = current_key.iv;
-            }
-
-            let mut certificate_mutex = certificate.lock().unwrap();
-            *certificate_mutex = reponse.certificate;
-
-        });
-    }
-
     // If we arrive here we have certificates signed from PKI
 
     // Create channels for thread comunication
     let (listener_sender, matrix_decoder_receiver) = unbounded();
     let (decoded_data_sender, decoded_data_receiver) = unbounded();
-    let (client_report_sender, client_report_receiver) = mpsc::channel(1000);
+    let (client_report_sender, client_report_receiver) = unbounded();
 
     // Create a Barrier for thread synchronization
     let barrier = Arc::new(Barrier::new(2));
@@ -189,7 +185,8 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
             decoded_data_sender,
             client_report_sender,
             cloned_session_key,
-            cloned_certificate
+            cloned_certificate,
+            2
         ) {
             error!("Matrix decoder failed to start: {}", e);
         }

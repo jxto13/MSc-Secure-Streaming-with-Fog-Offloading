@@ -76,3 +76,16 @@ message ClientReport {
     int32 index = 1;
     bytes payload = 2;
 }
+
+
+message StatMessage{
+    uint64  total_packets_received = 1;
+    uint64  total_packets_received_size = 2;
+    uint64  total_multicast_packets_received = 3;
+    uint64  total_multicast_packets_received_size = 4;
+    uint64  total_unicast_packets_received = 5;
+    uint64  total_unicast_packets_received_size = 6;
+    uint64  total_ack_packets = 7;
+    uint64  total_ack_packets_size = 8;
+    uint64  current_time = 9;
+};

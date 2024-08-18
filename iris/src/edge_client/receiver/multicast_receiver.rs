@@ -108,9 +108,9 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>, barrier: Arc<Bar
         }
 
         // Report bandwidth metrics
-        // if bandwidth_monitor.total_packets_received != 0 && bandwidth_monitor.total_bytes != 0 {
-        //     bandwidth_monitor.report();
-        // }
+        if bandwidth_monitor.total_packets_received != 0 && bandwidth_monitor.total_bytes != 0 {
+            bandwidth_monitor.report();
+        }
 
         // Process each event.
         for event in events.iter() {
