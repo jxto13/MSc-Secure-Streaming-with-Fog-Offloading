@@ -1,3 +1,5 @@
+use crate::CONFIG;
+
 use std::sync::{Arc, Mutex};
 
 use crate::proto;
@@ -28,10 +30,10 @@ impl MyKeyService {
         key_manager.get_current_key().clone()  // Access KeyManager safely
     }
 
-    pub fn get_next_key(&self) -> SessionKey {
-        let key_manager = self.key_manager.lock().unwrap();  // Lock the Mutex
-        key_manager.get_next_key().clone()  // Access KeyManager safely
-    }
+    // pub fn get_next_key(&self) -> SessionKey {
+    //     let key_manager = self.key_manager.lock().unwrap();  // Lock the Mutex
+    //     key_manager.get_next_key().clone()  // Access KeyManager safely
+    // }
 
     pub fn get_certificate(&self) -> Vec<u8> {
         // Convert the X509 certificate to a PEM-encoded string
@@ -44,13 +46,14 @@ impl MyKeyService {
 impl KeyService for MyKeyService {
     async fn request_current_key(
         &self,
-        request: Request<proto::RequestKey>,
+        _: Request<proto::RequestKey>,
     ) -> Result<Response<proto::KeyResponse>, Status> {
         let current_key = self.get_current_key();
         let certificate = self.get_certificate();
         Ok(Response::new(KeyResponse {
             current_key: Some(current_key),
-            certificate, 
+            certificate,
+            epoch: CONFIG.get().unwrap().multicast.epoch as i32
         }))
     }
 }

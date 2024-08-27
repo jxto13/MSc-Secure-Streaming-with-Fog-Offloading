@@ -8,11 +8,22 @@
     tools:ignore="UseSwitchCompatOrMaterialXml"
     >
 
-    <androidx.media3.ui.PlayerView
-        android:id="@+id/playerView"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-    </androidx.media3.ui.PlayerView>
+        android:layout_height="match_parent"
+        android:padding="16dp">
+
+        <!-- Other UI components -->
+
+        <Button
+            android:id="@+id/open_mpv_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Open MPV" />
+
+        <!-- Other UI components -->
+
+    </RelativeLayout>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

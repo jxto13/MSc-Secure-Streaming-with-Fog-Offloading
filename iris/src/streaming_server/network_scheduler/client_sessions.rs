@@ -2,26 +2,19 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
-use std::fs::OpenOptions;
-use std::io::{Write, BufWriter};
-
-use crossbeam_channel::{Receiver, Sender};
-use iris::streaming_server::proto::{ClientReport, Empty};
-
-use log::{info, error};
-use serde::{Serialize, Deserialize};
-use tonic::{Request, Response, Status};
-use csv::WriterBuilder;
+use iris::streaming_server::proto::ClientReport;
 
 #[derive(Debug)]
 pub struct ClientSessions {
     clients: Arc<Mutex<HashMap<SocketAddr, Instant>>>,
+    reports: Arc<Mutex<HashMap<SocketAddr, HashMap<i32, Vec<u8>>>>>, // To store reports per client
 }
 
 impl ClientSessions {
     pub fn new() -> Self {
         Self {
             clients: Arc::new(Mutex::new(HashMap::new())),
+            reports: Arc::new(Mutex::new(HashMap::new())),
         }
     }
 
@@ -38,8 +31,10 @@ impl ClientSessions {
         // info!("Clients after timeout removal: {:?}", *clients);
     }
 
-    // Getter for the clients hashmap
-    pub fn get_clients(&self) -> Arc<Mutex<HashMap<SocketAddr, Instant>>> {
-        Arc::clone(&self.clients)
+    pub fn save_client_report(&mut self, client_addr: SocketAddr, report: ClientReport) {
+        let mut reports = self.reports.lock().unwrap();
+        let client_reports = reports.entry(client_addr).or_insert_with(HashMap::new);
+
+        client_reports.insert(report.index, report.payload.to_vec());
     }
 }

@@ -1,37 +1,34 @@
-use crate::crypto::key_manager::{self, KeyManager};
-
-
 use crate::{CONFIG, MANAGER};
 
 use crossbeam_channel::{Receiver, Sender};
 use iris::crypto_utils::encrypt;
-use iris::streaming_server;
-use iris::streaming_server::proto::{SessionKey, TransmitionPacket, VideoData};
+use iris::streaming_server::proto::{TransmitionPacket, VideoData};
+
+use openssl::sha::sha256;
 use openssl::ecdsa::EcdsaSig;
-use openssl::symm::Cipher;
+
 use reed_solomon_16::ReedSolomonEncoder;
 use grid::Grid as Matrix;
 use prost::Message;
-
-use std::io::Cursor;
 use std::time::Instant;
-use log::{error, info};
+use log::info;
 
-use openssl::sha::sha256;
 
 // This is running inside a separate task
 pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     let config = &CONFIG.get().unwrap().multicast;
     
-    let ROW: usize = config.row;
-    let COL: usize = config.col;
-    let ROW_FEC: usize = config.row_fec;
-    let COL_FEC: usize = config.col_fec;
+    let num_rows: usize = config.row;
+    let num_cols: usize = config.col;
+    let fec_rows: usize = config.row_fec;
+    let fec_cols: usize = config.col_fec;
     
-    let SHARD_SIZE: usize = config.shard_size;
-    let MTU_SIZE: usize = config.mtu_size;
+    let shard_size: usize = config.shard_size;
     
-    assert!(SHARD_SIZE < MTU_SIZE);
+    assert!(num_rows > 0);
+    assert!(num_cols > 0);
+    assert!(config.mtu_size > 0);
+    assert!(shard_size < config.mtu_size);
 
     // Create counters
     let start_time = Instant::now();
@@ -40,9 +37,9 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     
     // Create encoders objects
     let mut row_encoder = match ReedSolomonEncoder::new(
-        COL,       // total number of col, which gives the length of row
-        ROW_FEC,   // total number of row recovery shards
-        SHARD_SIZE // shard size in bytes
+        num_cols,       // total number of col, which gives the length of row
+        fec_rows,   // total number of row recovery shards
+        shard_size // shard size in bytes
     ) {
         Ok(encoder) => Some(encoder),
         Err(_) => {
@@ -51,9 +48,9 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     };
     
     let mut col_encoder = match ReedSolomonEncoder::new(
-        ROW,       // total number of col, which gives the length of row
-        COL_FEC,   // total number of row recovery shards
-        SHARD_SIZE // shard size in bytes
+        num_rows,       // total number of col, which gives the length of row
+        fec_cols,   // total number of row recovery shards
+        shard_size // shard size in bytes
     ) {
         Ok(encoder) => Some(encoder),
         Err(_) => {
@@ -71,7 +68,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
         // If epoch is equal to config, rotate keys and reset counter
         if epoch == config.epoch {
-            info!("Key rotation performed after {} epochs", config.epoch);
+            info!("Encryption Key rotation performed");
             binding.rotate_key();
         
             epoch = 0;
@@ -91,7 +88,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
             for item in rows {
                 let mut video_data = VideoData {
                     data: item.clone(),
-                    signature: vec![0,0],
+                    signature: vec![0,255],
                     next_key: Some(next_key.clone()),
                 };
 
@@ -101,18 +98,19 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
                 video_data.signature = signature;
 
-                assert!(video_data.encode_to_vec().len() < SHARD_SIZE);
+                assert!(video_data.encode_to_vec().len() < shard_size);
                 
                 let mut packet = TransmitionPacket {
                     matrix: matrix_counter,
                     index: matrix_index as i32,
-                    rows: ROW as i32,
-                    cols: COL as i32,
-                    rows_fec: ROW_FEC as i32,
-                    cols_fec: COL_FEC as i32,
-                    payload: encrypt(&video_data.encode_length_delimited_to_vec(), &current_key.key, &current_key.iv, SHARD_SIZE),
+                    rows: num_rows as i32,
+                    cols: num_cols as i32,
+                    rows_fec: fec_rows as i32,
+                    cols_fec: fec_cols as i32,
+                    payload: encrypt(&video_data.encode_length_delimited_to_vec(), &current_key.key, &current_key.iv, shard_size),
                     packet_signature: vec![0,255],
                 };
+
                 let message_hash = sha256(&packet.encode_to_vec());
                 let signature = EcdsaSig::sign(&message_hash, &ec_key).unwrap().to_der().unwrap();
                 
@@ -139,10 +137,10 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                     let mut packet = TransmitionPacket {
                         matrix: matrix_counter,
                         index: matrix_index,
-                        rows: ROW as i32,
-                        cols: COL as i32,
-                        rows_fec: ROW_FEC as i32,
-                        cols_fec: COL_FEC as i32,
+                        rows: num_rows as i32,
+                        cols: num_cols as i32,
+                        rows_fec: fec_rows as i32,
+                        cols_fec: fec_cols as i32,
                         payload: item.to_vec(),
                         packet_signature: vec![0,255],
                     };
@@ -164,24 +162,15 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         if let Some(ref mut col_encoder) = col_encoder {
            
             // Add COL_FEC as empty rows
-            for _ in 0..COL_FEC {
-                transmission_matrix.push_row(vec![TransmitionPacket {
-                    matrix: 0,
-                    index: 0,
-                    rows: 0,
-                    cols: 0,
-                    rows_fec: 0,
-                    cols_fec: 0,
-                    payload: vec![0,0],
-                    packet_signature: vec![0,255]
-                }; COL + ROW_FEC]);
+            for _ in 0..fec_cols {
+                transmission_matrix.push_row(vec![TransmitionPacket::default(); num_cols + fec_rows]);
             }
 
             let column_data: Vec<Vec<TransmitionPacket>> = transmission_matrix.iter_cols().map(|col| col.cloned().collect()).collect();
 
             // Iterate over columns of transmission matrix to update the extra FEC info
             for (col_index, col) in column_data.iter().enumerate() {
-                for item in col.iter().take(ROW) {
+                for item in col.iter().take(num_rows) {
                     // update col parity index
                     col_encoder.add_original_shard(&item.payload).unwrap();
                 }
@@ -193,11 +182,11 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
                     let mut packet = TransmitionPacket {
                         matrix: matrix_counter,
-                        index: ((ROW + item_index) * (COL + ROW_FEC) + col_index) as i32,
-                        rows: ROW as i32,
-                        cols: COL as i32,
-                        rows_fec: ROW_FEC as i32,
-                        cols_fec: COL_FEC as i32,
+                        index: ((num_rows + item_index) * (num_cols + fec_rows) + col_index) as i32,
+                        rows: num_rows as i32,
+                        cols: num_cols as i32,
+                        rows_fec: fec_rows as i32,
+                        cols_fec: fec_cols as i32,
                         payload: item.to_vec(),
                         packet_signature: vec![0,255],
                     };
@@ -207,7 +196,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
                     packet.packet_signature = signature;
 
-                    transmission_matrix[(ROW + item_index, col_index)] = packet;
+                    transmission_matrix[(num_rows + item_index, col_index)] = packet;
                 }
             }
         }

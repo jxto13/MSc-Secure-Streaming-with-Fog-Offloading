@@ -2,17 +2,17 @@ fn insert_value<T>(matrix: &mut Vec<Vec<T>>, position: usize, matrix_size: usize
     let row = position / matrix_size;
     let col = position % matrix_size;
 
-    if row < matrix_size && col < matrix_size { 
-        matrix[row][col] = value; 
-     } else { 
-        println!("Invalid position!"); 
+    if row < matrix_size && col < matrix_size {
+        matrix[row][col] = value;
+     } else {
+        println!("Invalid position!");
      }
 }
 
 
 #[cfg(test)]
 mod tests {
-    
+
     #[test]
     fn test_encryption_decryption() {
 
@@ -73,34 +73,8 @@ mod tests {
     fn slices() {
         let slices: Vec<_> = "-r 30 -video_size 640x480 -i /dev/video0 -c:v libx264 -b:a 2048k -preset ultrafast -tune zerolatency -f mpegts".split_whitespace().collect();
         println!("{:?}", slices);
-        
+
     }
-
-    // #[test]
-    // fn slices_2() {
-    //     use iris::streaming_server::proto::TransmitionPacket;
-    //     use prost::Message;
-    //     use std::io::Cursor;
-
-    //     let packet = TransmitionPacket {
-    //         matrix: 0,
-    //         index: 0,
-    //         rows: 0,
-    //         cols: 0,
-    //         rows_fec: 0,
-    //         cols_fec: 0,
-    //         payload: None,
-    //         packet_signature: vec![0,0],
-    //     } ;
-
-    //     let mut encoded = packet.encode_length_delimited_to_vec();
-    //     encoded.resize(10, 0);
-    //     println!("{:?}", encoded);
-
-    //     let decoded = TransmitionPacket::decode_length_delimited(&mut Cursor::new(encoded)).unwrap();
-    //     println!("{:?}", decoded);
-        
-    // }
 
     #[test]
     fn test_encrypt_decrypt_2() {
@@ -112,40 +86,40 @@ mod tests {
             padded_data.extend(vec![padding_len as u8; padding_len]);
             padded_data
         }
-        
+
         pub fn encrypt(plaintext: &[u8], key: &[u8], iv: &[u8], target_size: usize) -> Vec<u8> {
             let cipher = Cipher::aes_256_cbc();
             let mut crypter = Crypter::new(cipher, Mode::Encrypt, key, Some(iv)).unwrap();
             crypter.pad(false); // Disable PKCS7 padding
-        
+
             // Pad plaintext to target size
             let padded_plaintext = pad_to_size(plaintext, target_size);
-        
+
             let mut ciphertext = vec![0; target_size + cipher.block_size()];
-        
+
             let mut count = crypter.update(&padded_plaintext, &mut ciphertext).unwrap();
             count += crypter.finalize(&mut ciphertext[count..]).unwrap();
-        
+
             ciphertext.truncate(count);
             ciphertext
         }
-        
+
         pub fn decrypt(ciphertext: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {
             let cipher = Cipher::aes_256_cbc();
             let mut crypter = Crypter::new(cipher, Mode::Decrypt, key, Some(iv)).unwrap();
             crypter.pad(false); // Disable PKCS7 padding
-        
+
             let mut plaintext = vec![0; ciphertext.len() + cipher.block_size()];
-        
+
             let mut count = crypter.update(ciphertext, &mut plaintext).unwrap();
             count += crypter.finalize(&mut plaintext[count..]).unwrap();
-        
+
             plaintext.truncate(count);
-        
+
             // Remove custom padding
             let padding_len = *plaintext.last().unwrap() as usize;
             plaintext.truncate(plaintext.len() - padding_len);
-        
+
             plaintext
         }
 
@@ -155,7 +129,7 @@ mod tests {
 
         let target_size = 1408;
         let ciphertext = encrypt(plaintext, key, iv, target_size);
-        
+
         // Ensure the ciphertext length is 1408 bytes
         assert_eq!(ciphertext.len(), target_size);
 
@@ -170,10 +144,8 @@ mod tests {
     #[test]
     fn test_sign_message() {
 
-        use openssl::bn::BigNumContext;
-        use openssl::ec::{EcGroup, EcKey, EcPoint};
+        use openssl::ec::{EcGroup, EcKey};
         use openssl::nid::Nid;
-        use openssl::pkey::Private;
         use openssl::sign::Signer;
         use openssl::hash::MessageDigest;
         use openssl::pkey::PKey;
@@ -194,7 +166,7 @@ mod tests {
 
         // Print the length of the signature
         println!("Signature length: {}", signature.len());
-        
+
         // Verify the signature
         let mut verifier = Verifier::new(MessageDigest::sha256(), &pkey).unwrap();
         verifier.update(message).unwrap();
@@ -206,17 +178,11 @@ mod tests {
 
     #[test]
     fn tst_signature_3(){
-        use openssl::hash::MessageDigest;
         use openssl::ecdsa::EcdsaSig;
         use openssl::ec::{EcGroup, EcKey};
         use openssl::nid::Nid;
         use openssl::sha::sha256;
-        use openssl::error::ErrorStack;
-        use openssl::x509::X509Req;
         use openssl::pkey::Private;
-        use openssl::pkey::PKey;
-        use openssl::x509::X509ReqBuilder;
-        use openssl::x509::X509NameBuilder;
 
         // Generate EC key pair
         let group: EcGroup = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
@@ -262,7 +228,7 @@ mod tests {
         // Assert that the signature is valid
         assert!(is_valid);
     }
-    
+
     #[test]
     fn tst_signature_2(){
         use openssl::hash::MessageDigest;
@@ -344,76 +310,20 @@ mod tests {
         assert!(is_valid);
     }
 
-    #[test]
-    fn crypto_manager() {
 
-        use openssl::base64;
-        use openssl::symm::{encrypt, decrypt, Cipher};
-        use serde::{Serialize, Deserialize};
-        use std::fs::{self, File};
-        use std::io::{self, Read, Write};
-
-        #[derive(Serialize, Deserialize)]
-        struct KeyFile {
-            keys: Vec<String>,
-        }
-
-        pub struct CryptoManager {
-            current_key: Vec<u8>,
-            previous_keys: Vec<Vec<u8>>,
-        }
-
-        impl CryptoManager {
-            pub fn new(current_key: Vec<u8>, previous_keys: Vec<Vec<u8>>) -> Self {
-                CryptoManager {
-                    current_key,
-                    previous_keys,
-                }
-            }
-
-            pub fn encrypt(&self, plaintext: &[u8]) -> Vec<u8> {
-                encrypt(Cipher::aes_256_cbc(), &self.current_key, None, plaintext).unwrap()
-            }
-
-            pub fn decrypt(&self, ciphertext: &[u8]) -> Result<Vec<u8>, ()> {
-                // Try with current key
-                if let Ok(plaintext) = decrypt(Cipher::aes_256_cbc(), &self.current_key, None, ciphertext) {
-                    return Ok(plaintext);
-                }
-                // Try with previous keys
-                for key in &self.previous_keys {
-                    if let Ok(plaintext) = decrypt(Cipher::aes_256_cbc(), key, None, ciphertext) {
-                        return Ok(plaintext);
-                    }
-                }
-                Err(())
-            }
-
-            pub fn rotate_key(&mut self, new_key: Vec<u8>) {
-                self.previous_keys.push(self.current_key.clone());
-                self.current_key = new_key;
-            }
-
-        }
-
-
-        // If key file doesn't exist, create a new CryptoManager with a random key
-        // let new_key = openssl::rand::rand_bytes(32).unwrap();
-        // CryptoManager::new(new_key, Vec::new())
-    }
 
     #[test]
     fn encrypt() {
         use openssl::encrypt::{Encrypter, Decrypter};
         use openssl::rsa::{Rsa, Padding};
         use openssl::pkey::PKey;
-        
+
         // Generate a keypair
         let keypair = Rsa::generate(2048).unwrap();
         let keypair = PKey::from_rsa(keypair).unwrap();
-        
+
         let data = b"hello, world!";
-        
+
         // Encrypt the data with RSA PKCS1
         let mut encrypter = Encrypter::new(&keypair).unwrap();
         encrypter.set_rsa_padding(Padding::PKCS1).unwrap();
@@ -421,11 +331,11 @@ mod tests {
         // Create an output buffer
         let buffer_len = encrypter.encrypt_len(data).unwrap();
         let mut encrypted = vec![0; buffer_len];
-        
+
         // Encrypt and truncate the buffer
         let encrypted_len = encrypter.encrypt(data, &mut encrypted).unwrap();
         encrypted.truncate(encrypted_len);
-        
+
         // Decrypt the data
         let mut decrypter = Decrypter::new(&keypair).unwrap();
         decrypter.set_rsa_padding(Padding::PKCS1).unwrap();
@@ -440,52 +350,6 @@ mod tests {
         assert_eq!(&*decrypted, data);
     }
 
-
-    // #[test]
-    // fn tst_signature(){
-    //     use openssl::ec::EcPoint;
-    //     use openssl::ecdsa::EcdsaSig;
-    //     use openssl::ec::{EcKey, EcGroup};
-    //     use openssl::nid::Nid;
-    //     use openssl::pkey::PKey;
-    //     use openssl::sha::sha256;
-    //     use openssl::bn::BigNumContext;
-
-    //     // Generate an EC key pair
-    //     let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
-    //     let ec_key = EcKey::generate(&group).unwrap();
-        
-
-    //     let mut ctx = BigNumContext::new().unwrap();
-
-    //     // get bytes from somewhere
-    //     let public_key = ec_key.public_key_to_der().unwrap();
-
-    //     // create an EcKey from the binary form of a EcPoint
-    //     let point = EcPoint::from_bytes(&group, &public_key, &mut ctx).unwrap();
-    //     let key = EcKey::from_public_key(&group, &point).unwrap();
-
-    //     // Message to be signed
-    //     let message = b"Hello, world!";
-        
-    //     // Hash the message
-    //     let message_hash = sha256(message);
-
-    //     // Sign the message hash
-    //     let signature = EcdsaSig::sign(&message_hash, &key).unwrap();
-
-    //     // Extract r and s from the signature
-    //     let r = signature.r().to_vec();
-    //     let s = signature.s().to_vec();
-        
-    //     println!("Signature (r): {:?}", r);
-    //     println!("Signature (s): {:?}", s);
-
-    //     // Verify the signature
-    //     let is_valid = signature.verify(&message_hash, &ec_key).is_ok();
-
-    //     println!("Signature is valid: {}", is_valid);
-    // }
 
     #[test]
     fn enumerate(){
@@ -539,7 +403,7 @@ mod tests {
 
             println!("{:?}", item.1.len());
         }
-        
+
 
         assert_eq!(restored[&0], original[0]);
         assert_eq!(restored[&2], original[2]);
@@ -553,13 +417,13 @@ mod tests {
             println!("value at row {row} and column {col} is: {i}");
         }
     }
-    
+
     #[test]
     fn insertion() {
         let mut numbers = vec![1, 2, 3, 4, 5];
         let index_to_add_to = 2; // Index at which you want to add the number
         let number_to_add = 10;
-    
+
         // Ensure the index is within the bounds of the vector
         if index_to_add_to <= numbers.len() {
             numbers.insert(index_to_add_to, number_to_add);
@@ -588,7 +452,7 @@ mod tests {
     fn test_encrypt_decrypt() {
         use openssl::symm::{Cipher, Crypter, Mode};
         use openssl::rand::rand_bytes;
-        
+
         fn generate_random_bytes(size: usize) -> Vec<u8> {
             let mut buf = vec![0; size];
             rand_bytes(&mut buf).expect("Failed to generate random bytes");
@@ -603,7 +467,7 @@ mod tests {
             ciphertext.truncate(count);
             Ok(ciphertext)
         }
-        
+
         fn decrypt(cipher: Cipher, data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, openssl::error::ErrorStack> {
             let mut crypter = Crypter::new(cipher, Mode::Decrypt, key, Some(iv))?;
             let mut plaintext = vec![0; data.len() + cipher.block_size()];
@@ -612,29 +476,29 @@ mod tests {
             plaintext.truncate(count);
             Ok(plaintext)
         }
-       
+
         let data = b"Hello, OpenSSL with Rust!";
-        
+
         println!("original data size: {:?}", data.len());
-        
+
         let key = generate_random_bytes(32); // 256 bits for AES-256
         let iv = generate_random_bytes(16);  // 128 bits for AES block size
-        
+
         let encrypted_data = encrypt(Cipher::aes_256_cbc(), data, &key, &iv)
             .expect("Failed to encrypt data");
 
         println!("encrypted data size: {:?}", encrypted_data.len());
-        
-        
+
+
         let decrypted_data = decrypt(Cipher::aes_256_cbc(), &encrypted_data, &key, &iv)
             .expect("Failed to decrypt data");
-                
+
         assert_eq!(data.to_vec(), decrypted_data);
     }
-    
+
     #[test]
     fn add_row_fec(){
-       
+
         // Define the input vectors
         let input = vec![
             vec![1, 2, 3],
@@ -651,7 +515,7 @@ mod tests {
             println!("{:?}", row);
         }
         println!("------");
-        
+
         // Define the input vectors
 
         let input = vec![
@@ -672,8 +536,8 @@ mod tests {
         for row in &transposed_fec {
             println!("{:?}", row);
         }
-            
-        
+
+
         //assert_eq!(dm, dm1);
 
     }

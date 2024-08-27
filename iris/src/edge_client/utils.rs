@@ -1,18 +1,32 @@
 
-use log::info;
-use openssl::asn1::Asn1Time;
-use openssl::bn::{BigNum, MsbOption};
+use openssl::ec::EcKey;
 use openssl::error::ErrorStack;
 use openssl::hash::MessageDigest;
-use openssl::pkey::{PKey, PKeyRef, Private};
-use openssl::rsa::Rsa;
-use openssl::x509::extension::{
-    AuthorityKeyIdentifier, BasicConstraints, KeyUsage, SubjectAlternativeName,
-    SubjectKeyIdentifier,
-};
-use openssl::x509::{X509NameBuilder, X509Ref, X509Req, X509ReqBuilder, X509VerifyResult, X509};
+use openssl::pkey::{PKey, Private};
+use openssl::x509::{X509NameBuilder, X509Req, X509ReqBuilder};
 
-use crate::edge_client::proto;
+use super::proto::SessionKey;
+
+#[derive(Debug, Clone, Default)]
+pub struct SessionConfig {
+    pub current_key: SessionKey,
+    pub ec_server_certificate: Vec<u8>,
+    pub epoch: i32,
+    pub client_ec_certificate: Vec<u8>,
+    pub client_ec_key: Option<EcKey<Private>>
+}
+
+// impl Default for SessionConfig {
+//     fn default() -> Self {
+//         Self {
+//             current_key: SessionKey::default(),
+//             ec_server_certificate: Vec::default(),
+//             epoch: 0, // or any other default value you prefer
+//             client_ec_certificate: Vec::default(),
+//             client_ec_key:
+//         }
+//     }
+// }
 
 /// Make a X509 request with the given private key
 pub fn mk_request(key_pair: &PKey<Private>) -> Result<X509Req, ErrorStack> {

@@ -13,7 +13,7 @@ use crossbeam_channel::bounded;
 use crypto::key_manager::KeyManager;
 use iris::streaming_server::proto::report_service_server::ReportServiceServer;
 use iris::streaming_server::proto::{self, FILE_DESCRIPTOR_SET};
-use log::{error, info};
+use log::error;
 use membership_manager::reporting_sink::MyReportService;
 use once_cell::sync::OnceCell;
 use openssl::x509::X509;

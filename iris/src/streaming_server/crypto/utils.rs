@@ -11,7 +11,6 @@ use openssl::x509::extension::{
 };
 use openssl::x509::{X509NameBuilder, X509Ref, X509Req, X509ReqBuilder, X509};
 
-use std::fs;
 use std::fs::File;
 use std::io::{self, Write, Read};
 use std::path::Path;
@@ -137,6 +136,7 @@ pub fn sign_request_with_ca(req: &X509Req, ca_cert: &X509Ref, ca_key_pair: &PKey
 }
 
 // Make a certificate and private key signed by the given CA cert and private key
+#[allow(dead_code)]
 pub fn mk_ca_signed_cert(
     ca_cert: &X509Ref,
     ca_key_pair: &PKeyRef<Private>,

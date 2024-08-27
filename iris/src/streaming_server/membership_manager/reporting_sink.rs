@@ -1,7 +1,7 @@
 use std::sync::{Arc, Mutex};
 
 use iris::streaming_server::proto::{report_service_server::ReportService, ClientReport, Empty};
-use log::{error, info};
+use log::error;
 use tonic::{Request, Response, Status};
 
 use crate::network_scheduler::client_sessions::ClientSessions;
@@ -28,14 +28,13 @@ impl ReportService for MyReportService {
 
         // Get the client address from the request metadata
         if let Some(client_addr) = request.remote_addr() {
+            let mut lock = self.client_sessions.lock().unwrap();
             // Update the client session
-            self.client_sessions.lock().unwrap().update_client(client_addr);
+            lock.update_client(client_addr);
+            lock.save_client_report(client_addr, request.into_inner());
         } else {
             error!("Client address not found in request metadata");
         }
-
-        let report = request.into_inner();
-        info!("Received report: index = {}, payload length = {}", report.index, report.payload.len());
 
         Ok(Response::new(Empty {}))  // Respond with an empty message
     }

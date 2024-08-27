@@ -10,9 +10,9 @@ use grid::Grid as Matrix;
 pub fn read_file_and_send(file_path: &str, tx: Sender<Matrix<Vec<u8>>>) {
     let config = &CONFIG.get().unwrap().multicast;
 
-    let ROW: usize = config.row;
-    let COL: usize = config.col;
-    let DATA_SIZE: usize = config.data_size;
+    let num_rows: usize = config.row;
+    let num_cols: usize = config.col;
+    let data_size: usize = config.data_size;
 
     // Open the file
     let file = match File::open(file_path) {
@@ -25,16 +25,16 @@ pub fn read_file_and_send(file_path: &str, tx: Sender<Matrix<Vec<u8>>>) {
     let mut reader = BufReader::new(file);
 
     // Buffer to store the read bytes
-    let mut buffer = vec![0; DATA_SIZE];
+    let mut buffer = vec![0; data_size];
 
     'main_loop: loop {
         // This is the matrix we will save globally
         let mut matrix: Matrix<Vec<u8>> = Matrix::new(0, 0);
 
-        for _ in 0..ROW {
-            let mut row: Vec<Vec<u8>> = Vec::with_capacity(COL);
+        for _ in 0..num_rows {
+            let mut row: Vec<Vec<u8>> = Vec::with_capacity(num_cols);
 
-            for _ in 0..COL {
+            for _ in 0..num_cols {
                 match reader.read(&mut buffer) {
                     Ok(0) => {
                         info!("END OF FILE");

@@ -10,7 +10,6 @@ public class AppContainer {
 	private static AppContainer instance;
 	private UUID myUUID;
 	private final HomeViewModel homeViewModel;
-	private RustService rustService;
 
 	private AppContainer() {
 		homeViewModel = new HomeViewModel();
@@ -25,14 +24,6 @@ public class AppContainer {
 
 	public HomeViewModel getHomeViewModel() {
 		return homeViewModel;
-	}
-
-	public RustService getRustService() {
-		return rustService;
-	}
-
-	public void setRustService(RustService rustService) {
-		this.rustService = rustService;
 	}
 
 	public UUID getMyUUID() {

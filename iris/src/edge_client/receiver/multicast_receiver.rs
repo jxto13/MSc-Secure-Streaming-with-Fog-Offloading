@@ -1,6 +1,5 @@
 use std::net::{Ipv4Addr, SocketAddr};
 use std::io;
-use std::sync::{Arc, Barrier};
 use std::time::{Duration, Instant};
 use crossbeam_channel::Sender;
 use log::info;
@@ -49,7 +48,7 @@ impl BandwidthMonitor {
 }
 
 
-pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>, barrier: Arc<Barrier>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
     info!("Starting the multicast receiver");
 
     // Parse the IP address
@@ -92,7 +91,6 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>, barrier: Arc<Bar
 
     // Initialize a buffer for the UDP packet.
     let mut buf = [0; 1 << 16]; // Maximum UDP packet size is 65535 bytes.
-    let mut decoder_notify = false;
 
     // Initialize the bandwidth monitor
     let mut bandwidth_monitor = BandwidthMonitor::new();
@@ -120,14 +118,9 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>, barrier: Arc<Bar
                         // Receive all packets queued for the socket.
                         match socket.recv_from(&mut buf) {
                             Ok((size, _source_address)) => {
+                                
                                 // Send data to matrix decoder
-                                sender.send(buf[..size].to_vec())?;
-
-                                // Notify that the multicast_receiver has started
-                                if !decoder_notify {
-                                    barrier.wait();
-                                    decoder_notify = true;
-                                }
+                                sender.send(buf[..size].to_vec()).unwrap();
 
                                 // Record the size of the received packet
                                 bandwidth_monitor.record(size);

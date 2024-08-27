@@ -81,8 +81,8 @@ public class MainActivity extends AppCompatActivity {
 		NavigationUI.setupWithNavController(navigationView, navController);
 
 		// Start Wifi Aware with NetworkInitializer
-		//wifiAwareNetwork = new NetworkInitializer(getApplicationContext());
-		//wifiAwareNetwork.start();
+		wifiAwareNetwork = new NetworkInitializer(getApplicationContext());
+		wifiAwareNetwork.start();
 
 		// Create an instance of the AppContainer
 		appContainer = AppContainer.getInstance();
@@ -129,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
 	protected void onDestroy() {
 		super.onDestroy();
 		getDelegate().onDestroy();
-		//wifiAwareNetwork.closeSessions();
+		wifiAwareNetwork.closeSessions();
 		this.stopService(serviceIntent);
 	}
 

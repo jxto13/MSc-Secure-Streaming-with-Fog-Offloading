@@ -13,10 +13,8 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
-.vscode
 .git-old
 
-config.toml
 public/file_path
 public/decode_matrix
 public/encoded_matrix

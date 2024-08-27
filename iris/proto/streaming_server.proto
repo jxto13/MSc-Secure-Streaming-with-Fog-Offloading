@@ -1,19 +1,11 @@
 syntax = "proto3";
 package streaming_server;
 
-// Certicastes
+// ----------------------------------------------------------------------------------------------------------- //
+
+// Certificates
 service CertificateService {
     rpc SignCertificate(CertificateRequest) returns (CertificateResponse);
-    rpc VerifyCertificate(SignedCertificateRequest) returns (ValidationCertificateResponse);
-
-}
-
-message SignedCertificateRequest {
-    bytes cert = 1; 
-}
-
-message ValidationCertificateResponse { 
-    bool auth = 1;
 }
 
 message CertificateRequest {
@@ -23,6 +15,7 @@ message CertificateRequest {
 message CertificateResponse {
     bytes signed_cert = 1;
 }
+
 // ----------------------------------------------------------------------------------------------------------- //
 
 // Symmetric keys
@@ -35,6 +28,7 @@ message RequestKey {}
 message KeyResponse {
     SessionKey current_key = 1;
     bytes certificate = 2;
+    int32 epoch = 3;
 }
 
 // ----------------------------------------------------------------------------------------------------------- //

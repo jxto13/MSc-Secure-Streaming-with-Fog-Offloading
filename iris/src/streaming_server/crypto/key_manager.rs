@@ -3,7 +3,6 @@ use iris::streaming_server::proto::SessionKey;
 use openssl::ec::EcKey;
 use openssl::pkey::Private;
 use openssl::rand::rand_bytes;
-use openssl::symm::{Cipher, Crypter, Mode};
 
 #[derive(Debug)]
 pub struct KeyManager {
