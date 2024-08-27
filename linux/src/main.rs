@@ -1,8 +1,8 @@
 use std::error::Error;
 use std::process::{Command, Stdio};
-use std::io::{self, Write, BufRead, BufReader};
+use std::io::{self, Write};
 use std::thread;
-use log::{debug, info, error};
+use log::{info, error};
 
 fn main() -> Result<(), Box<dyn Error>> {
     // Initialize the logger
@@ -22,15 +22,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     };
 
-    // let args: Vec<_> = "- -fflags nobuffer -flags low_delay".split_whitespace().collect();
-    // let args: Vec<_> = " - --no-cache --untimed  --no-demuxer-thread --video-sync=audio --vd-lavc-threads=1".split_whitespace().collect();
     // Start the ffplay (mpv) process
     let mut ffplay = Command::new("mpv")
-    // let mut ffplay = Command::new("ffplay")
 
         .args(&["-", "--cache=yes", "--cache-secs=5", "--speed=1"])
-        // .args(&["-"])
-        // .args(&args)
         .stdin(Stdio::piped())
         .stdout(Stdio::null())
         .stderr(Stdio::null())
