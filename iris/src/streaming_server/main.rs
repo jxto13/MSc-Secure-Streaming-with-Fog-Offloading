@@ -79,8 +79,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (source_handler_sender, source_handler_receiver) = bounded(1);
     
     // Choose the data source
-    let source = DataSource::File(CONFIG.get().unwrap().multicast.file_path.clone());
-
+    let source = match CONFIG.get().unwrap().multicast.data_source.as_str() {
+        "file" => DataSource::File(CONFIG.get().unwrap().multicast.file_path.clone()),
+        "ffmpeg" => DataSource::FFMPEG(),
+        _ => panic!("Invalid data_source value in config"),
+    };
+   
     // Create a DataHandler instance based on datasource
     let data_handler = DataHandler::new(source, source_handler_sender);        
     
