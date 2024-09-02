@@ -11,8 +11,6 @@ use std::path::PathBuf;
 // Standard
 use crossbeam_channel::bounded;
 use crypto::key_manager::KeyManager;
-use iris::streaming_server::proto::report_service_server::ReportServiceServer;
-use iris::streaming_server::proto::{self, FILE_DESCRIPTOR_SET};
 use log::error;
 use membership_manager::reporting_sink::MyReportService;
 use once_cell::sync::OnceCell;
@@ -22,7 +20,18 @@ use source_handler::data_handler::{DataHandler,DataSource};
 use tonic::transport::{Identity, Server, ServerTlsConfig};
 use tokio::runtime::Runtime;
 
-use iris::streaming_server::{read_config, Config};
+use proto::FILE_DESCRIPTOR_SET;
+use proto::report_service_server::ReportServiceServer;
+
+use iris_server::{read_config,Config};
+
+// Import protobuff
+pub mod proto {
+    tonic::include_proto!("streaming_server");
+
+    pub const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("streaming_server_descriptor");
+}
+
 
 // Define the global static instance of Config using OnceCell
 static CONFIG: OnceCell<Config> = OnceCell::new();
@@ -35,7 +44,7 @@ use clap::{arg, Command};
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Define the command structure
     let cmd = Command::new("streaming_server")
-        .version("0.0.1")
+        .version("0.1.0")
         .author("Joaquim Oliveira <up201908075@up.pt>")
         .about("MSc Secure Streaming with Fog Offloading")
         .arg(

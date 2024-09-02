@@ -6,7 +6,6 @@ pub mod android {
     use jni::objects::{JClass, JString};
     use jni::JNIEnv;
     use log::{error, info};
-    use iris::edge_client;
 
     #[no_mangle]
     pub extern "system" fn Java_pt_iris_services_RustService_startService(
@@ -45,7 +44,7 @@ pub mod android {
             // Create storage for events.
             let mut events = Events::with_capacity(1024);
 
-            let receiver = edge_client::core::start().unwrap();
+            let receiver = iris_client::start().unwrap();
             
             // Start an event loop.
             loop {

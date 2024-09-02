@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 
     // Attempt to start the receiver
-    let receiver = match iris::edge_client::core::start() {
+    let receiver = match iris_client::start() {
         Ok(receiver) => receiver,
         Err(e) => {
             error!("Failed to start receiver: {}", e);
@@ -44,7 +44,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Spawn a thread to handle data reception
     let receiver_thread = thread::spawn(move || {
         for data in receiver {
-            if let Err(e) = ffplay_stdin.write_all(&data) {
+            if let Err(e) = ffplay_stdin.write_all(&data[..]) {
                 error!("Failed to write to ffplay stdin: {}", e);
                 break;
             }

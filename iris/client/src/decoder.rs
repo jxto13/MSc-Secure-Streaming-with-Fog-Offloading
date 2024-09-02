@@ -11,12 +11,14 @@ use std::error::Error;
 use std::io::Cursor;
 use std::time::Instant;
 
-use crate::edge_client::proto::{SessionKey, TransmitionPacket, VideoData};
+use proto::{SessionKey, TransmitionPacket, VideoData};
 use grid::Grid as Matrix;
 
 use openssl::ecdsa::EcdsaSig;
 
-use crate::crypto_utils::decrypt;
+use iris_shared::crypto_utils::decrypt;
+
+use crate::proto;
 
 use super::proto::ClientReport;
 use super::utils::SessionConfig;

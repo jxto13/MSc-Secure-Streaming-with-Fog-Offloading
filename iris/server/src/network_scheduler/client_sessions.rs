@@ -2,7 +2,9 @@ use std::collections::HashMap;
 use std::net::SocketAddr;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
-use iris::streaming_server::proto::ClientReport;
+use proto::ClientReport;
+
+use crate::proto;
 
 #[derive(Debug)]
 pub struct ClientSessions {

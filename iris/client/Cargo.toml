@@ -1,5 +1,5 @@
 [package]
-name = "iris"
+name = "iris-client"
 version = "0.1.0"
 edition = "2021"
 
@@ -19,6 +19,9 @@ reed-solomon-16  = "0.1.0"
 grid = "0.14.0"
 crossbeam-channel = "0.5.13"
 
+iris-shared = {version = "0.1.0" , path = "../shared-lib"}
+
+
 serde = { version = "1.0.209", features = ["derive"] }
 toml = "0.8.19"
 clap = "4.5.16"
@@ -34,7 +37,3 @@ openssl = { version = "0.10.66", features = ["vendored"] }
 
 [build-dependencies]
 tonic-build = "0.12.1"
-
-[[bin]]
-name = "streaming_server"
-path = "./src/streaming_server/main.rs"

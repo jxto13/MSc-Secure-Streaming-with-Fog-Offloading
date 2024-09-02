@@ -6,7 +6,8 @@ use log::info;
 // use tokio::sync::mpsc::Receiver;
 use tokio::runtime::Runtime;
 
-use super::core::CHANNEL;
+use crate::CHANNEL;
+
 use super::proto::report_service_client::ReportServiceClient;
 use super::proto::ClientReport;
 

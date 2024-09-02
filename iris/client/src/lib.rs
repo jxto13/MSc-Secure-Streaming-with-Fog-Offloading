@@ -1,9 +1,13 @@
-use super::utils::SessionConfig;
-use super::{receiver, session, decoder, utils};
+mod utils;
+mod session;
+mod decoder;
+mod receiver;
 
 use crossbeam_channel::{unbounded, Receiver};
 
 use once_cell::sync::OnceCell;
+
+use crate::utils::SessionConfig;
 
 use openssl::ec::{EcGroup, EcKey};
 use openssl::nid::Nid;
@@ -14,9 +18,9 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 use std::thread;
 
-use crate::edge_client::proto::{RequestKey,CertificateRequest};
-use crate::edge_client::proto::key_service_client::KeyServiceClient;
-use crate::edge_client::proto::certificate_service_client::CertificateServiceClient;
+use proto::{RequestKey,CertificateRequest};
+use proto::key_service_client::KeyServiceClient;
+use proto::certificate_service_client::CertificateServiceClient;
 
 use tokio::runtime::Runtime;
 use tokio::time::sleep;
@@ -25,7 +29,12 @@ use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
 use log::{error, info};
 
-const CA_PUBLIC_CERTIFICATE: &[u8] = include_bytes!("../../certs/ca_certificate.pem");
+pub mod proto {
+    tonic::include_proto!("streaming_server");
+    tonic::include_proto!("edge_client");
+}
+
+const CA_PUBLIC_CERTIFICATE: &[u8] = include_bytes!("../../server/certs/ca_certificate.pem");
 
 pub static CHANNEL: OnceCell<Channel> = OnceCell::new();
 pub static INTERFACES: OnceCell<Arc<Mutex<Vec<String>>>> = OnceCell::new();

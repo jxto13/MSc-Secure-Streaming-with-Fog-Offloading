@@ -1,8 +1,8 @@
-use crate::{CONFIG, MANAGER};
+use crate::{proto, CONFIG, MANAGER};
 
 use crossbeam_channel::{Receiver, Sender};
-use iris::crypto_utils::encrypt;
-use iris::streaming_server::proto::{TransmitionPacket, VideoData};
+use iris_shared::crypto_utils::encrypt;
+use proto::{TransmitionPacket, VideoData};
 
 use openssl::sha::sha256;
 use openssl::ecdsa::EcdsaSig;

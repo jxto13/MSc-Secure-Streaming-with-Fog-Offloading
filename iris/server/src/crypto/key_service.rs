@@ -4,8 +4,8 @@ use std::sync::{Arc, Mutex};
 
 use crate::proto;
 
-use iris::streaming_server::proto::key_service_server::{KeyService, KeyServiceServer};
-use iris::streaming_server::proto::{KeyResponse, SessionKey};
+use proto::key_service_server::{KeyService, KeyServiceServer};
+use proto::{KeyResponse, SessionKey};
 
 use openssl::x509::X509;
 use tonic::{Request, Response, Status};

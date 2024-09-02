@@ -1,12 +1,6 @@
-// lib.rs
-
-pub mod edge_client;
-pub mod streaming_server;
-
 pub mod crypto_utils {
 
     use openssl::symm::{Cipher, Crypter, Mode};
-    
     
     fn pad_to_size(data: &[u8], target_size: usize) -> Vec<u8> {
         let padding_len = target_size - data.len();
@@ -21,6 +15,7 @@ pub mod crypto_utils {
         crypter.pad(false); // Disable PKCS7 padding
             
         assert!(target_size > plaintext.len());
+        
         // Pad plaintext to target size
         let padded_plaintext = pad_to_size(plaintext, target_size);
     

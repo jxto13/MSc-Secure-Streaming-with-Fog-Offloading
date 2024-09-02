@@ -1,10 +1,10 @@
 use std::sync::{Arc, Mutex};
 
-use iris::streaming_server::proto::{report_service_server::ReportService, ClientReport, Empty};
+use proto::{report_service_server::ReportService, ClientReport, Empty};
 use log::error;
 use tonic::{Request, Response, Status};
 
-use crate::network_scheduler::client_sessions::ClientSessions;
+use crate::{network_scheduler::client_sessions::ClientSessions, proto};
 
 #[derive(Debug)]
 pub struct MyReportService {

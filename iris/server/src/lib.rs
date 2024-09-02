@@ -1,14 +1,11 @@
+// lib.rs
 use std::fs;
 
 use serde::Deserialize;
 
 
-// Import protobuff
-pub mod proto {
-    tonic::include_proto!("streaming_server");
 
-    pub const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("streaming_server_descriptor");
-}
+
 
 #[derive(Deserialize, Debug)]
 pub struct Config {

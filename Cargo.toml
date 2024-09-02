@@ -1,6 +1,8 @@
 [workspace]
 members = [
-    "iris",
+    "iris/client",
+    "iris/server",
+    "iris/shared-lib",
     "linux",
     "android/app/src/main/rust"
 ]
