@@ -199,147 +199,132 @@ pub fn start(
 }
 
 fn reconstruct_matrix(tracker: &mut MatrixTracker, ec_client_key: &EcKey<Private>) -> Result<(), Box<dyn Error>> {
-    // Start timing
-    let start = Instant::now();
-    let mut number_recovered = 0;
-    let init_missing = tracker.missing_indexes().len();
-
     // Logic to reconstruct the matrix
-    // Two iteration with column recovery helps row recovery in the second iteration
 
-    for _ in 0..2 {
-        let mut updates = Vec::new();
+    let mut updates = Vec::new();
 
-        for (row_index, row) in tracker.matrix.iter_rows().enumerate() {
-            let mut original_shards = Vec::new();
-            let mut recovery_shards = Vec::new();
+    for (row_index, row) in tracker.matrix.iter_rows().enumerate() {
+        let mut original_shards = Vec::new();
+        let mut recovery_shards = Vec::new();
 
-            for (index, element) in row.enumerate() {
-                if let Some(value) = element {
-                    if index < tracker.cols as usize {
-                        original_shards.push((index, value.payload.clone()));
-                    } else {
-                        let enumerated_value =
-                            (index - tracker.cols as usize) % tracker.rows_fec as usize;
-                        recovery_shards.push((enumerated_value, value.payload.clone()));
-                    }
-                }
-            }
-
-            if let Ok(recovered) = reed_solomon_16::decode(
-                tracker.cols as usize,     // total number of original shards
-                tracker.rows_fec as usize, // total number of recovery shards
-                original_shards,
-                recovery_shards,
-            ) {
-                for (position, data) in recovered {
-                    updates.push((row_index, position, data));
+        for (index, element) in row.enumerate() {
+            if let Some(value) = element {
+                if index < tracker.cols as usize {
+                    original_shards.push((index, value.payload.clone()));
+                } else {
+                    let enumerated_value =
+                        (index - tracker.cols as usize) % tracker.rows_fec as usize;
+                    recovery_shards.push((enumerated_value, value.payload.clone()));
                 }
             }
         }
 
-        number_recovered += updates.len();
-
-        // Apply updates for rows
-        for &(row_index, position, ref data) in &updates {
-            if let Some(elem) = tracker.matrix.get_mut(row_index, position) {
-                let index = (tracker.cols + tracker.rows_fec) * row_index as i32 + position as i32;
-                let mut packet = TransmitionPacket {
-                    matrix: tracker.matrix_index,
-                    index,
-                    rows: tracker.rows,
-                    cols: tracker.cols,
-                    rows_fec: tracker.rows_fec,
-                    cols_fec: tracker.cols_fec,
-                    payload: data.clone(),
-                    packet_signature: vec![0,255], // Initial empty signature
-                };
-        
-                // Encode the packet to a vector (assuming protobuf or similar)
-                let encoded_packet = packet.encode_to_vec();  // Replace with the actual encoding method you're using
-                let message_hash = sha256(&encoded_packet);
-        
-                // Sign the message hash
-                let signature = EcdsaSig::sign(&message_hash, ec_client_key).unwrap().to_der().unwrap();
-        
-                // Update the packet signature
-                packet.packet_signature = signature;
-        
-                // Replace the element in the matrix with the updated packet
-                *elem = Some(packet);
-                
-                tracker.update_index(index);
-            }
-        }
-
-        updates.clear();
-
-        for (col_index, col) in tracker.matrix.iter_cols().enumerate() {
-            let mut original_shards = Vec::new();
-            let mut recovery_shards = Vec::new();
-
-            for (index, element) in col.enumerate() {
-                if let Some(value) = element {
-                    if index < tracker.rows as usize {
-                        original_shards.push((index, value.payload.clone()));
-                    } else {
-                        let enumerated_value =
-                            (index - tracker.rows as usize) % tracker.cols_fec as usize;
-                        recovery_shards.push((enumerated_value, value.payload.clone()));
-                    }
-                }
-            }
-
-            if let Ok(recovered) = reed_solomon_16::decode(
-                tracker.rows as usize,     // total number of original shards
-                tracker.cols_fec as usize, // total number of recovery shards
-                original_shards,
-                recovery_shards,
-            ) {
-                for (position, data) in recovered {
-                    updates.push((col_index, position, data));
-                }
-            }
-        }
-
-        number_recovered += updates.len();
-
-        // Apply updates for columns
-        for &(col_index, position, ref data) in &updates {
-            if let Some(elem) = tracker.matrix.get_mut(col_index, position) {
-                let index = (tracker.rows + tracker.cols_fec) * col_index as i32 + position as i32;
-                let mut packet = TransmitionPacket {
-                    matrix: tracker.matrix_index,
-                    index,
-                    rows: tracker.rows,
-                    cols: tracker.cols,
-                    rows_fec: tracker.rows_fec,
-                    cols_fec: tracker.cols_fec,
-                    payload: data.clone(),
-                    packet_signature: vec![0, 255],
-                };
-
-                // Encode the packet to a vector (assuming protobuf or similar)
-                let encoded_packet = packet.encode_to_vec();  // Replace with the actual encoding method you're using
-                let message_hash = sha256(&encoded_packet);
-        
-                // Sign the message hash
-                let signature = EcdsaSig::sign(&message_hash, ec_client_key).unwrap().to_der().unwrap();
-        
-                // Update the packet signature
-                packet.packet_signature = signature;
-        
-                // Replace the element in the matrix with the updated packet
-                *elem = Some(packet);
-                
-                tracker.update_index(index);
+        if let Ok(recovered) = reed_solomon_16::decode(
+            tracker.cols as usize,     // total number of original shards
+            tracker.rows_fec as usize, // total number of recovery shards
+            original_shards,
+            recovery_shards,
+        ) {
+            for (position, data) in recovered {
+                updates.push((row_index, position, data));
             }
         }
     }
 
-    // Stop timing and log the duration
-    info!("current_missing: {}, recovered_data: {}, still_missing: {}, reconstruct_matrix time: {:?}", init_missing, number_recovered, tracker.missing_indexes().len(), start.elapsed());
+    // Apply updates for rows
+    for &(row_index, position, ref data) in &updates {
+        if let Some(elem) = tracker.matrix.get_mut(row_index, position) {
+            let index = (tracker.cols + tracker.rows_fec) * row_index as i32 + position as i32;
+            let mut packet = TransmitionPacket {
+                matrix: tracker.matrix_index,
+                index,
+                rows: tracker.rows,
+                cols: tracker.cols,
+                rows_fec: tracker.rows_fec,
+                cols_fec: tracker.cols_fec,
+                payload: data.clone(),
+                packet_signature: vec![0,255], // Initial empty signature
+            };
+    
+            // Encode the packet to a vector (assuming protobuf or similar)
+            let encoded_packet = packet.encode_to_vec();  // Replace with the actual encoding method you're using
+            let message_hash = sha256(&encoded_packet);
+    
+            // Sign the message hash
+            let signature = EcdsaSig::sign(&message_hash, ec_client_key).unwrap().to_der().unwrap();
+    
+            // Update the packet signature
+            packet.packet_signature = signature;
+    
+            // Replace the element in the matrix with the updated packet
+            *elem = Some(packet);
+            
+            tracker.update_index(index);
+        }
+    }
 
+    updates.clear();
+
+    for (col_index, col) in tracker.matrix.iter_cols().enumerate() {
+        let mut original_shards = Vec::new();
+        let mut recovery_shards = Vec::new();
+
+        for (index, element) in col.enumerate() {
+            if let Some(value) = element {
+                if index < tracker.rows as usize {
+                    original_shards.push((index, value.payload.clone()));
+                } else {
+                    let enumerated_value =
+                        (index - tracker.rows as usize) % tracker.cols_fec as usize;
+                    recovery_shards.push((enumerated_value, value.payload.clone()));
+                }
+            }
+        }
+
+        if let Ok(recovered) = reed_solomon_16::decode(
+            tracker.rows as usize,     // total number of original shards
+            tracker.cols_fec as usize, // total number of recovery shards
+            original_shards,
+            recovery_shards,
+        ) {
+            for (position, data) in recovered {
+                updates.push((col_index, position, data));
+            }
+        }
+    }
+
+    // Apply updates for columns
+    for &(col_index, position, ref data) in &updates {
+        if let Some(elem) = tracker.matrix.get_mut(col_index, position) {
+            let index = (tracker.rows + tracker.cols_fec) * col_index as i32 + position as i32;
+            let mut packet = TransmitionPacket {
+                matrix: tracker.matrix_index,
+                index,
+                rows: tracker.rows,
+                cols: tracker.cols,
+                rows_fec: tracker.rows_fec,
+                cols_fec: tracker.cols_fec,
+                payload: data.clone(),
+                packet_signature: vec![0, 255],
+            };
+
+            // Encode the packet to a vector (assuming protobuf or similar)
+            let encoded_packet = packet.encode_to_vec();  // Replace with the actual encoding method you're using
+            let message_hash = sha256(&encoded_packet);
+    
+            // Sign the message hash
+            let signature = EcdsaSig::sign(&message_hash, ec_client_key).unwrap().to_der().unwrap();
+    
+            // Update the packet signature
+            packet.packet_signature = signature;
+    
+            // Replace the element in the matrix with the updated packet
+            *elem = Some(packet);
+            
+            tracker.update_index(index);
+        }
+    }
+    
     Ok(())
 }
 

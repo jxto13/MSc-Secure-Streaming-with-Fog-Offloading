@@ -10,6 +10,7 @@ use std::time::{Duration, Instant};
 use pnet_datalink::interfaces;
 use log::{info, error};
 
+use crate::metrics::get_metrics;
 use crate::CONFIG;
 
 // A token to allow us to identify which event is for the `UdpSocket`.
@@ -137,6 +138,8 @@ impl WiFiMulticast {
         // Create storage for events.
         let mut events = Events::with_capacity(1024);
 
+        let metrics = get_metrics();
+
         // Start an event loop.
         loop {
             // Poll Mio for events, blocking until we get an event.
@@ -164,6 +167,11 @@ impl WiFiMulticast {
                                 // Send the data over multicast.
                                 if let Err(e) = socket.send(&data) {
                                     error!("Failed to send data over multicast: {}", e);
+                                }
+                                // this makes the lock out of scope to release it
+                                {
+                                    let bandwidth_used = metrics.multicast_bandwidth_used.lock().unwrap();
+                                    bandwidth_used.add(data.len() as f64); // Update the gauge value
                                 }
                             }
                             Err(_) => {

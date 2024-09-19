@@ -3,6 +3,7 @@ pub mod android {
     use std::thread;
     
     use android_logger::{self, init_once};
+    use crossbeam_channel::TryRecvError;
     use jni::objects::{JClass, JString};
     use jni::JNIEnv;
     use log::{error, info};
@@ -22,7 +23,6 @@ pub mod android {
         // Log that the Rust app is starting
         info!("Rust app is starting...");
 
-    
         thread::spawn( || {
             // A token to allow us to identify which event is for the `UdpSocket`.
             const SERVER: Token = Token(0);
@@ -31,7 +31,7 @@ pub mod android {
             use mio::net::UdpSocket;
             use std::io;
 
-            let addr = "0.0.0.0:0".parse().unwrap();
+            let addr = "127.0.0.1:0".parse().unwrap();
             let mut socket = UdpSocket::bind(addr).unwrap();
 
             // Create a poll instance.
@@ -64,19 +64,24 @@ pub mod android {
                         SERVER => {
                             // Check if there is data to be sent over multicast.
                             // If there's data available, send it over multicast.
-                            match receiver.recv() {
-                                Ok(data) => {
-                                    // Send the data over multicast.
-                                    if let Err(e) = socket.send_to(&data, "127.0.0.1:12346".parse().unwrap()) {
-                                        error!("Failed to send data over multicast: {}", e);
-                                    }   
-                                }
-                                Err(err) => {
-                                    // Channel is closed, handle the error or break out of the loop.
-                                    error!("Data channel closed, exiting loop: {}", err);
-                                    break; // Exit the loop if the channel is closed
+                            loop {
+                                match receiver.try_recv() {
+                                    Ok(data) => {
+                                        // Send the data over multicast.
+                                        if let Err(e) = socket.send_to(&data, "127.0.0.1:12346".parse().unwrap()) {
+                                            error!("Failed to send data over multicast: {}", e);
+                                        }
+                                    }
+                                    Err(TryRecvError::Empty) => {
+                                        // No message available, continue looping
+                                    }
+                                    Err(TryRecvError::Disconnected) => {
+                                        // Channel is closed, handle the error or break out of the loop.
+                                        return; // Exit the loop if the channel is closed
+                                    }
                                 }
                             }
+                            
                         }
                         // We don't expect any events with tokens other than those we provided.
                         _ => unreachable!(),

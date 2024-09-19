@@ -1,0 +1,14 @@
+services:
+    restreamer:
+      container_name: restreamer
+      image: datarhei/restreamer:latest
+      volumes:
+            - ./config:/core/config
+            - ./data:/core/data
+      ports:
+          - 8080:8080
+          - 8181:8181
+          - 1935:1935
+      privileged: true
+      network_mode: host
+      restart: always

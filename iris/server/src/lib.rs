@@ -3,10 +3,6 @@ use std::fs;
 
 use serde::Deserialize;
 
-
-
-
-
 #[derive(Deserialize, Debug)]
 pub struct Config {
     pub ca: CA,
@@ -31,9 +27,7 @@ pub struct GRPC {
 pub struct Multicast {
     // Strean Config
     pub data_source: String,
-    pub file_path: String,
-    pub ffmpeg_input: String,
-    pub ffmpeg_options: String,
+    pub ip_source: String,
     pub interface: String,
     pub ip: String,
     pub port: u16,

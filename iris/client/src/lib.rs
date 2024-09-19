@@ -37,12 +37,8 @@ pub mod proto {
 const CA_PUBLIC_CERTIFICATE: &[u8] = include_bytes!("../../server/certs/ca_certificate.pem");
 
 pub static CHANNEL: OnceCell<Channel> = OnceCell::new();
-pub static INTERFACES: OnceCell<Arc<Mutex<Vec<String>>>> = OnceCell::new();
 
 pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
-    // Initialize INTERFACES if it's not already initialized
-    INTERFACES.get_or_init(|| Arc::new(Mutex::new(Vec::new())));
-    
     // Set up a Tokio runtime
     let rt = Arc::new(Runtime::new().unwrap());
 

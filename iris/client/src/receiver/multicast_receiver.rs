@@ -2,7 +2,7 @@ use std::net::{Ipv4Addr, SocketAddr};
 use std::io;
 use std::time::{Duration, Instant};
 use crossbeam_channel::Sender;
-use log::info;
+use log::{error, info};
 use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
 
@@ -55,14 +55,16 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Bo
     let multicast_address = ip.parse::<Ipv4Addr>().map_err(|e| {
         info!("Error parsing IPv4 address: {}", e);
         e
-    })?;
+    }).unwrap();
+
     info!("Parsed IPv4 address: {}", multicast_address);
 
     // Parse the port
     let multicast_port = port.parse::<u16>().map_err(|e| {
         info!("Error parsing port: {}", e);
         e
-    })?;
+    }).unwrap();
+
     let multicast_dest: SocketAddr = SocketAddr::new(std::net::IpAddr::V4(multicast_address), multicast_port);
 
     info!("Binding to multicast destination: {}", multicast_dest);
@@ -75,7 +77,8 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Bo
     socket.join_multicast_v4(&multicast_address, &Ipv4Addr::UNSPECIFIED).map_err(|err| {
         info!("Failed to join multicast group: {}", err);
         err
-    })?;
+    }).unwrap();
+
     info!("Joined multicast group successfully");
     
     // Create a poll instance.
@@ -84,6 +87,7 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Bo
 
     // Register the socket with the poll instance.
     poll.registry().register(&mut socket, CLIENT, Interest::READABLE).unwrap();
+
     info!("Socket registered with poll instance");
 
     // Create storage for events.
@@ -129,7 +133,7 @@ pub fn start(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), Bo
                                 break;
                             }
                             Err(e) => {
-                                info!("Error receiving packet: {}", e);
+                                error!("Error receiving packet: {}", e);
                                 break;
                             }
                         }

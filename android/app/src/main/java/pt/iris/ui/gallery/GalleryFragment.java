@@ -6,18 +6,26 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.OptIn;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
+
+import androidx.media3.common.MediaItem;
+import androidx.media3.common.util.UnstableApi;
+import androidx.media3.exoplayer.ExoPlayer;
+import androidx.media3.ui.PlayerView;
+
 
 import pt.iris.databinding.FragmentGalleryBinding;
 
 public class GalleryFragment extends Fragment {
 
 	private FragmentGalleryBinding binding;
+	private ExoPlayer player;
 
+	@OptIn(markerClass = UnstableApi.class)
 	@Override
 	public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 		GalleryViewModel slideshowViewModel = new ViewModelProvider(this).get(GalleryViewModel.class);
@@ -25,40 +33,35 @@ public class GalleryFragment extends Fragment {
 		binding = FragmentGalleryBinding.inflate(inflater, container, false);
 		View root = binding.getRoot();
 
-		// Find the Button using the binding
-		Button openMpvButton = binding.openMpvButton;
+		PlayerView playerView = binding.media3Player;
 
-		// Set an OnClickListener for the button
-		openMpvButton.setOnClickListener(v -> openMpv());
+		// Initialize ExoPlayer
+		player = new ExoPlayer.Builder(getContext()).build();
+		playerView.setPlayer(player);
+
+		// Prepare and play
+		MediaItem mediaItem = MediaItem.fromUri("udp://127.0.0.1:12346");
+
+		// Set the media item to be played.
+		player.setMediaItem(mediaItem);
+
+		// Prepare the player.
+		player.prepare();
+		// Start the playback.
+		player.play();
+
 
 		return root;
-	}
-
-	private void openMpv() {
-		// Create an intent to open the URL with mpv
-		Intent launchIntent = requireActivity().getPackageManager().getLaunchIntentForPackage("is.xyz.mpv");
-		if (launchIntent != null) {
-			startActivity(launchIntent);//null pointer check in case package name was not found
-		}
-		/*Intent intent = new Intent(Intent.ACTION_VIEW);
-		intent.setDataAndType(Uri.parse("udp://127.0.0.1:12346"), "video/*");
-
-		// Specify the package for MPV Player if needed
-		intent.setPackage("is.xyz.mpv");
-
-		// Check if there's an activity that can handle this intent
-		if (intent.resolveActivity(requireActivity().getPackageManager()) != null) {
-			startActivity(intent);
-		} else {
-			// Handle the case where MPV is not installed or cannot handle the intent
-			// For example, you could show a message to the user
-			System.out.println("MPV Player is not installed or cannot handle this URL.");
-		}*/
 	}
 
 	@Override
 	public void onDestroyView() {
 		super.onDestroyView();
 		binding = null;
+		if (player != null) {
+			player.release();
+			player = null;
+		}
 	}
+
 }

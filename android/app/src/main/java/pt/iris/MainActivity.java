@@ -88,8 +88,8 @@ public class MainActivity extends AppCompatActivity {
 		appContainer = AppContainer.getInstance();
 
 		// Start rustService
-		//serviceIntent = new Intent(this, RustService.class);
-		//this.startService(serviceIntent);
+		serviceIntent = new Intent(this, RustService.class);
+		this.startService(serviceIntent);
 	}
 
 	@Override

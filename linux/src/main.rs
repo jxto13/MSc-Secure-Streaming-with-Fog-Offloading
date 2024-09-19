@@ -23,12 +23,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     // Start the ffplay (mpv) process
-    let mut ffplay = Command::new("mpv")
+    let mut ffplay = Command::new("ffplay")
 
-        .args(&["-", "--cache=yes", "--cache-secs=5", "--speed=1"])
+        .args(&["-"])
         .stdin(Stdio::piped())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
+        // .stdout(Stdio::null())
+        // .stderr(Stdio::null())
         .spawn()
         .map_err(|e| {
             error!("Failed to start ffplay process: {}", e);

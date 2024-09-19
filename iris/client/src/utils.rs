@@ -16,18 +16,6 @@ pub struct SessionConfig {
     pub client_ec_key: Option<EcKey<Private>>
 }
 
-// impl Default for SessionConfig {
-//     fn default() -> Self {
-//         Self {
-//             current_key: SessionKey::default(),
-//             ec_server_certificate: Vec::default(),
-//             epoch: 0, // or any other default value you prefer
-//             client_ec_certificate: Vec::default(),
-//             client_ec_key:
-//         }
-//     }
-// }
-
 /// Make a X509 request with the given private key
 pub fn mk_request(key_pair: &PKey<Private>) -> Result<X509Req, ErrorStack> {
     let mut req_builder = X509ReqBuilder::new()?;

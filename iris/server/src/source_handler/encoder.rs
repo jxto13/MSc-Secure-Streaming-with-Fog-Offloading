@@ -10,7 +10,6 @@ use openssl::ecdsa::EcdsaSig;
 use reed_solomon_16::ReedSolomonEncoder;
 use grid::Grid as Matrix;
 use prost::Message;
-use std::time::Instant;
 use log::info;
 
 
@@ -31,7 +30,6 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     assert!(shard_size < config.mtu_size);
 
     // Create counters
-    let start_time = Instant::now();
     let mut matrix_counter = 0;
     let mut epoch = 0;
     
@@ -217,13 +215,6 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         }
 
         // Increment epoch
-        epoch += 1;
-
-        
+        epoch += 1;   
     }
-
-    let end_time = Instant::now();
-    let duration = end_time.duration_since(start_time);
-
-    info!("Time taken to encode and send the data to multicast sender: {:?}", duration);
 }

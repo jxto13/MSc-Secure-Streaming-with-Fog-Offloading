@@ -3,13 +3,14 @@ mod network_scheduler;
 mod source_handler;
 mod membership_manager;
 mod certificates;
+mod metrics;
 
 use std::sync::Mutex;
 use std::{sync::Arc, thread};
 use std::path::PathBuf;
 
 // Standard
-use crossbeam_channel::bounded;
+use crossbeam_channel::unbounded;
 use crypto::key_manager::KeyManager;
 use log::error;
 use membership_manager::reporting_sink::MyReportService;
@@ -24,6 +25,10 @@ use proto::FILE_DESCRIPTOR_SET;
 use proto::report_service_server::ReportServiceServer;
 
 use iris_server::{read_config,Config};
+
+use prometheus_exporter::prometheus::register_gauge;
+use crate::metrics::init_metrics;
+
 
 // Import protobuff
 pub mod proto {
@@ -40,6 +45,25 @@ static MANAGER: OnceCell<Arc<Mutex<KeyManager>>> = OnceCell::new();
 // Custom
 use network_scheduler::pipeline::Pipeline;
 use clap::{arg, Command};
+
+fn start_prometheus_exporter() {
+    use std::net::SocketAddr;
+
+    // Parse address used to bind exporter to.
+    let addr_raw = "0.0.0.0:9186";
+    let addr: SocketAddr = addr_raw.parse().expect("can not parse listen addr");
+
+    // Start exporter and update metrics every five seconds.
+    prometheus_exporter::start(addr).expect("can not start exporter");
+
+    // Create metric
+    let random = register_gauge!("run_and_repeat_random", "will set a random value")
+        .expect("can not create gauge random_value_metric");
+
+    // Initialize the metrics
+    init_metrics();
+    
+}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Define the command structure
@@ -71,6 +95,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Set the global CONFIG instance
     CONFIG.set(config).expect("Failed to set CONFIG");
 
+    start_prometheus_exporter();
+    
     // ----------------------------------- Programs Setup -------------------------------------------------------------
 
     // Load or create certificates
@@ -85,20 +111,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ----------------------------------- Programs Starts Here ------------------------------------------------------
 
     // Create channels
-    let (source_handler_sender, source_handler_receiver) = bounded(1);
+    let (source_handler_sender, source_handler_receiver) = unbounded();
     
     // Choose the data source
     let source = match CONFIG.get().unwrap().multicast.data_source.as_str() {
-        "file" => DataSource::File(CONFIG.get().unwrap().multicast.file_path.clone()),
-        "ffmpeg" => DataSource::FFMPEG(),
+        "udp" => DataSource::UDP(CONFIG.get().unwrap().multicast.ip_source.clone()),
         _ => panic!("Invalid data_source value in config"),
     };
-   
-    // Create a DataHandler instance based on datasource
-    let data_handler = DataHandler::new(source, source_handler_sender);        
     
     let source_handler = thread::spawn(move || {
-        data_handler.start();
+        // Create a DataHandler instance based on datasource
+        DataHandler::new(source, source_handler_sender).start();
     });
     
     // Create the pipeline
@@ -124,11 +147,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             
             // Start grpc server this will block execution because of await
             Server::builder()
-                .tls_config(ServerTlsConfig::new()
-                    .identity(Identity::from_pem(certificates.server_cert, certificates.server_key))).unwrap()
+                .tls_config(ServerTlsConfig::new().identity(Identity::from_pem(certificates.server_cert, certificates.server_key))).unwrap()
                 .concurrency_limit_per_connection(256)
                 // Service reflection to enable clients to see services
-                .add_service(tonic_reflection::server::Builder::configure().register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET).build().unwrap())
+                .add_service(tonic_reflection::server::Builder::configure().register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET).build_v1().unwrap())
                 .add_service(crypto::ca_service::get_service(certificates.ca_cert, certificates.ca_private_key)) // Responsible for signing the client certificates
                 .add_service(key_service)
                 .add_service(ReportServiceServer::new(MyReportService::new(pipeline.get_arc_client_sessions())))
