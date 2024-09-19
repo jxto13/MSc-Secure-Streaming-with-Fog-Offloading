@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 
     // Attempt to start the receiver
-    let receiver = match iris::edge_client::core::start() {
+    let receiver = match iris_client::start() {
         Ok(receiver) => receiver,
         Err(e) => {
             error!("Failed to start receiver: {}", e);
@@ -23,12 +23,12 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     // Start the ffplay (mpv) process
-    let mut ffplay = Command::new("mpv")
+    let mut ffplay = Command::new("ffplay")
 
-        .args(&["-", "--cache=yes", "--cache-secs=5", "--speed=1"])
+        .args(&["-"])
         .stdin(Stdio::piped())
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
+        // .stdout(Stdio::null())
+        // .stderr(Stdio::null())
         .spawn()
         .map_err(|e| {
             error!("Failed to start ffplay process: {}", e);
@@ -44,7 +44,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Spawn a thread to handle data reception
     let receiver_thread = thread::spawn(move || {
         for data in receiver {
-            if let Err(e) = ffplay_stdin.write_all(&data) {
+            if let Err(e) = ffplay_stdin.write_all(&data[..]) {
                 error!("Failed to write to ffplay stdin: {}", e);
                 break;
             }

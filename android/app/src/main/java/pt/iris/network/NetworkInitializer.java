@@ -1,8 +1,5 @@
 package pt.iris.network;
 
-
-import static android.net.wifi.aware.Characteristics.WIFI_AWARE_CIPHER_SUITE_NCS_SK_256;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.ConnectivityManager;
@@ -25,14 +22,13 @@ import android.net.wifi.aware.WifiAwareManager;
 import android.net.wifi.aware.WifiAwareNetworkSpecifier;
 import android.net.wifi.aware.WifiAwareSession;
 import android.os.Build;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.util.Log;
 import android.widget.CompoundButton;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.RequiresApi;
 
+import pt.iris.network.utils.Utils;
 import pt.iris.utils.AppContainer;
 
 import java.util.List;
@@ -49,8 +45,6 @@ public class NetworkInitializer {
 	private WifiAwareSession mWifiAwareSession;
 	private UUID myUUID;
 	private ConnectivityManager connectivityManager;
-	private HandlerThread worker;
-	private Handler workerHandle;
 
 	private int MAX_INTERFACES = 0;
 	private int MAX_DATA_PATHS = 0;
@@ -62,6 +56,7 @@ public class NetworkInitializer {
 	/**
 	 * Entrypoint for the NetworkInitializer
 	 */
+	@RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 	public void start() {
 		this.myUUID = AppContainer.getInstance().getMyUUID();
 
@@ -70,11 +65,6 @@ public class NetworkInitializer {
 
 		// Get instance of ConnectivityManager
 		this.connectivityManager =  (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
-
-		// Create and start a worker thread for background tasks
-		worker = new HandlerThread("Worker");
-		worker.start();
-		workerHandle = new Handler(worker.getLooper());
 
 		// Start wifiAwareManager
 		startWifiAwareManager();
@@ -86,7 +76,7 @@ public class NetworkInitializer {
 	/**
 	 * Initialize Wi-Fi Aware Manager
 	 */
-	@SuppressLint({"DefaultLocale", "NewApi"})
+	@RequiresApi(api = Build.VERSION_CODES.UPSIDE_DOWN_CAKE)
 	private void startWifiAwareManager() {
 		wifiAwareManager = (WifiAwareManager) context.getSystemService(Context.WIFI_AWARE_SERVICE);
 
@@ -146,6 +136,7 @@ public class NetworkInitializer {
 								// The switch is turned on
 								PublishConfig config = new PublishConfig.Builder()
 										.setServiceName("Aware_File_Share_Service_Name")
+										.setServiceSpecificInfo(Utils.asBytes(myUUID))
 										.build();
 
 								session.publish(config, new DiscoverySessionCallback() {
@@ -160,8 +151,7 @@ public class NetworkInitializer {
 									@Override
 									public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
 										NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(publisherSession, peerHandle)
-												.setPskPassphrase("somePassword")
-												.setPort(8080)
+												.setPskPassphrase(myUUID.toString())
 												.build();
 
 										NetworkRequest myNetworkRequest = new NetworkRequest.Builder()
@@ -228,7 +218,6 @@ public class NetworkInitializer {
 									@Override
 									public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
 										NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(subscriberSession, peerHandle)
-												.setPskPassphrase("somePassword")
 												.build();
 
 										NetworkRequest myNetworkRequest = new NetworkRequest.Builder()
@@ -296,7 +285,7 @@ public class NetworkInitializer {
 							break;
 					}
 				}
-			}, workerHandle);
+			}, null);
 		}
 	}
 
