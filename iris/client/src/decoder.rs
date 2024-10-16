@@ -1,3 +1,4 @@
+use chrono::{DateTime, Utc};
 use crossbeam_channel::{Receiver, Sender, TryRecvError};
 use log::{error, info};
 use openssl::ec::{EcKey, EcKeyRef};
@@ -18,7 +19,7 @@ use openssl::ecdsa::EcdsaSig;
 
 use iris_shared::crypto_utils::decrypt;
 
-use crate::proto;
+use crate::{proto, TIME};
 
 use super::proto::ClientReport;
 use super::utils::SessionConfig;
@@ -73,8 +74,8 @@ impl MatrixTracker {
 
         // Update the bitmap if this is a data packet (not a FEC row/col)
         if row < self.rows as usize && col < self.cols as usize {
-        let data_index = row * self.cols as usize + col;
-        self.bitmap[data_index] = 1; // Set the corresponding position in the bitmap to 1
+            let data_index = row * self.cols as usize + col;
+            self.bitmap[data_index] = 1; // Set the corresponding position in the bitmap to 1
         }
     }
 
@@ -101,7 +102,7 @@ impl MatrixTracker {
 }
 
 pub fn start(
-    receiver: Receiver<Vec<u8>>,
+    multicast_receiver: Receiver<Vec<u8>>,
     decode_data_sender: Sender<Vec<u8>>,
     client_report_sender: Sender<ClientReport>,
     session_config: SessionConfig,
@@ -109,13 +110,15 @@ pub fn start(
 ) -> Result<(), Box<dyn Error>> {
     let mut buffer: VecDeque<MatrixTracker> = VecDeque::new();
 
+    // Public Key from Server to verify packets signature
     let x509_public_key = X509::from_pem(&session_config.ec_server_certificate)?.public_key()?.ec_key().unwrap();
 
+    // Current encryption key and Option for next encryption key
     let mut current_key_session = session_config.current_key;
     let mut next_key_session : Option<SessionKey> = None;
 
     loop {
-        match receiver.try_recv() {
+        match multicast_receiver.try_recv() {
             Ok(matrix_cell) => {
                 let mut packet = match TransmitionPacket::decode(&*matrix_cell) {
                     Ok(packet) => packet,
@@ -139,8 +142,10 @@ pub fn start(
                 // Check if next_key_session is null
                 if next_key_session == None {
                     let decrypted_plaintext = decrypt(&packet.payload, &current_key_session.key, &current_key_session.iv);
-                    let decoded = VideoData::decode_length_delimited(&mut Cursor::new(decrypted_plaintext)).unwrap();
-                    next_key_session = decoded.next_key;
+                    if !decrypted_plaintext.len() != 0 {
+                        let decoded = VideoData::decode_length_delimited(&mut Cursor::new(decrypted_plaintext)).unwrap();
+                        next_key_session = decoded.next_key;
+                    }
                 }
 
                 // Check if the packet belongs to an existing matrix in the buffer
@@ -343,10 +348,10 @@ fn send_client_report_and_decode(
         tracker.matrix.pop_row();
     }
 
-    let report = ClientReport {
-        index: tracker.matrix_index,
-        payload: tracker.bitmap.clone(),
-    };
+    // let report = ClientReport {
+    //     index: tracker.matrix_index,
+    //     payload: tracker.bitmap.clone(),
+    // };
 
     // Ensure the session key is set
     let session_key = match tracker.session_key {
@@ -379,7 +384,7 @@ fn send_client_report_and_decode(
     }
     
     // Sende report
-    client_report_sender.send(report).unwrap();
+    // client_report_sender.send(report).unwrap();
 
     Ok(())
 }

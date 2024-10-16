@@ -7,7 +7,9 @@ use serde::Deserialize;
 pub struct Config {
     pub ca: CA,
     pub grpc: GRPC,
-    pub multicast: Multicast
+    pub multicast: Multicast,
+    pub prometheus: Prometheus,
+    pub settings: Settings
 }
 
 #[derive(Deserialize, Debug)]
@@ -38,12 +40,20 @@ pub struct Multicast {
     pub col_fec: usize,
 
     pub epoch: usize,
-    
-    pub max_bandwidth: usize,
-    
+       
     pub data_size: usize,
     pub shard_size: usize,
     pub mtu_size: usize
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Prometheus {
+    pub ip: String
+}
+
+#[derive(Deserialize, Debug)]
+pub struct Settings {
+    pub timeout_clients: u64
 }
 
 pub fn read_config(filename: &str) -> Result<Config, Box<dyn std::error::Error>> {

@@ -21,11 +21,33 @@ use std::thread;
 use proto::{RequestKey,CertificateRequest};
 use proto::key_service_client::KeyServiceClient;
 use proto::certificate_service_client::CertificateServiceClient;
+use proto::nts_service_client::NtsServiceClient;
+use proto::TimestampRequest;
+
+
+
+#[cfg(all(
+    target_arch = "wasm32",
+    target_vendor = "unknown",
+    target_os = "unknown"
+))]
+use tokio_with_wasm as tokio;
+
+
+#[cfg(not(all(
+    target_arch = "wasm32",
+    target_vendor = "unknown",
+    target_os = "unknown"
+)))]
+use tokio;
+
 
 use tokio::runtime::Runtime;
 use tokio::time::sleep;
 
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
+
+use chrono::{DateTime, Utc};
 
 use log::{error, info};
 
@@ -37,6 +59,7 @@ pub mod proto {
 const CA_PUBLIC_CERTIFICATE: &[u8] = include_bytes!("../../server/certs/ca_certificate.pem");
 
 pub static CHANNEL: OnceCell<Channel> = OnceCell::new();
+pub static TIME: OnceCell<Mutex<DateTime<Utc>>> = OnceCell::new();
 
 pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     // Set up a Tokio runtime
@@ -59,49 +82,57 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
             loop {
                 match create_channel().await {
                     Ok(channel) => {
-                        let mut connection = CertificateServiceClient::new(channel.clone());
+                        // Create connection to retrieve client certificate from CA
+                        {
+                            let mut connection = CertificateServiceClient::new(channel.clone());
+    
+                            // Extract key-pair to struct
+                            let pkey = PKey::from_ec_key(ec_key.clone()).unwrap();
+                            
+                            // Make a X509 request with the given private key
+                            let request = utils::mk_request(&pkey).unwrap();
+    
+                            // Serialize the request CSR
+                            let csr_vec = request.to_pem().unwrap();
+    
+                            // Make a CertificateRequest with the CSR
+                            let csr_request = CertificateRequest { csr: csr_vec };
+    
+                            // Send the CSR to the server to get it signed
+                            let response = connection
+                                .sign_certificate(csr_request)
+                                .await
+                                .unwrap();
+                            let signed_cert = response.into_inner().signed_cert;
+    
+                            let mut mutex_session_config = arc_session_config.lock().unwrap();
 
-                        // Extract key-pair to struct
-                        let pkey = PKey::from_ec_key(ec_key.clone()).unwrap();
-                        
-                        // Make a X509 request with the given private key
-                        let request = utils::mk_request(&pkey).unwrap();
+                            mutex_session_config.client_ec_certificate = signed_cert;
+                            mutex_session_config.client_ec_key = Some(ec_key);
+                        }
 
-                        // Serialize the request CSR
-                        let csr_vec = request.to_pem().unwrap();
+                        // Create connection to retrive current Session encryption key and certificate to verify packets is comming from the server
+                        {
+                            let mut connection = KeyServiceClient::new(channel.clone());
+    
+                            let key_response = connection.request_current_key(RequestKey {}).await.unwrap();
+    
+                            let reponse = key_response.into_inner();
 
-                        // Make a CertificateRequest with the CSR
-                        let csr_request = CertificateRequest { csr: csr_vec };
+                            let mut mutex_session_config = arc_session_config.lock().unwrap();
 
-                        // Send the CSR to the server to get it signed
-                        let response = connection
-                            .sign_certificate(csr_request)
-                            .await
-                            .unwrap();
-                        let signed_cert = response.into_inner().signed_cert;
+                            mutex_session_config.current_key = reponse.current_key.unwrap();
+                            mutex_session_config.ec_server_certificate = reponse.certificate;
+                            mutex_session_config.epoch = reponse.epoch;
+                        }
 
-                        // Convert from Vec<u8> to X509
-                        let cert = X509::from_pem(&signed_cert).unwrap();
-                        
-                        let result = X509::from_pem(CA_PUBLIC_CERTIFICATE).unwrap().issued(&cert);
-
-                        info!("Certificate issued from CA: {}", result);
-
-                        let mut connection = KeyServiceClient::new(channel.clone());
-
-                        let key_response = connection.request_current_key(RequestKey {}).await.unwrap();
-
-                        let reponse = key_response.into_inner();
-
-                        let mut mutex_session_config = arc_session_config.lock().unwrap();
-                        
-                        *mutex_session_config = SessionConfig {
-                            current_key: reponse.current_key.unwrap(),
-                            ec_server_certificate: reponse.certificate,
-                            epoch: reponse.epoch,
-                            client_ec_certificate: signed_cert,
-                            client_ec_key: Some(ec_key)
-                        };
+                        // Create connection to retrieve current timestamp to base our client report intervals
+                        {
+                            let mut connection = NtsServiceClient::new(channel.clone());
+                            let stamp_response = connection.get_current_timestamp(TimestampRequest {}).await.unwrap();
+                            let timestamp_str = stamp_response.into_inner().timestamp;
+                            TIME.set(Mutex::new(DateTime::parse_from_rfc3339(&timestamp_str).unwrap().into())).unwrap();
+                        }
 
                         // Save the client for use after the loop
                         CHANNEL.set(channel).unwrap();
@@ -117,7 +148,7 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
         });
     }
 
-    // If we arrive here we have certificates signed from PKI
+    // If we arrive here we have certificates signed from PKI, Session Key and Current Timestamp
 
     // Create channels for thread comunication
     let (listener_sender, matrix_decoder_receiver) = unbounded();

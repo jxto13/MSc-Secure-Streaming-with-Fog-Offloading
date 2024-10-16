@@ -1,10 +1,11 @@
 use crate::metrics::get_metrics;
 use crate::CONFIG;
 use crossbeam_channel::{unbounded, Sender, TryRecvError};
-use log::{error, warn};
+use log::{error, info, warn};
 use grid::Grid as Matrix;
 use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
+use std::time::{Duration, Instant};
 use std::{ io, thread};
 
 // A token to allow us to identify which event is for the `UdpSocket`.
@@ -48,6 +49,14 @@ pub fn read(ip_source: String, tx: Sender<Matrix<Vec<u8>>>) -> Result<(), io::Er
             return;
         }
 
+        // Variables for bandwidth logging
+        let mut total_bytes_received = 0;
+        let mut last_log_time = Instant::now();
+        let metrics = get_metrics();
+
+        let bandwidth_used = metrics.multicast_bandwidth_used.lock().unwrap();
+
+        
         // Event loop.
         loop {
             // Poll to check for events.
@@ -64,8 +73,13 @@ pub fn read(ip_source: String, tx: Sender<Matrix<Vec<u8>>>) -> Result<(), io::Er
                     loop {
                         match socket.recv_from(&mut buf) {
                             Ok((packet_size, _source_address)) => {
-                                if let Err(e) = ipc_channel_tx.send(buf[..packet_size].to_vec()){
+
+                                if let Err(e) = ipc_channel_tx.send(buf[..packet_size].to_vec()) {
                                     panic!("Error sending data from udp_source: {:?}", e);
+                                }
+
+                                {
+                                    bandwidth_used.add(packet_size as f64 ); // Update the gauge value
                                 }
                             }
                             Err(e) if e.kind() == io::ErrorKind::WouldBlock => {

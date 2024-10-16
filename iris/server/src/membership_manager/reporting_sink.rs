@@ -1,10 +1,15 @@
+use crate::proto;
+
 use std::sync::{Arc, Mutex};
 
-use proto::{report_service_server::ReportService, ClientReport, Empty};
+use chrono::Utc;
+use proto::{report_service_server::ReportService, ClientReport};
 use log::error;
 use tonic::{Request, Response, Status};
+use proto::TimestampResponse;
 
-use crate::{network_scheduler::client_sessions::ClientSessions, proto};
+use super::client_sessions::ClientSessions;
+
 
 #[derive(Debug)]
 pub struct MyReportService {
@@ -21,10 +26,10 @@ impl MyReportService {
 
 #[tonic::async_trait]
 impl ReportService for MyReportService {
-    async fn send_report(
+    async fn report_sink(
         &self,
         request: Request<ClientReport>,
-    ) -> Result<Response<Empty>, Status> {
+    ) -> Result<Response<TimestampResponse>, Status> {
 
         // Get the client address from the request metadata
         if let Some(client_addr) = request.remote_addr() {
@@ -36,6 +41,6 @@ impl ReportService for MyReportService {
             error!("Client address not found in request metadata");
         }
 
-        Ok(Response::new(Empty {}))  // Respond with an empty message
+        Ok(Response::new(TimestampResponse {timestamp: Utc::now().to_rfc3339()}))  // Respond with an empty message
     }
 }

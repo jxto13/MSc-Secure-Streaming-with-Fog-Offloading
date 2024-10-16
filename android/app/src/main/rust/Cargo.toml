@@ -12,7 +12,6 @@ android_logger = "0.14.1"
 log = "0.4.22"
 iris-client = { version = "0.1.0", path = "../../../../../iris/client" }
 mio = { version = "1.0.2", features = ["os-poll", "net"] }
-libc = "0.2.157"
 crossbeam-channel = "0.5.13"
 
 

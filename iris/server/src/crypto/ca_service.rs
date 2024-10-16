@@ -1,11 +1,12 @@
 use crate::crypto::utils;
 use crate::proto;
 
+use log::info;
 use tonic::{Request, Response, Status};
 use proto::certificate_service_server::{CertificateService, CertificateServiceServer};
 
 use openssl::pkey::{PKey, Private};
-use openssl::x509::{X509Req, X509};
+use openssl::x509::{X509Req, X509VerifyResult, X509};
 
 pub struct MyCertificateService {
     ca_cert: X509,
@@ -48,6 +49,38 @@ impl CertificateService for MyCertificateService {
         // Return the signed certificate
         let response = proto::CertificateResponse {
             signed_cert: cert_pem,
+        };
+
+        Ok(Response::new(response))
+    }
+
+    async fn verify_certificate(
+        &self,
+        mut request: Request<proto::SignedCertificateRequest>
+    ) -> Result<Response<proto::ValidationCertificateResponse>, Status> {
+        let request_ref = request.get_mut();
+
+        // Extract Certificate from the request
+        let cert_vec = &request_ref.cert;
+
+        // Convert the CSR from Vec<u8> to X509Req
+        let cert = match X509::from_pem(cert_vec) {
+            Ok(cert) => cert,
+            Err(_) => return Err(Status::invalid_argument("Invalid Certificate")),
+        };
+
+        // Get the CA cert
+        let ca_cert = &self.ca_cert;
+
+        // Verify that this cert was issued by this ca
+        match ca_cert.issued(&cert) {
+            X509VerifyResult::OK => info!("Certificate verified for client: {:?}", request.remote_addr().unwrap()),
+            ver_err => info!("Failed to verify certificate for client: {} - {}", request.remote_addr().unwrap(), ver_err),
+        };
+
+        // For demonstration, let's assume it always succeeds
+        let response = proto::ValidationCertificateResponse {
+            auth: true,
         };
 
         Ok(Response::new(response))

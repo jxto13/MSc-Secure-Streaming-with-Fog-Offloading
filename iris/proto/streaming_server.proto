@@ -6,6 +6,15 @@ package streaming_server;
 // Certificates
 service CertificateService {
     rpc SignCertificate(CertificateRequest) returns (CertificateResponse);
+    rpc VerifyCertificate(SignedCertificateRequest) returns (ValidationCertificateResponse);
+}
+
+message SignedCertificateRequest {
+    bytes cert = 1; 
+}
+
+message ValidationCertificateResponse { 
+    bool auth = 1;
 }
 
 message CertificateRequest {
@@ -28,7 +37,8 @@ message RequestKey {}
 message KeyResponse {
     SessionKey current_key = 1;
     bytes certificate = 2;
-    int32 epoch = 3;
+    int32 epoch = 3; // this is the number of matrix to rotate the key
+    int32 reports_interval = 4; // piggypack the key response to know when to send client reports
 }
 
 // ----------------------------------------------------------------------------------------------------------- //
@@ -61,12 +71,27 @@ message TransmitionPacket {
 
 // Reporting Service
 service ReportService {
-    rpc SendReport (ClientReport) returns (Empty);
+    rpc ReportSink (ClientReport) returns (TimestampResponse);
 }
 
-message Empty {}
+message MatrixReportBitmap {
+    int32 matrix = 1;
+    bytes bitmap = 2; // only sends data row and collumn bitmap
+    int32 number_of_packet_lost = 3; // this is need because bitmap only sends data row and collumn, ignores FEC packets lost
+}
 
 message ClientReport {
-    int32 index = 1;
-    bytes payload = 2;
+    repeated MatrixReportBitmap reports = 1;
+}
+
+// ----------------------------------------------------------------------------------------------------------- //
+
+service NtsService {
+    rpc GetCurrentTimestamp (TimestampRequest) returns (TimestampResponse);
+}
+  
+message TimestampRequest {}
+
+message TimestampResponse {
+    string timestamp = 1;
 }

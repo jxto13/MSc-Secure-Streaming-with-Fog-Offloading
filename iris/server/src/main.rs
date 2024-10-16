@@ -4,6 +4,7 @@ mod source_handler;
 mod membership_manager;
 mod certificates;
 mod metrics;
+mod nts_service;
 
 use std::sync::Mutex;
 use std::{sync::Arc, thread};
@@ -16,6 +17,7 @@ use log::error;
 use membership_manager::reporting_sink::MyReportService;
 use once_cell::sync::OnceCell;
 use openssl::x509::X509;
+use proto::nts_service_server::NtsServiceServer;
 use source_handler::data_handler::{DataHandler,DataSource};
 
 use tonic::transport::{Identity, Server, ServerTlsConfig};
@@ -26,7 +28,7 @@ use proto::report_service_server::ReportServiceServer;
 
 use iris_server::{read_config,Config};
 
-use prometheus_exporter::prometheus::register_gauge;
+use crate::nts_service::MyNtsService;
 use crate::metrics::init_metrics;
 
 
@@ -50,19 +52,14 @@ fn start_prometheus_exporter() {
     use std::net::SocketAddr;
 
     // Parse address used to bind exporter to.
-    let addr_raw = "0.0.0.0:9186";
+    let addr_raw = CONFIG.get().unwrap().prometheus.ip.clone();
     let addr: SocketAddr = addr_raw.parse().expect("can not parse listen addr");
 
     // Start exporter and update metrics every five seconds.
     prometheus_exporter::start(addr).expect("can not start exporter");
 
-    // Create metric
-    let random = register_gauge!("run_and_repeat_random", "will set a random value")
-        .expect("can not create gauge random_value_metric");
-
     // Initialize the metrics
     init_metrics();
-    
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -154,6 +151,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .add_service(crypto::ca_service::get_service(certificates.ca_cert, certificates.ca_private_key)) // Responsible for signing the client certificates
                 .add_service(key_service)
                 .add_service(ReportServiceServer::new(MyReportService::new(pipeline.get_arc_client_sessions())))
+                .add_service(NtsServiceServer::new(MyNtsService::default()))
                 .serve(addr)
                 .await
                 .unwrap_or_else(|err| {

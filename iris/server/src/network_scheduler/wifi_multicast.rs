@@ -5,7 +5,6 @@ use pnet::ipnetwork::IpNetwork;
 use std::io;
 use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::str::FromStr;
-use std::thread::sleep;
 use std::time::{Duration, Instant};
 use pnet_datalink::interfaces;
 use log::{info, error};
@@ -16,68 +15,13 @@ use crate::CONFIG;
 // A token to allow us to identify which event is for the `UdpSocket`.
 const SERVER: Token = Token(0);
 
-/// A struct representing a simple bandwidth manager.
-pub struct BandwidthManager {
-    pub bitrate: usize,              // Maximum bits per second
-    bytes_per_second: usize,         // Maximum bytes per second
-    interval: Duration,              // Time interval for rate limiting
-    last_check: Instant,             // Last time we checked the bandwidth usage
-    bytes_sent: usize,               // Bytes sent in the current interval
-    packets_sent: usize,             // Number of packets sent
-}
-
-impl BandwidthManager {
-    /// Creates a new bandwidth manager with a specified bitrate.
-    pub fn new(bitrate: usize) -> Self {
-        let bytes_per_second = bitrate / 8;
-        let interval = Duration::from_secs(1);
-        Self {
-            bitrate,
-            bytes_per_second,
-            interval,
-            last_check: Instant::now(),
-            bytes_sent: 0,
-            packets_sent: 0,
-        }
-    }
-
-    /// Checks if we can send the given number of bytes without exceeding the bitrate.
-    /// If the rate limit is exceeded, it waits until it can send the data.
-    pub fn wait_until_can_send(&mut self, bytes: usize) {
-        loop {
-            let now = Instant::now();
-            if now.duration_since(self.last_check) >= self.interval {
-                self.last_check = now;
-                info!("Bandwidth Usage: {} Mbit/s", (self.bytes_sent * 8) as f64 / 1_000_000.0);
-                // Reset bytes_sent outside of the loop
-                self.bytes_sent = 0;
-            }
-            
-            if self.bytes_sent + bytes <= self.bytes_per_second {
-                self.bytes_sent += bytes;
-                self.packets_sent += 1;
-                break;
-            } else {
-                // Calculate how long to sleep to avoid busy-waiting.
-                let remaining_time = self.interval - now.duration_since(self.last_check);
-                sleep(remaining_time);
-            }
-        }
-    }    
-}
-
 /// A struct representing a WiFi Multicast sender.
-pub struct WiFiMulticast {
-    pub bandwidth_manager: BandwidthManager,
-}
+pub struct WiFiMulticast;
 
 impl WiFiMulticast {
-    /// Creates a new instance of `WiFiMulticast` with a specified bitrate.
+    /// Creates a new instance of `WiFiMulticast`.
     pub fn new() -> Self {
-        let max_bandwidth = CONFIG.get().unwrap().multicast.max_bandwidth * 1_000_000;
-        Self {
-            bandwidth_manager: BandwidthManager::new(max_bandwidth),
-        }
+        Self
     }
 
     /// Starts the multicast sender.
@@ -138,12 +82,9 @@ impl WiFiMulticast {
         // Create storage for events.
         let mut events = Events::with_capacity(1024);
 
-        let metrics = get_metrics();
-
         // Start an event loop.
         loop {
             // Poll Mio for events, blocking until we get an event.
-            // Poll to check if we have events waiting for us.
             if let Err(err) = poll.poll(&mut events, None) {
                 if err.kind() == io::ErrorKind::Interrupted {
                     continue;
@@ -153,36 +94,25 @@ impl WiFiMulticast {
 
             // Process each event.
             for event in events.iter() {
-                // We can use the token we previously provided to `register` to
-                // determine for which socket the event is.
                 match event.token() {
                     SERVER => {
                         // Check if there is data to be sent over multicast.
-                        // If there's data available, send it over multicast.
                         match data_receiver.recv() {
                             Ok(data) => {
-                                // Wait until we can send this data without exceeding the rate limit.
-                                self.bandwidth_manager.wait_until_can_send(data.len());
                                 
                                 // Send the data over multicast.
                                 if let Err(e) = socket.send(&data) {
                                     error!("Failed to send data over multicast: {}", e);
                                 }
-                                // this makes the lock out of scope to release it
-                                {
-                                    let bandwidth_used = metrics.multicast_bandwidth_used.lock().unwrap();
-                                    bandwidth_used.add(data.len() as f64); // Update the gauge value
-                                }
+
                             }
                             Err(_) => {
                                 // Channel is closed, handle the error or break out of the loop.
-                                info!("Packets Sent: {}", self.bandwidth_manager.packets_sent);
                                 error!("Data channel closed, exiting loop");
-                                break; // Exit the loop if the channel is closed
+                                return Ok(()); // Exit the loop if the channel is closed
                             }
                         }
                     }
-                    // We don't expect any events with tokens other than those we provided.
                     _ => unreachable!(),
                 }
             }
