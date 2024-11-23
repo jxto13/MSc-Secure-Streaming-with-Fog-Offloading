@@ -24,23 +24,7 @@ use proto::certificate_service_client::CertificateServiceClient;
 use proto::nts_service_client::NtsServiceClient;
 use proto::TimestampRequest;
 
-
-
-#[cfg(all(
-    target_arch = "wasm32",
-    target_vendor = "unknown",
-    target_os = "unknown"
-))]
-use tokio_with_wasm as tokio;
-
-
-#[cfg(not(all(
-    target_arch = "wasm32",
-    target_vendor = "unknown",
-    target_os = "unknown"
-)))]
 use tokio;
-
 
 use tokio::runtime::Runtime;
 use tokio::time::sleep;
@@ -61,7 +45,7 @@ const CA_PUBLIC_CERTIFICATE: &[u8] = include_bytes!("../../server/certs/ca_certi
 pub static CHANNEL: OnceCell<Channel> = OnceCell::new();
 pub static TIME: OnceCell<Mutex<DateTime<Utc>>> = OnceCell::new();
 
-pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
+pub fn start(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     // Set up a Tokio runtime
     let rt = Arc::new(Runtime::new().unwrap());
 
@@ -80,7 +64,7 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
             let arc_session_config = Arc::clone(&session_config);
 
             loop {
-                match create_channel().await {
+                match create_channel(ip).await {
                     Ok(channel) => {
                         // Create connection to retrieve client certificate from CA
                         {
@@ -122,8 +106,11 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
                             let mut mutex_session_config = arc_session_config.lock().unwrap();
 
                             mutex_session_config.current_key = reponse.current_key.unwrap();
+                            mutex_session_config.next_key = reponse.next_key.unwrap();
                             mutex_session_config.ec_server_certificate = reponse.certificate;
                             mutex_session_config.epoch = reponse.epoch;
+
+                            info!("Current key: {:?}", mutex_session_config.current_key);
                         }
 
                         // Create connection to retrieve current timestamp to base our client report intervals
@@ -151,79 +138,82 @@ pub fn start() -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     // If we arrive here we have certificates signed from PKI, Session Key and Current Timestamp
 
     // Create channels for thread comunication
-    let (listener_sender, matrix_decoder_receiver) = unbounded();
+    let (multicast_receiver_sender, multicast_receiver_receiver) = unbounded();
+    let (unicast_receiver_sender, unicast_receiver_receiver) = unbounded();
     let (decoded_data_sender, decoded_data_receiver) = unbounded();
     let (client_report_sender, client_report_receiver) = unbounded();
 
+    // Create the Client Session using the runtime that was init in the start
+    let mut client_session = session::ClientSession::new(Arc::clone(&rt));
+
     // Creates new thread for multicast receiver
-    let listener_handler = std::thread::spawn(move || {
-        info!("Starting multicast receiver on address 239.255.0.1:12345.");
-        match receiver::multicast_receiver::start(
-            "239.255.0.1".to_string(),
+    let multicast_receiver_handler = std::thread::spawn(move || {
+        info!("Starting multicast receiver on address 224.0.0.2:12345.");
+        receiver::multicast_receiver::server(
+            "224.0.0.2".to_string(),
             "12345".to_string(),
-            listener_sender,
-        ) {
-            Ok(_) => {
-                info!("Multicast receiver exited successfully.");
-            }
-            Err(e) => {
-                error!("Multicast receiver failed with error: {}", e);
-            }
-        }
+            multicast_receiver_sender,
+        ).unwrap();
     });
 
-    // Extract the session config from the Mutex
-    let cloned_session_config = {
-        let mutex_session_config = session_config.lock().unwrap();
-        (*mutex_session_config).clone() // Clone the session config to pass it
-    };
+    // Creates new thread for multicast receiver
+    let unicast_receiver_handler = std::thread::spawn(move || {
+        info!("Starting unicast receiver on address 224.0.0.2:12345.");
+        // receiver::unicast_receiver::start(
+        //     "224.0.0.2".to_string(),
+        //     "12345".to_string(),
+        //     multicast_receiver_sender,
+        // ).unwrap();
+    });
 
-    // dont need handler because when the listener goes out of scope, i want the decoder to also go out of scoupe
+    // Dont need handler because when the listener goes out of scope the threads continue execution (infinite loops inside), i want the decoder to also go out of scope
     let decoder_handler = thread::spawn(move || {
 
         if let Err(e) = decoder::start(
-            matrix_decoder_receiver,
+            multicast_receiver_receiver,
+            unicast_receiver_receiver,
             decoded_data_sender,
             client_report_sender,
-            cloned_session_config,
-            10
+            session_config.lock().unwrap().clone()
         ) {
             error!("Matrix decoder failed to start: {}", e);
         }
     });
 
-    let runtime = Arc::clone(&rt);
 
     // Spawn Client Report Thread
     thread::spawn(move || {
         // Wait for the listener multicast with a barrier before starting the decoder
-        let mut client_report = session::ClientSession::new(runtime);
-        client_report.start_report_client(client_report_receiver);
+        client_session.start_report_client(client_report_receiver);
     });
 
     // Spawn a separate thread for joining and returning the sender
     thread::spawn(move || {
         // Join all the threads to ensure they complete before returning
-        listener_handler.join().expect("listener_handler panicked");
+        multicast_receiver_handler.join().expect("listener_handler panicked");
         decoder_handler.join().expect("decoder_handler panicked");
+        unicast_receiver_handler.join().expect("unicast_handler panicked");
     });
 
     Ok(decoded_data_receiver)
 }
 
-async fn create_channel() -> Result<Channel, Box<dyn std::error::Error>> {
+async fn create_channel(ip: &String) -> Result<Channel, Box<dyn std::error::Error>> {
     // Configure the TLS settings for the channel
     let tls_config = ClientTlsConfig::new()
         .ca_certificate(Certificate::from_pem(&CA_PUBLIC_CERTIFICATE))
         .domain_name("www.example.com");
 
-    // Create the channel with the TLS configuration
-    let channel = Channel::from_static("https://razer15:50051")
-        .tls_config(tls_config)?
+    // Create the channel with the TLS configuration using the provided IP address
+    let channel_url = format!("https://{}:50051", ip);
+    
+    // Use Channel::builder instead of Channel::from_static
+    let channel = Channel::builder(channel_url.parse()?) // Convert String to Uri
+        .tls_config(tls_config)? // Apply the TLS configuration
         .connect()
         .await?;
 
-    info!("Connected to GRPC Server");
+    info!("Connected to GRPC Server at {}", ip);
 
     // If we reach here, connection was successful
     Ok(channel)

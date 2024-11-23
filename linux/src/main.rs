@@ -1,8 +1,8 @@
 use std::error::Error;
 use std::process::{Command, Stdio};
-use std::io::{self, Write};
+use std::io::{self, Read, Write};
 use std::thread;
-use log::{info, error};
+use log::{error, info, warn};
 
 fn main() -> Result<(), Box<dyn Error>> {
     // Initialize the logger
@@ -14,7 +14,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
 
     // Attempt to start the receiver
-    let receiver = match iris_client::start() {
+    let receiver = match iris_client::start(&"192.168.15.1".to_string()) {
         Ok(receiver) => receiver,
         Err(e) => {
             error!("Failed to start receiver: {}", e);
@@ -23,10 +23,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     };
 
     // Start the ffplay (mpv) process
-    let mut ffplay = Command::new("ffplay")
+    let mut ffplay = Command::new("mpv")
 
         .args(&["-"])
         .stdin(Stdio::piped())
+        .stdout(Stdio::piped()) // Capture stdout for packet handling
         // .stdout(Stdio::null())
         // .stderr(Stdio::null())
         .spawn()
@@ -50,6 +51,23 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         }
     });
+
+    // If ffmpeg's stdout is present, read and log it in 188-byte chunks
+    if let Some(mut stdout) = ffplay.stdout.take() {
+        let mut buffer = [0u8; 188];
+        loop {
+            match stdout.read_exact(&mut buffer) {
+                Ok(_) => {
+                    warn!("Received 188-byte packet: {:?}", &buffer);
+                }
+                Err(e) => {
+                    error!("Error reading stdout: {}", e);
+                    break;
+                }
+            }
+        }
+    }
+
 
     // Wait for the receiver thread to finish
     receiver_thread.join().map_err(|e| {

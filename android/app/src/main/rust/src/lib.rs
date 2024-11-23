@@ -44,7 +44,7 @@ pub mod android {
             // Create storage for events.
             let mut events = Events::with_capacity(1024);
 
-            let receiver = iris_client::start().unwrap();
+            let receiver = iris_client::start(&"192.168.2.2".to_string()).unwrap();
             
             // Start an event loop.
             loop {

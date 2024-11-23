@@ -1,0 +1,31 @@
+services:
+  streaming-server:
+    image: iris:0.1.0
+    container_name: streaming-server-1
+    build: 
+      context: .
+      dockerfile: server/Dockerfile
+    restart: on-failure
+    ports:
+      - "50051:50051"
+    volumes:
+      - ./server/config.toml:/usr/src/server/config.toml
+    networks:
+      iris-network:
+        ipv4_address: 172.22.0.102  
+
+  client:
+    image: iris-client:0.1.0
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    deploy:
+      replicas: 15  # Replace 5 with your desired number of replicas (N)
+    restart: on-failure
+    # command: cargo run --example headless -- --ip 172.22.0.102
+    networks:
+      - iris-network
+
+networks:
+  iris-network:
+    external: true

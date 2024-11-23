@@ -10,5 +10,12 @@ services:
           - 8181:8181
           - 1935:1935
       privileged: true
-      network_mode: host
+      networks: 
+        iris-network:
+            ipv4_address: 172.22.0.101
       restart: always
+
+
+networks:
+  iris-network:
+    external: true

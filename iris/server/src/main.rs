@@ -13,17 +13,19 @@ use std::path::PathBuf;
 // Standard
 use crossbeam_channel::unbounded;
 use crypto::key_manager::KeyManager;
+use grid::Grid;
 use log::error;
 use membership_manager::reporting_sink::MyReportService;
 use once_cell::sync::OnceCell;
 use openssl::x509::X509;
 use proto::nts_service_server::NtsServiceServer;
 use source_handler::data_handler::{DataHandler,DataSource};
+use std::collections::VecDeque;
 
 use tonic::transport::{Identity, Server, ServerTlsConfig};
 use tokio::runtime::Runtime;
 
-use proto::FILE_DESCRIPTOR_SET;
+use proto::{TransmissionPacket, FILE_DESCRIPTOR_SET};
 use proto::report_service_server::ReportServiceServer;
 
 use iris_server::{read_config,Config};
@@ -43,6 +45,7 @@ pub mod proto {
 // Define the global static instance of Config using OnceCell
 static CONFIG: OnceCell<Config> = OnceCell::new();
 static MANAGER: OnceCell<Arc<Mutex<KeyManager>>> = OnceCell::new();
+static MATRIX_BUFFER: OnceCell<Arc<Mutex<VecDeque<Grid<TransmissionPacket>>>>> = OnceCell::new();
 
 // Custom
 use network_scheduler::pipeline::Pipeline;

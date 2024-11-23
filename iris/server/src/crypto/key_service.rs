@@ -30,10 +30,10 @@ impl MyKeyService {
         key_manager.get_current_key().clone()  // Access KeyManager safely
     }
 
-    // pub fn get_next_key(&self) -> SessionKey {
-    //     let key_manager = self.key_manager.lock().unwrap();  // Lock the Mutex
-    //     key_manager.get_next_key().clone()  // Access KeyManager safely
-    // }
+    pub fn get_next_key(&self) -> SessionKey {
+        let key_manager = self.key_manager.lock().unwrap();  // Lock the Mutex
+        key_manager.get_next_key().clone()  // Access KeyManager safely
+    }
 
     pub fn get_certificate(&self) -> Vec<u8> {
         // Convert the X509 certificate to a PEM-encoded string
@@ -49,11 +49,15 @@ impl KeyService for MyKeyService {
         _: Request<proto::RequestKey>,
     ) -> Result<Response<proto::KeyResponse>, Status> {
         let current_key = self.get_current_key();
+        let next_key = self.get_next_key();
         let certificate = self.get_certificate();
+
         Ok(Response::new(KeyResponse {
             current_key: Some(current_key),
+            next_key: Some(next_key),
             certificate,
-            epoch: CONFIG.get().unwrap().multicast.epoch as i32
+            epoch: CONFIG.get().unwrap().multicast.epoch as i32,
+            reports_interval: CONFIG.get().unwrap().settings.transmissions_interval as i32,
         }))
     }
 }

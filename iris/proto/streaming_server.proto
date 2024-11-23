@@ -36,9 +36,10 @@ message RequestKey {}
 
 message KeyResponse {
     SessionKey current_key = 1;
-    bytes certificate = 2;
-    int32 epoch = 3; // this is the number of matrix to rotate the key
-    int32 reports_interval = 4; // piggypack the key response to know when to send client reports
+    SessionKey next_key = 2;
+    bytes certificate = 3;
+    int32 epoch = 4; // this is the number of matrix to rotate the key
+    int32 reports_interval = 5; // piggypack the key response to know when to send client reports
 }
 
 // ----------------------------------------------------------------------------------------------------------- //
@@ -49,14 +50,14 @@ message SessionKey {
     bytes iv = 2;
 }
 
-// This will be the payload of TransmitionPacket
+// This will be the payload of TransmissionPacket
 message VideoData {
     bytes data = 1;
     bytes signature = 2;
     SessionKey next_key = 3;
 }
 
-message TransmitionPacket {
+message TransmissionPacket {
     int32 matrix = 1;
     int32 index = 2;
     int32 rows = 3;
@@ -65,6 +66,12 @@ message TransmitionPacket {
     int32 cols_fec = 8;
     bytes payload = 9; // this payload is encrypted
     bytes packet_signature = 10; // signed sha256
+}
+
+// RetransmissionPacket is a packet with a single TransmissionPacket 
+message RetransmissionPacket {
+    // probably will need a array saying what packets is on the linear combination
+    TransmissionPacket packet = 1;
 }
 
 // ----------------------------------------------------------------------------------------------------------- //
@@ -77,7 +84,6 @@ service ReportService {
 message MatrixReportBitmap {
     int32 matrix = 1;
     bytes bitmap = 2; // only sends data row and collumn bitmap
-    int32 number_of_packet_lost = 3; // this is need because bitmap only sends data row and collumn, ignores FEC packets lost
 }
 
 message ClientReport {

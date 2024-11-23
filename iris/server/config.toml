@@ -10,10 +10,12 @@ port = 50051 # service port
 [multicast]
 # Stream Config
 data_source = "udp"
-ip_source = "127.0.0.1:1234"
+ip_source = "172.22.0.102:1234"
+# ip_source = "172.22.0.1:1234"
 
-interface = "wlp92s0"
-ip = "239.255.0.1"
+# interface = "veth0"
+interface = "eth0"
+ip = "224.0.0.2"
 port = 12345
 
 # Matrix Config

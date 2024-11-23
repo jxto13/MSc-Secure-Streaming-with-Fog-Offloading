@@ -14,6 +14,23 @@ fn insert_value<T>(matrix: &mut Vec<Vec<T>>, position: usize, matrix_size: usize
 mod tests {
 
     #[test]
+    fn test_lookup(){
+        use std::time::Instant;
+        // Create a large vector of integers
+        let n = 10_000_000;
+        let vec: Vec<i32> = (0..n).collect();
+
+        // Measure the time to iterate over the Vec
+        let mut start = Instant::now();
+
+        for _ in &vec {
+            println!("Time to iterate over: {:?}",start.elapsed());
+            start = Instant::now();
+        
+        }
+    }
+
+    #[test]
     fn test_encryption_decryption() {
 
         use openssl::symm::{Cipher, Crypter, Mode};

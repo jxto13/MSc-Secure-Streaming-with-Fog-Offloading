@@ -53,7 +53,8 @@ pub struct Prometheus {
 
 #[derive(Deserialize, Debug)]
 pub struct Settings {
-    pub timeout_clients: u64
+    pub timeout_clients: u64,
+    pub transmissions_interval: u64
 }
 
 pub fn read_config(filename: &str) -> Result<Config, Box<dyn std::error::Error>> {

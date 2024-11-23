@@ -4,7 +4,7 @@ use std::sync::{Arc, Mutex};
 
 use chrono::Utc;
 use proto::{report_service_server::ReportService, ClientReport};
-use log::error;
+use log::{error, info};
 use tonic::{Request, Response, Status};
 use proto::TimestampResponse;
 

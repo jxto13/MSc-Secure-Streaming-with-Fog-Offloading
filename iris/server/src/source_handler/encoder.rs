@@ -1,8 +1,8 @@
-use crate::{proto, CONFIG, MANAGER};
+use crate::{proto, CONFIG, MANAGER, MATRIX_BUFFER};
 
 use crossbeam_channel::{Receiver, Sender};
 use iris_shared::crypto_utils::encrypt;
-use proto::{TransmitionPacket, VideoData};
+use proto::{TransmissionPacket, VideoData};
 
 use openssl::sha::sha256;
 use openssl::ecdsa::EcdsaSig;
@@ -16,6 +16,7 @@ use log::info;
 // This is running inside a separate task
 pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     let config = &CONFIG.get().unwrap().multicast;
+    // let matrix_buffer = MATRIX_BUFFER.get().unwrap();
     
     let num_rows: usize = config.row;
     let num_cols: usize = config.col;
@@ -33,7 +34,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     let mut matrix_counter = 0;
     let mut epoch = 0;
     
-    // Create encoders objects
+    // Create encoders objects (This can be put on the loop for dynamic fec_rows and fec_cols changes)
     let mut row_encoder = match ReedSolomonEncoder::new(
         num_cols,       // total number of col, which gives the length of row
         fec_rows,   // total number of row recovery shards
@@ -56,9 +57,16 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         }
     };
     
+    let mut debug = true;
     // Create transmission matrix
     while let Ok(matrix) = rx.recv() {
-        let mut transmission_matrix: Matrix<TransmitionPacket> = Matrix::new(0, 0);
+        
+        if debug {
+            info!("Encoder received data, starting to encode....");
+            debug = false;
+        }
+
+        let mut transmission_matrix: Matrix<TransmissionPacket> = Matrix::new(0, 0);
 
         let mut matrix_index = 0;
         let manager = MANAGER.get().unwrap();
@@ -66,7 +74,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
         // If epoch is equal to config, rotate keys and reset counter
         if epoch == config.epoch {
-            info!("Encryption Key rotation performed");
+            // info!("Encryption Key rotation performed");
             binding.rotate_key();
         
             epoch = 0;
@@ -81,7 +89,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         };
 
         for rows in matrix.iter_rows() {
-            let mut row: Vec<TransmitionPacket> = Vec::new();
+            let mut row: Vec<TransmissionPacket> = Vec::new();
 
             for item in rows {
                 let mut video_data = VideoData {
@@ -98,7 +106,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
                 assert!(video_data.encode_to_vec().len() < shard_size);
                 
-                let mut packet = TransmitionPacket {
+                let mut packet = TransmissionPacket {
                     matrix: matrix_counter,
                     index: matrix_index as i32,
                     rows: num_rows as i32,
@@ -132,7 +140,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
                 for item in result.recovery_iter() {
 
-                    let mut packet = TransmitionPacket {
+                    let mut packet = TransmissionPacket {
                         matrix: matrix_counter,
                         index: matrix_index,
                         rows: num_rows as i32,
@@ -161,10 +169,10 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
            
             // Add COL_FEC as empty rows
             for _ in 0..fec_cols {
-                transmission_matrix.push_row(vec![TransmitionPacket::default(); num_cols + fec_rows]);
+                transmission_matrix.push_row(vec![TransmissionPacket::default(); num_cols + fec_rows]);
             }
 
-            let column_data: Vec<Vec<TransmitionPacket>> = transmission_matrix.iter_cols().map(|col| col.cloned().collect()).collect();
+            let column_data: Vec<Vec<TransmissionPacket>> = transmission_matrix.iter_cols().map(|col| col.cloned().collect()).collect();
 
             // Iterate over columns of transmission matrix to update the extra FEC info
             for (col_index, col) in column_data.iter().enumerate() {
@@ -178,7 +186,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
                 for (item_index, item) in result.recovery_iter().enumerate() {
 
-                    let mut packet = TransmitionPacket {
+                    let mut packet = TransmissionPacket {
                         matrix: matrix_counter,
                         index: ((num_rows + item_index) * (num_cols + fec_rows) + col_index) as i32,
                         rows: num_rows as i32,
@@ -199,6 +207,8 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
             }
         }
 
+        // info!("Matrix index: {}, current key: {:?}", matrix_counter, &current_key);
+
         matrix_counter += 1;
 
         // Loop the matrix col by col
@@ -215,6 +225,12 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         }
 
         // Increment epoch
-        epoch += 1;   
+        epoch += 1;
+
+        // Lock the buffer and push the matrix into it
+        // {
+        //     let mut lock = matrix_buffer.lock().unwrap();
+        //     lock.push_front(transmission_matrix);
+        // }
     }
 }
