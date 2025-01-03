@@ -1,15 +1,19 @@
 use chrono::{DateTime, Utc};
-use crossbeam_channel::{Receiver, Sender, TryRecvError};
-use log::{error, info};
+use crossbeam_channel::{unbounded, Receiver, Sender, TryRecvError};
+use iris_shared::padding;
+use log::{debug, error, info};
 use openssl::ec::{EcKey, EcKeyRef};
 use openssl::pkey::{Private, Public};
 use openssl::sha::sha256;
 use openssl::x509::X509;
+use prost::bytes::buf;
 use prost::Message;
 
 use std::collections::VecDeque;
 use std::error::Error;
 use std::io::Cursor;
+use std::sync::Arc;
+use std::thread;
 use std::time::Instant;
 
 use grid::Grid as Matrix;
@@ -19,27 +23,42 @@ use openssl::ecdsa::EcdsaSig;
 use iris_shared::crypto_utils::decrypt;
 
 use crate::proto::{SessionKey, TransmissionPacket, VideoData, MatrixReportBitmap, RetransmissionPacket};
-use crate::TIME;
+use crate::{session, SESSION_CONFIG, TIME};
 
 use super::proto::ClientReport;
 use super::utils::SessionConfig;
 
 #[derive(Default)]
+/// A struct to track the state of a matrix.
 struct MatrixTracker {
-    matrix_index: i32,
-    cols: i32,
-    rows: i32,
-    cols_fec: i32,
-    rows_fec: i32,
-    matrix_packets: Matrix<Option<TransmissionPacket>>,
+    /// Index of the matrix.
+    matrix_index: i32, 
+
+    /// Number of columns in the matrix.
+    cols: i32, 
+    
+    /// Number of rows in the matrix.
+    rows: i32, 
+    
+    /// Number of columns for Forward Error Correction.
+    cols_fec: i32, 
+    
+    /// Number of rows for Forward Error Correction.
+    rows_fec: i32, 
+    
+    /// Matrix to store the packets.
+    matrix_packets: Matrix<Option<TransmissionPacket>>, 
+    
+    /// Session key to decrypt the matrix.
     session_key: Option<SessionKey>, 
-    bitmap: Vec<u8>, // Bitmap to track the presence of packets
-    key_rotated: bool, // New field to track if the key has been rotated for this matrix
+    
+    /// Bitmap to track the presence of packets.
+    bitmap: Vec<u8>, 
 }
 
 impl MatrixTracker {
+    /// Initialize the MatrixTracker with the packet's matrix details.
     fn new(packet: &TransmissionPacket) -> Self {
-         // Initialize the MatrixTracker with the packet's matrix details.
         let mut tracker = Self {
             matrix_index: packet.matrix,
             cols: packet.cols,
@@ -52,7 +71,6 @@ impl MatrixTracker {
                 (packet.cols + packet.rows_fec) as usize,
             ),
             bitmap: vec![0; ((packet.rows + packet.cols_fec) * (packet.cols + packet.rows_fec)) as usize], // Initialize the bitmap with 0s
-            key_rotated: false, // Initialize key rotation status
         };
 
         // Add the initial packet to the tracker.
@@ -62,7 +80,7 @@ impl MatrixTracker {
         tracker
     }
 
-    // Add packet to Tracker
+    /// Add packet to Tracker
     fn add_packet(&mut self, packet: &TransmissionPacket) {
         let index = packet.index as usize;
         let row = index / (self.cols + self.rows_fec) as usize;
@@ -77,145 +95,131 @@ impl MatrixTracker {
 
     }
 
+    /// Reconstruct the matrix using the Reed-Solomon algorithm.
     fn reconstruct_matrix(&mut self, ec_client_key: &EcKey<Private>) -> Result<(), Box<dyn Error>> {
         // This let was do to a refactor, can be improved by replacing self in all places of this function
         let tracker = self;
         
-        // Temporarily take `matrix_packets` out
-        let mut matrix_packets = std::mem::take(&mut tracker.matrix_packets);
-        
         // Logic to reconstruct the matrix
+   
         // Reconstruct rows
-        for row_index in 0..tracker.rows as usize {
-            
-            // Get mut row by index 
-            for row in matrix_packets.iter_row_mut(row_index){
+        for row_index in 0..tracker.matrix_packets.rows() {
 
-                // Collect the first M (original) and remaining N-M (recovery) elements in a single iteration
-                let (original_shards, recovery_shards): (Vec<_>, Vec<_>) = row.iter_mut()
+            let current_row = tracker.matrix_packets.iter_row(row_index);
+
+            let original_shards: Vec<(usize, &Vec<u8>)> = current_row
+                .clone()
+                .take(tracker.cols as usize)
                 .enumerate()
-                .partition(|(index, _)| *index < tracker.cols as usize);  // Split based on the index
+                .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
+                .collect();
 
-                // Convert original_shards and recovery_shards into the correct format
-                let original_shards: Vec<(usize, &mut Vec<u8>)> = original_shards
-                    .into_iter()
-                    .map(|(index, transmition_packet)| (index, &mut transmition_packet.payload))
-                    .collect();
+            let recovery_shards: Vec<(usize, &Vec<u8>)> = current_row
+                .skip(tracker.cols as usize)
+                .enumerate()
+                .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
+                .collect();
+            
+            // Reed-Solomon decode the row
+            if let Ok(recovered) = reed_solomon_16::decode(
+                tracker.cols as usize,     // total number of original shards
+                tracker.rows_fec as usize, // total number of recovery shards
+                original_shards,
+                recovery_shards,
+            ) {
+                for (position, data) in recovered {
 
-                let recovery_shards: Vec<(usize, &mut Vec<u8>)> = recovery_shards
-                    .into_iter()
-                    .map(|(index, transmition_packet)| (index - tracker.cols as usize, &mut transmition_packet.payload))  // Adjust the index for recovery shards
-                    .collect();
+                    let index = (tracker.cols + tracker.rows_fec) * row_index as i32 + position as i32;
+                    let mut packet = TransmissionPacket {
+                        matrix: tracker.matrix_index,
+                        index,
+                        rows: tracker.rows,
+                        cols: tracker.cols,
+                        rows_fec: tracker.rows_fec,
+                        cols_fec: tracker.cols_fec,
+                        payload: data.clone(),
+                        packet_signature: vec![0,255], // Initial empty signature
+                    };
+            
+                    // Encode the packet to a vector (assuming protobuf or similar)
+                    let encoded_packet = packet.encode_to_vec();  // Replace with the actual encoding method you're using
+                    let message_hash = sha256(&encoded_packet);
+            
+                    // Sign the message hash
+                    let signature = EcdsaSig::sign(&message_hash, ec_client_key).unwrap().to_der().unwrap();
+            
+                    // Update the packet signature
+                    packet.packet_signature = signature;
 
-                // Reed-Solomon decode the row
-                if let Ok(recovered) = reed_solomon_16::decode(
-                    tracker.cols as usize,     // total number of original shards
-                    tracker.rows_fec as usize, // total number of recovery shards
-                    original_shards,
-                    recovery_shards,
-                ) {
-                    for (position, data) in recovered {
-
-                        let index = (tracker.cols + tracker.rows_fec) * row_index as i32 + position as i32;
-
-                        let mut packet = TransmissionPacket {
-                            matrix: tracker.matrix_index,
-                            index,
-                            rows: tracker.rows,
-                            cols: tracker.cols,
-                            rows_fec: tracker.rows_fec,
-                            cols_fec: tracker.cols_fec,
-                            payload: data.clone(),
-                            packet_signature: vec![0,255], // Initial empty signature
-                        };
-                
-                        // Encode the packet to a vector (assuming protobuf or similar)
-                        let encoded_packet = packet.encode_to_vec();  // Replace with the actual encoding method you're using
-                        let message_hash = sha256(&encoded_packet);
-                
-                        // Sign the message hash
-                        let signature = EcdsaSig::sign(&message_hash, ec_client_key).unwrap().to_der().unwrap();
-                
-                        // Update the packet signature
-                        packet.packet_signature = signature;
-                        
-                        tracker.add_packet(&packet);                    
-                    }
+                    tracker.add_packet(&packet);
                 }
             }
         }
 
-        // Reconstruct columns
-        for col_index in 0..tracker.cols as usize {
+        // Reconstruct collumn
+        for col_index in 0..tracker.matrix_packets.cols() {
 
-            for col in matrix_packets.iter_col_mut(col_index){
+            let current_col = tracker.matrix_packets.iter_row(col_index);
 
-                // Collect the first M (original) and remaining N-M (recovery) elements in a single iteration
-                let (original_shards, recovery_shards): (Vec<_>, Vec<_>) = col.iter_mut()
-                    .enumerate()
-                    .partition(|(index, _)| *index < tracker.rows as usize);  // Split based on the index
-                
-                // Convert original_shards and recovery_shards into the correct format
-                let original_shards: Vec<(usize, &mut Vec<u8>)> = original_shards
-                    .into_iter()
-                    .map(|(index, transmition_packet)| (index, &mut transmition_packet.payload))
-                    .collect();
+            let original_shards: Vec<(usize, &Vec<u8>)> = current_col
+                .clone()
+                .take(tracker.rows as usize)
+                .enumerate()
+                .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
+                .collect();
 
-                let recovery_shards: Vec<(usize, &mut Vec<u8>)> = recovery_shards
-                    .into_iter()
-                    .map(|(index, transmition_packet)| (index - tracker.rows as usize, &mut transmition_packet.payload))  // Adjust the index for recovery shards
-                    .collect();
+            let recovery_shards: Vec<(usize, &Vec<u8>)> = current_col
+                .skip(tracker.rows as usize)
+                .enumerate()
+                .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
+                .collect();
+            
+            // Reed-Solomon decode the column
+            if let Ok(recovered) = reed_solomon_16::decode(
+                tracker.rows as usize,     // total number of original shards
+                tracker.cols_fec as usize, // total number of recovery shards
+                original_shards,
+                recovery_shards,
+            ) {
+                for (position, data) in recovered {
+                    
+                    let index = (tracker.rows + tracker.cols_fec) * col_index as i32 + position as i32;
+                    let mut packet = TransmissionPacket {
+                        matrix: tracker.matrix_index,
+                        index,
+                        rows: tracker.rows,
+                        cols: tracker.cols,
+                        rows_fec: tracker.rows_fec,
+                        cols_fec: tracker.cols_fec,
+                        payload: data.clone(),
+                        packet_signature: vec![0, 255],
+                    };
 
-                // Reed-Solomon decode the column
-                if let Ok(recovered) = reed_solomon_16::decode(
-                    tracker.rows as usize,     // total number of original shards
-                    tracker.cols_fec as usize, // total number of recovery shards
-                    original_shards,
-                    recovery_shards,
-                ) {
-                    for (position, data) in recovered {
-                        
-                        let index = (tracker.rows + tracker.cols_fec) * col_index as i32 + position as i32;
-                        let mut packet = TransmissionPacket {
-                            matrix: tracker.matrix_index,
-                            index,
-                            rows: tracker.rows,
-                            cols: tracker.cols,
-                            rows_fec: tracker.rows_fec,
-                            cols_fec: tracker.cols_fec,
-                            payload: data.clone(),
-                            packet_signature: vec![0, 255],
-                        };
+                    // Encode the packet to a vector (assuming protobuf or similar)
+                    let encoded_packet = packet.encode_to_vec();  // Replace with the actual encoding method you're using
+                    let message_hash = sha256(&encoded_packet);
+            
+                    // Sign the message hash
+                    let signature = EcdsaSig::sign(&message_hash, ec_client_key).unwrap().to_der().unwrap();
+            
+                    // Update the packet signature
+                    packet.packet_signature = signature;
+                    
+                    tracker.add_packet(&packet);     
 
-                        // Encode the packet to a vector (assuming protobuf or similar)
-                        let encoded_packet = packet.encode_to_vec();  // Replace with the actual encoding method you're using
-                        let message_hash = sha256(&encoded_packet);
-                
-                        // Sign the message hash
-                        let signature = EcdsaSig::sign(&message_hash, ec_client_key).unwrap().to_der().unwrap();
-                
-                        // Update the packet signature
-                        packet.packet_signature = signature;
-                        
-                        tracker.add_packet(&packet);
-                    }
                 }
             }
         }
-
-        // Restore `matrix_packets`
-        tracker.matrix_packets = matrix_packets;
-
         
         Ok(())
     }
 
-    // Checks if matrix is complete or not
+    /// Checks if matrix is complete or not
     fn is_complete(&self) -> bool {
         self.bitmap.iter().map(|&bit| bit == 1).all(|x| x)
     }
 
-    // Returns the missing index (the index are in row major) as vector
+    /// Returns the missing index (the index are in row major) as vector
     fn missing_indexes(&self) -> Vec<i32> {
         let mut missing = Vec::new();
         for (index, value) in self.matrix_packets.iter().enumerate() {
@@ -227,209 +231,277 @@ impl MatrixTracker {
     }
 }
 
+/// Validate the packet signature and return true if valid, false otherwise.
+fn validate_packet(packet: &mut TransmissionPacket, x509_public_key: &EcKey<Public>) -> bool {
+     // Get the signature from the packet and put the packet_signature field with 0's to calculate local hash computation
+     let signature = match EcdsaSig::from_der(&packet.packet_signature) {
+        Ok(sig) => sig,
+        Err(err) => {
+            error!("Invalid signature format: {}", err);
+            return false;
+        }
+    };
+    
+    // Set the packet_signature field to 0's to calculate the hash
+    packet.packet_signature = vec![0, 255];
+    let message_hash = sha256(&packet.encode_to_vec());
+
+    // Verify the signature
+    if let Err(err) = signature.verify(&message_hash, &x509_public_key) {
+        error!("Signature verification failed: {}", err);
+        return false;
+    }
+
+    // Validate the packet
+    true
+}
+
+/// Process a packet and check if it belongs to a new matrix or an old matrix in the buffer.
+fn process_packet(buffer: &mut VecDeque<MatrixTracker>, packet: TransmissionPacket, current_key: &mut SessionKey, next_key: &mut Option<SessionKey>) {
+
+    // Check if the buffer is empty
+    if buffer.is_empty() {
+        // Create a new tracker for the packet
+        let mut matrix = MatrixTracker::new(&packet);
+        // Check if the matrix index is a multiple of the epoch and rotate the key if necessary
+        check_key_rotation(&mut matrix, &packet, current_key, next_key);
+        // Set the session key to the matrix
+        matrix.session_key = Some(current_key.clone());
+        // Add the matrix to the buffer
+        buffer.push_back(matrix);
+        return;
+    }
+
+    // Check if the packet's matrix is already in the buffer
+    if let Some(tracker) = buffer.back_mut() {
+        // Check if the packet's matrix matches the tracker
+        if packet.matrix == tracker.matrix_index {
+            tracker.add_packet(&packet);
+        } else {
+            // The packet's matrix doesn't match the last tracker in the buffer
+
+            // Check if the last tracker matrix index is less than the packet matrix index
+            if tracker.matrix_index < packet.matrix {
+                // The packet's matrix index is greater than the last tracker matrix index
+                // This means the packet is from a new matrix
+
+                // Create a new tracker for the packet
+                let mut matrix = MatrixTracker::new(&packet);
+                // Check if the matrix index is a multiple of the epoch and rotate the key if necessary
+                check_key_rotation(&mut matrix, &packet, current_key, next_key);
+                // Set the session key to the matrix
+                matrix.session_key = Some(current_key.clone());
+                // Add the matrix to the buffer
+                buffer.push_back(matrix);
+            } else {
+                // The packet's matrix index is less than the last tracker matrix index
+                // This means the packet is from an old matrix
+
+                // Iterate over the trackers in the buffer in reverse order to find the correct tracker
+                for tracker in buffer.iter_mut().rev() {
+                    if tracker.matrix_index == packet.matrix {
+                        tracker.add_packet(&packet);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+}
+
+/// Check if the key rotation is necessary and rotate the key if necessary. Only called when the tracker is created.
+fn check_key_rotation(matrix: &mut MatrixTracker, packet: &TransmissionPacket, current_key: &mut SessionKey, next_key: &mut Option<SessionKey>) {
+    // Get the session config
+    let session_config = SESSION_CONFIG.get().unwrap().read().unwrap();
+
+    // Check if the matrix index is a multiple of the epoch
+    if matrix.matrix_index % session_config.epoch == 0 {
+
+        // Check if next_key is not None
+        if next_key.is_none() {
+            error!("Next key is not set.");
+            return;
+        }
+
+        // Get the next key from the Option and unwrap it safely
+        let new_key = match next_key {
+            Some(next_key_value) => {
+                // remove padding from payload
+                let deppaded_payload = padding::depad(&packet.payload).unwrap();
+
+                // Decrypt the matrix with the next_key, because the matrix is from the next epoch
+                let decrypted_plaintext = decrypt(&deppaded_payload, &next_key_value.key, &next_key_value.iv).unwrap();
+
+                if decrypted_plaintext.is_empty() {
+                    error!("Decryption failed or empty payload.");
+                    return;
+                }
+
+                // Decode the decrypted payload as VideoData
+                if let Ok(decoded) = VideoData::decode(&mut Cursor::new(decrypted_plaintext)) {
+                    decoded.next_key
+                } else {
+                    error!("Failed to decode payload.");
+                    return;
+                }
+            },
+            None => {
+                return;
+            }
+        };
+
+        // Check if the new key is not None
+        match new_key {
+            Some(new_key_value) => {
+                // Rotate the key
+                rotate_key(current_key, next_key, new_key_value);
+            },
+            None => {
+                error!("New key is not set.");
+                return;
+            }
+        }
+    } 
+}
+
+/// Rotate the current key and next key.
+fn rotate_key(current_key: &mut SessionKey, next_key: &mut Option<SessionKey>, new_key: SessionKey) {
+    *current_key = next_key.take().unwrap();
+    *next_key = Some(new_key);
+}
+
 pub fn start(
     multicast_receiver: Receiver<Vec<u8>>,
     unicast_receiver: Receiver<Vec<u8>>,
     decode_data_sender: Sender<Vec<u8>>,
     client_report_sender: Sender<ClientReport>,
-    session_config: SessionConfig,
 ) -> Result<(), Box<dyn Error>> {
+
     let mut buffer: VecDeque<MatrixTracker> = VecDeque::new();
+
+    let session_config = SESSION_CONFIG.get().unwrap().read().unwrap();
 
     // Public Key from Server to verify packets signature
     let x509_public_key = X509::from_pem(&session_config.ec_server_certificate)?.public_key()?.ec_key().unwrap();
 
     // Current encryption key and Option for next encryption key
-    let mut current_key_session = session_config.current_key;
-    let mut next_key_session : Option<SessionKey> = Some(session_config.next_key);
-
-    let mut server_time = None;
-
-    {
-        let current_server_time = TIME.get().unwrap().lock().unwrap();
-        server_time = Some(*current_server_time);
-    }
+    let mut current_key_session = session_config.current_key.clone();
+    let mut next_key_session : Option<SessionKey> = Some(session_config.next_key.clone());
     
-    // Simulated current server time (this will be periodically updated)
-    let mut flush_buffer_timer = server_time.unwrap();
-    let mut client_report_timer = server_time.unwrap();
+    const BUFFER_DEQUEUING_INTERVAL: usize = 10; // Number of matrix to keep in the buffer before dequeuing
+    const BUFFER_LENGTH: usize = 20; // Number of matrix to keep in the buffer
+    
+    let mut matrix_counter = 0;
 
-    let mut process_packet = |buffer: &mut VecDeque<MatrixTracker>,mut packet: TransmissionPacket| {
-
-        // Get the signature from the packet and put the packet_signature field with 0's to calculate hash using local computation
-        let signature = EcdsaSig::from_der(&packet.packet_signature).unwrap();
-        packet.packet_signature = vec![0, 255];
-        let message_hash = sha256(&packet.encode_to_vec());
-
-        let is_valid = signature.verify(&message_hash, &x509_public_key).unwrap();
-
-        // If packet signature is not valid, drop and continue
-        if !is_valid {
-            return;
-        }
-
-        // Check if next_key_session is null
-        if next_key_session == None {
-            let decrypted_plaintext = decrypt(&packet.payload, &current_key_session.key, &current_key_session.iv);
-            if !decrypted_plaintext.len() != 0 {
-                let decoded = match VideoData::decode_length_delimited(&mut Cursor::new(decrypted_plaintext)){
-                    Ok(value) => value,
-                    Err(err) => {
-                        error!("{}", err);
-                        return;
-                    },
-                };
-                next_key_session = decoded.next_key;
-            }
-        }
-
-        // Check if the packet belongs to an existing matrix in the buffer
-        if let Some(tracker) = buffer.iter_mut().rev().find(|tracker| tracker.matrix_index == packet.matrix) {
-            // Rotate the session key only if it hasn't been rotated for this matrix tracker
-            if packet.matrix % session_config.epoch == 0 && !tracker.key_rotated {
-                if let Some(new_session_key) = next_key_session.take() {
-                    current_key_session = new_session_key;
-                    tracker.key_rotated = true; // Mark rotation as done for this matrix
-                }
-            }
-            
-            tracker.add_packet(&packet);
-            
-        } else { // Else is a packet from the next matrix
-            // Create a new MatrixTracker
-            let mut new_tracker = MatrixTracker::new(&packet);
-
-            // Rotate the session key if needed for this new matrix
-            if packet.matrix % session_config.epoch == 0 && !new_tracker.key_rotated {
-                if let Some(new_session_key) = next_key_session.take() {
-                    current_key_session = new_session_key;
-                    new_tracker.key_rotated = true; // Mark rotation as done for this matrix
-                }
-            }
-
-            new_tracker.session_key = Some(current_key_session.clone());
-
-            // Add it to the buffer
-            buffer.push_back(new_tracker);
-        }
+    let client_ec_key = if let Some(ec_key) = &session_config.client_ec_key {
+        ec_key
+    } else {
+        error!("Client EC Key is not set.");
+        return Err("Client EC Key is not set.".into());
     };
+
+    let server_time = *TIME.get().unwrap().lock().unwrap();
+
+    let mut flush_buffer_timer = server_time;
 
     // Main loop to receive all packets from receiving threads
     loop {
 
+        // {
+            
+        //     // Check the time for decoding and sending reports
+        //     let now = Utc::now();
+            
+        //     if now - flush_buffer_timer >= chrono::Duration::milliseconds(500) {
+
+
+        //         // Check size of buffer
+        //         if buffer.len() > 1 {
+    
+        //             // Drain all elements except the last one
+        //             let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
+    
+        //             for mut item in drained {
+        //                 // Check if the matrix is complete
+        //                 if item.is_complete() {
+        //                     // Decode the matrix to the application layer
+        //                     decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key).unwrap();
+        //                 } else {
+        //                     // Reconstruct the matrix
+        //                     item.reconstruct_matrix(client_ec_key).unwrap();
+        //                     // Decode the matrix to the application layer
+        //                     decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key).unwrap();
+        //                 }
+        //             }
+    
+        //         }
+    
+        //         // Reset timer
+        //         flush_buffer_timer = now;
+        //     }
+        // }
+
+        if buffer.len() == BUFFER_LENGTH {
+            
+            // Drain all elements except the last one
+            let drained : Vec<MatrixTracker> = buffer.drain(0..BUFFER_DEQUEUING_INTERVAL).collect();
+
+            // Iterate over the drained elements
+            for mut oldest_matrix in drained {
+                // Check if the matrix is complete
+                if oldest_matrix.is_complete() {
+                    // Decode the matrix to the application layer
+                    decode_to_app_layer(&mut oldest_matrix, &decode_data_sender, &x509_public_key).unwrap();
+                } else {
+                    info!("Reconstructing matrix {}", oldest_matrix.matrix_index);
+                    // Reconstruct the matrix
+                    oldest_matrix.reconstruct_matrix(client_ec_key).unwrap();
+                    // Decode the matrix to the application layer
+                    decode_to_app_layer(&mut oldest_matrix, &decode_data_sender, &x509_public_key).unwrap();
+                }
+            }
+        }
+
         // Try to receive and decode multicast packets  
         match multicast_receiver.try_recv() {
             Ok(payload_bytes) => {
-
                 // Attempt to decode as a TransmissionPacket
-                if let Ok(transmission) = TransmissionPacket::decode(&*payload_bytes) {
-                    // println!("TransmissionPacket data: {:?}", transmission);
-                    process_packet(&mut buffer, transmission);
-                }
-                // Attempt to decode as a RetransmissionPacket
-                if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
-                    // println!("RetransmissionPacket data: {:?}", retransmission);
-                    if let Some(packet) = retransmission.packet {
-                        // Missing logic to decode linear combination with the other packets of matrix
-                        // process_packet(&mut buffer, packet);
-                    } else {
-                        eprintln!("RetransmissionPacket contained no packet.");
-                    }
-                }
-               
-            }
-            Err(TryRecvError::Empty) => {
-                // No message available, continue looping
-            }
-            Err(TryRecvError::Disconnected) => {
-                // The channel is closed, continue loop
-            }
-        }
-
-        // Try to receive and decode unicast packets  
-        match unicast_receiver.try_recv() {
-            Ok(payload_bytes) => {
-
-                // Attempt to decode as a TransmissionPacket
-                if let Ok(transmission) = TransmissionPacket::decode(&*payload_bytes) {
-                    // println!("TransmissionPacket data: {:?}", transmission);
-                    process_packet(&mut buffer, transmission);
-                }
-                // Attempt to decode as a RetransmissionPacket
-                if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
-                    // println!("RetransmissionPacket data: {:?}", retransmission);
-                    if let Some(packet) = retransmission.packet {
-                        // Missing logic to decode linear combination with the other packets of matrix
-                        // process_packet(&mut buffer, packet);
-                    } else {
-                        eprintln!("RetransmissionPacket contained no packet.");
-                    }
-                }
-               
-            }
-            Err(TryRecvError::Empty) => {
-                // No message available, continue looping
-            }
-            Err(TryRecvError::Disconnected) => {
-                // The channel is closed, continue loop
-            }
-        }
-        
-
-        {
-            
-            // Check the time and send reports if 50ms have passed since the last one
-            let now = Utc::now();
-
-            if now - flush_buffer_timer >= chrono::Duration::milliseconds(500) {
-
-
-                // Check size of buffer
-                if buffer.len() > 1 {
-
-                    // Drain all elements except the last one
-                    let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
-
-                    for mut item in drained {
-                        decode_to_app_layer(
-                            &mut item,
-                            &decode_data_sender,
-                            &x509_public_key
-                        ).unwrap();
-                    }
-
-                }
-
-                // Reset timer
-                flush_buffer_timer = now;
-            }
-
-            if now - client_report_timer >= chrono::Duration::milliseconds(200) {
-
-                let mut bitmaps = Vec::new();
-
-                // Loops all buffer and retrieves matrix_index and bitmaps of every tracker
-                for item in buffer.iter() {
-                    bitmaps.push(
-                        MatrixReportBitmap {
-                            matrix: item.matrix_index,
-                            bitmap: item.bitmap.clone(),
+                if let Ok(mut transmission) = TransmissionPacket::decode(&*payload_bytes) {
+                    // Validate the packet signature, if invalid, skip the packet
+                    if validate_packet(&mut transmission, &x509_public_key) {
+                        if transmission.matrix != matrix_counter {
+                            matrix_counter = transmission.matrix;
                         }
-                    );
-                }
-            
-                let report = ClientReport {
-                    reports: bitmaps,
-                };
 
-                client_report_sender.send(report).unwrap();
-                
-                // Reset timer
-                client_report_timer = now;
+                        // Process the packet if valid
+                        process_packet(&mut buffer, transmission, &mut current_key_session, &mut next_key_session);
+                    } else {
+                        // Invalid packet, skip
+                        continue;
+                    }
+                }
+
+                // Attempt to decode as a RetransmissionPacket
+                if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
+                    if let Some(packet) = retransmission.packet {
+                        // Missing logic to decode linear combination with the other packets of matrix
+                        info!("RetransmissionPacket contained packet: {:?}", packet);
+                    } else {
+                        eprintln!("RetransmissionPacket contained no packet.");
+                    }
+                }
+            }
+            Err(TryRecvError::Empty) => {
+                // No message available, continue looping
+            }
+            Err(TryRecvError::Disconnected) => {
+                // The channel is closed, continue loop
+                panic!("Multicast channel disconnected.");
             }
         }
     }
 }
+
 
 fn decode_to_app_layer(
     tracker: &mut MatrixTracker,
@@ -454,12 +526,23 @@ fn decode_to_app_layer(
             return Err("Session key is not set".into());
         }
     };
-    
+
+    debug!("Session: {} - {:?}", tracker.matrix_index, session_key.key[..4].to_vec());
+   
     // Decrypt and decode video data
     for item in tracker.matrix_packets.iter() {
         if let Some(value) = item {
-            let decrypted_plaintext = decrypt(&value.payload, &session_key.key, &session_key.iv);
-            let mut decoded = VideoData::decode_length_delimited(&mut Cursor::new(decrypted_plaintext)).unwrap();
+            // remove padding from payload
+            let deppaded_payload = padding::depad(&value.payload).unwrap();
+
+            // Decrypt the payload
+            let decrypted_plaintext = decrypt(&deppaded_payload, &session_key.key, &session_key.iv).unwrap();
+            if decrypted_plaintext.is_empty() {
+                error!("Decryption failed or empty payload.");
+                continue;
+            }
+
+            let mut decoded = VideoData::decode(&mut Cursor::new(decrypted_plaintext)).unwrap();
 
             let signature = EcdsaSig::from_der(&decoded.signature)?;
             decoded.signature = vec![0, 255];
@@ -478,17 +561,3 @@ fn decode_to_app_layer(
 
     Ok(())
 }
-
-// fn try_decode(matrix_cell: &[u8]) -> Option<TransmissionPacket> {
-    
-//     if let Ok(transmition_packet) = TransmissionPacket::decode(matrix_cell) {
-//         return Some(transmition_packet);
-//     }
-
-//     if let Ok(retransmition_packet) = RetransmissionPacket::decode(matrix_cell) {
-//         // Missing logic to reconstruct the packet from the linear combination, the return value is the original packet reconstructed
-//         return retransmition_packet.packet; // Unwrap the inner packet if needed
-//     }
-
-//     None
-// }

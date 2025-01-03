@@ -30,10 +30,10 @@ pub struct Multicast {
     // Strean Config
     pub data_source: String,
     pub ip_source: String,
-    pub interface: String,
-    pub ip: String,
-    pub port: u16,
     // Matrix Config
+    pub interface: String,
+    pub ip_multicast: String,
+    pub bitrate: usize,
     pub row: usize,
     pub col: usize,
     pub row_fec: usize,

@@ -10,13 +10,19 @@ port = 50051 # service port
 [multicast]
 # Stream Config
 data_source = "udp"
-ip_source = "172.22.0.102:1234"
-# ip_source = "172.22.0.1:1234"
 
-# interface = "veth0"
-interface = "eth0"
-ip = "224.0.0.2"
-port = 12345
+# This ip source is for docker network
+# ip_source = "172.22.0.102:1234"
+
+# This ip source is local development
+ip_source = "172.22.0.1:1234"
+
+# Multicast Config
+interface = "veth0" # This is the interface that will be used to send the multicast packets
+# interface = "wlp92s0"
+# interface = "eth0"
+ip_multicast = "224.0.0.2:12345"
+bitrate = 10000 # kbit/s
 
 # Matrix Config
 row = 10
@@ -24,7 +30,7 @@ col = 10
 row_fec = 5 # can be 0 if network loss allows it
 col_fec = 5 # can be 0 if network loss allows it
 
-epoch = 20 # number of matrix to rotate encryption key
+epoch = 10 # number of matrix to rotate encryption key
 
 # This is the protocol defined, this is optimized for MTU 1500, can be easily changed with another MTU size
 data_size = 1128 # 188 x 6, this is 6 ts packets
@@ -32,7 +38,7 @@ shard_size = 1280 # must be a multiple of 64 but needs to be bigger then data an
 mtu_size = 1500 # default in most AP or routers
 
 [prometheus]
-ip = "0.0.0.0:9186"
+ip = "0.0.0.0:9186" # bind prometheus to all interfaces
 
 [settings]
 timeout_clients = 5 # in seconds

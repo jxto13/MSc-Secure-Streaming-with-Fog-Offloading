@@ -1,10 +1,13 @@
-use std::sync::{Arc, Mutex};
+use std::{net::SocketAddr, sync::{Arc, Mutex, RwLock}, time::Duration};
 
 use chrono::Utc;
+use circular_buffer::CircularBuffer;
 use crossbeam_channel::Sender;
+use grid::Grid;
 use log::info;
-
-use crate::membership_manager::client_sessions::{self, ClientSessions};
+use prost::Message;
+use crate::{proto::RetransmissionPacket, TransmissionPacket};
+use crate::{membership_manager::client_sessions::{self, ClientSessions}, MATRIX_BUFFER};
 
 
 
@@ -22,25 +25,17 @@ impl RetransmissionManager {
     }
 
     // Run the retransmission handler that listens to both channels
-    pub fn handle_retransmissions(&self, client_sessions: Arc<Mutex<ClientSessions>>, multicast_tx: Sender<Vec<u8>>, unicast_tx: Sender<Vec<u8>>) {
+    pub fn handle_retransmissions(client_sessions: Arc<RwLock<ClientSessions>>, multicast_tx: Sender<Vec<u8>>, unicast_tx: Sender<Vec<u8>>) {
 
-        let mut start = Utc::now();
-        let timout = chrono::Duration::seconds(1);
+
+        let retransmission_interval = Duration::from_millis(100); // Define the interval for retransmission rounds
 
         loop {
-            let now = Utc::now();
+            std::thread::sleep(retransmission_interval);
 
-            if now - start >= timout {
-                // for client in &client_sessions.lock().unwrap().clients {
-                //     info!("Client {:?}: {:?}", client.0, client.1.reports.len());
-                // }
-                info!("Clients: {:?}", client_sessions.lock().unwrap().clients.len());
-
-                start = now;
-            }
-
-
+        
         }
+
     }
 
     fn encoder() {

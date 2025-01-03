@@ -2,6 +2,7 @@ use crate::{proto, CONFIG, MANAGER, MATRIX_BUFFER};
 
 use crossbeam_channel::{Receiver, Sender};
 use iris_shared::crypto_utils::encrypt;
+use iris_shared::padding;
 use proto::{TransmissionPacket, VideoData};
 
 use openssl::sha::sha256;
@@ -16,7 +17,7 @@ use log::info;
 // This is running inside a separate task
 pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     let config = &CONFIG.get().unwrap().multicast;
-    // let matrix_buffer = MATRIX_BUFFER.get().unwrap();
+    let matrix_buffer = MATRIX_BUFFER.get().unwrap();
     
     let num_rows: usize = config.row;
     let num_cols: usize = config.col;
@@ -58,6 +59,8 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     };
     
     let mut debug = true;
+    let mut counter = 0;
+    
     // Create transmission matrix
     while let Ok(matrix) = rx.recv() {
         
@@ -65,29 +68,34 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
             info!("Encoder received data, starting to encode....");
             debug = false;
         }
-
+        
         let mut transmission_matrix: Matrix<TransmissionPacket> = Matrix::new(0, 0);
-
+        
         let mut matrix_index = 0;
+
         let manager = MANAGER.get().unwrap();
-        let mut binding = manager.lock().unwrap();
 
         // If epoch is equal to config, rotate keys and reset counter
         if epoch == config.epoch {
-            // info!("Encryption Key rotation performed");
-            binding.rotate_key();
-        
+
+            // Get write lock 
+            let mut binding_write = manager.write().unwrap();
+
+            // Rotate keys
+            binding_write.rotate_key();
+           
+            // Reset epoch
             epoch = 0;
         }
         
         // Get keys outside the loop
-        let (ec_key, current_key, next_key) = {
-            let ec_key = binding.get_ec_key().clone();
-            let current_key = binding.get_current_key().clone();
-            let next_key = binding.get_next_key().clone();
-            (ec_key, current_key, next_key)
-        };
+        let binding = manager.read().unwrap();
 
+        let ec_key = binding.get_ec_key();
+        let current_key = binding.get_current_key();
+        let next_key = binding.get_next_key();
+
+        // Iterate over the matrix and create the packets
         for rows in matrix.iter_rows() {
             let mut row: Vec<TransmissionPacket> = Vec::new();
 
@@ -104,8 +112,12 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
                 video_data.signature = signature;
 
-                assert!(video_data.encode_to_vec().len() < shard_size);
-                
+                let mut encryped_payload = encrypt(&video_data.encode_to_vec(), &current_key.key, &current_key.iv).unwrap();
+                // info!("before - {}", encryped_payload.len());
+                // padding the payload to match the shard size
+                padding::pad(&mut encryped_payload, shard_size);
+                // info!("after - {}", encryped_payload.len());
+
                 let mut packet = TransmissionPacket {
                     matrix: matrix_counter,
                     index: matrix_index as i32,
@@ -113,9 +125,10 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                     cols: num_cols as i32,
                     rows_fec: fec_rows as i32,
                     cols_fec: fec_cols as i32,
-                    payload: encrypt(&video_data.encode_length_delimited_to_vec(), &current_key.key, &current_key.iv, shard_size),
+                    payload: encryped_payload,
                     packet_signature: vec![0,255],
                 };
+                info!("({},{}) {:?} - {}", matrix_counter, packet.index, video_data.encode_to_vec()[..4].to_vec(), video_data.encode_to_vec().len());
 
                 let message_hash = sha256(&packet.encode_to_vec());
                 let signature = EcdsaSig::sign(&message_hash, &ec_key).unwrap().to_der().unwrap();
@@ -206,12 +219,10 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                 }
             }
         }
+        
+        info!("{} - {:?}", matrix_counter, &current_key.key[..4].to_vec());
 
-        // info!("Matrix index: {}, current key: {:?}", matrix_counter, &current_key);
-
-        matrix_counter += 1;
-
-        // Loop the matrix col by col
+        // Loop the matrix col by col and send the data to the client via UDP multicast
         for col in transmission_matrix.iter_cols() {
 
             for item in col {
@@ -224,13 +235,19 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
             }
         }
 
+        
+        // Lock the buffer and push the matrix into it
+        {
+            let mut lock = matrix_buffer.write().unwrap();
+            lock.push_back(Some(transmission_matrix));
+        }
+
         // Increment epoch
         epoch += 1;
 
-        // Lock the buffer and push the matrix into it
-        // {
-        //     let mut lock = matrix_buffer.lock().unwrap();
-        //     lock.push_front(transmission_matrix);
-        // }
+        // Increment matrix counter
+        matrix_counter += 1;
+
+        
     }
 }

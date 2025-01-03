@@ -14,20 +14,63 @@ fn insert_value<T>(matrix: &mut Vec<Vec<T>>, position: usize, matrix_size: usize
 mod tests {
 
     #[test]
-    fn test_lookup(){
-        use std::time::Instant;
-        // Create a large vector of integers
-        let n = 10_000_000;
-        let vec: Vec<i32> = (0..n).collect();
+    fn test_encrpt() {
+        use openssl::symm::{Cipher, Crypter, Mode};
+        use openssl::rand::rand_bytes;
 
-        // Measure the time to iterate over the Vec
-        let mut start = Instant::now();
+        fn encrypt_aes_256_cbc(plaintext: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {
+            let cipher = Cipher::aes_256_cbc();
+            let mut crypter = Crypter::new(cipher, Mode::Encrypt, key, Some(iv)).unwrap();
+            crypter.pad(true);
 
-        for _ in &vec {
-            println!("Time to iterate over: {:?}",start.elapsed());
-            start = Instant::now();
-        
+            let block_size = cipher.block_size();
+            let mut ciphertext = vec![0; plaintext.len() + block_size];
+            let mut count = crypter.update(plaintext, &mut ciphertext).unwrap();
+            count += crypter.finalize(&mut ciphertext[count..]).unwrap();
+            ciphertext.truncate(count);
+            ciphertext
         }
+
+        fn decrypt_aes_256_cbc(ciphertext: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {
+            let cipher = Cipher::aes_256_cbc();
+            let mut crypter = Crypter::new(cipher, Mode::Decrypt, key, Some(iv)).unwrap();
+            crypter.pad(true);
+
+            let mut plaintext = vec![0; ciphertext.len() + cipher.block_size()];
+            let mut count = crypter.update(ciphertext, &mut plaintext).unwrap();
+            count += crypter.finalize(&mut plaintext[count..]).unwrap();
+            plaintext.truncate(count);
+            plaintext
+        }
+
+        let key = b"01234567890123456789012345678901"; // 32 bytes key for AES-256
+        let iv = b"0123456789012345"; // 16 bytes IV for AES-CBC
+    
+        let plaintext = b"Hello, world!";
+        let ciphertext = encrypt_aes_256_cbc(plaintext, key, iv);
+        println!("Ciphertext: {:?}", ciphertext);
+    
+        let decrypted_plaintext = decrypt_aes_256_cbc(&ciphertext, key, iv);
+        println!("Decrypted plaintext: {:?}", String::from_utf8(decrypted_plaintext).unwrap());
+
+        // fn generate_random_bytes(size: usize) -> Vec<u8> {
+        //     use openssl::rand::rand_bytes;
+            
+        //     let mut buf = vec![0; size];
+        //     rand_bytes(&mut buf).expect("Failed to generate random bytes");
+        //     buf
+        // }
+
+        // let data = b"Hello, OpenSSL with Rust!";
+
+        // let key = generate_random_bytes(32); // 256 bits for AES-256
+        // let iv = generate_random_bytes(16);  // 128 bits for AES block size
+        // let encrypted_data = iris_shared::crypto_utils::encrypt(data, &key, &iv, 1280);
+    
+        // let decryped_data = iris_shared::crypto_utils::decrypt(&encrypted_data, &key, &iv);
+
+        // assert_eq!(data.to_vec(), decryped_data);
+    
     }
 
     #[test]

@@ -6,8 +6,9 @@ use std::sync::{Arc, Mutex};
 // Struct to group related metrics
 #[derive(Debug)]
 pub struct Metrics {
-    pub multicast_bandwidth_used: Mutex<GenericGauge<AtomicF64>>,  // Each gauge is wrapped in Mutex
-    pub packets_received: Mutex<GenericGauge<AtomicF64>>,
+    pub data_source_rate: Mutex<GenericGauge<AtomicF64>>,  // Each gauge is wrapped in Mutex
+    pub multicast_sender_rate: Mutex<GenericGauge<AtomicF64>>,
+    pub retransmissions_sender_rate: Mutex<GenericGauge<AtomicF64>>,
     pub packets_sent: Mutex<GenericGauge<AtomicF64>>,
 }
 
@@ -15,14 +16,19 @@ impl Metrics {
     // Initialize metrics
     pub fn new() -> Self {
         Metrics {
-            multicast_bandwidth_used: Mutex::new(register_gauge!(opts!(
-                "multicast_bandwidth_used", 
-                "Total bandwidth used in bytes"
+            data_source_rate: Mutex::new(register_gauge!(opts!(
+                "data_source_rate", 
+                "Rate of incoming UDP Stream"
             )).unwrap()),
             
-            packets_received: Mutex::new(register_gauge!(opts!(
-                "packets_received_total", 
-                "Total packets received"
+            multicast_sender_rate: Mutex::new(register_gauge!(opts!(
+                "multicast_sender_rate", 
+                "Rate of what is being sent over multicast"
+            )).unwrap()),
+
+            retransmissions_sender_rate: Mutex::new(register_gauge!(opts!(
+                "retransmissions_sender_rate", 
+                "Rate of retransmissions being sent over multicast"
             )).unwrap()),
             
             packets_sent: Mutex::new(register_gauge!(opts!(

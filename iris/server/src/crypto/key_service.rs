@@ -1,6 +1,6 @@
 use crate::CONFIG;
 
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, RwLock};
 
 use crate::proto;
 
@@ -13,12 +13,12 @@ use tonic::{Request, Response, Status};
 use super::key_manager::KeyManager;
 
 pub struct MyKeyService {
-    pub key_manager: Arc<Mutex<KeyManager>>,  // Wrap KeyManager in Arc<Mutex<>>
+    pub key_manager: Arc<RwLock<KeyManager>>,  // Wrap KeyManager in Arc<Mutex<>>
     ec_certificate: X509
 }
 
 impl MyKeyService {
-    pub fn new(key_manager: Arc<Mutex<KeyManager>>, ec_certificate: X509) -> Self {
+    pub fn new(key_manager: Arc<RwLock<KeyManager>>, ec_certificate: X509) -> Self {
         MyKeyService {
             key_manager,  // Use the provided Arc<Mutex<KeyManager>>
             ec_certificate
@@ -26,12 +26,12 @@ impl MyKeyService {
     }
 
     pub fn get_current_key(&self) -> SessionKey {
-        let key_manager = self.key_manager.lock().unwrap();  // Lock the Mutex
+        let key_manager = self.key_manager.read().unwrap();  // Lock the Mutex
         key_manager.get_current_key().clone()  // Access KeyManager safely
     }
 
     pub fn get_next_key(&self) -> SessionKey {
-        let key_manager = self.key_manager.lock().unwrap();  // Lock the Mutex
+        let key_manager = self.key_manager.read().unwrap();  // Lock the Mutex
         key_manager.get_next_key().clone()  // Access KeyManager safely
     }
 
@@ -52,6 +52,8 @@ impl KeyService for MyKeyService {
         let next_key = self.get_next_key();
         let certificate = self.get_certificate();
 
+        log::info!("Current key: {:?}", current_key);
+        log::info!("Next key: {:?}", next_key);
         Ok(Response::new(KeyResponse {
             current_key: Some(current_key),
             next_key: Some(next_key),
@@ -62,6 +64,6 @@ impl KeyService for MyKeyService {
     }
 }
 
-pub fn get_service(key_manager: Arc<Mutex<KeyManager>>, ec_certificate :X509) -> KeyServiceServer<MyKeyService> {
+pub fn get_service(key_manager: Arc<RwLock<KeyManager>>, ec_certificate :X509) -> KeyServiceServer<MyKeyService> {
     KeyServiceServer::new(MyKeyService::new(key_manager,ec_certificate))
 }

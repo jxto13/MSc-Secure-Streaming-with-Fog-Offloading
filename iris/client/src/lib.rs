@@ -14,8 +14,8 @@ use openssl::nid::Nid;
 use openssl::x509::X509;
 use openssl::pkey::PKey;
 
-use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::sync::{Arc, Mutex, RwLock};
+use std::time::{Duration, Instant};
 use std::thread;
 
 use proto::{RequestKey,CertificateRequest};
@@ -44,12 +44,14 @@ const CA_PUBLIC_CERTIFICATE: &[u8] = include_bytes!("../../server/certs/ca_certi
 
 pub static CHANNEL: OnceCell<Channel> = OnceCell::new();
 pub static TIME: OnceCell<Mutex<DateTime<Utc>>> = OnceCell::new();
+pub static SESSION_CONFIG: OnceCell<Arc<RwLock<SessionConfig>>> = OnceCell::new();
 
 pub fn start(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
     // Set up a Tokio runtime
     let rt = Arc::new(Runtime::new().unwrap());
 
-    let session_config: Arc<Mutex<SessionConfig>> = Arc::new(Mutex::new(SessionConfig::default()));
+    // Create a session config to store the certificates and keys
+    SESSION_CONFIG.set(Arc::new(RwLock::new(SessionConfig::default()))).unwrap();
     
     // EC Certificates
     let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
@@ -61,7 +63,7 @@ pub fn start(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error
         // Run async code using the Tokio runtime
         runtime.block_on(async {
 
-            let arc_session_config = Arc::clone(&session_config);
+            let arc_session_config = Arc::clone(&SESSION_CONFIG.get().unwrap());
 
             loop {
                 match create_channel(ip).await {
@@ -89,7 +91,7 @@ pub fn start(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error
                                 .unwrap();
                             let signed_cert = response.into_inner().signed_cert;
     
-                            let mut mutex_session_config = arc_session_config.lock().unwrap();
+                            let mut mutex_session_config = arc_session_config.write().unwrap();
 
                             mutex_session_config.client_ec_certificate = signed_cert;
                             mutex_session_config.client_ec_key = Some(ec_key);
@@ -103,7 +105,7 @@ pub fn start(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error
     
                             let reponse = key_response.into_inner();
 
-                            let mut mutex_session_config = arc_session_config.lock().unwrap();
+                            let mut mutex_session_config = arc_session_config.write().unwrap();
 
                             mutex_session_config.current_key = reponse.current_key.unwrap();
                             mutex_session_config.next_key = reponse.next_key.unwrap();
@@ -111,14 +113,32 @@ pub fn start(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error
                             mutex_session_config.epoch = reponse.epoch;
 
                             info!("Current key: {:?}", mutex_session_config.current_key);
+                            info!("Next key: {:?}", mutex_session_config.next_key);
                         }
 
                         // Create connection to retrieve current timestamp to base our client report intervals
                         {
                             let mut connection = NtsServiceClient::new(channel.clone());
+                            
+                            // Measure the time before the request
+                            let start_time = Instant::now();
+                            
                             let stamp_response = connection.get_current_timestamp(TimestampRequest {}).await.unwrap();
+                            
+                            // Measure the time after the request
+                            let end_time = Instant::now();
+                            
+                            // Calculate the RTT
+                            let rtt = end_time.duration_since(start_time);
+                            
+                            // Get the server timestamp
                             let timestamp_str = stamp_response.into_inner().timestamp;
-                            TIME.set(Mutex::new(DateTime::parse_from_rfc3339(&timestamp_str).unwrap().into())).unwrap();
+                            let mut server_time = DateTime::parse_from_rfc3339(&timestamp_str).unwrap();
+                            
+                            // Add half of the RTT to the server timestamp
+                            server_time = server_time + chrono::Duration::from_std(rtt / 2).unwrap();
+                            
+                            TIME.set(Mutex::new(server_time.into())).unwrap();
                         }
 
                         // Save the client for use after the loop
@@ -173,8 +193,7 @@ pub fn start(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error
             multicast_receiver_receiver,
             unicast_receiver_receiver,
             decoded_data_sender,
-            client_report_sender,
-            session_config.lock().unwrap().clone()
+            client_report_sender
         ) {
             error!("Matrix decoder failed to start: {}", e);
         }

@@ -1,6 +1,6 @@
 use crate::proto;
 
-use std::sync::{Arc, Mutex};
+use std::sync::{Arc, Mutex, RwLock};
 
 use chrono::Utc;
 use proto::{report_service_server::ReportService, ClientReport};
@@ -13,11 +13,11 @@ use super::client_sessions::ClientSessions;
 
 #[derive(Debug)]
 pub struct MyReportService {
-    client_sessions: Arc<Mutex<ClientSessions>>,
+    client_sessions: Arc<RwLock<ClientSessions>>,
 }
 
 impl MyReportService {
-    pub fn new(client_sessions: Arc<Mutex<ClientSessions>>) -> Self {
+    pub fn new(client_sessions: Arc<RwLock<ClientSessions>>) -> Self {
         Self { 
             client_sessions,
         }
@@ -33,7 +33,7 @@ impl ReportService for MyReportService {
 
         // Get the client address from the request metadata
         if let Some(client_addr) = request.remote_addr() {
-            let mut lock = self.client_sessions.lock().unwrap();
+            let mut lock = self.client_sessions.write().unwrap();
             // Update the client session
             lock.update_client(client_addr);
             lock.save_client_report(client_addr, request.into_inner());

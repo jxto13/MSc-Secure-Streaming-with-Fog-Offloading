@@ -30,6 +30,7 @@ pnet = "0.35.0"
 pnet_datalink = "0.35.0"
 prometheus_exporter = "0.8.5"
 chrono = "0.4.38"
+circular-buffer = "0.1.9"
 
 # This compiles openssl for android using NDK
 [target.'cfg(target_os = "android")'.dependencies]

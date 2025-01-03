@@ -5,7 +5,6 @@ use crossbeam_channel::Sender;
 use log::{error, info};
 use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
-use std::sync::{Arc, Mutex}; // To safely share the counter across threads
 
 // A token to allow us to identify which event is for the `UdpSocket`.
 const CLIENT: Token = Token(0);
@@ -59,6 +58,7 @@ pub fn server(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), B
     let mut buf = [0; 1 << 16]; // Maximum UDP packet size is 65535 bytes.
 
     let mut counter = 0;
+    let mut total_bytes = 0;
 
     let mut start_time = std::time::Instant::now();
     // Start an event loop.
@@ -78,7 +78,9 @@ pub fn server(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), B
                     loop {
 
                         if start_time.elapsed() > std::time::Duration::from_secs(1) {
-                            info!("Bytes received: {}", (counter * 8) / 1000);
+                            let bitrate = (counter * 8) / 1000;
+                            info!("Bytes received: {} | Bitrate: {} Kbit/s", total_bytes, bitrate);
+
                             start_time = std::time::Instant::now();
                             counter = 0;
                         }
@@ -88,7 +90,8 @@ pub fn server(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), B
                             Ok((size, _source_address)) => {
                                 // Send data to matrix decoder.
                                 sender.send(buf[..size].to_vec()).unwrap();
-                                counter += size;
+                                counter += size as u64;
+                                total_bytes += size;
                                 
                             }
                             Err(e) if e.kind() == io::ErrorKind::WouldBlock => {

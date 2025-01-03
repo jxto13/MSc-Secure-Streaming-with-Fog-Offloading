@@ -27,9 +27,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         .args(&["-"])
         .stdin(Stdio::piped())
-        .stdout(Stdio::piped()) // Capture stdout for packet handling
-        // .stdout(Stdio::null())
-        // .stderr(Stdio::null())
+        // .stdout(Stdio::piped()) // Capture stdout for packet handling
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .spawn()
         .map_err(|e| {
             error!("Failed to start ffplay process: {}", e);
