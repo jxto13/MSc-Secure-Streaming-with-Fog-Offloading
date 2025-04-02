@@ -3,9 +3,8 @@ use crossbeam_channel::{unbounded, Receiver};
 use std::sync::{Arc, RwLock};
 use std::thread;
 
-use crate::CONFIG;
 
-use crate::membership_manager::client_sessions::{self, ClientSessions};
+use crate::membership_manager::client_sessions::ClientSessions;
 use super::wifi_multicast::WiFiMulticast;
 use super::wifi_unicast::WiFiUnicast;
 use super::retransmission_manager::RetransmissionManager;
@@ -50,7 +49,8 @@ impl Pipeline {
         // Start wifi_unicast thread
         let wifi_unicast_handler = thread::spawn(move || {
             // Start unicast sender
-            WiFiUnicast::new();
+            let mut unicast = WiFiUnicast::new();
+            unicast.server(retransmission_unicast_rx).unwrap();
         });
 
         // Start Retransmition Handler thread

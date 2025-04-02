@@ -1,4 +1,4 @@
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, Utc};
 use crossbeam_channel::{unbounded, Receiver, Sender, TryRecvError};
 use iris_shared::padding;
 use log::{debug, error, info};
@@ -28,7 +28,7 @@ use crate::{session, SESSION_CONFIG, TIME};
 use super::proto::ClientReport;
 use super::utils::SessionConfig;
 
-#[derive(Default)]
+#[derive(Default,Debug)]
 /// A struct to track the state of a matrix.
 struct MatrixTracker {
     /// Index of the matrix.
@@ -86,11 +86,10 @@ impl MatrixTracker {
         let row = index / (self.cols + self.rows_fec) as usize;
         let col = index % (self.cols + self.rows_fec) as usize;
         self.matrix_packets[(row, col)] = Some(packet.clone());
-
+        
         // Update the bitmap if this is a data packet
         {
-            let data_index = row * self.cols as usize + col;
-            self.bitmap[data_index] = 1; // Set the corresponding position in the bitmap to 1
+            self.bitmap[packet.index as usize] = 1; // Set the corresponding position in the bitmap to 1
         }
 
     }
@@ -108,7 +107,7 @@ impl MatrixTracker {
             let current_row = tracker.matrix_packets.iter_row(row_index);
 
             let original_shards: Vec<(usize, &Vec<u8>)> = current_row
-                .clone()
+                .clone()// Clone the iterator to avoid consuming it
                 .take(tracker.cols as usize)
                 .enumerate()
                 .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
@@ -162,7 +161,7 @@ impl MatrixTracker {
             let current_col = tracker.matrix_packets.iter_row(col_index);
 
             let original_shards: Vec<(usize, &Vec<u8>)> = current_col
-                .clone()
+                .clone()// Clone the iterator to avoid consuming it
                 .take(tracker.rows as usize)
                 .enumerate()
                 .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
@@ -199,7 +198,7 @@ impl MatrixTracker {
                     let encoded_packet = packet.encode_to_vec();  // Replace with the actual encoding method you're using
                     let message_hash = sha256(&encoded_packet);
             
-                    // Sign the message hash
+                    // Sign the message hash with the client private key
                     let signature = EcdsaSig::sign(&message_hash, ec_client_key).unwrap().to_der().unwrap();
             
                     // Update the packet signature
@@ -216,7 +215,12 @@ impl MatrixTracker {
 
     /// Checks if matrix is complete or not
     fn is_complete(&self) -> bool {
-        self.bitmap.iter().map(|&bit| bit == 1).all(|x| x)
+        for item in self.matrix_packets.iter() {
+            if item.is_none() {
+                return false;
+            }
+        }
+        true
     }
 
     /// Returns the missing index (the index are in row major) as vector
@@ -258,6 +262,7 @@ fn validate_packet(packet: &mut TransmissionPacket, x509_public_key: &EcKey<Publ
 
 /// Process a packet and check if it belongs to a new matrix or an old matrix in the buffer.
 fn process_packet(buffer: &mut VecDeque<MatrixTracker>, packet: TransmissionPacket, current_key: &mut SessionKey, next_key: &mut Option<SessionKey>) {
+    let session_config = SESSION_CONFIG.get().unwrap().read().unwrap();
 
     // Check if the buffer is empty
     if buffer.is_empty() {
@@ -279,6 +284,9 @@ fn process_packet(buffer: &mut VecDeque<MatrixTracker>, packet: TransmissionPack
             tracker.add_packet(&packet);
         } else {
             // The packet's matrix doesn't match the last tracker in the buffer
+            
+            // At this point, should be a new tracker in the buffer so try to reconstruct the matrix before with FEC
+            tracker.reconstruct_matrix(&session_config.client_ec_key.clone().unwrap()).unwrap();
 
             // Check if the last tracker matrix index is less than the packet matrix index
             if tracker.matrix_index < packet.matrix {
@@ -391,8 +399,6 @@ pub fn start(
     const BUFFER_DEQUEUING_INTERVAL: usize = 10; // Number of matrix to keep in the buffer before dequeuing
     const BUFFER_LENGTH: usize = 20; // Number of matrix to keep in the buffer
     
-    let mut matrix_counter = 0;
-
     let client_ec_key = if let Some(ec_key) = &session_config.client_ec_key {
         ec_key
     } else {
@@ -403,64 +409,98 @@ pub fn start(
     let server_time = *TIME.get().unwrap().lock().unwrap();
 
     let mut flush_buffer_timer = server_time;
+    let mut report_timer = server_time;
+
+    fn find_zero_indices(vec: Vec<u8>) -> Vec<usize> {
+        vec.iter()
+            .enumerate()
+            .filter_map(|(index, &value)| if value == 0 { Some(index) } else { None })
+            .collect()
+    }
+
+    // Get the current time using Instant
+    let now = Instant::now();
+    let mut report_timer = now;
+    let mut flush_buffer_timer = now;
 
     // Main loop to receive all packets from receiving threads
     loop {
 
-        // {
-            
-        //     // Check the time for decoding and sending reports
-        //     let now = Utc::now();
-            
-        //     if now - flush_buffer_timer >= chrono::Duration::milliseconds(500) {
+        
+        {   
+            // Calculate the elapsed time since the last report
+            let elapsed = report_timer.elapsed();
+
+            // If 100 milliseconds have passed, send a report
+            if elapsed >= std::time::Duration::from_millis(100) {
+
+                let mut bitmaps = Vec::new();
+                
+                if buffer.len() > 1 {
+                    for item in buffer.iter().take(buffer.len() - 1) {
+                        bitmaps.push(MatrixReportBitmap {
+                            matrix_index: item.matrix_index,
+                            bitmap: item.bitmap.clone(),
+                        });
+                    }
+                }
+                let report = ClientReport {
+                    reports: bitmaps,
+                };
+
+                // Send the report
+                client_report_sender.send(report).unwrap();
+
+                // Update the report timer
+                report_timer = Instant::now();
+            }
+        }
+
+        {
+            // Calculate the elapsed time since the last flush
+            let elapsed = flush_buffer_timer.elapsed();
+
+            if elapsed >= std::time::Duration::from_millis(2000) {
 
 
-        //         // Check size of buffer
-        //         if buffer.len() > 1 {
+                // Check size of buffer
+                if buffer.len() > 1 {
     
-        //             // Drain all elements except the last one
-        //             let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
+                    // Drain all elements except the last one
+                    let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
     
-        //             for mut item in drained {
-        //                 // Check if the matrix is complete
-        //                 if item.is_complete() {
-        //                     // Decode the matrix to the application layer
-        //                     decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key).unwrap();
-        //                 } else {
-        //                     // Reconstruct the matrix
-        //                     item.reconstruct_matrix(client_ec_key).unwrap();
-        //                     // Decode the matrix to the application layer
-        //                     decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key).unwrap();
-        //                 }
-        //             }
+                    for mut item in drained {
+                        info!("Matrix {} - Missing indexes: {:?}", item.matrix_index, item.missing_indexes());
+
+                        // Reconstruct the matrix
+                        item.reconstruct_matrix(&client_ec_key).unwrap();
+                        // Decode the matrix to the application layer
+                        decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key).unwrap();
+                        
+                    }
     
-        //         }
+                }
     
-        //         // Reset timer
-        //         flush_buffer_timer = now;
+                // Reset timer
+                flush_buffer_timer = Instant::now();
+            }
+        }
+
+        // if buffer.len() == BUFFER_LENGTH {
+            
+        //     // Drain all elements except the last one
+        //     let drained : Vec<MatrixTracker> = buffer.drain(0..BUFFER_DEQUEUING_INTERVAL).collect();
+
+        //     // Iterate over the drained elements
+        //     for mut oldest_matrix in drained {
+                
+        //         info!("Matrix {} - Missing indexes: {:?}", oldest_matrix.matrix_index, oldest_matrix.missing_indexes());
+                
+        //         // Decode the matrix to the application layer
+        //         decode_to_app_layer(&mut oldest_matrix, &decode_data_sender, &x509_public_key).unwrap();
         //     }
         // }
 
-        if buffer.len() == BUFFER_LENGTH {
-            
-            // Drain all elements except the last one
-            let drained : Vec<MatrixTracker> = buffer.drain(0..BUFFER_DEQUEUING_INTERVAL).collect();
-
-            // Iterate over the drained elements
-            for mut oldest_matrix in drained {
-                // Check if the matrix is complete
-                if oldest_matrix.is_complete() {
-                    // Decode the matrix to the application layer
-                    decode_to_app_layer(&mut oldest_matrix, &decode_data_sender, &x509_public_key).unwrap();
-                } else {
-                    info!("Reconstructing matrix {}", oldest_matrix.matrix_index);
-                    // Reconstruct the matrix
-                    oldest_matrix.reconstruct_matrix(client_ec_key).unwrap();
-                    // Decode the matrix to the application layer
-                    decode_to_app_layer(&mut oldest_matrix, &decode_data_sender, &x509_public_key).unwrap();
-                }
-            }
-        }
 
         // Try to receive and decode multicast packets  
         match multicast_receiver.try_recv() {
@@ -469,10 +509,42 @@ pub fn start(
                 if let Ok(mut transmission) = TransmissionPacket::decode(&*payload_bytes) {
                     // Validate the packet signature, if invalid, skip the packet
                     if validate_packet(&mut transmission, &x509_public_key) {
-                        if transmission.matrix != matrix_counter {
-                            matrix_counter = transmission.matrix;
-                        }
+                        // info!("({},{})", transmission.rows_fec, transmission.cols_fec);
+                        // Process the packet if valid
+                        process_packet(&mut buffer, transmission, &mut current_key_session, &mut next_key_session);
+                    } else {
+                        // Invalid packet, skip
+                        continue;
+                    }
+                }
 
+                // Attempt to decode as a RetransmissionPacket
+                if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
+                    if let Some(packet) = retransmission.packet {
+                        // Missing logic to decode linear combination with the other packets of matrix
+                        info!("RetransmissionPacket contained packet: {:?}", packet);
+                    } else {
+                        eprintln!("RetransmissionPacket contained no packet.");
+                    }
+                }
+            }
+            Err(TryRecvError::Empty) => {
+                // No message available, continue looping
+            }
+            Err(TryRecvError::Disconnected) => {
+                // The channel is closed, continue loop
+                // panic!("Multicast channel disconnected.");
+            }
+        }
+
+        // Try to receive and decode unicast packets  
+        match unicast_receiver.try_recv() {
+            Ok(payload_bytes) => {
+                // Attempt to decode as a TransmissionPacket
+                if let Ok(mut transmission) = TransmissionPacket::decode(&*payload_bytes) {
+                    // Validate the packet signature, if invalid, skip the packet
+                    if validate_packet(&mut transmission, &x509_public_key) {
+                        // info!("Unicast transmission packet: {:?}", transmission);
                         // Process the packet if valid
                         process_packet(&mut buffer, transmission, &mut current_key_session, &mut next_key_session);
                     } else {
@@ -526,8 +598,6 @@ fn decode_to_app_layer(
             return Err("Session key is not set".into());
         }
     };
-
-    debug!("Session: {} - {:?}", tracker.matrix_index, session_key.key[..4].to_vec());
    
     // Decrypt and decode video data
     for item in tracker.matrix_packets.iter() {
@@ -542,18 +612,25 @@ fn decode_to_app_layer(
                 continue;
             }
 
+            // Decode the decrypted payload as VideoData
             let mut decoded = VideoData::decode(&mut Cursor::new(decrypted_plaintext)).unwrap();
 
+            // Retrive the signature from the packet and put the packet_signature field with 0's to calculate local hash computation
             let signature = EcdsaSig::from_der(&decoded.signature)?;
             decoded.signature = vec![0, 255];
+            
+            // Calculate the local hash of the decoded data
             let message_hash = sha256(&decoded.encode_to_vec());
 
+            // Verify the signature of the data
             let is_valid = signature.verify(&message_hash, x509_public_key).unwrap();
 
             // If Data signature is not valid, drop and continue
             if !is_valid {
+                error!("Invalid signature for matrix: {}", tracker.matrix_index);
                 continue;
             } else {
+                // Send the decoded data to the application layer
                 decode_data_sender.send(decoded.data).unwrap();
             }
         }

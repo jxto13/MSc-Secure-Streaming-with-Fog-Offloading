@@ -1,13 +1,10 @@
 use crate::metrics::get_metrics;
 use crate::CONFIG;
-use crossbeam_channel::{unbounded, Sender, TryRecvError};
-use log::{error, info, warn};
+use crossbeam_channel::{unbounded, Sender};
+use log::{error, warn};
 use grid::Grid as Matrix;
 use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
-use std::io::{BufRead, BufReader, Read};
-use std::process::{Command, Stdio};
-use std::time::{Duration, Instant};
 use std::{ io, thread};
 
 // A token to allow us to identify which event is for the `UdpSocket`.

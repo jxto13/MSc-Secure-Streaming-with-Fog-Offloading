@@ -52,8 +52,6 @@ impl KeyService for MyKeyService {
         let next_key = self.get_next_key();
         let certificate = self.get_certificate();
 
-        log::info!("Current key: {:?}", current_key);
-        log::info!("Next key: {:?}", next_key);
         Ok(Response::new(KeyResponse {
             current_key: Some(current_key),
             next_key: Some(next_key),

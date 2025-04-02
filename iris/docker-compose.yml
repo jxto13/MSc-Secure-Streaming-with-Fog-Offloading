@@ -20,7 +20,7 @@ services:
       context: .
       dockerfile: client/Dockerfile
     deploy:
-      replicas: 15  # Replace 5 with your desired number of replicas (N)
+      replicas: 10  # Replace 5 with your desired number of replicas (N)
     restart: on-failure
     # command: cargo run --example headless -- --ip 172.22.0.102
     networks:

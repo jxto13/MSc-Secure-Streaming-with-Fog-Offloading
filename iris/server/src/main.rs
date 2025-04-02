@@ -5,7 +5,7 @@ mod membership_manager;
 mod metrics;
 mod nts_service;
 
-use std::sync::{Mutex, RwLock};
+use std::sync::RwLock;
 use std::{sync::Arc, thread};
 use std::path::PathBuf;
 
@@ -22,13 +22,12 @@ use once_cell::sync::OnceCell;
 use openssl::x509::X509;
 use proto::nts_service_server::NtsServiceServer;
 use source_handler::data_handler::{DataHandler,DataSource};
-use std::collections::{HashMap, VecDeque};
 use std::time::Duration;
 
 use tonic::transport::{Identity, Server, ServerTlsConfig};
 use tokio::runtime::Runtime;
 
-use proto::{TransmissionPacket, FILE_DESCRIPTOR_SET};
+use proto::TransmissionPacket;
 use proto::report_service_server::ReportServiceServer;
 
 use iris_server::{read_config,Config};
@@ -41,34 +40,20 @@ use crate::metrics::init_metrics;
 // Import protobuff
 pub mod proto {
     tonic::include_proto!("streaming_server");
-
-    pub const FILE_DESCRIPTOR_SET: &[u8] = tonic::include_file_descriptor_set!("streaming_server_descriptor");
 }
 
-const MAX_BUFFER_SIZE: usize = 20;
+pub const MAX_BUFFER_SIZE: usize = 10000;
 
 // Define the global static instance of Config using OnceCell
 static CONFIG: OnceCell<Config> = OnceCell::new();
 static MANAGER: OnceCell<Arc<RwLock<KeyManager>>> = OnceCell::new();
 static MATRIX_BUFFER: OnceCell<Arc<RwLock<CircularBuffer::<MAX_BUFFER_SIZE, Option<Grid<TransmissionPacket>>>>>> = OnceCell::new();
+static FEC_PARAMS: OnceCell<Arc<RwLock<(usize, usize)>>> = OnceCell::new();
 
 // Custom
 use network_scheduler::pipeline::Pipeline;
 use clap::{arg, Command};
 
-fn start_prometheus_exporter() {
-    use std::net::SocketAddr;
-
-    // Parse address used to bind exporter to.
-    let addr_raw = &CONFIG.get().unwrap().prometheus.ip;
-    let addr: SocketAddr = addr_raw.parse().expect("can not parse listen addr");
-
-    // Start exporter and update metrics every five seconds.
-    prometheus_exporter::start(addr).expect("can not start exporter");
-
-    // Initialize the metrics
-    init_metrics();
-}
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Define the command structure
@@ -99,8 +84,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Set the global CONFIG instance
     CONFIG.set(config).expect("Failed to set CONFIG");
-    MATRIX_BUFFER.set(Arc::new(RwLock::new(CircularBuffer::<MAX_BUFFER_SIZE, Option<Grid<TransmissionPacket>>>::new()))).expect("Failed to set MATRIX_BUFFER");
 
+    MATRIX_BUFFER.set(Arc::new(RwLock::new(CircularBuffer::<MAX_BUFFER_SIZE, Option<Grid<TransmissionPacket>>>::new()))).expect("Failed to set MATRIX_BUFFER");
+    FEC_PARAMS.set(Arc::new(RwLock::new((CONFIG.get().unwrap().multicast.row_fec, CONFIG.get().unwrap().multicast.col_fec)))).expect("Failed to set FEC_PARAMS");
+    
     start_prometheus_exporter();
 
     // Set up a Tokio runtime
@@ -134,7 +121,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     // Create the client sessions
-    let client_sessions = Arc::new(RwLock::new(ClientSessions::new(Arc::clone(&rt))));
+    let client_sessions = Arc::new(RwLock::new(ClientSessions::new()));
 
     // Start client_sessions thread
     let client_sessions_handler = thread::spawn({
@@ -144,9 +131,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Check every N second for timeout clients
             loop {
                 {
-                    // Lock only for the duration of removing timed-out clients
-                    let mut sessions = client_sessions.write().unwrap();
-                    sessions.remove_timed_out_clients();
+                    // Lock the client_sessions for writing
+                    let mut client_sessions = client_sessions.write().unwrap();
+                    // Removing timed-out clients
+                    client_sessions.remove_timed_out_clients();
                 }
                 // Sleep outside the lock to avoid holding it during the sleep
                 thread::sleep(timeout);
@@ -155,7 +143,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     // Create the pipeline
-    let pipeline= Arc::new(Pipeline::new(Arc::clone(&client_sessions),true, true));
+    let pipeline= Arc::new(Pipeline::new(Arc::clone(&client_sessions),CONFIG.get().unwrap().retransmission.wifi_multicast, CONFIG.get().unwrap().retransmission.wifi_unicast));
 
     let pipeline_handler = {
         let pipeline = Arc::clone(&pipeline);
@@ -170,15 +158,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         move || {
         // Run async code using the Tokio runtime
         rt.block_on(async {
-            
-            // listen to all ipv6 addresses
+
+            // listen to all ipv4 addresses
             let addr = format!("0.0.0.0:{}", CONFIG.get().unwrap().grpc.port).parse().unwrap();
             
             // Start grpc server this will block execution because of await
             Server::builder()
                 .tls_config(ServerTlsConfig::new().identity(Identity::from_pem(certificates.server_cert, certificates.server_key))).unwrap()
-                // Service reflection to enable clients to see services
-                .add_service(tonic_reflection::server::Builder::configure().register_encoded_file_descriptor_set(FILE_DESCRIPTOR_SET).build_v1().unwrap())
                 .add_service(crypto::ca_service::get_service(certificates.ca_cert, certificates.ca_private_key)) // Responsible for signing the client certificates
                 .add_service(key_service)
                 .add_service(ReportServiceServer::new(MyReportService::new(Arc::clone(&client_sessions))))
@@ -207,4 +193,17 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     }
     
     Ok(())
+}
+
+fn start_prometheus_exporter() {
+
+    // Parse address used to bind exporter to.
+    let prometheus_port = &CONFIG.get().unwrap().prometheus.port;
+    let socket_addr = format!("0.0.0.0:{}", prometheus_port).parse().unwrap();
+
+    // Start exporter and update metrics every five seconds.
+    prometheus_exporter::start(socket_addr).expect("can not start exporter");
+
+    // Initialize the metrics
+    init_metrics();
 }

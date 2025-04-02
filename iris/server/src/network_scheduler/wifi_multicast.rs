@@ -8,7 +8,7 @@ use std::net::{IpAddr, Ipv4Addr, SocketAddr};
 use std::str::FromStr;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
-use pnet_datalink::interfaces;
+use pnet::datalink::interfaces;
 use log::{info, error};
 
 use crate::metrics::get_metrics;
@@ -130,7 +130,7 @@ impl WiFiMulticast {
                                         // Record the retransmission data sent.
                                         self.bandwidth_manager.record_retransmission(data.len());
                                         // Update the retransmissions sender rate.
-                                        retransmissions_sender_rate.add(data.len() as f64 ); // Update the gauge value
+                                        retransmissions_sender_rate.add(data.len() as f64); // Update the gauge value
                                         
                                     }
                                     Err(err) => {

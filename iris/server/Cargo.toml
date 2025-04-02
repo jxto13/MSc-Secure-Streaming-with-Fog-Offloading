@@ -6,35 +6,35 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-env_logger = "0.11.5"
-log = "0.4.22"
-tokio-util = { version = "0.7.12", features = ["full"] }
-tokio = { version = "1.40.0", features = ["macros", "rt-multi-thread"] }
-tonic-reflection = "0.12.3"
+env_logger = "0.11.6"
+log = "0.4.25"
+tokio-util = { version = "0.7.13", features = ["full"] }
+tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
 tonic = { version =  "0.12.3", features = ["transport", "tls"] }
-mio = {version =  "1.0.2", features = ["os-poll", "net"]}
-openssl = "0.10.66"
-prost = "0.13.3" # tonic uses this, but needs a trait implementation todo!()
+mio = {version =  "1.0.3", features = ["os-poll", "net"]}
+openssl = "0.10.71"
+prost = "0.13.4"
 reed-solomon-16  = "0.1.0"
-grid = "0.15.0"
-crossbeam-channel = "0.5.13"
+grid = "0.16.1"
+crossbeam-channel = "0.5.14"
 
 iris-shared = {version = "0.1.0" , path = "../shared-lib"}
 
-serde = { version = "1.0.210", features = ["derive"] }
+serde = { version = "1.0.217", features = ["derive"] }
 toml = "0.8.19"
-clap = "4.5.20"
-rand = "0.8.5"
+clap = "4.5.26"
+rand = "0.9.0"
 once_cell = "1.20.2"
 pnet = "0.35.0"
-pnet_datalink = "0.35.0"
 prometheus_exporter = "0.8.5"
-chrono = "0.4.38"
-circular-buffer = "0.1.9"
+chrono = "0.4.39"
+circular-buffer = "1.0.0"
+itertools = "0.14.0"
+flate2 = "1.1.1"
 
 # This compiles openssl for android using NDK
 [target.'cfg(target_os = "android")'.dependencies]
-openssl = { version = "0.10.66", features = ["vendored"] }
+openssl = { version = "0.10.71", features = ["vendored"] }
 
 [build-dependencies]
 tonic-build = "0.12.3"

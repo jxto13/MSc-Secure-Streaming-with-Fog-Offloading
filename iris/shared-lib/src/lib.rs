@@ -1,8 +1,79 @@
+use std::sync::{Arc, RwLock};
+use std::thread;
+
+#[derive(Debug)]
+pub struct ConcurrentVector<K, V> {
+    data: Vec<(K, RwLock<V>)>,
+}
+
+impl<K: PartialEq, V> ConcurrentVector<K, V> {
+    pub fn new() -> Self {
+        Self { data: Vec::new() }
+    }
+
+    pub fn insert(&mut self, key: K, value: V) {
+        self.data.push((key, RwLock::new(value)));
+    }
+
+    pub fn get(&self, key: &K) -> Option<V>
+    where
+        V: Clone,
+    {
+        for (k, v) in &self.data {
+            if k == key {
+                let value = v.read().unwrap(); // Read lock
+                return Some(value.clone());
+            }
+        }
+        None
+    }
+
+    pub fn update(&self, key: &K, new_value: V) -> bool {
+        for (k, v) in &self.data {
+            if k == key {
+                let mut value = v.write().unwrap(); // Write lock
+                *value = new_value;
+                return true;
+            }
+        }
+        false
+    }
+
+    pub fn values(&self) -> Vec<V>
+    where
+        V: Clone,
+    {
+        self.data.iter()
+            .map(|(_, v)| v.read().unwrap().clone())
+            .collect()
+    }
+
+    pub fn retain<F>(&mut self, mut f: F)
+    where
+        F: FnMut(&K, &V) -> bool,
+        V: Clone,
+    {
+        self.data.retain(|(k, v)| f(k, &v.read().unwrap()));
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&K, &RwLock<V>)> {
+        self.data.iter().map(|(k, v)| (k, v))
+    }
+
+    pub fn len(&self) -> usize {
+        self.data.len()
+    }
+}
+
 pub mod crypto_utils {
 
     use openssl::symm::{Cipher, Crypter, Mode};
-    
-    pub fn encrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+
+    pub fn encrypt(
+        data: &[u8],
+        key: &[u8],
+        iv: &[u8],
+    ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         let cipher = Cipher::aes_256_cbc();
         let mut crypter = Crypter::new(cipher, Mode::Encrypt, key, Some(iv))?;
         let mut ciphertext = vec![0; data.len() + cipher.block_size()];
@@ -11,8 +82,12 @@ pub mod crypto_utils {
         ciphertext.truncate(count);
         Ok(ciphertext)
     }
-    
-    pub fn decrypt(data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
+
+    pub fn decrypt(
+        data: &[u8],
+        key: &[u8],
+        iv: &[u8],
+    ) -> Result<Vec<u8>, Box<dyn std::error::Error>> {
         let cipher = Cipher::aes_256_cbc();
         let mut crypter = Crypter::new(cipher, Mode::Decrypt, key, Some(iv))?;
         let mut plaintext = vec![0; data.len() + cipher.block_size()];
@@ -21,7 +96,6 @@ pub mod crypto_utils {
         plaintext.truncate(count);
         Ok(plaintext)
     }
-    
 }
 
 pub mod padding {
@@ -54,17 +128,134 @@ pub mod padding {
     }
 }
 
+pub mod xor {
+    pub fn xor_with_padding(vec1: Vec<u8>, vec2: Vec<u8>) -> Vec<u8> {
+        let max_len = vec1.len().max(vec2.len());
+        let mut result = Vec::with_capacity(max_len);
+
+        for i in 0..max_len {
+            let byte1 = *vec1.get(i).unwrap_or(&0);
+            let byte2 = *vec2.get(i).unwrap_or(&0);
+            result.push(byte1 ^ byte2);
+        }
+
+        result
+    }
+
+    pub fn depad_vector(vec: Vec<u8>) -> Vec<u8> {
+        let mut end = vec.len();
+        while end > 0 && vec[end - 1] == 0 {
+            end -= 1;
+        }
+        vec[..end].to_vec()
+    }
+}
+
+pub mod nc_type {
+    use grid::Grid;
+    use std::collections::{HashSet};
+
+    // Represents a retransmission strategy
+    #[derive(Debug)]
+    pub enum Transmission {
+        Unicast(usize, usize),      // (Receiver, Packet)
+        XorMulticast(usize, usize), // (Packet1, Packet2)
+    }
+
+    // Function to compute the best retransmission strategy
+    pub fn retransmit(
+        loss_matrix: &Grid<u8>, // Loss matrix: 1 = packet missing, 0 = received
+        multicast_cost: f64,
+        unicast_cost: f64,
+    ) -> Vec<Transmission> {
+        let num_receivers = loss_matrix.rows();
+        let num_packets = loss_matrix.cols();
+        let mut best_transmissions: Vec<Transmission> = Vec::new();
+
+        // Precompute receiver sets for each packet
+        let mut receiver_sets: Vec<HashSet<usize>> = vec![HashSet::new(); num_packets];
+        for receiver in 0..num_receivers {
+            for packet in 0..num_packets {
+                if *loss_matrix.get(receiver, packet).unwrap() == 1 {
+                    receiver_sets[packet].insert(receiver);
+                }
+            }
+        }
+
+        // Track uncovered receivers
+        let mut uncovered_packets: HashSet<(usize, usize)> = HashSet::new();
+        for packet in 0..num_packets {
+            for &receiver in &receiver_sets[packet] {
+                uncovered_packets.insert((receiver, packet));
+            }
+        }
+
+        while !uncovered_packets.is_empty() {
+            let mut best_cost = f64::MAX;
+            let mut best_strategy: Option<Transmission> = None;
+
+            // Evaluate all unicast options
+            for &(receiver, packet) in &uncovered_packets {
+                let cost = unicast_cost;
+                if cost < best_cost {
+                    best_cost = cost;
+                    best_strategy = Some(Transmission::Unicast(receiver, packet));
+                }
+            }
+
+            // Evaluate all XOR multicast options
+            for packet1 in 0..num_packets {
+                for packet2 in packet1 + 1..num_packets {
+                    let union_set: HashSet<_> = receiver_sets[packet1]
+                        .union(&receiver_sets[packet2])
+                        .cloned()
+                        .collect();
+                    let cost = multicast_cost; // Cost of XOR multicast
+                    if cost < best_cost {
+                        best_cost = cost;
+                        best_strategy = Some(Transmission::XorMulticast(packet1, packet2));
+                    }
+                }
+            }
+
+            // Apply the best strategy
+            if let Some(strategy) = best_strategy {
+                match strategy {
+                    Transmission::Unicast(receiver, packet) => {
+                        best_transmissions.push(Transmission::Unicast(receiver, packet));
+                        uncovered_packets.retain(|&(r, p)| !(r == receiver && p == packet));
+                    }
+                    Transmission::XorMulticast(packet1, packet2) => {
+                        best_transmissions.push(Transmission::XorMulticast(packet1, packet2));
+                        let union_set: HashSet<_> = receiver_sets[packet1]
+                            .union(&receiver_sets[packet2])
+                            .cloned()
+                            .collect();
+                        for receiver in union_set {
+                            uncovered_packets.retain(|&(r, p)| {
+                                !(r == receiver && (p == packet1 || p == packet2))
+                            });
+                        }
+                    }
+                }
+            }
+        }
+
+        best_transmissions
+    }
+}
+
 pub mod bandwidth_utils {
-    use std::time::{Duration, Instant};
     use std::thread;
+    use std::time::{Duration, Instant};
 
     /// A struct representing a simple bandwidth manager.
     pub struct BandwidthManager {
-        bitrate: usize,              // Maximum bits per second, in kbit/s
-        bytes_sent: usize,           // Bytes sent in the current interval
-        multicast_packets_sent: usize,   // Number of multicast packets sent
+        bitrate: usize,                     // Maximum bits per second, in kbit/s
+        bytes_sent: usize,                  // Bytes sent in the current interval
+        multicast_packets_sent: usize,      // Number of multicast packets sent
         retransmission_packets_sent: usize, // Number of retransmission packets sent
-        interval_start: Instant,     // Tracks the start of the interval
+        interval_start: Instant,            // Tracks the start of the interval
     }
 
     impl BandwidthManager {
@@ -108,7 +299,8 @@ pub mod bandwidth_utils {
             if self.bytes_sent > expected_bytes {
                 // Calculate how long to sleep to maintain the CBR
                 let excess_bytes = self.bytes_sent - expected_bytes;
-                let sleep_duration = Duration::from_secs_f64(excess_bytes as f64 / allowed_bytes_per_second as f64);
+                let sleep_duration =
+                    Duration::from_secs_f64(excess_bytes as f64 / allowed_bytes_per_second as f64);
                 thread::sleep(sleep_duration);
             }
 
@@ -119,13 +311,121 @@ pub mod bandwidth_utils {
             }
         }
     }
+}
 
+pub mod rlnc {
+
+    use rand::Rng;
+    use std::collections::HashMap;
+
+    #[derive(Debug)]
+    pub struct RLNC {
+        pub generation_size: usize,
+        pub packet_size: usize,
+        pub coefficients: Vec<Vec<u8>>,
+        pub encoded_packets: Vec<Vec<u8>>,
+    }
+
+    impl RLNC {
+        pub fn new(generation_size: usize, packet_size: usize) -> Self {
+            RLNC {
+                generation_size,
+                packet_size,
+                coefficients: Vec::new(),
+                encoded_packets: Vec::new(),
+            }
+        }
+
+        pub fn encode(&mut self, packets: Vec<Vec<u8>>) {
+            let mut rng = rand::thread_rng();
+            for _ in 0..self.generation_size {
+                let mut coeffs = vec![0u8; self.generation_size];
+                for coeff in &mut coeffs {
+                    *coeff = rng.gen();
+                }
+                self.coefficients.push(coeffs.clone());
+
+                let mut encoded_packet = vec![0u8; self.packet_size];
+                for (i, packet) in packets.iter().enumerate() {
+                    for j in 0..self.packet_size {
+                        encoded_packet[j] ^= coeffs[i] * packet[j];
+                    }
+                }
+                self.encoded_packets.push(encoded_packet);
+            }
+        }
+
+        pub fn decode(
+            &self,
+            received_packets: Vec<Vec<u8>>,
+            received_coeffs: Vec<Vec<u8>>,
+        ) -> Vec<Vec<u8>> {
+            let mut decoded_packets = vec![vec![0u8; self.packet_size]; self.generation_size];
+            let mut coeff_matrix = vec![vec![0u8; self.generation_size]; self.generation_size];
+
+            for i in 0..self.generation_size {
+                for j in 0..self.generation_size {
+                    coeff_matrix[i][j] = received_coeffs[i][j];
+                }
+            }
+
+            for i in 0..self.generation_size {
+                for j in 0..self.packet_size {
+                    decoded_packets[i][j] = received_packets[i][j];
+                }
+            }
+
+            // Gaussian elimination to solve the linear system
+            for i in 0..self.generation_size {
+                let pivot = coeff_matrix[i][i];
+                for j in 0..self.generation_size {
+                    coeff_matrix[i][j] /= pivot;
+                }
+                for j in 0..self.packet_size {
+                    decoded_packets[i][j] /= pivot;
+                }
+
+                for k in 0..self.generation_size {
+                    if k != i {
+                        let factor = coeff_matrix[k][i];
+                        for j in 0..self.generation_size {
+                            coeff_matrix[k][j] ^= factor * coeff_matrix[i][j];
+                        }
+                        for j in 0..self.packet_size {
+                            decoded_packets[k][j] ^= factor * decoded_packets[i][j];
+                        }
+                    }
+                }
+            }
+
+            decoded_packets
+        }
+    }
 }
 #[cfg(test)]
 mod tests {
-    use crate::crypto_utils::{encrypt,decrypt};
-    use crate::padding::{pad, depad};
+    use super::rlnc::RLNC;
+    use crate::crypto_utils::{decrypt, encrypt};
+    use crate::padding::{depad, pad};
 
+    #[test]
+    fn test_rlnc() {
+        let generation_size = 4;
+        let packet_size = 8;
+        let packets = vec![
+            vec![1, 2, 3, 4, 5, 6, 7, 8],
+            vec![8, 7, 6, 5, 4, 3, 2, 1],
+            vec![1, 1, 1, 1, 1, 1, 1, 1],
+            vec![2, 2, 2, 2, 2, 2, 2, 2],
+        ];
+
+        let mut rlnc = RLNC::new(generation_size, packet_size);
+        rlnc.encode(packets.clone());
+
+        let decoded_packets = rlnc.decode(rlnc.encoded_packets.clone(), rlnc.coefficients.clone());
+
+        assert_eq!(packets, decoded_packets);
+    }
 
     #[test]
     fn test_encrypt_decrypt() {
@@ -135,9 +435,9 @@ mod tests {
 
         let encrypted_data = encrypt(data, key, iv).expect("Encryption failed");
         let decrypted_data = decrypt(&encrypted_data, key, iv).expect("Decryption failed");
-        println!("{:?}",encrypted_data);
+        println!("{:?}", encrypted_data);
 
-        println!("{:?} {:?}",data, decrypted_data);
+        println!("{:?} {:?}", data, decrypted_data);
 
         assert_eq!(data.to_vec(), decrypted_data);
     }

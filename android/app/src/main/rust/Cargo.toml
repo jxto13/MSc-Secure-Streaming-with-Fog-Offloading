@@ -8,11 +8,14 @@ crate-type = ["dylib"]
 
 [dependencies]
 jni = "0.21.1"
-android_logger = "0.14.1"
+android_logger = "0.15.0"
 log = "0.4.22"
+
 iris-client = { version = "0.1.0", path = "../../../../../iris/client" }
 mio = { version = "1.0.2", features = ["os-poll", "net"] }
 crossbeam-channel = "0.5.13"
+# pnet = "0.35.0"
+tokio = "1.43.0" 
 
 
 [profile.release]

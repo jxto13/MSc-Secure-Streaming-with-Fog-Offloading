@@ -17,6 +17,9 @@ public class RustService extends Service {
      * Native method declaration to start the Rust service.
      */
     private static native void startService();
+    private static native void stopService();
+
+    private static native void startClient(String hostname);
 
     @Override
     public void onCreate() {
@@ -39,6 +42,9 @@ public class RustService extends Service {
     public void onDestroy() {
         super.onDestroy();
         // Cleanup or resource release logic can be added here
+
+        // Stop the Rust service
+        stopService();
     }
 
     @Override

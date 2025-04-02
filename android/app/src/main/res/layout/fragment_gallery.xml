@@ -8,12 +8,12 @@
     tools:ignore="UseSwitchCompatOrMaterialXml"
     >
 
-    <androidx.media3.ui.PlayerView
-        android:id="@+id/media3Player"
+    <org.videolan.libvlc.util.VLCVideoLayout
+        android:id="@+id/video_layout"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="false"/>
 
-    </androidx.media3.ui.PlayerView>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

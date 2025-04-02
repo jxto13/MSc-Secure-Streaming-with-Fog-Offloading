@@ -5,3 +5,5 @@ edition = "2021"
 
 [dependencies]
 openssl = "0.10.66"
+rand = "0.8.5"
+grid = "0.16.1"

@@ -1,5 +1,6 @@
-use std::net::{Ipv4Addr, SocketAddr};
-use std::io;
+use std::mem::MaybeUninit;
+use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+use std::{io, thread};
 use std::time::Duration;
 use crossbeam_channel::Sender;
 use log::{error, info};
@@ -32,15 +33,14 @@ pub fn server(ip: String, port: String, sender: Sender<Vec<u8>>) -> Result<(), B
 
     // Setup the UDP socket.
     let mut socket = UdpSocket::bind(format!("{}:{}", "0.0.0.0", multicast_port).parse().unwrap()).unwrap();
+
     info!("Socket bound successfully");
 
-    socket.set_multicast_loop_v4(false)?;
 
     // Join the multicast group.
     socket.join_multicast_v4(&multicast_address, &Ipv4Addr::UNSPECIFIED).expect("Failed to join multicast group");
-    // socket.join_multicast_v4(&multicast_address, &Ipv4Addr::new(192, 168, 1, 26)).expect("Failed to join multicast group");
+    // socket.join_multicast_v4(&multicast_address, &Ipv4Addr::new(192, 168, 2, 119)).expect("Failed to join multicast group");
 
-    info!("Joined multicast group successfully");
     
     // Create a poll instance.
     let mut poll = Poll::new().unwrap();

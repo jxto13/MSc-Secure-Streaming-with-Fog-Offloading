@@ -1,8 +1,9 @@
-use crate::{proto, CONFIG, MANAGER, MATRIX_BUFFER};
+use crate::{proto, CONFIG, FEC_PARAMS, MANAGER, MATRIX_BUFFER};
 
 use crossbeam_channel::{Receiver, Sender};
 use iris_shared::crypto_utils::encrypt;
 use iris_shared::padding;
+use prost::Message;
 use proto::{TransmissionPacket, VideoData};
 
 use openssl::sha::sha256;
@@ -10,7 +11,6 @@ use openssl::ecdsa::EcdsaSig;
 
 use reed_solomon_16::ReedSolomonEncoder;
 use grid::Grid as Matrix;
-use prost::Message;
 use log::info;
 
 
@@ -35,39 +35,10 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     let mut matrix_counter = 0;
     let mut epoch = 0;
     
-    // Create encoders objects (This can be put on the loop for dynamic fec_rows and fec_cols changes)
-    let mut row_encoder = match ReedSolomonEncoder::new(
-        num_cols,       // total number of col, which gives the length of row
-        fec_rows,   // total number of row recovery shards
-        shard_size // shard size in bytes
-    ) {
-        Ok(encoder) => Some(encoder),
-        Err(_) => {
-            None
-        }
-    };
     
-    let mut col_encoder = match ReedSolomonEncoder::new(
-        num_rows,       // total number of col, which gives the length of row
-        fec_cols,   // total number of row recovery shards
-        shard_size // shard size in bytes
-    ) {
-        Ok(encoder) => Some(encoder),
-        Err(_) => {
-            None
-        }
-    };
-    
-    let mut debug = true;
-    let mut counter = 0;
     
     // Create transmission matrix
     while let Ok(matrix) = rx.recv() {
-        
-        if debug {
-            info!("Encoder received data, starting to encode....");
-            debug = false;
-        }
         
         let mut transmission_matrix: Matrix<TransmissionPacket> = Matrix::new(0, 0);
         
@@ -95,6 +66,35 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         let current_key = binding.get_current_key();
         let next_key = binding.get_next_key();
 
+        let fec_tupple = FEC_PARAMS.get().unwrap().read().unwrap();
+        let fec_params = fec_tupple.clone();
+
+        // drop the lock
+        drop(fec_tupple);
+
+        // Create encoders objects (This can be put on the loop for dynamic fec_rows and fec_cols changes)
+        let mut row_encoder = match ReedSolomonEncoder::new(
+            num_cols,       // total number of col, which gives the length of row
+            fec_params.0,   // total number of row recovery shards
+            shard_size // shard size in bytes
+        ) {
+            Ok(encoder) => Some(encoder),
+            Err(_) => {
+                None
+            }
+        };
+        
+        let mut col_encoder = match ReedSolomonEncoder::new(
+            num_rows,       // total number of col, which gives the length of row
+            fec_params.1,   // total number of row recovery shards
+            shard_size // shard size in bytes
+        ) {
+            Ok(encoder) => Some(encoder),
+            Err(_) => {
+                None
+            }
+        };
+
         // Iterate over the matrix and create the packets
         for rows in matrix.iter_rows() {
             let mut row: Vec<TransmissionPacket> = Vec::new();
@@ -113,22 +113,20 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                 video_data.signature = signature;
 
                 let mut encryped_payload = encrypt(&video_data.encode_to_vec(), &current_key.key, &current_key.iv).unwrap();
-                // info!("before - {}", encryped_payload.len());
+                
                 // padding the payload to match the shard size
                 padding::pad(&mut encryped_payload, shard_size);
-                // info!("after - {}", encryped_payload.len());
 
                 let mut packet = TransmissionPacket {
                     matrix: matrix_counter,
                     index: matrix_index as i32,
                     rows: num_rows as i32,
                     cols: num_cols as i32,
-                    rows_fec: fec_rows as i32,
-                    cols_fec: fec_cols as i32,
+                    rows_fec: fec_params.0 as i32,
+                    cols_fec: fec_params.1 as i32,
                     payload: encryped_payload,
                     packet_signature: vec![0,255],
                 };
-                info!("({},{}) {:?} - {}", matrix_counter, packet.index, video_data.encode_to_vec()[..4].to_vec(), video_data.encode_to_vec().len());
 
                 let message_hash = sha256(&packet.encode_to_vec());
                 let signature = EcdsaSig::sign(&message_hash, &ec_key).unwrap().to_der().unwrap();
@@ -158,8 +156,8 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                         index: matrix_index,
                         rows: num_rows as i32,
                         cols: num_cols as i32,
-                        rows_fec: fec_rows as i32,
-                        cols_fec: fec_cols as i32,
+                        rows_fec: fec_params.0 as i32,
+                        cols_fec: fec_params.1 as i32,
                         payload: item.to_vec(),
                         packet_signature: vec![0,255],
                     };
@@ -181,8 +179,8 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         if let Some(ref mut col_encoder) = col_encoder {
            
             // Add COL_FEC as empty rows
-            for _ in 0..fec_cols {
-                transmission_matrix.push_row(vec![TransmissionPacket::default(); num_cols + fec_rows]);
+            for _ in 0..fec_params.1 {
+                transmission_matrix.push_row(vec![TransmissionPacket::default(); num_cols + fec_params.0]);
             }
 
             let column_data: Vec<Vec<TransmissionPacket>> = transmission_matrix.iter_cols().map(|col| col.cloned().collect()).collect();
@@ -201,11 +199,11 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
                     let mut packet = TransmissionPacket {
                         matrix: matrix_counter,
-                        index: ((num_rows + item_index) * (num_cols + fec_rows) + col_index) as i32,
+                        index: ((num_rows + item_index) * (num_cols + fec_params.0) + col_index) as i32,
                         rows: num_rows as i32,
                         cols: num_cols as i32,
-                        rows_fec: fec_rows as i32,
-                        cols_fec: fec_cols as i32,
+                        rows_fec: fec_params.0 as i32,
+                        cols_fec: fec_params.1 as i32,
                         payload: item.to_vec(),
                         packet_signature: vec![0,255],
                     };
@@ -220,8 +218,6 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
             }
         }
         
-        info!("{} - {:?}", matrix_counter, &current_key.key[..4].to_vec());
-
         // Loop the matrix col by col and send the data to the client via UDP multicast
         for col in transmission_matrix.iter_cols() {
 

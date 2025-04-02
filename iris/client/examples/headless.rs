@@ -1,8 +1,8 @@
 use std::error::Error;
 use std::net::IpAddr;
 use std::path::PathBuf;
-use std::io::{self, Read, Write};
-use log::{error, info, warn};
+use log::{error, info};
+use std::io;
 use clap::{arg, Command};
 use std::net::ToSocketAddrs;
 
@@ -74,7 +74,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     };
 
-    for item in receiver {
+    for _item in receiver {
         
     }
 

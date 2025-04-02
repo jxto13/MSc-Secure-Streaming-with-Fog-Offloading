@@ -26,4 +26,5 @@ scrape_configs:
     # scheme defaults to 'http'.
 
     static_configs:
-      - targets: ["localhost:9186"]
+      - targets: ["172.22.0.1:9186"]
+      - targets: ["streaming-server:9186"]

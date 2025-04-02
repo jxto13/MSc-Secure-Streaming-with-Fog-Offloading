@@ -1,93 +1,109 @@
+mod network_utils;
+
 #[allow(non_snake_case)]
 pub mod android {
+    use std::net::{SocketAddr, ToSocketAddrs};
     use std::thread;
     
     use android_logger::{self, init_once};
-    use crossbeam_channel::TryRecvError;
     use jni::objects::{JClass, JString};
     use jni::JNIEnv;
     use log::{error, info};
-
+    
     #[no_mangle]
     pub extern "system" fn Java_pt_iris_services_RustService_startService(
         _: JNIEnv,
         _: JClass,
         _: JString,
     ) {
+        // Init the log of android 
         init_once(
             android_logger::Config::default()
-                .with_max_level(log::LevelFilter::Info)
+                .with_max_level(log::LevelFilter::Debug)
                 .with_tag("RustApp"),
         );
 
         // Log that the Rust app is starting
         info!("Rust app is starting...");
 
-        thread::spawn( || {
-            // A token to allow us to identify which event is for the `UdpSocket`.
-            const SERVER: Token = Token(0);
+        use tokio::net::UdpSocket;
+        use std::net::{Ipv4Addr, SocketAddrV4};
+        use tokio::runtime::Runtime;
+        use tokio::io;
 
-            use mio::{Events, Interest, Poll, Token};
-            use mio::net::UdpSocket;
-            use std::io;
+        // thread::spawn(||{
 
-            let addr = "127.0.0.1:0".parse().unwrap();
-            let mut socket = UdpSocket::bind(addr).unwrap();
-
-            // Create a poll instance.
-            let mut poll = Poll::new().unwrap();
-
-            // Register the socket with the poll instance.
-            poll.registry()
-                .register(&mut socket, SERVER, Interest::WRITABLE).unwrap();
-
-            // Create storage for events.
-            let mut events = Events::with_capacity(1024);
-
-            let receiver = iris_client::start(&"192.168.1.252".to_string()).unwrap();
+        //     // Create a new Tokio runtime
+        //     let rt = Runtime::new().unwrap();
             
-            // Start an event loop.
-            loop {
-                // Poll Mio for events, blocking until we get an event.
-                // Poll to check if we have events waiting for us.
-                if let Err(err) = poll.poll(&mut events, None) {
-                    if err.kind() == io::ErrorKind::Interrupted {
-                        continue;
-                    }
-                }
+        //     rt.block_on(async {
+        //         let multicast_addr: Ipv4Addr = "239.255.0.1".parse().expect("Invalid multicast address");
+        //         let port = 9999;
+        //         let local_addr: SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
 
-                // Process each event.
-                for event in events.iter() {
-                    // We can use the token we previously provided to `register` to
-                    // determine for which socket the event is.
-                    match event.token() {
-                        SERVER => {
-                            // Check if there is data to be sent over multicast.
-                            // If there's data available, send it over multicast.
-                            loop {
-                                match receiver.try_recv() {
-                                    Ok(data) => {
-                                        // Send the data over multicast.
-                                        if let Err(e) = socket.send_to(&data, "127.0.0.1:12346".parse().unwrap()) {
-                                            error!("Failed to send data over multicast: {}", e);
-                                        }
-                                    }
-                                    Err(TryRecvError::Empty) => {
-                                        // No message available, continue looping
-                                    }
-                                    Err(TryRecvError::Disconnected) => {
-                                        // Channel is closed, handle the error or break out of the loop.
-                                        return; // Exit the loop if the channel is closed
-                                    }
-                                }
-                            }
-                            
-                        }
-                        // We don't expect any events with tokens other than those we provided.
-                        _ => unreachable!(),
-                    }
-                }
+        //         let socket = UdpSocket::bind(local_addr).await.expect("Failed to bind socket");
+                
+        //         // Join the multicast group
+        //         socket.join_multicast_v4(multicast_addr, Ipv4Addr::UNSPECIFIED).expect("Failed to join multicast group");
+                
+        //         const MAX_DATAGRAM_SIZE: usize = 65_507;
+        //         let mut data = vec![0u8; MAX_DATAGRAM_SIZE];
+
+        //         println!("Listening for multicast UDP packets on {}:{}", multicast_addr, port);
+
+        //         loop {
+        //             let (len, addr) = socket.recv_from(&mut data).await.expect("Failed to receive data");
+        //             info!("Received {} bytes from {}", len, addr);
+        //         }
+        //     })
+        // });
+
+        
+        // fn is_same_subnet(ip1: Ipv4Addr, ip2: Ipv4Addr, netmask: Ipv4Addr) -> bool {
+        //     let ip1_int = u32::from(ip1) & u32::from(netmask);
+        //     let ip2_int = u32::from(ip2) & u32::from(netmask);
+        //     ip1_int == ip2_int
+        // }
+    
+
+        // use pnet::datalink;
+        // use std::net::{IpAddr,Ipv4Addr};
+
+        // // Domain name to resolve
+        // let domain = "stream1.iris.dcc.fc.up.pt";
+
+        // // Use lookup_host to resolve the domain name
+        // let addrs = (domain, 80).to_socket_addrs().unwrap();
+
+        // for addr in addrs {
+        //     if let SocketAddr::V4(v4) = addr {
+        //         let resolved_ip = v4.ip().clone();
+        //         info!("Resolved IP: {}", resolved_ip);
+    
+        //         for interface in datalink::interfaces() {
+        //             for ip_net in &interface.ips {
+        //                 if let IpAddr::V4(ip) = ip_net.ip() {
+        //                     if let IpAddr::V4(netmask) = ip_net.mask() {
+        //                         if is_same_subnet(ip, resolved_ip, netmask) {
+        //                             info!("Interface {} has IPv4 {} on the same subnet as {}", 
+        //                                  interface.name, ip, resolved_ip);
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
+    
+
+        thread::spawn(||{
+            let client = iris_client::start(&"stream1.iris.dcc.fc.up.pt".to_string()).unwrap();
+
+    
+            for item in client {
+                info!("{}",item.len());
             }
+
         });
     }
 }

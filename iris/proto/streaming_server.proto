@@ -82,7 +82,7 @@ service ReportService {
 }
 
 message MatrixReportBitmap {
-    int32 matrix = 1;
+    int32 matrix_index = 1;
     bytes bitmap = 2; // only sends data row and collumn bitmap
 }
 

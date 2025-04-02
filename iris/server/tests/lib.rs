@@ -12,6 +12,651 @@ fn insert_value<T>(matrix: &mut Vec<Vec<T>>, position: usize, matrix_size: usize
 
 #[cfg(test)]
 mod tests {
+    use std::{net::SocketAddr, vec};
+
+    #[test]
+    fn compression_test() {
+        use flate2::write::GzEncoder;
+        use flate2::Compression;
+        use std::io::Write;
+
+        fn compress_data(data: &[u8]) -> Vec<u8> {
+            let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+            encoder.write_all(data).unwrap();
+            encoder.finish().unwrap()
+        }
+
+        fn decompress_data(data: &[u8]) -> Vec<u8> {
+            use flate2::read::GzDecoder;
+            use std::io::Read;
+
+            let mut decoder = GzDecoder::new(data);
+            let mut decompressed_data = Vec::new();
+            decoder.read_to_end(&mut decompressed_data).unwrap();
+            decompressed_data
+        }
+
+        let data = b"Hello, Hello, Hello, Hello, Hello!";
+        println!("Original size: {}", data.len());
+        let compressed = compress_data(data);
+        println!("Compressed size: {}", compressed.len());
+        let decompressed = decompress_data(&compressed);
+        println!("Decompressed size: {}", decompressed.len());
+        assert_eq!(data.to_vec(), decompressed);
+        
+
+    }
+    
+    #[test]
+    fn test_xor_with_padding() {
+        fn xor_with_padding(vec1: Vec<u8>, vec2: Vec<u8>) -> Vec<u8> {
+            let max_len = vec1.len().max(vec2.len());
+            let mut result = Vec::with_capacity(max_len);
+        
+            for i in 0..max_len {
+                let byte1 = *vec1.get(i).unwrap_or(&0);
+                let byte2 = *vec2.get(i).unwrap_or(&0);
+                result.push(byte1 ^ byte2);
+            }
+        
+            result
+        }
+        
+        fn depad_vector(vec: Vec<u8>) -> Vec<u8> {
+            let mut end = vec.len();
+            while end > 0 && vec[end - 1] == 0 {
+                end -= 1;
+            }
+            vec[..end].to_vec()
+        }
+
+        let vec1 = vec![1, 2, 3];
+        let vec2 = vec![4, 5];
+        let expected_xor_result = vec![5, 7, 3];
+
+        let xor_result = xor_with_padding(vec1.clone(), vec2.clone());
+        assert_eq!(xor_result, expected_xor_result);
+
+        let recovered_vec1 = xor_with_padding(xor_result.clone(), vec2.clone());
+        let recovered_vec2 = xor_with_padding(xor_result.clone(), vec1.clone());
+
+        println!("{:?}", recovered_vec1);
+        println!("{:?}", recovered_vec2);
+        assert_eq!(depad_vector(recovered_vec1), vec1);
+        assert_eq!(depad_vector(recovered_vec2), vec2);
+    }
+        
+    #[test]
+    fn test_nc_3() {
+        use std::collections::{HashSet, HashMap};
+        use grid::Grid;
+
+        // Represents a retransmission strategy
+        #[derive(Debug)]
+        enum Transmission {
+            Unicast(usize, usize),            // (Receiver, Packet)
+            Multicast(usize),                 // (Packet)
+            XorMulticast(usize, usize),       // (Packet1, Packet2)
+        }
+
+        // Function to compute the best retransmission strategy
+        fn retransmit(
+            loss_matrix: Grid<u8>, // Loss matrix: 1 = packet missing, 0 = received
+            multicast_cost: f64,
+            unicast_cost: f64,
+        ) -> (Vec<Transmission>, Grid<u8>) {
+            let num_receivers = loss_matrix.rows();
+            let num_packets = loss_matrix.cols();
+            let mut best_transmissions: Vec<Transmission> = Vec::new();
+
+            // Precompute receiver sets for each packet
+            let mut receiver_sets: Vec<HashSet<usize>> = Vec::new();
+            for packet in 0..num_packets {
+                let mut receivers = HashSet::new();
+                for receiver in 0..num_receivers {
+                    if *loss_matrix.get(receiver, packet).unwrap() == 1 {
+                        receivers.insert(receiver);
+                    }
+                }
+                receiver_sets.push(receivers);
+            }
+
+            // Track covered receivers and which packets they've recovered
+            let mut uncovered: Vec<HashSet<usize>> = receiver_sets.clone();
+            let mut updated_loss_matrix = loss_matrix.clone(); // To track recovered packets
+            
+            // Calculate miss counts and sort packets by most missed
+            let mut packets_with_miss_counts: Vec<(usize, usize)> = receiver_sets
+                .iter()
+                .enumerate()
+                .map(|(packet, receivers)| (packet, receivers.len())) // (packet_index, miss_count)
+                .collect();
+
+            packets_with_miss_counts.sort_by(|a, b| b.1.cmp(&a.1)); // Sort by miss_count descending
+
+            println!("Packets with miss counts: {:?}", packets_with_miss_counts);
+            
+             // Process packets in priority order
+            for (packet_index, _miss_count) in packets_with_miss_counts {
+                // Skip if all receivers have the packet
+                if receiver_sets[packet_index].is_empty() {
+                    continue;
+                }
+
+                // Unicast cost for this packet
+                let unicast_cost_i = receiver_sets[packet_index].len() as f64 * unicast_cost;
+
+                // Multicast cost for this packet
+                let multicast_cost_i = multicast_cost;
+
+                // Evaluate XOR pairing
+                let mut best_pair_cost = f64::MAX;
+                let mut best_pair: Option<(usize, usize)> = None;
+                let mut best_pair_union: HashSet<usize> = HashSet::new();
+
+                for j in packet_index + 1..num_packets {
+                    // Compute union of receivers missing P_i and P_j
+                    let union_set: HashSet<_> = receiver_sets[packet_index].union(&receiver_sets[j]).cloned().collect();
+                    let xor_set: HashSet<_> = receiver_sets[packet_index].symmetric_difference(&receiver_sets[j]).cloned().collect();
+
+                    // Cost of multicasting XOR pair
+                    let pair_cost = multicast_cost;
+
+                    if pair_cost < best_pair_cost {
+                        best_pair_cost = pair_cost;
+                        best_pair = Some((packet_index, j));
+                        best_pair_union = union_set;
+                    }
+                }
+
+                // Decide the best strategy
+                if unicast_cost_i < multicast_cost_i && unicast_cost_i < best_pair_cost {
+                    // Unicast
+                    for &receiver in &receiver_sets[packet_index] {
+                        best_transmissions.push(Transmission::Unicast(receiver, packet_index));
+                        uncovered[receiver].remove(&packet_index);
+                        *updated_loss_matrix.get_mut(receiver, packet_index).unwrap() = 1;
+                    }
+                } else if multicast_cost_i < best_pair_cost {
+                    // Multicast single packet
+                    best_transmissions.push(Transmission::Multicast(packet_index));
+                    for &receiver in &receiver_sets[packet_index] {
+                        uncovered[receiver].remove(&packet_index);
+                        *updated_loss_matrix.get_mut(receiver, packet_index).unwrap() = 1;
+                    }
+                } else if let Some((packet1, packet2)) = best_pair {
+                    // Multicast XOR pair
+                    best_transmissions.push(Transmission::XorMulticast(packet1, packet2));
+                    for &receiver in &best_pair_union {
+                        if receiver_sets[packet1].contains(&receiver) || receiver_sets[packet2].contains(&receiver) {
+                            uncovered[receiver].remove(&packet1);
+                            uncovered[receiver].remove(&packet2);
+                            *updated_loss_matrix.get_mut(receiver, packet1).unwrap() = 1;
+                            *updated_loss_matrix.get_mut(receiver, packet2).unwrap() = 1;
+                        }
+                    }
+                }
+
+                // Debug: Print intermediate states
+                println!("After processing packet {}: ", packet_index);
+                println!("Best Transmissions: {:?}", best_transmissions);
+                println!("Updated Loss Matrix: {:?}", updated_loss_matrix);
+                println!("Uncovered: {:?}", uncovered);
+            }
+
+            // Handle any remaining uncovered packets with unicast or multicast
+            for receiver in 0..num_receivers {
+                for &packet in &uncovered[receiver] {
+                    best_transmissions.push(Transmission::Unicast(receiver, packet));
+                    *updated_loss_matrix.get_mut(receiver, packet).unwrap() = 1;
+                }
+            }
+
+            (best_transmissions, updated_loss_matrix)
+        }
+
+        fn main() {
+            // Example loss matrix: rows = receivers, columns = packets
+            let loss_matrix = Grid::from_vec(vec![
+                vec![1, 0, 0, 1], // Receiver 1
+                vec![1, 1, 0, 1], // Receiver 2
+                vec![1, 0, 0, 1], // Receiver 3
+                vec![1, 1, 0, 0] // Receiver 4
+            ].concat(), 4);
+
+            // Bandwidth costs
+            let multicast_cost = 1.0;
+            let unicast_cost = 1.5;
+
+            // Compute the best retransmissions and the final loss matrix
+            let (transmissions, final_loss_matrix) = retransmit(loss_matrix, multicast_cost, unicast_cost);
+
+            // Output the result
+            println!("Best Transmissions:");
+            for transmission in transmissions {
+                println!("{:?}", transmission);
+            }
+
+            println!("\nFinal Loss Matrix:");
+            for row in 0..final_loss_matrix.rows() {
+                let mut row_vec = Vec::new();
+                for col in 0..final_loss_matrix.cols() {
+                    row_vec.push(*final_loss_matrix.get(row, col).unwrap());
+                }
+                println!("{:?}", row_vec);
+            }
+        }
+        
+        main();
+    }
+
+    #[test]
+    fn test_nc_2() {
+        use std::collections::{HashSet, HashMap};
+
+        // Represents a retransmission strategy
+        #[derive(Debug)]
+        enum Transmission {
+            Unicast(usize, usize),            // (Receiver, Packet)
+            Multicast(usize),                 // (Packet)
+            XorMulticast(usize, usize),       // (Packet1, Packet2)
+        }
+        
+        // Function to compute the best retransmission strategy
+        fn retransmit(
+            loss_matrix: Vec<Vec<u8>>, // Loss matrix: 1 = packet missing, 0 = received
+            multicast_cost: f64,
+            unicast_cost: f64,
+        ) -> (Vec<Transmission>, Vec<Vec<u8>>) {
+            let num_receivers = loss_matrix.len();
+            let num_packets = loss_matrix[0].len();
+            let mut best_transmissions: Vec<Transmission> = Vec::new();
+        
+            // Precompute receiver sets for each packet
+            let mut receiver_sets: Vec<HashSet<usize>> = Vec::new();
+            for packet in 0..num_packets {
+                let mut receivers = HashSet::new();
+                for (receiver, row) in loss_matrix.iter().enumerate() {
+                    if row[packet] == 1 {
+                        receivers.insert(receiver);
+                    }
+                }
+                receiver_sets.push(receivers);
+            }
+        
+            // Track covered receivers and which packets they've recovered
+            let mut uncovered: Vec<HashSet<usize>> = receiver_sets.clone();
+            let mut updated_loss_matrix = loss_matrix.clone(); // To track recovered packets
+        
+            for i in 0..num_packets {
+                // Skip if all receivers have the packet
+                if receiver_sets[i].is_empty() {
+                    continue;
+                }
+        
+                // Unicast cost for this packet
+                let unicast_cost_i = receiver_sets[i].len() as f64 * unicast_cost;
+        
+                // Multicast cost for this packet
+                let multicast_cost_i = multicast_cost;
+        
+                // Evaluate XOR pairing
+                let mut best_pair_cost = f64::MAX;
+                let mut best_pair: Option<(usize, usize)> = None;
+                let mut best_pair_union: HashSet<usize> = HashSet::new();
+        
+                for j in i + 1..num_packets {
+                    // Compute union of receivers missing P_i and P_j
+                    let union_set: HashSet<_> = receiver_sets[i].union(&receiver_sets[j]).cloned().collect();
+                    let xor_set: HashSet<_> = receiver_sets[i].symmetric_difference(&receiver_sets[j]).cloned().collect();
+        
+                    // Cost of multicasting XOR pair
+                    let pair_cost = multicast_cost;
+        
+                    if pair_cost < best_pair_cost {
+                        best_pair_cost = pair_cost;
+                        best_pair = Some((i, j));
+                        best_pair_union = union_set;
+                    }
+                }
+        
+                // Decide the best strategy
+                if unicast_cost_i < multicast_cost_i && unicast_cost_i < best_pair_cost {
+                    // Unicast
+                    for &receiver in &receiver_sets[i] {
+                        best_transmissions.push(Transmission::Unicast(receiver, i));
+                        uncovered[receiver].remove(&i);
+                        updated_loss_matrix[receiver][i] = 1;
+                    }
+                } else if multicast_cost_i < best_pair_cost {
+                    // Multicast single packet
+                    best_transmissions.push(Transmission::Multicast(i));
+                    for &receiver in &receiver_sets[i] {
+                        uncovered[receiver].remove(&i);
+                        updated_loss_matrix[receiver][i] = 1;
+                    }
+                } else if let Some((packet1, packet2)) = best_pair {
+                    // Multicast XOR pair
+                    best_transmissions.push(Transmission::XorMulticast(packet1, packet2));
+                    for &receiver in &best_pair_union {
+                        if receiver_sets[packet1].contains(&receiver) || receiver_sets[packet2].contains(&receiver) {
+                            uncovered[receiver].remove(&packet1);
+                            uncovered[receiver].remove(&packet2);
+                            updated_loss_matrix[receiver][packet1] = 1;
+                            updated_loss_matrix[receiver][packet2] = 1;
+                        }
+                    }
+                }
+        
+                // Debug: Print intermediate states
+                println!("After processing packet {}: ", i);
+                println!("Best Transmissions: {:?}", best_transmissions);
+                println!("Updated Loss Matrix: {:?}", updated_loss_matrix);
+                println!("Uncovered: {:?}", uncovered);
+            }
+        
+            // Handle any remaining uncovered packets with unicast or multicast
+            for receiver in 0..num_receivers {
+                for &packet in &uncovered[receiver] {
+                    best_transmissions.push(Transmission::Unicast(receiver, packet));
+                    updated_loss_matrix[receiver][packet] = 1;
+                }
+            }
+        
+            (best_transmissions, updated_loss_matrix)
+        }
+        
+        fn main() {
+            // Example loss matrix: rows = receivers, columns = packets
+            let loss_matrix = vec![
+                vec![1, 0, 0, 1, 0], // Receiver 1
+                vec![1, 0, 1, 0, 1], // Receiver 2
+                vec![0, 0, 1, 0, 0], // Receiver 3
+                vec![1, 0, 0, 1, 0], // Receiver 4
+                vec![0, 0, 0, 0, 1], // Receiver 5
+            ];
+        
+            // Bandwidth costs
+            let multicast_cost = 1.0;
+            let unicast_cost = 1.5;
+        
+            // Compute the best retransmissions and the final loss matrix
+            let (transmissions, final_loss_matrix) = retransmit(loss_matrix, multicast_cost, unicast_cost);
+        
+            // Output the result
+            println!("Best Transmissions:");
+            for transmission in transmissions {
+                println!("{:?}", transmission);
+            }
+        
+            println!("\nFinal Loss Matrix:");
+            for row in final_loss_matrix {
+                println!("{:?}", row);
+            }
+        }
+        
+        main();
+    }
+
+    #[test]
+    fn test_nc() {
+        use std::collections::{HashSet, HashMap};
+
+        // Represents a retransmission strategy
+        #[derive(Debug)]
+        enum Transmission {
+            Unicast(usize, usize),            // (Receiver, Packet)
+            Multicast(usize),                 // (Packet)
+            XorMulticast(usize, usize),       // (Packet1, Packet2)
+        }
+        
+        // Function to compute the best retransmission strategy
+        fn retransmit(
+            loss_matrix: Vec<Vec<u8>>, // Loss matrix: 1 = packet missing, 0 = received
+            multicast_cost: f64,
+            unicast_cost: f64,
+        ) -> (Vec<Transmission>, Vec<Vec<u8>>) {
+            let num_receivers = loss_matrix.len();
+            let num_packets = loss_matrix[0].len();
+            let mut best_transmissions: Vec<Transmission> = Vec::new();
+        
+            // Precompute receiver sets for each packet
+            let mut receiver_sets: Vec<HashSet<usize>> = Vec::new();
+            for packet in 0..num_packets {
+                let mut receivers = HashSet::new();
+                for (receiver, row) in loss_matrix.iter().enumerate() {
+                    if row[packet] == 1 {
+                        receivers.insert(receiver);
+                    }
+                }
+                receiver_sets.push(receivers);
+            }
+        
+            // Track covered receivers and which packets they've recovered
+            let mut uncovered: Vec<HashSet<usize>> = receiver_sets.clone();
+            let mut updated_loss_matrix = loss_matrix.clone(); // To track recovered packets
+        
+            for i in 0..num_packets {
+                // Skip if all receivers have the packet
+                if receiver_sets[i].is_empty() {
+                    continue;
+                }
+        
+                // Unicast cost for this packet
+                let unicast_cost_i = receiver_sets[i].len() as f64 * unicast_cost;
+        
+                // Multicast cost for this packet
+                let multicast_cost_i = multicast_cost;
+        
+                // Evaluate XOR pairing
+                let mut best_pair_cost = f64::MAX;
+                let mut best_pair: Option<(usize, usize)> = None;
+                let mut best_pair_union: HashSet<usize> = HashSet::new();
+        
+                for j in i + 1..num_packets {
+                    // Compute union of receivers missing P_i and P_j
+                    let union_set: HashSet<_> = receiver_sets[i].union(&receiver_sets[j]).cloned().collect();
+                    let xor_set: HashSet<_> = receiver_sets[i].symmetric_difference(&receiver_sets[j]).cloned().collect();
+        
+                    // Cost of multicasting XOR pair
+                    let pair_cost = multicast_cost;
+        
+                    if pair_cost < best_pair_cost {
+                        best_pair_cost = pair_cost;
+                        best_pair = Some((i, j));
+                        best_pair_union = union_set;
+                    }
+                }
+        
+                // Decide the best strategy
+                if unicast_cost_i < multicast_cost_i && unicast_cost_i < best_pair_cost {
+                    // Unicast
+                    for &receiver in &receiver_sets[i] {
+                        best_transmissions.push(Transmission::Unicast(receiver, i));
+                        uncovered[receiver].remove(&i);
+                        updated_loss_matrix[receiver][i] = 1;
+                    }
+                } else if multicast_cost_i < best_pair_cost {
+                    // Multicast single packet
+                    best_transmissions.push(Transmission::Multicast(i));
+                    for &receiver in &receiver_sets[i] {
+                        uncovered[receiver].remove(&i);
+                        updated_loss_matrix[receiver][i] = 1;
+                    }
+                } else if let Some((packet1, packet2)) = best_pair {
+                    // Multicast XOR pair
+                    best_transmissions.push(Transmission::XorMulticast(packet1, packet2));
+                    for &receiver in &best_pair_union {
+                        if receiver_sets[packet1].contains(&receiver) || receiver_sets[packet2].contains(&receiver) {
+                            uncovered[receiver].remove(&packet1);
+                            uncovered[receiver].remove(&packet2);
+                            updated_loss_matrix[receiver][packet1] = 1;
+                            updated_loss_matrix[receiver][packet2] = 1;
+                        }
+                    }
+                }
+            }
+        
+            // Handle any remaining uncovered packets with unicast or multicast
+            for receiver in 0..num_receivers {
+                for &packet in &uncovered[receiver] {
+                    best_transmissions.push(Transmission::Unicast(receiver, packet));
+                    updated_loss_matrix[receiver][packet] = 1;
+                }
+            }
+        
+            (best_transmissions, updated_loss_matrix)
+        }
+        
+        fn main() {
+            // Example loss matrix: rows = receivers, columns = packets
+            let loss_matrix = vec![
+                vec![1, 0, 0, 1, 0], // Receiver 1
+                vec![1, 0, 1, 0, 1], // Receiver 2
+                vec![0, 0, 1, 0, 0], // Receiver 3
+                vec![1, 0, 0, 1, 0], // Receiver 4
+                vec![0, 0, 0, 0, 1], // Receiver 5
+            ];
+        
+            // Bandwidth costs
+            let multicast_cost = 1.0;
+            let unicast_cost = 1.5;
+        
+            // Compute the best retransmissions and the final loss matrix
+            let (transmissions, final_loss_matrix) = retransmit(loss_matrix, multicast_cost, unicast_cost);
+        
+            // Output the result
+            println!("Best Transmissions:");
+            for transmission in transmissions {
+                println!("{:?}", transmission);
+            }
+        
+            println!("\nFinal Loss Matrix:");
+            for row in final_loss_matrix {
+                println!("{:?}", row);
+            }
+        }
+        
+        main();
+    }
+
+    #[test]
+    fn test_mio_unicast() {
+        // You can run this example from the root of the mio repo:
+        // cargo run --example udp_server --features="os-poll net"
+        use log::warn;
+        use mio::{Events, Interest, Poll, Token};
+        use std::io;
+
+        // A token to allow us to identify which event is for the `UdpSocket`.
+        const UDP_SOCKET: Token = Token(0);
+
+        fn server(rx: crossbeam_channel::Receiver<(Vec<u8>,SocketAddr)>) -> io::Result<()> {
+            use mio::net::UdpSocket;
+
+            env_logger::init();
+
+            // Create a poll instance.
+            let mut poll = Poll::new()?;
+            // Create storage for events. Since we will only register a single socket, a
+            // capacity of 1 will do.
+            let mut events = Events::with_capacity(1);
+
+            // Setup the UDP socket.
+            let addr = "127.0.0.1:9000".parse().unwrap();
+
+            let mut socket = UdpSocket::bind(addr)?;
+
+            // Register our socket with the token defined above and an interest in being
+            // `READABLE`.
+            poll.registry().register(&mut socket, UDP_SOCKET, Interest::WRITABLE)?;
+
+            println!("You can connect to the server using `nc`:");
+            println!(" $ nc -u 127.0.0.1 9000");
+            println!("Anything you type will be echoed back to you.");
+
+            // Initialize a buffer for the UDP packet. We use the maximum size of a UDP
+            // packet, which is the maximum value of 16 a bit integer.
+            let mut buf = [0; 1 << 16];
+
+            // Our event loop.
+            loop {
+                // Poll to check if we have events waiting for us.
+                if let Err(err) = poll.poll(&mut events, None) {
+                    if err.kind() == io::ErrorKind::Interrupted {
+                        continue;
+                    }
+                    return Err(err);
+                }
+
+                // Process each event.
+                for event in events.iter() {
+                    // Validate the token we registered our socket with,
+                    // in this example it will only ever be one but we
+                    // make sure it's valid none the less.
+                    match event.token() {
+                        UDP_SOCKET => {
+                            let message  =rx.recv().unwrap();
+
+                            socket.send_to(&message.0, message.1)?;
+                        },
+                        _ => {
+                            // This should never happen as we only registered our
+                            // `UdpSocket` using the `UDP_SOCKET` token, but if it ever
+                            // does we'll log it.
+                            warn!("Got event for unexpected token: {:?}", event);
+                        }
+                    }
+                }
+            }
+        }
+
+        // Create a channel for sending messages to clients
+        let (tx, rx) = crossbeam_channel::unbounded();
+
+        let messages = vec![("Hello, world!", SocketAddr::from(([127, 0, 0, 1], 9001)))];
+
+        let handler = std::thread::spawn(move || {
+            server(rx).unwrap();
+        });
+
+        tx.send((messages[0].0.as_bytes().to_vec(),messages[0].1)).unwrap();
+
+        handler.join().unwrap();
+        
+        
+
+
+    }
+
+    #[test]
+    fn test_value() {
+        fn find_zero_indices(vec: Vec<u8>) -> Vec<usize> {
+            vec.iter()
+                .enumerate()
+                .filter_map(|(index, &value)| if value == 0 { Some(index) } else { None })
+                .collect()
+        }
+        
+        fn apply_to_tuples(vec_of_tuples: Vec<(i32, Vec<u8>)>) -> Vec<(i32, Vec<usize>)> {
+            vec_of_tuples
+                .into_iter()
+                .map(|(num, vec)| (num, find_zero_indices(vec)))
+                .collect()
+        }
+
+        let reports =[
+            (1, vec![1, 1, 1, 0, 0, 0]),
+            (2, vec![0, 0, 0, 0, 0, 0]),
+            (3, vec![1, 1, 1, 1, 1, 1]),
+        ];
+
+        let result = apply_to_tuples(reports.to_vec());
+
+        println!("{:?}", result);
+
+
+    }
 
     #[test]
     fn test_encrpt() {

@@ -6,8 +6,11 @@ use serde::Deserialize;
 #[derive(Deserialize, Debug)]
 pub struct Config {
     pub ca: CA,
+    pub server_cert: ServerCert,
     pub grpc: GRPC,
+    pub unicast: Unicast,
     pub multicast: Multicast,
+    pub retransmission: Retransmission,
     pub prometheus: Prometheus,
     pub settings: Settings
 }
@@ -21,13 +24,26 @@ pub struct CA {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct ServerCert {
+    pub c: String,
+    pub st: String,
+    pub o: String,
+    pub cn: String,
+}
+
+#[derive(Deserialize, Debug)]
 pub struct GRPC {
     pub port: u16,
 }
 
 #[derive(Deserialize, Debug)]
+pub struct Unicast {
+    pub port: u16
+}
+
+#[derive(Deserialize, Debug)]
 pub struct Multicast {
-    // Strean Config
+    // Stream Config
     pub data_source: String,
     pub ip_source: String,
     // Matrix Config
@@ -47,8 +63,15 @@ pub struct Multicast {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct Retransmission {
+    pub wifi_multicast: bool,
+    pub wifi_unicast: bool,
+    pub interval: usize
+}
+
+#[derive(Deserialize, Debug)]
 pub struct Prometheus {
-    pub ip: String
+    pub port: usize
 }
 
 #[derive(Deserialize, Debug)]

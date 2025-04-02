@@ -5,6 +5,7 @@ use openssl::error::ErrorStack;
 use openssl::hash::MessageDigest;
 use openssl::pkey::{PKey, PKeyRef, Private};
 use openssl::rsa::Rsa;
+use openssl::stack::Stack;
 use openssl::x509::extension::{
     AuthorityKeyIdentifier, BasicConstraints, KeyUsage, SubjectAlternativeName,
     SubjectKeyIdentifier,
@@ -71,13 +72,16 @@ pub fn mk_request(key_pair: &PKey<Private>) -> Result<X509Req, ErrorStack> {
     let mut req_builder = X509ReqBuilder::new()?;
     req_builder.set_pubkey(key_pair)?;
 
+    let config = &CONFIG.get().unwrap().server_cert;
+
     let mut x509_name = X509NameBuilder::new()?;
-    x509_name.append_entry_by_text("C", "US")?;
-    x509_name.append_entry_by_text("ST", "TX")?;
-    x509_name.append_entry_by_text("O", "Some organization")?;
-    x509_name.append_entry_by_text("CN", "www.example.com")?;
+    x509_name.append_entry_by_text("C", &config.c)?;
+    x509_name.append_entry_by_text("ST", &config.st)?;
+    x509_name.append_entry_by_text("O", &config.o)?;
+    x509_name.append_entry_by_text("CN", &config.cn)?;
     let x509_name = x509_name.build();
     req_builder.set_subject_name(&x509_name)?;
+
 
     req_builder.sign(key_pair, MessageDigest::sha256())?;
     let req = req_builder.build();
@@ -113,8 +117,7 @@ pub fn sign_request_with_ca(req: &X509Req, ca_cert: &X509Ref, ca_key_pair: &PKey
             .build()?,
     )?;
 
-    let subject_key_identifier =
-        SubjectKeyIdentifier::new().build(&cert_builder.x509v3_context(Some(ca_cert), None))?;
+    let subject_key_identifier = SubjectKeyIdentifier::new().build(&cert_builder.x509v3_context(Some(ca_cert), None))?;
     cert_builder.append_extension(subject_key_identifier)?;
 
     let auth_key_identifier = AuthorityKeyIdentifier::new()
@@ -124,8 +127,7 @@ pub fn sign_request_with_ca(req: &X509Req, ca_cert: &X509Ref, ca_key_pair: &PKey
     cert_builder.append_extension(auth_key_identifier)?;
 
     let subject_alt_name = SubjectAlternativeName::new()
-        .dns("*.example.com")
-        .dns("hello.com")
+        .dns(&CONFIG.get().unwrap().server_cert.cn)
         .build(&cert_builder.x509v3_context(Some(ca_cert), None))?;
     cert_builder.append_extension(subject_alt_name)?;
 
@@ -134,67 +136,6 @@ pub fn sign_request_with_ca(req: &X509Req, ca_cert: &X509Ref, ca_key_pair: &PKey
 
     Ok(cert)
 }
-
-// Make a certificate and private key signed by the given CA cert and private key
-#[allow(dead_code)]
-pub fn mk_ca_signed_cert(
-    ca_cert: &X509Ref,
-    ca_key_pair: &PKeyRef<Private>,
-) -> Result<(X509, PKey<Private>), ErrorStack> {
-    let rsa = Rsa::generate(2048)?;
-    let key_pair: PKey<Private> = PKey::from_rsa(rsa)?;
-
-    let req = mk_request(&key_pair)?;
-
-    let mut cert_builder = X509::builder()?;
-    cert_builder.set_version(2)?;
-    let serial_number = {
-        let mut serial = BigNum::new()?;
-        serial.rand(159, MsbOption::MAYBE_ZERO, false)?;
-        serial.to_asn1_integer()?
-    };
-    cert_builder.set_serial_number(&serial_number)?;
-    cert_builder.set_subject_name(req.subject_name())?;
-    cert_builder.set_issuer_name(ca_cert.subject_name())?;
-    cert_builder.set_pubkey(&key_pair)?;
-    let not_before = Asn1Time::days_from_now(0)?;
-    cert_builder.set_not_before(&not_before)?;
-    let not_after = Asn1Time::days_from_now(365)?;
-    cert_builder.set_not_after(&not_after)?;
-
-    cert_builder.append_extension(BasicConstraints::new().build()?)?;
-
-    cert_builder.append_extension(
-        KeyUsage::new()
-            .critical()
-            .non_repudiation()
-            .digital_signature()
-            .key_encipherment()
-            .build()?,
-    )?;
-
-    let subject_key_identifier =
-        SubjectKeyIdentifier::new().build(&cert_builder.x509v3_context(Some(ca_cert), None))?;
-    cert_builder.append_extension(subject_key_identifier)?;
-
-    let auth_key_identifier = AuthorityKeyIdentifier::new()
-        .keyid(false)
-        .issuer(false)
-        .build(&cert_builder.x509v3_context(Some(ca_cert), None))?;
-    cert_builder.append_extension(auth_key_identifier)?;
-
-    let subject_alt_name = SubjectAlternativeName::new()
-        .dns("*.example.com")
-        .dns("hello.com")
-        .build(&cert_builder.x509v3_context(Some(ca_cert), None))?;
-    cert_builder.append_extension(subject_alt_name)?;
-
-    cert_builder.sign(ca_key_pair, MessageDigest::sha256())?;
-    let cert = cert_builder.build();
-
-    Ok((cert, key_pair))
-}
-
 
 pub fn save_certificate_to_file(cert: &X509, file_path: &str) -> io::Result<()> {
     let pem = cert.to_pem()?;

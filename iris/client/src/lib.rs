@@ -135,8 +135,8 @@ pub fn start(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error
                             let timestamp_str = stamp_response.into_inner().timestamp;
                             let mut server_time = DateTime::parse_from_rfc3339(&timestamp_str).unwrap();
                             
-                            // Add half of the RTT to the server timestamp
-                            server_time = server_time + chrono::Duration::from_std(rtt / 2).unwrap();
+                            // Substract half of the RTT to the server timestamp to compensate for the delay
+                            server_time = server_time - chrono::Duration::from_std(rtt / 2).unwrap();
                             
                             TIME.set(Mutex::new(server_time.into())).unwrap();
                         }
@@ -168,9 +168,9 @@ pub fn start(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error
 
     // Creates new thread for multicast receiver
     let multicast_receiver_handler = std::thread::spawn(move || {
-        info!("Starting multicast receiver on address 224.0.0.2:12345.");
+        info!("Starting multicast receiver on address 239.255.0.1:12345.");
         receiver::multicast_receiver::server(
-            "224.0.0.2".to_string(),
+            "239.255.0.1".to_string(),
             "12345".to_string(),
             multicast_receiver_sender,
         ).unwrap();
@@ -178,12 +178,10 @@ pub fn start(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error
 
     // Creates new thread for multicast receiver
     let unicast_receiver_handler = std::thread::spawn(move || {
-        info!("Starting unicast receiver on address 224.0.0.2:12345.");
-        // receiver::unicast_receiver::start(
-        //     "224.0.0.2".to_string(),
-        //     "12345".to_string(),
-        //     multicast_receiver_sender,
-        // ).unwrap();
+        info!("Starting unicast receiver on address 0.0.0.0:50052.");
+        receiver::unicast_receiver::server(
+            unicast_receiver_sender,
+        ).unwrap();
     });
 
     // Dont need handler because when the listener goes out of scope the threads continue execution (infinite loops inside), i want the decoder to also go out of scope
@@ -199,7 +197,6 @@ pub fn start(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error
         }
     });
 
-
     // Spawn Client Report Thread
     thread::spawn(move || {
         // Wait for the listener multicast with a barrier before starting the decoder
@@ -209,21 +206,23 @@ pub fn start(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error
     // Spawn a separate thread for joining and returning the sender
     thread::spawn(move || {
         // Join all the threads to ensure they complete before returning
-        multicast_receiver_handler.join().expect("listener_handler panicked");
-        decoder_handler.join().expect("decoder_handler panicked");
+        multicast_receiver_handler.join().expect("multicast_handler panicked");
         unicast_receiver_handler.join().expect("unicast_handler panicked");
+        decoder_handler.join().expect("decoder_handler panicked");
     });
 
     Ok(decoded_data_receiver)
 }
 
 async fn create_channel(ip: &String) -> Result<Channel, Box<dyn std::error::Error>> {
+
     // Configure the TLS settings for the channel
     let tls_config = ClientTlsConfig::new()
         .ca_certificate(Certificate::from_pem(&CA_PUBLIC_CERTIFICATE))
-        .domain_name("www.example.com");
+        .domain_name(ip);
 
     // Create the channel with the TLS configuration using the provided IP address
+    // let channel_url = format!("https://{}:50051", "192.168.1.199");
     let channel_url = format!("https://{}:50051", ip);
     
     // Use Channel::builder instead of Channel::from_static
