@@ -11,7 +11,6 @@ use openssl::ecdsa::EcdsaSig;
 
 use reed_solomon_16::ReedSolomonEncoder;
 use grid::Grid as Matrix;
-use log::info;
 
 
 // This is running inside a separate task
@@ -21,9 +20,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     
     let num_rows: usize = config.row;
     let num_cols: usize = config.col;
-    let fec_rows: usize = config.row_fec;
-    let fec_cols: usize = config.col_fec;
-    
+
     let shard_size: usize = config.shard_size;
     
     assert!(num_rows > 0);

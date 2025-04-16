@@ -26,7 +26,7 @@ impl WiFiUnicast {
         }
     }
 
-    pub fn server(&mut self, rx: crossbeam_channel::Receiver<(Vec<u8>,SocketAddr)>) -> io::Result<()> {
+    pub fn server(&mut self, rx: crossbeam_channel::Receiver<(Vec<u8>, IpAddr)>) -> io::Result<()> {
 
         // Create a poll instance.
         let mut poll = Poll::new()?;
@@ -42,6 +42,7 @@ impl WiFiUnicast {
         // Register our socket with the token defined above and an interest in being `WRITABLE`.
         poll.registry().register(&mut socket, UDP_SOCKET, Interest::WRITABLE)?;
 
+        let port = CONFIG.get().unwrap().unicast.port;
         // Our event loop.
         loop {
             // Poll to check if we have events waiting for us.
@@ -59,8 +60,18 @@ impl WiFiUnicast {
                 // make sure it's valid none the less.
                 match event.token() {
                     UDP_SOCKET => {
-                        let message = rx.recv().unwrap();
-                        socket.send_to(&message.0, message.1)?;
+                        
+                        // loop {
+                        //     let message = rx.recv();
+
+                        //     if message.is_ok(){
+                        //         // If we have a message, send it to the socket.
+                        //         let message = message.unwrap();
+                        //         let client = SocketAddr::new(message.1, port);
+                        //         socket.send_to(&message.0, client)?;
+                        //         break;
+                        //     }
+                        // }
                     },
                     _ => {
                         // This should never happen as we only registered our

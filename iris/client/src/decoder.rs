@@ -317,6 +317,21 @@ fn process_packet(buffer: &mut VecDeque<MatrixTracker>, packet: TransmissionPack
     }
 }
 
+/// Process a retransmission packet and check if it belongs to a matrix in the buffer.
+fn process_retransmission_packet(buffer: &mut VecDeque<MatrixTracker>, packet: TransmissionPacket) {
+
+    // Loop through the buffer to find the matrix tracker that matches the packet's matrix index
+    for tracker in buffer.iter_mut(){
+        if packet.matrix == tracker.matrix_index {
+            // log::debug!("Matrix index: {} - Packet index: {}", tracker.matrix_index, packet.index);
+            log::debug!("tracker before adding packet: {:?}", tracker.bitmap);
+            tracker.add_packet(&packet);
+            log::debug!("tracker after adding packet: {:?}", tracker.bitmap);
+        } 
+    }
+    
+}
+
 /// Check if the key rotation is necessary and rotate the key if necessary. Only called when the tracker is created.
 fn check_key_rotation(matrix: &mut MatrixTracker, packet: &TransmissionPacket, current_key: &mut SessionKey, next_key: &mut Option<SessionKey>) {
     // Get the session config
@@ -423,46 +438,53 @@ pub fn start(
     let mut report_timer = now;
     let mut flush_buffer_timer = now;
 
+    let mut received_unicast_packets = Vec::new();
+
     // Main loop to receive all packets from receiving threads
     loop {
 
         
-        {   
-            // Calculate the elapsed time since the last report
-            let elapsed = report_timer.elapsed();
+        // {   
+        //     // Calculate the elapsed time since the last report
+        //     let elapsed = report_timer.elapsed();
 
-            // If 100 milliseconds have passed, send a report
-            if elapsed >= std::time::Duration::from_millis(100) {
+        //     // If 100 milliseconds have passed, send a report
+        //     if elapsed >= std::time::Duration::from_millis(200) {
 
-                let mut bitmaps = Vec::new();
+        //         let mut bitmaps = Vec::new();
                 
-                if buffer.len() > 1 {
-                    for item in buffer.iter().take(buffer.len() - 1) {
-                        bitmaps.push(MatrixReportBitmap {
-                            matrix_index: item.matrix_index,
-                            bitmap: item.bitmap.clone(),
-                        });
-                    }
-                }
-                let report = ClientReport {
-                    reports: bitmaps,
-                };
+        //         if buffer.len() > 1 {
+        //             for item in buffer.iter().take(buffer.len() - 1) {
+        //                 bitmaps.push(MatrixReportBitmap {
+        //                     matrix_index: item.matrix_index,
+        //                     bitmap: item.bitmap.clone(),
+        //                 });
+        //             }
+        //         }
+        //         let mut report = ClientReport {
+        //             reports: bitmaps,
+        //             signature: vec![0, 255],
+        //         };
 
-                // Send the report
-                client_report_sender.send(report).unwrap();
+        //         // Sign the report
+        //         report.signature = EcdsaSig::sign(&sha256(&report.encode_to_vec()), &client_ec_key).unwrap().to_der().unwrap();
 
-                // Update the report timer
-                report_timer = Instant::now();
-            }
-        }
+        //         // Send the report
+        //         client_report_sender.send(report).unwrap();
+
+        //         // Update the report timer
+        //         report_timer = Instant::now();
+        //     }
+        // }
 
         {
             // Calculate the elapsed time since the last flush
             let elapsed = flush_buffer_timer.elapsed();
 
-            if elapsed >= std::time::Duration::from_millis(2000) {
+            if elapsed >= std::time::Duration::from_millis(1000) {
 
-
+                // info!("Received from unicast: {:?}", received_unicast_packets);
+                received_unicast_packets.clear();
                 // Check size of buffer
                 if buffer.len() > 1 {
     
@@ -470,7 +492,6 @@ pub fn start(
                     let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
     
                     for mut item in drained {
-                        info!("Matrix {} - Missing indexes: {:?}", item.matrix_index, item.missing_indexes());
 
                         // Reconstruct the matrix
                         item.reconstruct_matrix(&client_ec_key).unwrap();
@@ -544,9 +565,11 @@ pub fn start(
                 if let Ok(mut transmission) = TransmissionPacket::decode(&*payload_bytes) {
                     // Validate the packet signature, if invalid, skip the packet
                     if validate_packet(&mut transmission, &x509_public_key) {
-                        // info!("Unicast transmission packet: {:?}", transmission);
+                        // info!("Unicast transmission packet: {:?} {:?}", transmission.matrix, transmission.index);
+                        received_unicast_packets.push((transmission.matrix, transmission.index));
+
                         // Process the packet if valid
-                        process_packet(&mut buffer, transmission, &mut current_key_session, &mut next_key_session);
+                        process_retransmission_packet(&mut buffer, transmission);
                     } else {
                         // Invalid packet, skip
                         continue;

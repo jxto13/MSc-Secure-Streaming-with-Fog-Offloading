@@ -274,14 +274,14 @@ pub mod bandwidth_utils {
         pub fn record_multicast(&mut self, packet_size: usize) {
             self.bytes_sent += packet_size;
             self.multicast_packets_sent += 1;
-            self.enforce_rate();
+            // self.enforce_rate();
         }
 
         /// Records a retransmission packet sent.
         pub fn record_retransmission(&mut self, packet_size: usize) {
             self.bytes_sent += packet_size;
             self.retransmission_packets_sent += 1;
-            self.enforce_rate();
+            // self.enforce_rate();
         }
 
         /// Enforces the bandwidth rate by introducing delays if needed.

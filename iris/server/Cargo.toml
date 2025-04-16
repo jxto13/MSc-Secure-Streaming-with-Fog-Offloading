@@ -29,8 +29,8 @@ pnet = "0.35.0"
 prometheus_exporter = "0.8.5"
 chrono = "0.4.39"
 circular-buffer = "1.0.0"
-itertools = "0.14.0"
 flate2 = "1.1.1"
+itertools = "0.14.0"
 
 # This compiles openssl for android using NDK
 [target.'cfg(target_os = "android")'.dependencies]

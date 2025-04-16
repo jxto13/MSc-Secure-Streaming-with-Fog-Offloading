@@ -142,8 +142,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
+    // Get the retransmission config
+    let retransmission_config = &CONFIG.get().unwrap().retransmission;
+    
     // Create the pipeline
-    let pipeline= Arc::new(Pipeline::new(Arc::clone(&client_sessions),CONFIG.get().unwrap().retransmission.wifi_multicast, CONFIG.get().unwrap().retransmission.wifi_unicast));
+    let pipeline= Arc::new(Pipeline::new(Arc::clone(&client_sessions),retransmission_config.wifi_multicast, retransmission_config.wifi_unicast));
 
     let pipeline_handler = {
         let pipeline = Arc::clone(&pipeline);
@@ -151,6 +154,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             pipeline.start(source_handler_receiver);
         })
     };
+
+    MyReportService::new(Arc::clone(&client_sessions));
 
     // Create a std thread and setup tokio for gRPC Server with tokio runtime
     let grpc_server_handler = thread::spawn({
@@ -165,9 +170,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // Start grpc server this will block execution because of await
             Server::builder()
                 .tls_config(ServerTlsConfig::new().identity(Identity::from_pem(certificates.server_cert, certificates.server_key))).unwrap()
-                .add_service(crypto::ca_service::get_service(certificates.ca_cert, certificates.ca_private_key)) // Responsible for signing the client certificates
+                .add_service(crypto::ca_service::get_service(certificates.ca_cert, certificates.ca_private_key, client_sessions)) // Responsible for signing the client certificates
                 .add_service(key_service)
-                .add_service(ReportServiceServer::new(MyReportService::new(Arc::clone(&client_sessions))))
                 .add_service(NtsServiceServer::new(MyNtsService::default()))
                 .serve(addr)
                 .await

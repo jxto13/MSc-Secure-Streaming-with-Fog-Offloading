@@ -119,26 +119,26 @@ impl WiFiMulticast {
                     SERVER => {                                
                         // Handle data from both channels. If data is available on both channels, the retransmissions channel will be prioritized.
                         crossbeam_channel::select_biased! {
-                            recv(retransmissions_rx) -> retransmission => {
-                                match retransmission {
-                                    Ok(data) => {
-                                        // Send the retransmitted data over multicast.
-                                        if let Err(e) = socket.send(&data) {
-                                            error!("Failed to send retransmission over multicast: {}", e);
-                                        }
+                            // recv(retransmissions_rx) -> retransmission => {
+                            //     match retransmission {
+                            //         Ok(data) => {
+                            //             // Send the retransmitted data over multicast.
+                            //             if let Err(e) = socket.send(&data) {
+                            //                 error!("Failed to send retransmission over multicast: {}", e);
+                            //             }
                                         
-                                        // Record the retransmission data sent.
-                                        self.bandwidth_manager.record_retransmission(data.len());
-                                        // Update the retransmissions sender rate.
-                                        retransmissions_sender_rate.add(data.len() as f64); // Update the gauge value
+                            //             // Record the retransmission data sent.
+                            //             self.bandwidth_manager.record_retransmission(data.len());
+                            //             // Update the retransmissions sender rate.
+                            //             retransmissions_sender_rate.add(data.len() as f64); // Update the gauge value
                                         
-                                    }
-                                    Err(err) => {
-                                        // Retransmission channel closed
-                                        panic!("Retransmission channel closed\n{}",err);
-                                    }
-                                }
-                            }
+                            //         }
+                            //         Err(err) => {
+                            //             // Retransmission channel closed
+                            //             panic!("Retransmission channel closed\n{}",err);
+                            //         }
+                            //     }
+                            // }
                             recv(data_receiver) -> data => {
                                 match data {
                                     Ok(data) => {
