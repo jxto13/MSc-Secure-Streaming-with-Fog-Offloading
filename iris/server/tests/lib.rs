@@ -15,6 +15,121 @@ mod tests {
     use std::{net::SocketAddr, vec};
 
     #[test]
+    fn test_dash_map_capacity(){
+        #[derive(Debug, Clone)]
+        struct Matrix {
+            // Assuming a 2D matrix (you can modify this as needed)
+            data: Vec<Vec<i32>>,
+            index: usize,  // Index associated with the matrix
+        }
+
+        struct MatrixHistory {
+            matrices: Vec<Option<Matrix>>,  // Vec of Option to handle empty slots
+            capacity: usize,
+            next_index: usize, // Index where the next matrix will go
+            size: usize, // Current number of matrices in the buffer
+        }
+
+        impl MatrixHistory {
+            // Constructor to create a new MatrixHistory
+            fn new(capacity: usize) -> Self {
+                MatrixHistory {
+                    matrices: vec![None; capacity],  // Initialize with None values
+                    capacity,
+                    next_index: 0,
+                    size: 0,
+                }
+            }
+
+            // Add a new matrix to the history
+            fn add_matrix(&mut self, matrix: Matrix) {
+                if self.size < self.capacity {
+                    // If there is space, simply add
+                    self.matrices[self.next_index] = Some(matrix);
+                    self.size += 1;
+                } else {
+                    // If buffer is full, overwrite the oldest matrix
+                    self.matrices[self.next_index] = Some(matrix);
+                }
+
+                // Update next_index (circular buffer)
+                self.next_index = (self.next_index + 1) % self.capacity;
+            }
+
+            // Get a matrix by its index
+            fn get_matrix(&self, index: usize) -> Option<&Matrix> {
+                // Search for the matrix with the given index
+                for matrix_option in &self.matrices {
+                    if let Some(matrix) = matrix_option {
+                        if matrix.index == index {
+                            return Some(matrix);
+                        }
+                    }
+                }
+                None
+            }
+        }
+
+        let mut history = MatrixHistory::new(3); // Store the last 3 matrices
+        
+        // Add matrices with specific index numbers
+        history.add_matrix(Matrix { data: vec![vec![1, 2], vec![3, 4]], index: 101 });
+        history.add_matrix(Matrix { data: vec![vec![5, 6], vec![7, 8]], index: 102 });
+        history.add_matrix(Matrix { data: vec![vec![9, 10], vec![11, 12]], index: 103 });
+
+        // Adding a new matrix will remove the oldest one
+        history.add_matrix(Matrix { data: vec![vec![13, 14], vec![15, 16]], index: 104 });
+
+        // Access matrices by their index
+        if let Some(matrix) = history.get_matrix(101) {
+            println!("Matrix with index 101: {:?}", matrix);
+        }
+
+        if let Some(matrix) = history.get_matrix(104) {
+            println!("Matrix with index 104: {:?}", matrix);
+        }
+
+        // Try to access a matrix that doesn't exist
+        if let Some(matrix) = history.get_matrix(999) {
+            println!("Matrix with index 999: {:?}", matrix);
+        } else {
+            println!("No matrix found with index 999");
+        }
+        
+
+
+    }
+
+    #[test]
+    fn sort_ips(){
+        use std::net::IpAddr;
+        let mut ips = vec![
+            "10.0.0.1".parse::<IpAddr>().unwrap(),
+            "172.16.0.1".parse::<IpAddr>().unwrap(),
+            "192.168.0.1".parse::<IpAddr>().unwrap(),
+        ];
+
+        // The list must already be sorted
+        let new_ip = "8.8.8.8".parse::<IpAddr>().unwrap();
+
+        match ips.binary_search(&new_ip) {
+            Ok(_) => {
+                // Already exists; do nothing or handle duplicates
+                println!("IP already in the list");
+            }
+            Err(pos) => {
+                // Insert at the position to keep the list sorted
+                ips.insert(pos, new_ip);
+                println!("Inserted at position {}", pos);
+            }
+        }
+
+        for ip in &ips {
+            println!("{}", ip);
+        }
+    }
+
+    #[test]
     fn interleaving_grid(){
         use itertools::Itertools;
 

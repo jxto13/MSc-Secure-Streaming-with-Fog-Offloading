@@ -230,10 +230,13 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
         
         // Lock the buffer and push the matrix into it
-        {
-            let mut lock = matrix_buffer.write().unwrap();
-            lock.push_back(Some(transmission_matrix));
-        }
+        // {
+        //     let mut lock = matrix_buffer.write().unwrap();
+        //     lock.push_back(Some(transmission_matrix));
+        // }
+
+        // Add the matrix to the history
+        matrix_buffer.add_matrix(matrix_counter as usize, transmission_matrix);
 
         // Increment epoch
         epoch += 1;

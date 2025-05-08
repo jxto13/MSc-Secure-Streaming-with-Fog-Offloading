@@ -319,16 +319,20 @@ fn process_packet(buffer: &mut VecDeque<MatrixTracker>, packet: TransmissionPack
 
 /// Process a retransmission packet and check if it belongs to a matrix in the buffer.
 fn process_retransmission_packet(buffer: &mut VecDeque<MatrixTracker>, packet: TransmissionPacket) {
+    let session_config = SESSION_CONFIG.get().unwrap().read().unwrap();
 
     // Loop through the buffer to find the matrix tracker that matches the packet's matrix index
     for tracker in buffer.iter_mut(){
         if packet.matrix == tracker.matrix_index {
             // log::debug!("Matrix index: {} - Packet index: {}", tracker.matrix_index, packet.index);
-            log::debug!("tracker before adding packet: {:?}", tracker.bitmap);
+            // log::debug!("tracker before adding packet: {:?}", tracker.bitmap);
             tracker.add_packet(&packet);
-            log::debug!("tracker after adding packet: {:?}", tracker.bitmap);
-        } 
+            // log::debug!("tracker after adding packet: {:?}", tracker.bitmap);
+        }
+        tracker.reconstruct_matrix(&session_config.client_ec_key.clone().unwrap());
     }
+
+    
     
 }
 
@@ -444,38 +448,38 @@ pub fn start(
     loop {
 
         
-        // {   
-        //     // Calculate the elapsed time since the last report
-        //     let elapsed = report_timer.elapsed();
+        {   
+            // Calculate the elapsed time since the last report
+            let elapsed = report_timer.elapsed();
 
-        //     // If 100 milliseconds have passed, send a report
-        //     if elapsed >= std::time::Duration::from_millis(200) {
+            // If 100 milliseconds have passed, send a report
+            if elapsed >= std::time::Duration::from_millis(200) {
 
-        //         let mut bitmaps = Vec::new();
+                let mut bitmaps = Vec::new();
                 
-        //         if buffer.len() > 1 {
-        //             for item in buffer.iter().take(buffer.len() - 1) {
-        //                 bitmaps.push(MatrixReportBitmap {
-        //                     matrix_index: item.matrix_index,
-        //                     bitmap: item.bitmap.clone(),
-        //                 });
-        //             }
-        //         }
-        //         let mut report = ClientReport {
-        //             reports: bitmaps,
-        //             signature: vec![0, 255],
-        //         };
+                if buffer.len() > 1 {
+                    for item in buffer.iter().take(buffer.len() - 1) {
+                        bitmaps.push(MatrixReportBitmap {
+                            matrix_index: item.matrix_index,
+                            bitmap: item.bitmap.clone(),
+                        });
+                    }
+                }
+                let mut report = ClientReport {
+                    reports: bitmaps,
+                    signature: vec![0, 255],
+                };
 
-        //         // Sign the report
-        //         report.signature = EcdsaSig::sign(&sha256(&report.encode_to_vec()), &client_ec_key).unwrap().to_der().unwrap();
+                // Sign the report
+                report.signature = EcdsaSig::sign(&sha256(&report.encode_to_vec()), &client_ec_key).unwrap().to_der().unwrap();
 
-        //         // Send the report
-        //         client_report_sender.send(report).unwrap();
+                // Send the report
+                client_report_sender.send(report).unwrap();
 
-        //         // Update the report timer
-        //         report_timer = Instant::now();
-        //     }
-        // }
+                // Update the report timer
+                report_timer = Instant::now();
+            }
+        }
 
         {
             // Calculate the elapsed time since the last flush
@@ -543,7 +547,10 @@ pub fn start(
                 if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
                     if let Some(packet) = retransmission.packet {
                         // Missing logic to decode linear combination with the other packets of matrix
-                        info!("RetransmissionPacket contained packet: {:?}", packet);
+                        // info!("RetransmissionPacket contained packet: {:?}", packet);
+
+                        process_retransmission_packet(&mut buffer, packet);
+
                     } else {
                         eprintln!("RetransmissionPacket contained no packet.");
                     }
@@ -565,7 +572,7 @@ pub fn start(
                 if let Ok(mut transmission) = TransmissionPacket::decode(&*payload_bytes) {
                     // Validate the packet signature, if invalid, skip the packet
                     if validate_packet(&mut transmission, &x509_public_key) {
-                        // info!("Unicast transmission packet: {:?} {:?}", transmission.matrix, transmission.index);
+                        info!("Unicast transmission packet: {:?} {:?}", transmission.matrix, transmission.index);
                         received_unicast_packets.push((transmission.matrix, transmission.index));
 
                         // Process the packet if valid

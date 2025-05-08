@@ -5,7 +5,6 @@ use openssl::error::ErrorStack;
 use openssl::hash::MessageDigest;
 use openssl::pkey::{PKey, PKeyRef, Private};
 use openssl::rsa::Rsa;
-use openssl::stack::Stack;
 use openssl::x509::extension::{
     AuthorityKeyIdentifier, BasicConstraints, KeyUsage, SubjectAlternativeName,
     SubjectKeyIdentifier,

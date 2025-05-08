@@ -1,12 +1,14 @@
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use crate::crypto::utils;
 use crate::membership_manager::client_sessions::{self, ClientSessions};
 use crate::proto;
 
 use log::info;
-use tonic::{client, Request, Response, Status};
+use tonic::{Request, Response, Status};
 use proto::certificate_service_server::{CertificateService, CertificateServiceServer};
+use std::time::Instant;
+use client_sessions::ClientData;
 
 use openssl::pkey::{PKey, Private};
 use openssl::x509::{X509Req, X509VerifyResult, X509};
@@ -14,11 +16,11 @@ use openssl::x509::{X509Req, X509VerifyResult, X509};
 pub struct MyCertificateService {
     ca_cert: X509,
     ca_private_key: PKey<Private>,
-    client_sessions: Arc<RwLock<ClientSessions>>,
+    client_sessions: Arc<ClientSessions>,
 }
 
 impl MyCertificateService {
-    pub fn new(ca_cert: X509, ca_key_pair: PKey<Private>, client_sessions: Arc<RwLock<ClientSessions>>) -> Self {
+    pub fn new(ca_cert: X509, ca_key_pair: PKey<Private>, client_sessions: Arc<ClientSessions>) -> Self {
         MyCertificateService {
             ca_cert,
             ca_private_key: ca_key_pair,
@@ -59,16 +61,11 @@ impl CertificateService for MyCertificateService {
             signed_cert: cert_pem.to_pem().map_err(|_| Status::internal("Failed to serialize certificate"))?,
         };
 
-        // Get a mutable reference to the client sessions
-        let mut client_sessions = self.client_sessions.write().unwrap();
-
-        // Check if the client session exists for the given address if exists delete it
-        client_sessions.certs.remove(&request_addr.ip());
-        client_sessions.clients.remove(&request_addr.ip());
+        self.client_sessions.add_client(request_addr.ip(), cert_pem.clone());
 
         // Now it's clear that the client session is removed, lets add a new one
-        client_sessions.update_client(request_addr.ip());
-        client_sessions.certs.insert(request_addr.ip(), cert_pem);
+        // self.client_sessions.update_client(request_addr.ip());
+        // self.client_sessions.certs.insert(request_addr.ip(), cert_pem);
 
         Ok(Response::new(response))
     }
@@ -107,6 +104,6 @@ impl CertificateService for MyCertificateService {
     
 }
 
-pub fn get_service(ca_cert: X509,ca_key_pair: PKey<Private>, client_sessions: Arc<RwLock<ClientSessions>>) -> CertificateServiceServer<MyCertificateService> {
+pub fn get_service(ca_cert: X509,ca_key_pair: PKey<Private>, client_sessions: Arc<ClientSessions>) -> CertificateServiceServer<MyCertificateService> {
     CertificateServiceServer::new(MyCertificateService::new(ca_cert,ca_key_pair,client_sessions))
 }

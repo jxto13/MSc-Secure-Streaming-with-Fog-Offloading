@@ -1,6 +1,6 @@
 use crossbeam_channel::{unbounded, Receiver};
 
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 use std::thread;
 
 
@@ -11,7 +11,7 @@ use super::retransmission_manager::RetransmissionManager;
 
 // Struct representing the pipeline composed of the components
 pub struct Pipeline {
-    client_sessions: Arc<RwLock<ClientSessions>>,
+    client_sessions: Arc<ClientSessions>,
     wifi_multicast_retransmission: bool,
     wifi_unicast_retransmission: bool,
     retransmission_manager: Option<RetransmissionManager>
@@ -19,7 +19,7 @@ pub struct Pipeline {
 
 impl Pipeline {
     // Constructor to create a new instance of Pipeline
-    pub fn new(client_sessions: Arc<RwLock<ClientSessions>>, multicast_enabled: bool, unicast_enabled: bool) -> Self {
+    pub fn new(client_sessions: Arc<ClientSessions>, multicast_enabled: bool, unicast_enabled: bool) -> Self {
         Pipeline {
             client_sessions,
             wifi_multicast_retransmission: multicast_enabled,
@@ -70,7 +70,4 @@ impl Pipeline {
         }
     }
 
-    pub fn get_client_sessions(&self) -> Arc<RwLock<ClientSessions>>{
-        Arc::clone(&self.client_sessions)
-    }
 }

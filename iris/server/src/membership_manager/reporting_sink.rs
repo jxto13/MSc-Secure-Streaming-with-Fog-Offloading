@@ -1,30 +1,29 @@
-use crate::{proto, CONFIG, MANAGER};
+use crate::{proto, CONFIG};
 
-use std::sync::{Arc, Mutex, RwLock};
+use std::net::SocketAddr;
+use std::sync::{Arc, RwLock};
 
-use chrono::Utc;
-use log::{error, info};
+use crossbeam_channel::Sender;
+use log::error;
 use openssl::ecdsa::EcdsaSig;
 use openssl::sha::sha256;
 use prost::Message;
-use proto::TimestampResponse;
-use proto::{report_service_server::ReportService, ClientReport};
-use tonic::{Request, Response, Status};
+use proto::ClientReport;
 
 use super::client_sessions::ClientSessions;
 
 #[derive(Debug)]
 pub struct MyReportService {
-    client_sessions: Arc<RwLock<ClientSessions>>,
+    client_sessions: Arc<ClientSessions>,
 }
 
 impl MyReportService {
-    pub fn new(client_sessions: Arc<RwLock<ClientSessions>>) -> Self {
-        Self::udp_receiver(Arc::clone(&client_sessions));
+    pub fn new(client_sessions: Arc<ClientSessions>, reports_channel: Sender<(SocketAddr, ClientReport)>) -> Self {
+        Self::udp_receiver(Arc::clone(&client_sessions), reports_channel);
         Self { client_sessions }
     }
 
-    pub fn udp_receiver(client_sessions: Arc<RwLock<ClientSessions>>) {
+    pub fn udp_receiver(client_sessions: Arc<ClientSessions>, reports_channel: Sender<(SocketAddr, ClientReport)>) {
         // Start the UDP receiver thread
 
         fn decompress_data(data: &[u8]) -> Vec<u8> {
@@ -92,21 +91,29 @@ impl MyReportService {
                                     let signature = EcdsaSig::from_der(&report.signature).unwrap();
                                     report.signature = vec![0, 255];
 
+                                    // Verify the signature using the public key from the client certificate
                                     let local_hash = sha256(&report.encode_to_vec());
 
-                                    let client_cert = client_sessions.read().unwrap().certs.get(&source_address.ip()).unwrap().clone();
+                                    // Get the client certificate from the client_sessions
+                                    let client_cert = match client_sessions.get_client_cert(source_address.ip()) {
+                                        Some(cert) => cert,
+                                        None => {
+                                            error!("Client certificate not found for {}", source_address.ip());
+                                            continue;
+                                        }
+                                        
+                                    };
 
+                                    // Verify the signature using the public key from the client certificate
                                     if !signature.verify(&local_hash, &client_cert.public_key().unwrap().ec_key().unwrap()).unwrap() {
                                         error!("Signature verification failed");
                                         continue;
                                     }
                                     
-                                    // Create a new instance of ClientSessions
-                                    let mut client_sessions = client_sessions.write().unwrap();
-                                    client_sessions.save_client_report(source_address.ip(), report);
-
-                                    // Drop the lock to allow other threads to access it
-                                    drop(client_sessions);
+                                    // Send the report to the reports channel
+                                    if let Err(_) = reports_channel.send((source_address,report)) {
+                                        error!("Failed to send report to channel");
+                                    }
                                 }
                                 Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
                                     // If we get a `WouldBlock` error we know our socket

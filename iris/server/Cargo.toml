@@ -31,6 +31,10 @@ chrono = "0.4.39"
 circular-buffer = "1.0.0"
 flate2 = "1.1.1"
 itertools = "0.14.0"
+dashmap = "6.1.0"
+tracing-subscriber = "0.3.19"
+tracing = "0.1.41"
+hyper = "1.6.0"
 
 # This compiles openssl for android using NDK
 [target.'cfg(target_os = "android")'.dependencies]

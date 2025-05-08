@@ -14,7 +14,7 @@ use circular_buffer::CircularBuffer;
 use crossbeam_channel::unbounded;
 use crypto::key_manager::KeyManager;
 use grid::Grid;
-use log::error;
+use log::{error, info};
 use membership_manager::client_sessions;
 use membership_manager::reporting_sink::MyReportService;
 use crypto::certificates;
@@ -42,12 +42,13 @@ pub mod proto {
     tonic::include_proto!("streaming_server");
 }
 
-pub const MAX_BUFFER_SIZE: usize = 10000;
+pub const MAX_BUFFER_SIZE: usize = 100;
 
 // Define the global static instance of Config using OnceCell
 static CONFIG: OnceCell<Config> = OnceCell::new();
 static MANAGER: OnceCell<Arc<RwLock<KeyManager>>> = OnceCell::new();
-static MATRIX_BUFFER: OnceCell<Arc<RwLock<CircularBuffer::<MAX_BUFFER_SIZE, Option<Grid<TransmissionPacket>>>>>> = OnceCell::new();
+// static MATRIX_BUFFER: OnceCell<Arc<RwLock<CircularBuffer::<MAX_BUFFER_SIZE, Option<Grid<TransmissionPacket>>>>>> = OnceCell::new();
+static MATRIX_BUFFER: OnceCell<Arc<MatrixHistory>> = OnceCell::new();
 static FEC_PARAMS: OnceCell<Arc<RwLock<(usize, usize)>>> = OnceCell::new();
 
 // Custom
@@ -85,7 +86,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Set the global CONFIG instance
     CONFIG.set(config).expect("Failed to set CONFIG");
 
-    MATRIX_BUFFER.set(Arc::new(RwLock::new(CircularBuffer::<MAX_BUFFER_SIZE, Option<Grid<TransmissionPacket>>>::new()))).expect("Failed to set MATRIX_BUFFER");
+    // MATRIX_BUFFER.set(Arc::new(RwLock::new(CircularBuffer::<MAX_BUFFER_SIZE, Option<Grid<TransmissionPacket>>>::new()))).expect("Failed to set MATRIX_BUFFER");
+    MATRIX_BUFFER.set(Arc::new(MatrixHistory::new(32))).expect("Failed to set MATRIX_BUFFER");
     FEC_PARAMS.set(Arc::new(RwLock::new((CONFIG.get().unwrap().multicast.row_fec, CONFIG.get().unwrap().multicast.col_fec)))).expect("Failed to set FEC_PARAMS");
     
     start_prometheus_exporter();
@@ -108,6 +110,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Create channels
     let (source_handler_sender, source_handler_receiver) = unbounded();
+    let (reports_channel_sender, reports_channel_receiver) = unbounded();
     
     // Choose the data source
     let source = match CONFIG.get().unwrap().multicast.data_source.as_str() {
@@ -119,26 +122,16 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         // Create a DataHandler instance based on datasource
         DataHandler::new(source, source_handler_sender).start();
     });
+    
 
     // Create the client sessions
-    let client_sessions = Arc::new(RwLock::new(ClientSessions::new()));
+    let client_sessions = Arc::new(ClientSessions::new(reports_channel_receiver));
 
     // Start client_sessions thread
     let client_sessions_handler = thread::spawn({
         let client_sessions = Arc::clone(&client_sessions);
         move || {
-            let timeout = Duration::from_secs(CONFIG.get().unwrap().settings.timeout_clients);
-            // Check every N second for timeout clients
-            loop {
-                {
-                    // Lock the client_sessions for writing
-                    let mut client_sessions = client_sessions.write().unwrap();
-                    // Removing timed-out clients
-                    client_sessions.remove_timed_out_clients();
-                }
-                // Sleep outside the lock to avoid holding it during the sleep
-                thread::sleep(timeout);
-            }
+            client_sessions.start_manager();
         }
     });
 
@@ -155,7 +148,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         })
     };
 
-    MyReportService::new(Arc::clone(&client_sessions));
+    // Creates the reporting sink
+    MyReportService::new(Arc::clone(&client_sessions), reports_channel_sender);
 
     // Create a std thread and setup tokio for gRPC Server with tokio runtime
     let grpc_server_handler = thread::spawn({
@@ -167,8 +161,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             // listen to all ipv4 addresses
             let addr = format!("0.0.0.0:{}", CONFIG.get().unwrap().grpc.port).parse().unwrap();
             
+
             // Start grpc server this will block execution because of await
             Server::builder()
+                .trace_fn(|request| {
+                    // Add debug-level logging for incoming requests
+                    tracing::debug!("Received gRPC request: {:?}", request);
+                    tracing::info_span!("grpc_server", method = %request.method(), uri = %request.uri())
+                })               
                 .tls_config(ServerTlsConfig::new().identity(Identity::from_pem(certificates.server_cert, certificates.server_key))).unwrap()
                 .add_service(crypto::ca_service::get_service(certificates.ca_cert, certificates.ca_private_key, client_sessions)) // Responsible for signing the client certificates
                 .add_service(key_service)
@@ -211,3 +211,60 @@ fn start_prometheus_exporter() {
     // Initialize the metrics
     init_metrics();
 }
+
+
+#[derive(Clone,Debug)]
+pub struct IndexedMatrix {
+    pub index: usize,
+    pub data: Grid<TransmissionPacket>,
+}
+
+#[derive(Debug)]
+pub struct MatrixHistory {
+    matrices: Vec<RwLock<Option<IndexedMatrix>>>,
+    capacity: usize,
+    latest_index: RwLock<Option<usize>>,
+}
+impl MatrixHistory {
+    pub fn new(capacity: usize) -> Self {
+        MatrixHistory {
+            matrices: (0..capacity)
+                .map(|_| RwLock::new(None))
+                .collect(),
+            capacity,
+            latest_index: RwLock::new(None),
+        }
+    }
+
+    pub fn is_valid_index(&self, index: usize) -> bool {
+        if let Some(latest) = *self.latest_index.read().unwrap() {
+            index >= latest.saturating_sub(self.capacity - 1) && index <= latest
+        } else {
+            false
+        }
+    }
+
+    pub fn add_matrix(&self, index: usize, grid: Grid<TransmissionPacket>) {
+        let slot_index = index % self.capacity;
+        let slot = &self.matrices[slot_index];
+        let mut slot_guard = slot.write().unwrap();
+        *slot_guard = Some(IndexedMatrix { index, data: grid });
+    
+        let mut latest_guard = self.latest_index.write().unwrap();
+        *latest_guard = Some(index);
+    }
+
+    pub fn get_matrix(&self, index: usize) -> Option<Grid<TransmissionPacket>> {
+        let slot_index = index % self.capacity;
+        let slot = &self.matrices[slot_index];
+        let guard = slot.read().unwrap();
+
+        if let Some(ref matrix) = *guard {
+            if matrix.index == index {
+                return Some(matrix.data.clone());
+            }
+        }
+        None
+    }
+}
+
