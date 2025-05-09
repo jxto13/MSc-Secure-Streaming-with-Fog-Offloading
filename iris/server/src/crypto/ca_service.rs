@@ -1,14 +1,12 @@
 use std::sync::Arc;
 
 use crate::crypto::utils;
-use crate::membership_manager::client_sessions::{self, ClientSessions};
+use crate::membership_manager::client_sessions::ClientSessions;
 use crate::proto;
 
 use log::info;
 use tonic::{Request, Response, Status};
 use proto::certificate_service_server::{CertificateService, CertificateServiceServer};
-use std::time::Instant;
-use client_sessions::ClientData;
 
 use openssl::pkey::{PKey, Private};
 use openssl::x509::{X509Req, X509VerifyResult, X509};
@@ -61,11 +59,8 @@ impl CertificateService for MyCertificateService {
             signed_cert: cert_pem.to_pem().map_err(|_| Status::internal("Failed to serialize certificate"))?,
         };
 
+        // Add client to the client sessions
         self.client_sessions.add_client(request_addr.ip(), cert_pem.clone());
-
-        // Now it's clear that the client session is removed, lets add a new one
-        // self.client_sessions.update_client(request_addr.ip());
-        // self.client_sessions.certs.insert(request_addr.ip(), cert_pem);
 
         Ok(Response::new(response))
     }

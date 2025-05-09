@@ -4,12 +4,9 @@ use mio::net::UdpSocket;
 use crossbeam_channel::Receiver;
 use pnet::ipnetwork::IpNetwork;
 use std::io;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::str::FromStr;
-use std::thread::sleep;
-use std::time::{Duration, Instant};
+use std::net::{IpAddr, SocketAddr};
 use pnet::datalink::interfaces;
-use log::{info, error};
+use log::error;
 
 use crate::metrics::get_metrics;
 use crate::CONFIG;
@@ -100,8 +97,6 @@ impl WiFiMulticast {
 
         // Metrics for bandwidth logging.
         let metrics = get_metrics();
-        let multicast_sender_rate = metrics.multicast_sender_rate.lock().unwrap();
-        let retransmissions_sender_rate = metrics.retransmissions_sender_rate.lock().unwrap();
 
         // Start an event loop.
         loop {
@@ -129,8 +124,9 @@ impl WiFiMulticast {
                                         
                                         // Record the retransmission data sent.
                                         self.bandwidth_manager.record_retransmission(data.len());
+
                                         // Update the retransmissions sender rate.
-                                        retransmissions_sender_rate.add(data.len() as f64); // Update the gauge value
+                                        metrics.retransmissions_sender_rate.add(data.len() as i64); // Update the gauge value
                                         
                                     }
                                     Err(err) => {
@@ -149,8 +145,9 @@ impl WiFiMulticast {
                                         
                                         // Record the multicast data sent.
                                         self.bandwidth_manager.record_multicast(data.len());
+
                                         // Update the multicast sender rate.
-                                        multicast_sender_rate.add(data.len() as f64 ); // Update the gauge value
+                                        metrics.multicast_sender_rate.add(data.len() as i64 ); // Update the gauge value
                                         
                                     }
                                     Err(err) => {

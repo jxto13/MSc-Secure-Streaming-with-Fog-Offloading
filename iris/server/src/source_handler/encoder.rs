@@ -1,4 +1,5 @@
-use crate::{proto, CONFIG, FEC_PARAMS, MANAGER, MATRIX_BUFFER};
+use crate::metrics::get_metrics;
+use crate::{proto, CONFIG, MANAGER, MATRIX_BUFFER};
 
 use crossbeam_channel::{Receiver, Sender};
 use iris_shared::crypto_utils::encrypt;
@@ -32,7 +33,7 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     let mut matrix_counter = 0;
     let mut epoch = 0;
     
-    
+    let metrics = get_metrics();
     
     // Create transmission matrix
     while let Ok(matrix) = rx.recv() {
@@ -63,11 +64,8 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         let current_key = binding.get_current_key();
         let next_key = binding.get_next_key();
 
-        let fec_tupple = FEC_PARAMS.get().unwrap().read().unwrap();
-        let fec_params = fec_tupple.clone();
+        let fec_params = (metrics.fec_row.get() as usize, metrics.fec_col.get() as usize);
 
-        // drop the lock
-        drop(fec_tupple);
 
         // Create encoders objects (This can be put on the loop for dynamic fec_rows and fec_cols changes)
         let mut row_encoder = match ReedSolomonEncoder::new(
@@ -227,13 +225,6 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                 });
             }
         }
-
-        
-        // Lock the buffer and push the matrix into it
-        // {
-        //     let mut lock = matrix_buffer.write().unwrap();
-        //     lock.push_back(Some(transmission_matrix));
-        // }
 
         // Add the matrix to the history
         matrix_buffer.add_matrix(matrix_counter as usize, transmission_matrix);

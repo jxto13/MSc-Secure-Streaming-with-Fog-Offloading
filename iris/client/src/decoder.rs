@@ -1,19 +1,15 @@
-use chrono::{DateTime, Duration, Utc};
-use crossbeam_channel::{unbounded, Receiver, Sender, TryRecvError};
+use crossbeam_channel::{Receiver, Sender, TryRecvError};
 use iris_shared::padding;
-use log::{debug, error, info};
+use log::{error, info};
 use openssl::ec::{EcKey, EcKeyRef};
 use openssl::pkey::{Private, Public};
 use openssl::sha::sha256;
 use openssl::x509::X509;
-use prost::bytes::buf;
 use prost::Message;
 
 use std::collections::VecDeque;
 use std::error::Error;
 use std::io::Cursor;
-use std::sync::Arc;
-use std::thread;
 use std::time::Instant;
 
 use grid::Grid as Matrix;
@@ -23,10 +19,9 @@ use openssl::ecdsa::EcdsaSig;
 use iris_shared::crypto_utils::decrypt;
 
 use crate::proto::{SessionKey, TransmissionPacket, VideoData, MatrixReportBitmap, RetransmissionPacket};
-use crate::{session, SESSION_CONFIG, TIME};
+use crate::SESSION_CONFIG;
 
 use super::proto::ClientReport;
-use super::utils::SessionConfig;
 
 #[derive(Default,Debug)]
 /// A struct to track the state of a matrix.
@@ -319,7 +314,6 @@ fn process_packet(buffer: &mut VecDeque<MatrixTracker>, packet: TransmissionPack
 
 /// Process a retransmission packet and check if it belongs to a matrix in the buffer.
 fn process_retransmission_packet(buffer: &mut VecDeque<MatrixTracker>, packet: TransmissionPacket) {
-    let session_config = SESSION_CONFIG.get().unwrap().read().unwrap();
 
     // Loop through the buffer to find the matrix tracker that matches the packet's matrix index
     for tracker in buffer.iter_mut(){
@@ -329,11 +323,7 @@ fn process_retransmission_packet(buffer: &mut VecDeque<MatrixTracker>, packet: T
             tracker.add_packet(&packet);
             // log::debug!("tracker after adding packet: {:?}", tracker.bitmap);
         }
-        tracker.reconstruct_matrix(&session_config.client_ec_key.clone().unwrap());
-    }
-
-    
-    
+    }    
 }
 
 /// Check if the key rotation is necessary and rotate the key if necessary. Only called when the tracker is created.
@@ -415,9 +405,7 @@ pub fn start(
     let mut current_key_session = session_config.current_key.clone();
     let mut next_key_session : Option<SessionKey> = Some(session_config.next_key.clone());
     
-    const BUFFER_DEQUEUING_INTERVAL: usize = 10; // Number of matrix to keep in the buffer before dequeuing
-    const BUFFER_LENGTH: usize = 20; // Number of matrix to keep in the buffer
-    
+    // Client EC Key
     let client_ec_key = if let Some(ec_key) = &session_config.client_ec_key {
         ec_key
     } else {
@@ -425,24 +413,12 @@ pub fn start(
         return Err("Client EC Key is not set.".into());
     };
 
-    let server_time = *TIME.get().unwrap().lock().unwrap();
-
-    let mut flush_buffer_timer = server_time;
-    let mut report_timer = server_time;
-
-    fn find_zero_indices(vec: Vec<u8>) -> Vec<usize> {
-        vec.iter()
-            .enumerate()
-            .filter_map(|(index, &value)| if value == 0 { Some(index) } else { None })
-            .collect()
-    }
-
     // Get the current time using Instant
     let now = Instant::now();
     let mut report_timer = now;
     let mut flush_buffer_timer = now;
-
-    let mut received_unicast_packets = Vec::new();
+    
+    let mut report_counter= 0;
 
     // Main loop to receive all packets from receiving threads
     loop {
@@ -458,14 +434,17 @@ pub fn start(
                 let mut bitmaps = Vec::new();
                 
                 if buffer.len() > 1 {
-                    for item in buffer.iter().take(buffer.len() - 1) {
+                    for item in buffer.iter().take(buffer.len()) {
                         bitmaps.push(MatrixReportBitmap {
                             matrix_index: item.matrix_index,
                             bitmap: item.bitmap.clone(),
                         });
                     }
                 }
+                // Create a new ClientReport
                 let mut report = ClientReport {
+                    client_id: sha256(&client_ec_key.public_key_to_der().unwrap()).to_vec(),
+                    counter: report_counter,
                     reports: bitmaps,
                     signature: vec![0, 255],
                 };
@@ -478,6 +457,9 @@ pub fn start(
 
                 // Update the report timer
                 report_timer = Instant::now();
+
+                // Increment the report counter
+                report_counter += 1;
             }
         }
 
@@ -487,8 +469,6 @@ pub fn start(
 
             if elapsed >= std::time::Duration::from_millis(1000) {
 
-                // info!("Received from unicast: {:?}", received_unicast_packets);
-                received_unicast_packets.clear();
                 // Check size of buffer
                 if buffer.len() > 1 {
     
@@ -497,11 +477,13 @@ pub fn start(
     
                     for mut item in drained {
 
+                        info!("Missing packets: {:?} - {:?}", item.matrix_index, item.missing_indexes());
                         // Reconstruct the matrix
                         item.reconstruct_matrix(&client_ec_key).unwrap();
+                        info!("Missing packets after reconstruct: {:?} - {:?}", item.matrix_index, item.missing_indexes());
+
                         // Decode the matrix to the application layer
                         decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key).unwrap();
-                        
                     }
     
                 }
@@ -511,21 +493,6 @@ pub fn start(
             }
         }
 
-        // if buffer.len() == BUFFER_LENGTH {
-            
-        //     // Drain all elements except the last one
-        //     let drained : Vec<MatrixTracker> = buffer.drain(0..BUFFER_DEQUEUING_INTERVAL).collect();
-
-        //     // Iterate over the drained elements
-        //     for mut oldest_matrix in drained {
-                
-        //         info!("Matrix {} - Missing indexes: {:?}", oldest_matrix.matrix_index, oldest_matrix.missing_indexes());
-                
-        //         // Decode the matrix to the application layer
-        //         decode_to_app_layer(&mut oldest_matrix, &decode_data_sender, &x509_public_key).unwrap();
-        //     }
-        // }
-
 
         // Try to receive and decode multicast packets  
         match multicast_receiver.try_recv() {
@@ -534,7 +501,6 @@ pub fn start(
                 if let Ok(mut transmission) = TransmissionPacket::decode(&*payload_bytes) {
                     // Validate the packet signature, if invalid, skip the packet
                     if validate_packet(&mut transmission, &x509_public_key) {
-                        // info!("({},{})", transmission.rows_fec, transmission.cols_fec);
                         // Process the packet if valid
                         process_packet(&mut buffer, transmission, &mut current_key_session, &mut next_key_session);
                     } else {
@@ -547,8 +513,7 @@ pub fn start(
                 if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
                     if let Some(packet) = retransmission.packet {
                         // Missing logic to decode linear combination with the other packets of matrix
-                        // info!("RetransmissionPacket contained packet: {:?}", packet);
-
+                        info!("RetransmissionPacket contained packet: {:?} - {:?}", packet.matrix, packet.index);
                         process_retransmission_packet(&mut buffer, packet);
 
                     } else {
@@ -572,8 +537,7 @@ pub fn start(
                 if let Ok(mut transmission) = TransmissionPacket::decode(&*payload_bytes) {
                     // Validate the packet signature, if invalid, skip the packet
                     if validate_packet(&mut transmission, &x509_public_key) {
-                        info!("Unicast transmission packet: {:?} {:?}", transmission.matrix, transmission.index);
-                        received_unicast_packets.push((transmission.matrix, transmission.index));
+                        info!("Unicast transmission packet: {:?} - {:?}", transmission.matrix, transmission.index);
 
                         // Process the packet if valid
                         process_retransmission_packet(&mut buffer, transmission);

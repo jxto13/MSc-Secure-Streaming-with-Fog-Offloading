@@ -1,6 +1,5 @@
-use std::mem::MaybeUninit;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::{io, thread};
+use std::net::{Ipv4Addr, SocketAddr};
+use std::io;
 use std::time::Duration;
 use crossbeam_channel::Sender;
 use log::{error, info};

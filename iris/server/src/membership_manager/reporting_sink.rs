@@ -1,7 +1,7 @@
 use crate::{proto, CONFIG};
 
 use std::net::SocketAddr;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
 
 use crossbeam_channel::Sender;
 use log::error;

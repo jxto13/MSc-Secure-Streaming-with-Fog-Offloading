@@ -6,42 +6,37 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-env_logger = "0.11.6"
-log = "0.4.25"
-tokio-util = { version = "0.7.13", features = ["full"] }
-tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
-tonic = { version =  "0.12.3", features = ["transport", "tls"] }
+env_logger = "0.11.8"
+log = "0.4.27"
+tokio-util = { version = "0.7.15", features = ["full"] }
+tokio = { version = "1.45.0", features = ["rt-multi-thread"] }
+tonic = { version =  "0.13.1", features = ["transport", "tls-ring"] }
 mio = {version =  "1.0.3", features = ["os-poll", "net"]}
-openssl = "0.10.71"
-prost = "0.13.4"
+openssl = "0.10.72"
+prost = "0.13.5"
 reed-solomon-16  = "0.1.0"
-grid = "0.16.1"
-crossbeam-channel = "0.5.14"
+grid = "0.16.2"
+crossbeam-channel = "0.5.15"
 
 iris-shared = {version = "0.1.0" , path = "../shared-lib"}
 
-serde = { version = "1.0.217", features = ["derive"] }
-toml = "0.8.19"
-clap = "4.5.26"
-rand = "0.9.0"
-once_cell = "1.20.2"
+serde = { version = "1.0.219", features = ["derive"] }
+toml = "0.8.22"
+clap = "4.5.37"
+rand = "0.9.1"
+once_cell = "1.21.3"
 pnet = "0.35.0"
 prometheus_exporter = "0.8.5"
-chrono = "0.4.39"
-circular-buffer = "1.0.0"
+chrono = "0.4.41"
 flate2 = "1.1.1"
-itertools = "0.14.0"
 dashmap = "6.1.0"
-tracing-subscriber = "0.3.19"
-tracing = "0.1.41"
-hyper = "1.6.0"
 
 # This compiles openssl for android using NDK
 [target.'cfg(target_os = "android")'.dependencies]
-openssl = { version = "0.10.71", features = ["vendored"] }
+openssl = { version = "0.10.72", features = ["vendored"] }
 
 [build-dependencies]
-tonic-build = "0.12.3"
+tonic-build = "0.13.1"
 
 [[bin]]
 name = "streaming_server"

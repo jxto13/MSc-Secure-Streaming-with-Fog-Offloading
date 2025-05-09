@@ -1,17 +1,13 @@
-use std::collections::{BTreeMap, HashMap};
 use std::net::{IpAddr, SocketAddr};
-use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use crossbeam_channel::Receiver;
 use dashmap::DashMap;
-use grid::Grid;
-use log::info;
-use openssl::x509::X509;
-use proto::ClientReport;
 
-use crate::proto::MatrixReportBitmap;
-use crate::{proto, CONFIG, MATRIX_BUFFER};
+use openssl::x509::X509;
+use proto::{ClientReport, MatrixReportBitmap};
+
+use crate::proto;
 
 #[derive(Debug)]
 pub struct ClientData {

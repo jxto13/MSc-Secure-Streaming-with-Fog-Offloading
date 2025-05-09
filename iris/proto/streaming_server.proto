@@ -87,8 +87,10 @@ message MatrixReportBitmap {
 }
 
 message ClientReport {
-    repeated MatrixReportBitmap reports = 1;
-    bytes signature = 2; // signed sha256
+    bytes client_id = 1; // this is the client id
+    int32 counter = 2; // this is the counter to prevent replay attacks
+    repeated MatrixReportBitmap reports = 3;
+    bytes signature = 4; // signed sha256
 }
 
 // ----------------------------------------------------------------------------------------------------------- //

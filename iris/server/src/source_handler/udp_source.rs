@@ -50,9 +50,6 @@ pub fn read(ip_source: String, tx: Sender<Matrix<Vec<u8>>>) -> Result<(), io::Er
 
         // Variables for bandwidth logging
         let metrics = get_metrics();
-
-        let data_source_rate = metrics.data_source_rate.lock().unwrap();
-
         
         // Event loop.
         loop {
@@ -76,7 +73,7 @@ pub fn read(ip_source: String, tx: Sender<Matrix<Vec<u8>>>) -> Result<(), io::Er
                                 }
 
                                 {
-                                    data_source_rate.add(packet_size as f64 ); // Update the gauge value
+                                    metrics.data_source_rate.add(packet_size as i64 ); // Update the gauge value
                                 }
                             }
                             Err(e) if e.kind() == io::ErrorKind::WouldBlock => {

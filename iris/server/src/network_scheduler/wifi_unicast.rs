@@ -61,17 +61,17 @@ impl WiFiUnicast {
                 match event.token() {
                     UDP_SOCKET => {
                         
-                        // loop {
-                        //     let message = rx.recv();
+                        loop {
+                            let message = rx.recv();
 
-                        //     if message.is_ok(){
-                        //         // If we have a message, send it to the socket.
-                        //         let message = message.unwrap();
-                        //         let client = SocketAddr::new(message.1, port);
-                        //         socket.send_to(&message.0, client)?;
-                        //         break;
-                        //     }
-                        // }
+                            if message.is_ok(){
+                                // If we have a message, send it to the socket.
+                                let message = message.unwrap();
+                                let client = SocketAddr::new(message.1, port);
+                                socket.send_to(&message.0, client)?;
+                                break;
+                            }
+                        }
                     },
                     _ => {
                         // This should never happen as we only registered our

@@ -1,20 +1,15 @@
 use std::sync::Arc;
 
-use chrono::DateTime;
 use crossbeam_channel::Receiver;
-use log::info;
 
 use prost::Message;
 use tokio::net::UdpSocket;
-// use tokio::sync::mpsc::Receiver;
 use tokio::runtime::Runtime;
 
-use crate::{CHANNEL, TIME};
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use std::io::Write;
 
-use super::proto::report_service_client::ReportServiceClient;
 use super::proto::ClientReport;
 
 pub struct ClientSession {

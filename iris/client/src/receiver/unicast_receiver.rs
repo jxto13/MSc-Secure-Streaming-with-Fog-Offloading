@@ -1,4 +1,3 @@
-use std::net::{Ipv4Addr, SocketAddr};
 use std::io;
 use std::time::Duration;
 use crossbeam_channel::Sender;

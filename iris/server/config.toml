@@ -38,8 +38,8 @@ bitrate = 30000 # kbit/s
 # Matrix Config
 row = 10
 col = 10
-row_fec = 0 # can be 0 if network loss allows it
-col_fec = 0 # can be 0 if network loss allows it
+row_fec = 5 # can be 0 if network loss allows it
+col_fec = 5 # can be 0 if network loss allows it
 
 epoch = 10 # number of matrix to rotate encryption key
 

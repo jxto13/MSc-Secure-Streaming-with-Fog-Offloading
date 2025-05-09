@@ -6,32 +6,28 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-env_logger = "0.11.6"
-log = "0.4.26"
+env_logger = "0.11.8"
+log = "0.4.27"
 
-tokio = { version = "1.43.0", features = ["rt-multi-thread"] }
-
-tonic = { version =  "0.12.3", features = ["transport", "tls"] }
+tokio = { version = "1.45.0", features = ["rt-multi-thread"] }
+tonic = { version =  "0.13.1", features = ["transport", "tls-ring"] }
 mio = {version =  "1.0.3", features = ["os-poll", "net"]}
-openssl = "0.10.71"
+openssl = "0.10.72"
 prost = "0.13.5"
-
 reed-solomon-16  = "0.1.0"
-grid = "0.16.1"
-
-crossbeam-channel = "0.5.14"
+grid = "0.16.2"
+crossbeam-channel = "0.5.15"
 
 iris-shared = {version = "0.1.0" , path = "../shared-lib"}
 
-
-clap = "4.5.31"
-once_cell = "1.20.3"
-chrono = "0.4.40"
+clap = "4.5.37"
+once_cell = "1.21.3"
+chrono = "0.4.41"
 flate2 = "1.1.1"
 
 # This compiles openssl for android using NDK
 [target.'cfg(target_os = "android")'.dependencies]
-openssl = { version = "0.10.71", features = ["vendored"] }
+openssl = { version = "0.10.72", features = ["vendored"] }
 
 [build-dependencies]
-tonic-build = "0.12.3"
+tonic-build = "0.13.1"

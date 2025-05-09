@@ -129,25 +129,7 @@ mod tests {
         }
     }
 
-    #[test]
-    fn interleaving_grid(){
-        use itertools::Itertools;
-
-        use grid::Grid;
-    
-        let grid = Grid::from_vec(vec![1, 2, 3, 4, 5, 6], 2);
-
-        let row_size = 10;
-        for collumn in grid.iter_cols(){
-
-            let data_vec: Vec<&i32> = collumn.take(row_size).collect();
-            println!("data_vec: {:?}", data_vec);
-        }
-
-
-        let it = (1..3).interleave(vec![-1, -2]);
-        itertools::assert_equal(it, vec![1, -1, 2, -2]);
-    }
+   
 
     #[test]
     fn compression_test() {

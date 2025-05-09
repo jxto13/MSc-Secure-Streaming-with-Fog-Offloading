@@ -9,12 +9,11 @@ use std::sync::RwLock;
 use std::{sync::Arc, thread};
 use std::path::PathBuf;
 
-use circular_buffer::CircularBuffer;
 // Standard
 use crossbeam_channel::unbounded;
 use crypto::key_manager::KeyManager;
 use grid::Grid;
-use log::{error, info};
+use log::error;
 use membership_manager::client_sessions;
 use membership_manager::reporting_sink::MyReportService;
 use crypto::certificates;
@@ -22,13 +21,11 @@ use once_cell::sync::OnceCell;
 use openssl::x509::X509;
 use proto::nts_service_server::NtsServiceServer;
 use source_handler::data_handler::{DataHandler,DataSource};
-use std::time::Duration;
 
 use tonic::transport::{Identity, Server, ServerTlsConfig};
 use tokio::runtime::Runtime;
 
 use proto::TransmissionPacket;
-use proto::report_service_server::ReportServiceServer;
 
 use iris_server::{read_config,Config};
 
@@ -42,14 +39,10 @@ pub mod proto {
     tonic::include_proto!("streaming_server");
 }
 
-pub const MAX_BUFFER_SIZE: usize = 100;
-
 // Define the global static instance of Config using OnceCell
 static CONFIG: OnceCell<Config> = OnceCell::new();
 static MANAGER: OnceCell<Arc<RwLock<KeyManager>>> = OnceCell::new();
-// static MATRIX_BUFFER: OnceCell<Arc<RwLock<CircularBuffer::<MAX_BUFFER_SIZE, Option<Grid<TransmissionPacket>>>>>> = OnceCell::new();
 static MATRIX_BUFFER: OnceCell<Arc<MatrixHistory>> = OnceCell::new();
-static FEC_PARAMS: OnceCell<Arc<RwLock<(usize, usize)>>> = OnceCell::new();
 
 // Custom
 use network_scheduler::pipeline::Pipeline;
@@ -88,8 +81,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // MATRIX_BUFFER.set(Arc::new(RwLock::new(CircularBuffer::<MAX_BUFFER_SIZE, Option<Grid<TransmissionPacket>>>::new()))).expect("Failed to set MATRIX_BUFFER");
     MATRIX_BUFFER.set(Arc::new(MatrixHistory::new(32))).expect("Failed to set MATRIX_BUFFER");
-    FEC_PARAMS.set(Arc::new(RwLock::new((CONFIG.get().unwrap().multicast.row_fec, CONFIG.get().unwrap().multicast.col_fec)))).expect("Failed to set FEC_PARAMS");
     
+    // Start the Prometheus exporter
     start_prometheus_exporter();
 
     // Set up a Tokio runtime
@@ -164,11 +157,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
             // Start grpc server this will block execution because of await
             Server::builder()
-                .trace_fn(|request| {
-                    // Add debug-level logging for incoming requests
-                    tracing::debug!("Received gRPC request: {:?}", request);
-                    tracing::info_span!("grpc_server", method = %request.method(), uri = %request.uri())
-                })               
                 .tls_config(ServerTlsConfig::new().identity(Identity::from_pem(certificates.server_cert, certificates.server_key))).unwrap()
                 .add_service(crypto::ca_service::get_service(certificates.ca_cert, certificates.ca_private_key, client_sessions)) // Responsible for signing the client certificates
                 .add_service(key_service)
@@ -182,6 +170,39 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         });
     }});
 
+    let handle = thread::spawn(|| {
+        use std::io::BufRead;
+        let stdin = std::io::stdin();
+        let metrics = metrics::get_metrics();
+        for line in stdin.lock().lines() {
+            match line {
+                Ok(input) => {
+                    let parts: Vec<&str> = input.trim().split_whitespace().collect();
+                    if parts.len() != 2 {
+                        eprintln!("Please enter exactly two numbers separated by a space.");
+                        continue;
+                    }
+
+                    let a = parts[0].parse::<i32>();
+                    let b = parts[1].parse::<i32>();
+
+                    match (a, b) {
+                        (Ok(x), Ok(y)) => {
+                            metrics.fec_row.set(x as i64);
+                            metrics.fec_col.set(y as i64);
+                        },
+                        _ => eprintln!("Invalid input. Make sure both entries are integers."),
+                    }
+                }
+                Err(e) => eprintln!("Error reading line: {}", e),
+            }
+        }
+    });
+
+    // Wait for the thread to finish (e.g., when EOF is reached)
+    if let Err(e) = handle.join() {
+        panic!("handle panicked: {:?}", e);
+    }
     // Join the threads and propagate any panics
     if let Err(e) = client_sessions_handler.join() {
         panic!("client_sessions_handler panicked: {:?}", e);
