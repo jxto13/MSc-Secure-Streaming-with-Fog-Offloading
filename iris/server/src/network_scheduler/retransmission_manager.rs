@@ -71,7 +71,8 @@ impl RetransmissionManager {
                                         let retransmission = RetransmissionPacket {
                                             packet: Some(packet.clone())
                                         };
-                                        multicast_tx.send(retransmission.encode_to_vec()).unwrap();
+                                        unicast_tx.send((retransmission.encode_to_vec(), *ip)).unwrap();
+                                        // multicast_tx.send(retransmission.encode_to_vec()).unwrap();
                                     }
                                 }
                                

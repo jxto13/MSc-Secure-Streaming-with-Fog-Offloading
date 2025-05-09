@@ -22,6 +22,7 @@ use openssl::x509::X509;
 use proto::nts_service_server::NtsServiceServer;
 use source_handler::data_handler::{DataHandler,DataSource};
 
+use tonic::client;
 use tonic::transport::{Identity, Server, ServerTlsConfig};
 use tokio::runtime::Runtime;
 
@@ -147,6 +148,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Create a std thread and setup tokio for gRPC Server with tokio runtime
     let grpc_server_handler = thread::spawn({
         let rt = Arc::clone(&rt);
+        let client_sessions = Arc::clone(&client_sessions);
         move || {
         // Run async code using the Tokio runtime
         rt.block_on(async {
@@ -199,6 +201,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }
     });
 
+    // Start the periodic task
+    rt.spawn(clean_client_session(Arc::clone(&client_sessions)));
+
     // Wait for the thread to finish (e.g., when EOF is reached)
     if let Err(e) = handle.join() {
         panic!("handle panicked: {:?}", e);
@@ -220,6 +225,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
+/// Start the Prometheus exporter
+/// This function binds the exporter to the address specified in the configuration file
 fn start_prometheus_exporter() {
 
     // Parse address used to bind exporter to.
@@ -233,7 +240,19 @@ fn start_prometheus_exporter() {
     init_metrics();
 }
 
+/// Periodically clean up client sessions
+async fn clean_client_session(client_sessions: Arc<ClientSessions>) {
+    let config = CONFIG.get().unwrap();
+    loop {
+        // Get the client sessions
+        client_sessions.remove_timed_out_clients();
+        tokio::time::sleep(std::time::Duration::from_secs(config.settings.timeout_clients)).await;
+    }
+        
+}
 
+/// ------------------------------------------ Matrix History -------------------------------------------------------------
+/// A struct to hold the matrix data and its index
 #[derive(Clone,Debug)]
 pub struct IndexedMatrix {
     pub index: usize,

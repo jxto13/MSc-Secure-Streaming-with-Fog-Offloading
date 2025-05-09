@@ -114,11 +114,11 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
                 let mut packet = TransmissionPacket {
                     matrix: matrix_counter,
-                    index: matrix_index as i32,
-                    rows: num_rows as i32,
-                    cols: num_cols as i32,
-                    rows_fec: fec_params.0 as i32,
-                    cols_fec: fec_params.1 as i32,
+                    index: matrix_index as u32,
+                    rows: num_rows as u32,
+                    cols: num_cols as u32,
+                    rows_fec: fec_params.0 as u32,
+                    cols_fec: fec_params.1 as u32,
                     payload: encryped_payload,
                     packet_signature: vec![0,255],
                 };
@@ -149,10 +149,10 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
                     let mut packet = TransmissionPacket {
                         matrix: matrix_counter,
                         index: matrix_index,
-                        rows: num_rows as i32,
-                        cols: num_cols as i32,
-                        rows_fec: fec_params.0 as i32,
-                        cols_fec: fec_params.1 as i32,
+                        rows: num_rows as u32,
+                        cols: num_cols as u32,
+                        rows_fec: fec_params.0 as u32,
+                        cols_fec: fec_params.1 as u32,
                         payload: item.to_vec(),
                         packet_signature: vec![0,255],
                     };
@@ -194,11 +194,11 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
 
                     let mut packet = TransmissionPacket {
                         matrix: matrix_counter,
-                        index: ((num_rows + item_index) * (num_cols + fec_params.0) + col_index) as i32,
-                        rows: num_rows as i32,
-                        cols: num_cols as i32,
-                        rows_fec: fec_params.0 as i32,
-                        cols_fec: fec_params.1 as i32,
+                        index: ((num_rows + item_index) * (num_cols + fec_params.0) + col_index) as u32,
+                        rows: num_rows as u32,
+                        cols: num_cols as u32,
+                        rows_fec: fec_params.0 as u32,
+                        cols_fec: fec_params.1 as u32,
                         payload: item.to_vec(),
                         packet_signature: vec![0,255],
                     };

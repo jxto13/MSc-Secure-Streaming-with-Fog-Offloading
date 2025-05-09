@@ -9,6 +9,7 @@ pub struct Metrics {
     pub data_source_rate: GenericGauge<AtomicI64>,
     pub multicast_sender_rate: GenericGauge<AtomicI64>,
     pub retransmissions_sender_rate: GenericGauge<AtomicI64>,
+    pub unicast_sender_rate: GenericGauge<AtomicI64>,
     pub fec_row: GenericGauge<AtomicI64>,
     pub fec_col: GenericGauge<AtomicI64>,
     pub packet_loss: GenericGauge<AtomicF64>,
@@ -31,6 +32,11 @@ impl Metrics {
             retransmissions_sender_rate: register_int_gauge!(opts!(
                 "retransmissions_sender_rate", 
                 "Rate of retransmissions being sent over multicast"
+            )).unwrap(),
+
+            unicast_sender_rate: register_int_gauge!(opts!(
+                "unicast_sender_rate", 
+                "Rate of what is being sent over unicast"
             )).unwrap(),
             
             fec_row: register_int_gauge!(opts!(

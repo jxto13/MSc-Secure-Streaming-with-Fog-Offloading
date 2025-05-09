@@ -56,8 +56,8 @@ impl KeyService for MyKeyService {
             current_key: Some(current_key),
             next_key: Some(next_key),
             certificate,
-            epoch: CONFIG.get().unwrap().multicast.epoch as i32,
-            reports_interval: CONFIG.get().unwrap().settings.transmissions_interval as i32,
+            epoch: CONFIG.get().unwrap().multicast.epoch as u32,
+            reports_interval: CONFIG.get().unwrap().settings.transmissions_interval as u32,
         }))
     }
 }

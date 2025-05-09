@@ -27,19 +27,19 @@ use super::proto::ClientReport;
 /// A struct to track the state of a matrix.
 struct MatrixTracker {
     /// Index of the matrix.
-    matrix_index: i32, 
+    matrix_index: u32, 
 
     /// Number of columns in the matrix.
-    cols: i32, 
+    cols: u32, 
     
     /// Number of rows in the matrix.
-    rows: i32, 
+    rows: u32, 
     
     /// Number of columns for Forward Error Correction.
-    cols_fec: i32, 
+    cols_fec: u32, 
     
     /// Number of rows for Forward Error Correction.
-    rows_fec: i32, 
+    rows_fec: u32, 
     
     /// Matrix to store the packets.
     matrix_packets: Matrix<Option<TransmissionPacket>>, 
@@ -123,7 +123,7 @@ impl MatrixTracker {
             ) {
                 for (position, data) in recovered {
 
-                    let index = (tracker.cols + tracker.rows_fec) * row_index as i32 + position as i32;
+                    let index = (tracker.cols + tracker.rows_fec) * row_index as u32 + position as u32;
                     let mut packet = TransmissionPacket {
                         matrix: tracker.matrix_index,
                         index,
@@ -177,7 +177,7 @@ impl MatrixTracker {
             ) {
                 for (position, data) in recovered {
                     
-                    let index = (tracker.rows + tracker.cols_fec) * col_index as i32 + position as i32;
+                    let index = (tracker.rows + tracker.cols_fec) * col_index as u32 + position as u32;
                     let mut packet = TransmissionPacket {
                         matrix: tracker.matrix_index,
                         index,
@@ -434,7 +434,7 @@ pub fn start(
                 let mut bitmaps = Vec::new();
                 
                 if buffer.len() > 1 {
-                    for item in buffer.iter().take(buffer.len()) {
+                    for item in buffer.iter().take(buffer.len() - 1) {
                         bitmaps.push(MatrixReportBitmap {
                             matrix_index: item.matrix_index,
                             bitmap: item.bitmap.clone(),
@@ -478,8 +478,10 @@ pub fn start(
                     for mut item in drained {
 
                         info!("Missing packets: {:?} - {:?}", item.matrix_index, item.missing_indexes());
+
                         // Reconstruct the matrix
                         item.reconstruct_matrix(&client_ec_key).unwrap();
+
                         info!("Missing packets after reconstruct: {:?} - {:?}", item.matrix_index, item.missing_indexes());
 
                         // Decode the matrix to the application layer
@@ -512,6 +514,7 @@ pub fn start(
                 // Attempt to decode as a RetransmissionPacket
                 if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
                     if let Some(packet) = retransmission.packet {
+
                         // Missing logic to decode linear combination with the other packets of matrix
                         info!("RetransmissionPacket contained packet: {:?} - {:?}", packet.matrix, packet.index);
                         process_retransmission_packet(&mut buffer, packet);

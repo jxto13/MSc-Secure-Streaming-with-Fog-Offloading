@@ -43,6 +43,10 @@ impl WiFiUnicast {
         poll.registry().register(&mut socket, UDP_SOCKET, Interest::WRITABLE)?;
 
         let port = CONFIG.get().unwrap().unicast.port;
+
+        // Get metrics 
+        let metrics = get_metrics();
+
         // Our event loop.
         loop {
             // Poll to check if we have events waiting for us.
@@ -61,17 +65,15 @@ impl WiFiUnicast {
                 match event.token() {
                     UDP_SOCKET => {
                         
-                        loop {
-                            let message = rx.recv();
+                        if let Ok(message) = rx.recv() {
+                            let client = SocketAddr::new(message.1, port);
+                            if let Err(err) = socket.send_to(&message.0, client) {
+                                error!("Failed to send UDP message: {}", err);
+                            } 
 
-                            if message.is_ok(){
-                                // If we have a message, send it to the socket.
-                                let message = message.unwrap();
-                                let client = SocketAddr::new(message.1, port);
-                                socket.send_to(&message.0, client)?;
-                                break;
-                            }
+                            metrics.unicast_sender_rate.add(message.0.len() as i64);
                         }
+                        
                     },
                     _ => {
                         // This should never happen as we only registered our

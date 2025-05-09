@@ -1,5 +1,5 @@
 use std::net::{IpAddr, SocketAddr};
-use std::time::Instant;
+use std::time::{Duration, Instant};
 
 use crossbeam_channel::Receiver;
 use dashmap::DashMap;
@@ -7,7 +7,7 @@ use dashmap::DashMap;
 use openssl::x509::X509;
 use proto::{ClientReport, MatrixReportBitmap};
 
-use crate::proto;
+use crate::{proto, CONFIG};
 
 #[derive(Debug)]
 pub struct ClientData {
@@ -24,12 +24,12 @@ impl ClientData {
             .collect()
     }
 
-    pub fn get_missing_packets(&self) -> Option<Vec<(i32,Vec<usize>)>> {
+    pub fn get_missing_packets(&self) -> Option<Vec<(u32,Vec<usize>)>> {
         if self.reports.is_empty() {
             return None;
         }
     
-        let results: Vec<(i32, Vec<usize>)> = self.reports.iter()
+        let results: Vec<(u32, Vec<usize>)> = self.reports.iter()
             .map(|report| (report.matrix_index, Self::find_zero_indices(&report.bitmap)))
             .collect();
     
@@ -40,7 +40,7 @@ impl ClientData {
 #[derive(Debug)]
 pub struct ClientSessions {
     pub clients: DashMap<IpAddr, ClientData>, // Client address, Client data
-    pub reports_channel: Receiver<(SocketAddr, ClientReport)>, // Channel for sending reports
+    pub reports_channel: Receiver<(SocketAddr, ClientReport)>, // Channel for receiving reports
 }
 
 impl ClientSessions {
@@ -51,23 +51,15 @@ impl ClientSessions {
         }
     }
 
+    /// Removes clients that have timed out and their associated reports.
+    pub fn remove_timed_out_clients(&self) {
+        let timeout = Duration::from_secs(CONFIG.get().unwrap().settings.timeout_clients);
+        let now = Instant::now();
+        self.clients
+            .retain(|_, client_data| now.duration_since(client_data.last_seen) <= timeout);
+    }
+
     pub fn start_manager(&self) {
-
-        // // Get the timeout duration from the configuration
-        // let timeout = Duration::from_secs(CONFIG.get().unwrap().settings.timeout_clients);
-        
-        // // Check every N second for timeout clients
-        // loop {
-        //     {
-        //         // Lock the client_sessions for writing
-        //         let mut client_sessions = client_sessions.write().unwrap();
-        //         // Removing timed-out clients
-        //         client_sessions.remove_timed_out_clients();
-        //     }
-        //     // Sleep outside the lock to avoid holding it during the sleep
-        //     thread::sleep(timeout);
-        // }
-
 
         for (client_addr,report) in &self.reports_channel {
 
@@ -188,13 +180,7 @@ impl ClientSessions {
     //         })
     // }
 
-    // /// Removes clients that have timed out and their associated reports.
-    // pub fn remove_timed_out_clients(&mut self) {
-    //     let timeout = Duration::from_secs(CONFIG.get().unwrap().settings.timeout_clients);
-    //     let now = Instant::now();
-    //     self.clients
-    //         .retain(|_, client_data| now.duration_since(client_data.last_seen) <= timeout);
-    // }
+    
 
     // /// Saves a client report, associating it with the client's session.
     // pub fn save_client_report(&mut self, client_addr: IpAddr, report: ClientReport) {
@@ -263,49 +249,4 @@ impl ClientSessions {
 
     //     nc_matrixes
     // }
-}
-
-
-
-#[derive(Debug)]
-pub struct SortedVecMap<K, V> {
-    data: Vec<(K, V)>,
-}
-
-impl<K: Ord, V> SortedVecMap<K, V> {
-    pub fn new() -> Self {
-        SortedVecMap { data: Vec::new() }
-    }
-
-    /// Insert or update a key-value pair
-    pub fn insert(&mut self, key: K, value: V) {
-        match self.data.binary_search_by(|(k, _)| k.cmp(&key)) {
-            Ok(pos) => {
-                // Key exists; update value
-                self.data[pos].1 = value;
-            }
-            Err(pos) => {
-                // Insert at the correct sorted position
-                self.data.insert(pos, (key, value));
-            }
-        }
-    }
-
-    /// Get a reference to the value by key
-    pub fn get(&self, key: &K) -> Option<&V> {
-        self.data
-            .binary_search_by(|(k, _)| k.cmp(key))
-            .ok()
-            .map(|pos| &self.data[pos].1)
-    }
-
-    /// Check if a key exists
-    pub fn contains_key(&self, key: &K) -> bool {
-        self.data.binary_search_by(|(k, _)| k.cmp(key)).is_ok()
-    }
-
-    /// Iterate over the key-value pairs
-    pub fn iter(&self) -> impl Iterator<Item = &(K, V)> {
-        self.data.iter()
-    }
 }

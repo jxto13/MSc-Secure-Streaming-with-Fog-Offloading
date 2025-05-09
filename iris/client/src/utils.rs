@@ -12,7 +12,7 @@ pub struct SessionConfig {
     pub current_key: SessionKey,
     pub next_key: SessionKey,
     pub ec_server_certificate: Vec<u8>,
-    pub epoch: i32,
+    pub epoch: u32,
     pub client_ec_certificate: Vec<u8>,
     pub client_ec_key: Option<EcKey<Private>>
 }
