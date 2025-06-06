@@ -27,6 +27,7 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Iris"
         >
+        <activity android:name=".MulticastReceiverActivity" />
         <activity
             android:name="pt.iris.MainActivity"
             android:exported="true"

@@ -6,6 +6,7 @@ mod metrics;
 mod nts_service;
 
 use std::sync::RwLock;
+use std::time::Duration;
 use std::{sync::Arc, thread};
 use std::path::PathBuf;
 
@@ -13,7 +14,7 @@ use std::path::PathBuf;
 use crossbeam_channel::unbounded;
 use crypto::key_manager::KeyManager;
 use grid::Grid;
-use log::error;
+use log::{error, info};
 use membership_manager::client_sessions;
 use membership_manager::reporting_sink::MyReportService;
 use crypto::certificates;
@@ -22,7 +23,6 @@ use openssl::x509::X509;
 use proto::nts_service_server::NtsServiceServer;
 use source_handler::data_handler::{DataHandler,DataSource};
 
-use tonic::client;
 use tonic::transport::{Identity, Server, ServerTlsConfig};
 use tokio::runtime::Runtime;
 
@@ -37,7 +37,7 @@ use crate::metrics::init_metrics;
 
 // Import protobuff
 pub mod proto {
-    tonic::include_proto!("streaming_server");
+    include!("../proto/generated/streaming_server.rs");
 }
 
 // Define the global static instance of Config using OnceCell
@@ -61,6 +61,12 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .required(true)
                 .value_parser(clap::value_parser!(PathBuf))
                 .help("Path to the configuration file"),
+        )
+        .arg(
+            arg!(--"train")
+                .required(false)
+                .help("Enable training mode for RL simulation")
+                .action(clap::ArgAction::SetTrue),
         );
     
     // Parse command-line arguments
@@ -74,14 +80,26 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .format_timestamp_millis()
         .init();
 
+    // tracing_subscriber::fmt()
+    //     // all spans/events with a level higher than TRACE (e.g, info, warn, etc.)
+    //     // will be written to stdout.
+    //     .with_max_level(tracing::Level::TRACE)
+    //     // sets this to be the default, global collector for this application.
+    //     .init();
+
+    if matches.get_flag("train") {
+        info!("------------------------- Training mode enabled  -------------------------");
+    } else {
+        info!("------------------------- Training mode disabled -------------------------");
+    }
+
     // Read configuration file
     let config = read_config(config_filename.to_str().unwrap())?;
 
     // Set the global CONFIG instance
     CONFIG.set(config).expect("Failed to set CONFIG");
 
-    // MATRIX_BUFFER.set(Arc::new(RwLock::new(CircularBuffer::<MAX_BUFFER_SIZE, Option<Grid<TransmissionPacket>>>::new()))).expect("Failed to set MATRIX_BUFFER");
-    MATRIX_BUFFER.set(Arc::new(MatrixHistory::new(32))).expect("Failed to set MATRIX_BUFFER");
+    MATRIX_BUFFER.set(Arc::new(MatrixHistory::new(64))).expect("Failed to set MATRIX_BUFFER");
     
     // Start the Prometheus exporter
     start_prometheus_exporter();
@@ -92,7 +110,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // ----------------------------------- Programs Setup -------------------------------------------------------------
 
     // Load or create certificates
-    let certificates = certificates::load_or_create_certificates()?;
+    let certificates = certificates::load_or_create_certificates().unwrap();
     let key_manager = Arc::new(RwLock::new(KeyManager::new(certificates.ec_key)));
 
     // Start key_service before the pipeline to generate the ECDSA Keys for encoder 
@@ -167,7 +185,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .await
                 .unwrap_or_else(|err| {
                     // Handle the error if creating the runtime fails
-                    error!("Error creating gRPC server: {}", err);
+                    panic!("Error creating gRPC server: {}", err);
                 });
         });
     }});
@@ -203,7 +221,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Start the periodic task
     rt.spawn(clean_client_session(Arc::clone(&client_sessions)));
-
+    rt.spawn(update_packet_loss_metrics(Arc::clone(&client_sessions)));
+    
     // Wait for the thread to finish (e.g., when EOF is reached)
     if let Err(e) = handle.join() {
         panic!("handle panicked: {:?}", e);
@@ -240,15 +259,33 @@ fn start_prometheus_exporter() {
     init_metrics();
 }
 
-/// Periodically clean up client sessions
+/// Periodically clean up client sessions using `tokio::time::interval`
 async fn clean_client_session(client_sessions: Arc<ClientSessions>) {
     let config = CONFIG.get().unwrap();
+    let mut interval = tokio::time::interval(Duration::from_secs(config.settings.timeout_clients));
+
     loop {
-        // Get the client sessions
+        interval.tick().await;
         client_sessions.remove_timed_out_clients();
-        tokio::time::sleep(std::time::Duration::from_secs(config.settings.timeout_clients)).await;
     }
+}
+
+/// Periodically update packet loss metrics using `tokio::time::interval`
+async fn update_packet_loss_metrics(client_sessions: Arc<ClientSessions>) {
+    let mut interval = tokio::time::interval(Duration::from_secs(1));
+    let metrics = metrics::get_metrics();
+
+    loop {
+        interval.tick().await;
+
+        // Calculate packet loss and update the metric
+        let packet_loss = client_sessions.calculate_packet_loss();
         
+        // If packet_loss is -1.0, it means that the client_sessions is empty
+        if packet_loss != -1.0 {
+            metrics.packet_loss.set(packet_loss.into());
+        }
+    }
 }
 
 /// ------------------------------------------ Matrix History -------------------------------------------------------------

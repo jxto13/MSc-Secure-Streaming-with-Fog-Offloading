@@ -2,7 +2,7 @@
 FROM rust:latest
 
 # Create and set the working directory in the container
-WORKDIR /usr/src/client
+WORKDIR /usr/iris/client
 
 # Update and install dependencies
 RUN apt update && apt install -y protobuf-compiler
@@ -19,4 +19,10 @@ COPY server/certs/ca_certificate.pem ../server/certs/ca_certificate.pem
 RUN cargo build --release --example headless
 
 # Use the precompiled binary directly
-CMD ["./target/release/examples/headless", "--ip", "streaming-server-1"]
+CMD ["sh", "-c", "\
+  if [ -z \"$SERVER_IP\" ]; then \
+    echo 'ERROR: SERVER_IP environment variable is not set' >&2; \
+    exit 1; \
+  else \
+    ./target/release/examples/headless --ip \"$SERVER_IP\"; \
+  fi"]

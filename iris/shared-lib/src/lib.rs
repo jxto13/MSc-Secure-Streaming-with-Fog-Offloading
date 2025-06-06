@@ -274,14 +274,14 @@ pub mod bandwidth_utils {
         pub fn record_multicast(&mut self, packet_size: usize) {
             self.bytes_sent += packet_size;
             self.multicast_packets_sent += 1;
-            // self.enforce_rate();
+            self.enforce_rate();
         }
 
         /// Records a retransmission packet sent.
         pub fn record_retransmission(&mut self, packet_size: usize) {
             self.bytes_sent += packet_size;
             self.retransmission_packets_sent += 1;
-            // self.enforce_rate();
+            self.enforce_rate();
         }
 
         /// Enforces the bandwidth rate by introducing delays if needed.
@@ -402,11 +402,196 @@ pub mod rlnc {
         }
     }
 }
+
+pub mod source_coding {
+
+    pub type Matrix = Vec<Vec<u8>>;
+
+    #[derive(Debug, PartialEq, Eq)]
+    pub enum Transmission {
+        Single(usize),
+        Xor(Vec<usize>), // Supports XOR of 2 or 3 packets
+    }
+
+    // Check if client can resolve a missing packet from an XOR combination
+    fn can_resolve_xor(client: &Vec<u8>, combo: &Vec<usize>) -> bool {
+        let known = combo.iter().filter(|&&i| client[i] == 1).count();
+        let unknown = combo.iter().filter(|&&i| client[i] == 0).count();
+        known + 1 == combo.len() && unknown == 1
+    }
+
+    // Apply an XOR transmission to the state
+    fn apply_xor(state: &mut Matrix, combo: &Vec<usize>) {
+        for row in state.iter_mut() {
+            let known: Vec<usize> = combo.iter().cloned().filter(|&i| row[i] == 1).collect();
+            let unknown: Vec<usize> = combo.iter().cloned().filter(|&i| row[i] == 0).collect();
+            if known.len() + 1 == combo.len() && unknown.len() == 1 {
+                row[unknown[0]] = 1;
+            }
+        }
+    }
+
+    // Apply a single packet transmission
+    fn apply_single(state: &mut Matrix, packet: usize) {
+        for row in state.iter_mut() {
+            row[packet] = 1;
+        }
+    }
+
+    // Generate all combinations of `k` packets out of `n`
+    fn all_combinations(k: usize, n: usize) -> Vec<Vec<usize>> {
+        fn combine(
+            result: &mut Vec<Vec<usize>>,
+            current: &mut Vec<usize>,
+            n: usize,
+            start: usize,
+            k: usize,
+        ) {
+            if current.len() == k {
+                result.push(current.clone());
+                return;
+            }
+            for i in start..n {
+                current.push(i);
+                combine(result, current, n, i + 1, k);
+                current.pop();
+            }
+        }
+
+        let mut result = vec![];
+        combine(&mut result, &mut vec![], n, 0, k);
+        result
+    }
+
+    // Greedy strategy that picks the best packet or XOR combo in each step
+    pub fn find_optimal_retransmissions(mut state: Matrix) -> Vec<Transmission> {
+        let num_packets = state[0].len();
+        let mut transmissions = Vec::new();
+
+        while state.iter().any(|row| row.contains(&0)) {
+            let mut best_gain = 0;
+            let mut best_transmission = None;
+
+            // Try all single packets
+            for j in 0..num_packets {
+                let gain = state.iter().filter(|row| row[j] == 0).count();
+                if gain > best_gain {
+                    best_gain = gain;
+                    best_transmission = Some(Transmission::Single(j));
+                }
+            }
+
+            // Try XOR combinations of 2 and 3 packets
+            for k in 2..=3 {
+                for combo in all_combinations(k, num_packets) {
+                    let gain = state
+                        .iter()
+                        .filter(|row| can_resolve_xor(row, &combo))
+                        .count();
+                    if gain > best_gain {
+                        best_gain = gain;
+                        best_transmission = Some(Transmission::Xor(combo));
+                    }
+                }
+            }
+
+            // Apply the best transmission
+            match best_transmission {
+                Some(Transmission::Single(j)) => {
+                    apply_single(&mut state, j);
+                    transmissions.push(Transmission::Single(j));
+                }
+                Some(Transmission::Xor(combo)) => {
+                    apply_xor(&mut state, &combo);
+                    transmissions.push(Transmission::Xor(combo));
+                }
+                None => break, // Nothing to improve
+            }
+        }
+
+        transmissions
+    }
+
+    pub fn run_test(matrix: Matrix, expected: Vec<Transmission>) {
+        let result = find_optimal_retransmissions(matrix);
+        assert_eq!(result.len(), expected.len(), "Transmission count mismatch.");
+        for (i, (res, exp)) in result.iter().zip(expected.iter()).enumerate() {
+            assert_eq!(res, exp, "Mismatch at step {}: {:?} != {:?}", i, res, exp);
+        }
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::rlnc::RLNC;
     use crate::crypto_utils::{decrypt, encrypt};
     use crate::padding::{depad, pad};
+    use super::source_coding::{Transmission, run_test};
+
+    #[test]
+    fn test_simple_case() {
+        let matrix = vec![
+            vec![1, 0, 0, 1],
+            vec![1, 1, 0, 1],
+            vec![1, 0, 0, 1],
+            vec![1, 1, 0, 0],
+        ];
+        let expected = vec![
+            Transmission::Single(2),
+            Transmission::Xor(vec![1, 3]),
+        ];
+        run_test(matrix, expected);
+    }
+
+    #[test]
+    fn test_all_missing_same() {
+        let matrix = vec![
+            vec![1, 0, 1],
+            vec![1, 0, 1],
+            vec![1, 0, 1],
+        ];
+        let expected = vec![Transmission::Single(1)];
+        run_test(matrix, expected);
+    }
+
+    #[test]
+    fn test_can_use_triple_xor() {
+        let matrix = vec![
+            vec![0, 1, 1],
+            vec![1, 0, 1],
+            vec![1, 1, 0],
+        ];
+        let expected = vec![Transmission::Xor(vec![0, 1, 2])];
+        run_test(matrix, expected);
+    }
+
+    #[test]
+    fn test_double_xor_works() {
+        let matrix = vec![
+            vec![1, 0],
+            vec![0, 1],
+        ];
+        let expected = vec![Transmission::Xor(vec![0, 1])];
+        run_test(matrix, expected);
+    }
+
+    #[test]
+    fn test_individual_sends() {
+        let matrix = vec![
+            vec![0, 0, 1],
+            vec![0, 1, 0],
+            vec![1, 0, 0],
+        ];
+
+        let expected = vec![
+            Transmission::Single(0),
+            Transmission::Single(1),
+            Transmission::Single(2),
+        ];
+        run_test(matrix, expected);
+    }
+
 
     #[test]
     fn test_rlnc() {

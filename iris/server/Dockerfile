@@ -1,8 +1,8 @@
 # Use the official Rust image from Docker Hub
-FROM rust:latest
+FROM rust:1.85.1-slim-bullseye
 
 # Create and set the working directory in the container
-WORKDIR /usr/src/server
+WORKDIR /usr/iris/server
 
 # Update and install dependencies
 RUN apt update && apt install -y protobuf-compiler

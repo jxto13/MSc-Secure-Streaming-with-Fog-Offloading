@@ -30,6 +30,10 @@ prometheus_exporter = "0.8.5"
 chrono = "0.4.41"
 flate2 = "1.1.1"
 dashmap = "6.1.0"
+serde_json = "1.0.140"
+rurel = "0.6.0"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.19"
 
 # This compiles openssl for android using NDK
 [target.'cfg(target_os = "android")'.dependencies]

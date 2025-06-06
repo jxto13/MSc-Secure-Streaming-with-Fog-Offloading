@@ -1,3 +1,4 @@
+use std::net::{Ipv4Addr, SocketAddr, ToSocketAddrs};
 use std::sync::Arc;
 
 use crossbeam_channel::Receiver;
@@ -23,6 +24,19 @@ impl ClientSession {
         }
     }
 
+    fn first_ipv4(host: &str, port: u16) -> Option<Ipv4Addr> {
+        let addr_iter = (host, port).to_socket_addrs().ok()?;
+
+        for addr in addr_iter {
+            match addr {
+                SocketAddr::V4(v4_addr) => return Some(*v4_addr.ip()),
+                SocketAddr::V6(_) => continue,
+            }
+        }
+
+        None
+    }
+
     // function to receive reports and send based on a time window based on the timeclock of the server
     
     pub fn start_report_client(&mut self, reports: Receiver<ClientReport>) {
@@ -40,11 +54,11 @@ impl ClientSession {
             let socket = UdpSocket::bind("0.0.0.0:0").await.unwrap();
             
             // Destination address
-            let addr = "192.168.15.1:50053";
+            let hostname = "stream1.iris.dcc.fc.up.pt";
 
             for client_report in reports {
                 // Send the UDP packet
-                socket.send_to(&compress_data(&client_report.encode_to_vec()), addr).await.unwrap();
+                socket.send_to(&compress_data(&client_report.encode_to_vec()), format!("{}:50053",hostname)).await.unwrap();
             }
 
         });

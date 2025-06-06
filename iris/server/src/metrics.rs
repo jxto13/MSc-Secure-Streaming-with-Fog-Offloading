@@ -1,6 +1,6 @@
 use once_cell::sync::OnceCell;
-use prometheus_exporter::prometheus::{opts, register_gauge, register_int_gauge};
-use prometheus_exporter::prometheus::core::{AtomicF64, AtomicI64, GenericGauge};
+use prometheus_exporter::prometheus::{opts, register_gauge, register_gauge_vec, register_int_gauge, IntGauge};
+use prometheus_exporter::prometheus::core::{AtomicF64, AtomicI64, GenericCounterVec, GenericGauge, GenericGaugeVec};
 use std::sync::Arc;
 
 // Struct to group related metrics
@@ -13,6 +13,8 @@ pub struct Metrics {
     pub fec_row: GenericGauge<AtomicI64>,
     pub fec_col: GenericGauge<AtomicI64>,
     pub packet_loss: GenericGauge<AtomicF64>,
+    pub clients: GenericGaugeVec<AtomicF64>, // Correct type
+
 }
 
 impl Metrics {
@@ -53,6 +55,14 @@ impl Metrics {
                 "packet_loss", 
                 "Packet loss rate"
             )).unwrap(),
+
+            clients: register_gauge_vec!(
+                opts!(
+                    "clients", 
+                    "Number of clients connected"
+                ),
+                &["client_id"]
+            ).unwrap(),
         }
     }
 }

@@ -6,7 +6,12 @@
     android:layout_height="match_parent"
     tools:context="pt.iris.ui.slideshow.SlideshowFragment">
 
+    <androidx.media3.ui.PlayerView
+        android:id="@+id/playerView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
 
+    </androidx.media3.ui.PlayerView>
 
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -27,19 +27,19 @@ data_source = "udp"
 ip_source = "172.22.0.1:1234"
 
 # Multicast Config
-interface = "veth0" 
+# interface = "veth0" 
 # interface = "wlp92s0"
 # interface = "eth0"
-# interface = "enp0s20f0u3u1u3"
+interface = "enp0s20f0u3u1u2"
 
 ip_multicast = "239.255.0.1:12345"
-bitrate = 30000 # kbit/s
+bitrate = 3000 # kbit/s
 
 # Matrix Config
 row = 10
 col = 10
-row_fec = 5 # can be 0 if network loss allows it
-col_fec = 5 # can be 0 if network loss allows it
+row_fec = 1 # can be 0 if network loss allows it
+col_fec = 1 # can be 0 if network loss allows it
 
 epoch = 10 # number of matrix to rotate encryption key
 
@@ -50,7 +50,7 @@ shard_size = 1088 # must be a multiple of 64 but needs to be bigger then data an
 mtu_size = 1500 # default in most AP or routers
 
 [retransmission]
-port = 50053 # retransmission port for unicast
+port = 50053 # port for report sink
 wifi_multicast = true
 wifi_unicast = true
 interval = 15 # in miliseconds
@@ -59,5 +59,5 @@ interval = 15 # in miliseconds
 port = 9186 # bind prometheus to all interfaces
 
 [settings]
-timeout_clients = 1 # in seconds
+timeout_clients = 5 # in seconds
 transmissions_interval = 100 # in miliseconds

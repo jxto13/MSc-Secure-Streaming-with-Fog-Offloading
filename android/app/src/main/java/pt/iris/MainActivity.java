@@ -89,7 +89,8 @@ public class MainActivity extends AppCompatActivity {
 
 		// Start rustService
 		serviceIntent = new Intent(this, RustService.class);
-		this.startService(serviceIntent);
+		//this.startService(serviceIntent);
+
 	}
 
 	@Override

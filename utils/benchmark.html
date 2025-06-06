@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Local Speed Test</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 50px; }
+    #result { font-size: 24px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>Local Network Speed Test</h1>
+  <button onclick="startTest()">Start Test</button>
+  <div id="result"></div>
+
+  <script>
+    async function startTest() {
+      const result = document.getElementById('result');
+      result.textContent = 'Testing...';
+
+      const fileUrl = "testfile.bin"; // Should be a large file (50MB+)
+      const startTime = new Date().getTime();
+
+      try {
+        const response = await fetch(fileUrl + "?cache_buster=" + Math.random());
+        const reader = response.body.getReader();
+        let receivedLength = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          receivedLength += value.length;
+        }
+
+        const endTime = new Date().getTime();
+        const duration = (endTime - startTime) / 1000;
+        const speedMbps = ((receivedLength * 8) / (1024 * 1024)) / duration;
+
+        result.textContent = `Download Speed: ${speedMbps.toFixed(2)} Mbps`;
+      } catch (err) {
+        result.textContent = 'Error during speed test.';
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -80,12 +80,20 @@ impl MatrixTracker {
         let index = packet.index as usize;
         let row = index / (self.cols + self.rows_fec) as usize;
         let col = index % (self.cols + self.rows_fec) as usize;
+
+        if self.matrix_packets[(row, col)].is_some(){
+            error!("Packet already exists in the matrix at index: {} - {}", row, col);
+            return;
+        }
+
+        // Add the packet to the matrix
         self.matrix_packets[(row, col)] = Some(packet.clone());
         
         // Update the bitmap if this is a data packet
-        {
-            self.bitmap[packet.index as usize] = 1; // Set the corresponding position in the bitmap to 1
+        if (packet.index as usize) < self.bitmap.len() {
+            self.bitmap[packet.index as usize] = 1;
         }
+
 
     }
 
@@ -93,116 +101,132 @@ impl MatrixTracker {
     fn reconstruct_matrix(&mut self, ec_client_key: &EcKey<Private>) -> Result<(), Box<dyn Error>> {
         // This let was do to a refactor, can be improved by replacing self in all places of this function
         let tracker = self;
-        
+
+        let mut updates= true;
+
         // Logic to reconstruct the matrix
-   
-        // Reconstruct rows
-        for row_index in 0..tracker.matrix_packets.rows() {
+        while updates {
+            let mut new_packets_added = false;
 
-            let current_row = tracker.matrix_packets.iter_row(row_index);
 
-            let original_shards: Vec<(usize, &Vec<u8>)> = current_row
-                .clone()// Clone the iterator to avoid consuming it
-                .take(tracker.cols as usize)
-                .enumerate()
-                .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
-                .collect();
-
-            let recovery_shards: Vec<(usize, &Vec<u8>)> = current_row
-                .skip(tracker.cols as usize)
-                .enumerate()
-                .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
-                .collect();
-            
-            // Reed-Solomon decode the row
-            if let Ok(recovered) = reed_solomon_16::decode(
-                tracker.cols as usize,     // total number of original shards
-                tracker.rows_fec as usize, // total number of recovery shards
-                original_shards,
-                recovery_shards,
-            ) {
-                for (position, data) in recovered {
-
-                    let index = (tracker.cols + tracker.rows_fec) * row_index as u32 + position as u32;
-                    let mut packet = TransmissionPacket {
-                        matrix: tracker.matrix_index,
-                        index,
-                        rows: tracker.rows,
-                        cols: tracker.cols,
-                        rows_fec: tracker.rows_fec,
-                        cols_fec: tracker.cols_fec,
-                        payload: data.clone(),
-                        packet_signature: vec![0,255], // Initial empty signature
-                    };
-            
-                    // Encode the packet to a vector (assuming protobuf or similar)
-                    let encoded_packet = packet.encode_to_vec();  // Replace with the actual encoding method you're using
-                    let message_hash = sha256(&encoded_packet);
-            
-                    // Sign the message hash
-                    let signature = EcdsaSig::sign(&message_hash, ec_client_key).unwrap().to_der().unwrap();
-            
-                    // Update the packet signature
-                    packet.packet_signature = signature;
-
-                    tracker.add_packet(&packet);
+            // Reconstruct rows
+            for row_index in 0..tracker.matrix_packets.rows() {
+    
+                let current_row = tracker.matrix_packets.iter_row(row_index);
+    
+                let original_shards: Vec<(usize, &Vec<u8>)> = current_row
+                    .clone()// Clone the iterator to avoid consuming it
+                    .take(tracker.cols as usize)
+                    .enumerate()
+                    .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
+                    .collect();
+    
+                let recovery_shards: Vec<(usize, &Vec<u8>)> = current_row
+                    .skip(tracker.cols as usize)
+                    .enumerate()
+                    .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
+                    .collect();
+                
+                // Reed-Solomon decode the row
+                if let Ok(recovered) = reed_solomon_16::decode(
+                    tracker.cols as usize,     // total number of original shards
+                    tracker.rows_fec as usize, // total number of recovery shards
+                    original_shards,
+                    recovery_shards,
+                ) {
+                    for (position, data) in recovered {
+    
+                        let index = (tracker.cols + tracker.rows_fec) * row_index as u32 + position as u32;
+                        let mut packet = TransmissionPacket {
+                            matrix: tracker.matrix_index,
+                            index,
+                            rows: tracker.rows,
+                            cols: tracker.cols,
+                            rows_fec: tracker.rows_fec,
+                            cols_fec: tracker.cols_fec,
+                            payload: data.clone(),
+                            packet_signature: vec![0,255], // Initial empty signature
+                        };
+                
+                        // Encode the packet to a vector (assuming protobuf or similar)
+                        let encoded_packet = packet.encode_to_vec();  // Replace with the actual encoding method you're using
+                        let message_hash = sha256(&encoded_packet);
+                
+                        // Sign the message hash
+                        let signature = EcdsaSig::sign(&message_hash, ec_client_key).unwrap().to_der().unwrap();
+                
+                        // Update the packet signature
+                        packet.packet_signature = signature;
+    
+                        tracker.add_packet(&packet);
+                        log::debug!("Reconstructed packet: {:?}", packet.index);
+                        new_packets_added = true;
+                    }
                 }
             }
-        }
 
-        // Reconstruct collumn
-        for col_index in 0..tracker.matrix_packets.cols() {
 
-            let current_col = tracker.matrix_packets.iter_row(col_index);
+            // Reconstruct collumn
+            for col_index in 0..tracker.matrix_packets.cols() {
 
-            let original_shards: Vec<(usize, &Vec<u8>)> = current_col
-                .clone()// Clone the iterator to avoid consuming it
-                .take(tracker.rows as usize)
-                .enumerate()
-                .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
-                .collect();
+                let current_col = tracker.matrix_packets.iter_col(col_index);
 
-            let recovery_shards: Vec<(usize, &Vec<u8>)> = current_col
-                .skip(tracker.rows as usize)
-                .enumerate()
-                .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
-                .collect();
-            
-            // Reed-Solomon decode the column
-            if let Ok(recovered) = reed_solomon_16::decode(
-                tracker.rows as usize,     // total number of original shards
-                tracker.cols_fec as usize, // total number of recovery shards
-                original_shards,
-                recovery_shards,
-            ) {
-                for (position, data) in recovered {
-                    
-                    let index = (tracker.rows + tracker.cols_fec) * col_index as u32 + position as u32;
-                    let mut packet = TransmissionPacket {
-                        matrix: tracker.matrix_index,
-                        index,
-                        rows: tracker.rows,
-                        cols: tracker.cols,
-                        rows_fec: tracker.rows_fec,
-                        cols_fec: tracker.cols_fec,
-                        payload: data.clone(),
-                        packet_signature: vec![0, 255],
-                    };
+                let original_shards: Vec<(usize, &Vec<u8>)> = current_col
+                    .clone()// Clone the iterator to avoid consuming it
+                    .take(tracker.rows as usize)
+                    .enumerate()
+                    .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
+                    .collect();
 
-                    // Encode the packet to a vector (assuming protobuf or similar)
-                    let encoded_packet = packet.encode_to_vec();  // Replace with the actual encoding method you're using
-                    let message_hash = sha256(&encoded_packet);
-            
-                    // Sign the message hash with the client private key
-                    let signature = EcdsaSig::sign(&message_hash, ec_client_key).unwrap().to_der().unwrap();
-            
-                    // Update the packet signature
-                    packet.packet_signature = signature;
-                    
-                    tracker.add_packet(&packet);     
+                let recovery_shards: Vec<(usize, &Vec<u8>)> = current_col
+                    .skip(tracker.rows as usize)
+                    .enumerate()
+                    .filter_map(|(i, opt_packet)| opt_packet.as_ref().map(|packet| (i, &packet.payload)))
+                    .collect();
+                
+                // Reed-Solomon decode the column
+                if let Ok(recovered) = reed_solomon_16::decode(
+                    tracker.rows as usize,     // total number of original shards
+                    tracker.cols_fec as usize, // total number of recovery shards
+                    original_shards,
+                    recovery_shards,
+                ) {
+                    for (position, data) in recovered {
 
+                        
+                        let index = position as u32 * (tracker.cols + tracker.rows_fec) + col_index as u32;
+                        let mut packet = TransmissionPacket {
+                            matrix: tracker.matrix_index,
+                            index,
+                            rows: tracker.rows,
+                            cols: tracker.cols,
+                            rows_fec: tracker.rows_fec,
+                            cols_fec: tracker.cols_fec,
+                            payload: data.clone(),
+                            packet_signature: vec![0, 255],
+                        };
+
+                        // Encode the packet to a vector (assuming protobuf or similar)
+                        let encoded_packet = packet.encode_to_vec();  // Replace with the actual encoding method you're using
+                        let message_hash = sha256(&encoded_packet);
+                
+                        // Sign the message hash with the client private key
+                        let signature = EcdsaSig::sign(&message_hash, ec_client_key).unwrap().to_der().unwrap();
+                
+                        // Update the packet signature
+                        packet.packet_signature = signature;
+                        
+                        tracker.add_packet(&packet);
+                        log::debug!("Reconstructed packet: {:?}", packet.index);
+
+                        new_packets_added = true;
+
+                    }
                 }
+
             }
+
+            updates = new_packets_added;
         }
         
         Ok(())
@@ -281,7 +305,7 @@ fn process_packet(buffer: &mut VecDeque<MatrixTracker>, packet: TransmissionPack
             // The packet's matrix doesn't match the last tracker in the buffer
             
             // At this point, should be a new tracker in the buffer so try to reconstruct the matrix before with FEC
-            tracker.reconstruct_matrix(&session_config.client_ec_key.clone().unwrap()).unwrap();
+            tracker.reconstruct_matrix(&session_config.client_ec_key.as_ref().unwrap()).unwrap();
 
             // Check if the last tracker matrix index is less than the packet matrix index
             if tracker.matrix_index < packet.matrix {
@@ -290,10 +314,13 @@ fn process_packet(buffer: &mut VecDeque<MatrixTracker>, packet: TransmissionPack
 
                 // Create a new tracker for the packet
                 let mut matrix = MatrixTracker::new(&packet);
+
                 // Check if the matrix index is a multiple of the epoch and rotate the key if necessary
                 check_key_rotation(&mut matrix, &packet, current_key, next_key);
+
                 // Set the session key to the matrix
                 matrix.session_key = Some(current_key.clone());
+
                 // Add the matrix to the buffer
                 buffer.push_back(matrix);
             } else {
@@ -419,47 +446,49 @@ pub fn start(
     let mut flush_buffer_timer = now;
     
     let mut report_counter= 0;
+    let client_id = sha256(&client_ec_key.public_key_to_der().unwrap()).to_vec();
 
     // Main loop to receive all packets from receiving threads
     loop {
 
-        
         {   
             // Calculate the elapsed time since the last report
             let elapsed = report_timer.elapsed();
 
-            // If 100 milliseconds have passed, send a report
+            // If 200 milliseconds have passed, send a report
             if elapsed >= std::time::Duration::from_millis(200) {
 
-                let mut bitmaps = Vec::new();
                 
                 if buffer.len() > 1 {
+
+                    // Create a new ClientReport
+                    let mut report = ClientReport {
+                        client_id: client_id.clone(),
+                        counter: report_counter.clone(),
+                        reports: Vec::with_capacity(buffer.len() - 1),
+                        signature: vec![0, 255],
+                    };
+
+                    
                     for item in buffer.iter().take(buffer.len() - 1) {
-                        bitmaps.push(MatrixReportBitmap {
+                        report.reports.push(MatrixReportBitmap {
                             matrix_index: item.matrix_index,
                             bitmap: item.bitmap.clone(),
                         });
                     }
-                }
-                // Create a new ClientReport
-                let mut report = ClientReport {
-                    client_id: sha256(&client_ec_key.public_key_to_der().unwrap()).to_vec(),
-                    counter: report_counter,
-                    reports: bitmaps,
-                    signature: vec![0, 255],
-                };
 
-                // Sign the report
-                report.signature = EcdsaSig::sign(&sha256(&report.encode_to_vec()), &client_ec_key).unwrap().to_der().unwrap();
+                    // Sign the report
+                    report.signature = EcdsaSig::sign(&sha256(&report.encode_to_vec()), &client_ec_key).unwrap().to_der().unwrap();
 
-                // Send the report
-                client_report_sender.send(report).unwrap();
+                    // Send the report
+                    client_report_sender.send(report).unwrap();
+
+                    // Increment the report counter
+                    report_counter += 1;
+                }   
 
                 // Update the report timer
                 report_timer = Instant::now();
-
-                // Increment the report counter
-                report_counter += 1;
             }
         }
 
@@ -476,13 +505,13 @@ pub fn start(
                     let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
     
                     for mut item in drained {
+                        log::debug!("Missing packets: {:?} - {:?}", item.matrix_index, item.missing_indexes());
 
-                        info!("Missing packets: {:?} - {:?}", item.matrix_index, item.missing_indexes());
 
                         // Reconstruct the matrix
-                        item.reconstruct_matrix(&client_ec_key).unwrap();
+                        // item.reconstruct_matrix(&client_ec_key).unwrap();
 
-                        info!("Missing packets after reconstruct: {:?} - {:?}", item.matrix_index, item.missing_indexes());
+                        // info!("Missing packets after reconstruct: {:?} - {:?}", item.matrix_index, item.missing_indexes());
 
                         // Decode the matrix to the application layer
                         decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key).unwrap();
@@ -516,7 +545,7 @@ pub fn start(
                     if let Some(packet) = retransmission.packet {
 
                         // Missing logic to decode linear combination with the other packets of matrix
-                        info!("RetransmissionPacket contained packet: {:?} - {:?}", packet.matrix, packet.index);
+                        // info!("RetransmissionPacket contained packet: {:?} - {:?}", packet.matrix, packet.index);
                         process_retransmission_packet(&mut buffer, packet);
 
                     } else {
@@ -536,25 +565,20 @@ pub fn start(
         // Try to receive and decode unicast packets  
         match unicast_receiver.try_recv() {
             Ok(payload_bytes) => {
-                // Attempt to decode as a TransmissionPacket
-                if let Ok(mut transmission) = TransmissionPacket::decode(&*payload_bytes) {
-                    // Validate the packet signature, if invalid, skip the packet
-                    if validate_packet(&mut transmission, &x509_public_key) {
-                        info!("Unicast transmission packet: {:?} - {:?}", transmission.matrix, transmission.index);
-
-                        // Process the packet if valid
-                        process_retransmission_packet(&mut buffer, transmission);
-                    } else {
-                        // Invalid packet, skip
-                        continue;
-                    }
-                }
 
                 // Attempt to decode as a RetransmissionPacket
                 if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
-                    if let Some(packet) = retransmission.packet {
-                        // Missing logic to decode linear combination with the other packets of matrix
-                        info!("RetransmissionPacket contained packet: {:?}", packet);
+                    if let Some(mut packet) = retransmission.packet {
+
+                        // Validate the packet signature, if invalid, skip the packet
+                        if validate_packet(&mut packet, &x509_public_key) {
+                            // Process the packet if valid
+                            process_retransmission_packet(&mut buffer, packet);
+                        } else {
+                            // Invalid packet, skip
+                            continue;
+                        }
+                        
                     } else {
                         eprintln!("RetransmissionPacket contained no packet.");
                     }
