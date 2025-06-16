@@ -246,72 +246,84 @@ pub mod nc_type {
 }
 
 pub mod bandwidth_utils {
-    use std::thread;
+    use dashmap::DashMap;
     use std::time::{Duration, Instant};
 
-    /// A struct representing a simple bandwidth manager.
+    /// Tracks bandwidth usage for a single client.
     pub struct BandwidthManager {
-        bitrate: usize,                     // Maximum bits per second, in kbit/s
-        bytes_sent: usize,                  // Bytes sent in the current interval
-        multicast_packets_sent: usize,      // Number of multicast packets sent
-        retransmission_packets_sent: usize, // Number of retransmission packets sent
-        interval_start: Instant,            // Tracks the start of the interval
+        bitrate: usize,       // in kbit/s
+        bytes_sent: usize,    // total bytes sent in the interval
+        interval_start: Instant,
     }
 
     impl BandwidthManager {
-        /// Creates a new bandwidth manager with a specified bitrate.
-        pub fn new(bitrate: usize) -> Self {
+        pub fn new(bitrate_kbps: usize) -> Self {
             Self {
-                bitrate,
+                bitrate: bitrate_kbps,
                 bytes_sent: 0,
-                multicast_packets_sent: 0,
-                retransmission_packets_sent: 0,
                 interval_start: Instant::now(),
             }
         }
 
-        /// Records a multicast packet sent.
-        pub fn record_multicast(&mut self, packet_size: usize) {
-            self.bytes_sent += packet_size;
-            self.multicast_packets_sent += 1;
-            self.enforce_rate();
+        fn allowed_bytes_per_second(&self) -> usize {
+            (self.bitrate * 1_000) / 8
         }
 
-        /// Records a retransmission packet sent.
-        pub fn record_retransmission(&mut self, packet_size: usize) {
-            self.bytes_sent += packet_size;
-            self.retransmission_packets_sent += 1;
-            self.enforce_rate();
-        }
-
-        /// Enforces the bandwidth rate by introducing delays if needed.
-        fn enforce_rate(&mut self) {
-            // Calculate the allowed bytes per second based on the bitrate (kbit/s to bytes/sec)
-            let allowed_bytes_per_second = (self.bitrate * 1_000) / 8;
-
-            // Calculate the elapsed time since the start of the interval
-            let elapsed = self.interval_start.elapsed();
-            let elapsed_seconds = elapsed.as_secs_f64();
-
-            // Determine if we are exceeding the allowed bandwidth
-            let expected_bytes = (elapsed_seconds * allowed_bytes_per_second as f64) as usize;
-
-            if self.bytes_sent > expected_bytes {
-                // Calculate how long to sleep to maintain the CBR
-                let excess_bytes = self.bytes_sent - expected_bytes;
-                let sleep_duration =
-                    Duration::from_secs_f64(excess_bytes as f64 / allowed_bytes_per_second as f64);
-                thread::sleep(sleep_duration);
-            }
-
-            // Reset interval and bytes if a second has passed
-            if elapsed >= Duration::from_secs(1) {
-                self.interval_start += Duration::from_secs(1);
+        fn reset_if_needed(&mut self) {
+            if self.interval_start.elapsed() >= Duration::from_secs(1) {
+                self.interval_start = Instant::now();
                 self.bytes_sent = 0;
             }
         }
+
+        /// Checks if a packet of the given size can be sent.
+        pub fn can_send(&mut self, packet_size: usize) -> bool {
+            self.reset_if_needed();
+            let allowed = self.allowed_bytes_per_second();
+            (self.bytes_sent + packet_size) <= allowed
+        }
+
+        /// Tries to send a packet, returning true if it fits the budget.
+        pub fn try_send(&mut self, packet_size: usize) -> bool {
+            if self.can_send(packet_size) {
+                self.bytes_sent += packet_size;
+                true
+            } else {
+                false
+            }
+        }
+    }
+
+    /// Thread-safe bandwidth limiter for multiple clients using DashMap.
+    pub struct ClientBandwidthLimiter {
+        bitrate_kbps: usize,
+        clients: DashMap<String, BandwidthManager>,
+    }
+
+    impl ClientBandwidthLimiter {
+        pub fn new(bitrate_kbps: usize) -> Self {
+            Self {
+                bitrate_kbps,
+                clients: DashMap::new(),
+            }
+        }
+
+        /// Checks if a packet can be sent for the client without sending it.
+        pub fn can_send(&self, client_id: &str, packet_size: usize) -> bool {
+            let mut entry = self.clients.entry(client_id.to_string())
+                .or_insert_with(|| BandwidthManager::new(self.bitrate_kbps));
+            entry.can_send(packet_size)
+        }
+
+        /// Attempts to send a packet for a client.
+        pub fn try_send(&self, client_id: &str, packet_size: usize) -> bool {
+            let mut entry = self.clients.entry(client_id.to_string())
+                .or_insert_with(|| BandwidthManager::new(self.bitrate_kbps));
+            entry.try_send(packet_size)
+        }
     }
 }
+
 
 pub mod rlnc {
 
@@ -521,6 +533,29 @@ pub mod source_coding {
     }
 }
 
+
+pub mod compression {
+    use flate2::read::GzDecoder;
+    use std::io::Read;
+    use flate2::Compression;
+    use std::io::Write;
+    use flate2::write::GzEncoder;
+
+
+    // Helper function for decompressing GZIP data
+    pub fn decompress_data(data: &[u8]) -> Vec<u8> {
+        let mut decoder = GzDecoder::new(data);
+        let mut decompressed_data = Vec::new();
+        decoder.read_to_end(&mut decompressed_data).unwrap();
+        decompressed_data
+    }
+
+    pub fn compress_data(data: &[u8]) -> Vec<u8> {
+        let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+        encoder.write_all(data).unwrap();
+        encoder.finish().unwrap()
+    }
+}
 
 #[cfg(test)]
 mod tests {

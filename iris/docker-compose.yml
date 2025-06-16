@@ -32,7 +32,7 @@ services:
 
 
   streaming-server:
-    image: iris-server:0.1.0
+    image: iris-server:0.1.1
     container_name: streaming-server
     build: 
       context: .
@@ -47,7 +47,7 @@ services:
         ipv4_address: 172.22.0.102
 
   client:
-    image: iris-client:0.1.0
+    image: iris-client:0.1.1
     build:
       context: .
       dockerfile: client/Dockerfile

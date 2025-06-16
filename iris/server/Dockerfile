@@ -1,5 +1,5 @@
 # Use the official Rust image from Docker Hub
-FROM rust:1.85.1-slim-bullseye
+FROM rust:latest
 
 # Create and set the working directory in the container
 WORKDIR /usr/iris/server

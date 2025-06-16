@@ -12,9 +12,8 @@ use super::retransmission_manager::RetransmissionManager;
 // Struct representing the pipeline composed of the components
 pub struct Pipeline {
     client_sessions: Arc<ClientSessions>,
-    wifi_multicast_retransmission: bool,
-    wifi_unicast_retransmission: bool,
-    retransmission_manager: Option<RetransmissionManager>
+    multicast_enabled: bool,
+    unicast_enabled: bool,
 }
 
 impl Pipeline {
@@ -22,9 +21,8 @@ impl Pipeline {
     pub fn new(client_sessions: Arc<ClientSessions>, multicast_enabled: bool, unicast_enabled: bool) -> Self {
         Pipeline {
             client_sessions,
-            wifi_multicast_retransmission: multicast_enabled,
-            wifi_unicast_retransmission: unicast_enabled,
-            retransmission_manager: None
+            multicast_enabled,
+            unicast_enabled,
         }
     }
 
@@ -35,8 +33,6 @@ impl Pipeline {
         let (retransmission_multicast_tx, retransmission_multicast_rx) = unbounded();
         let (retransmission_unicast_tx, retransmission_unicast_rx) = unbounded();
         
-        
-
         // Start wifi_multicast thread
         let wifi_multicast_handler = thread::spawn(move || {
             // Create a new instance of WiFiMulticast
@@ -44,7 +40,6 @@ impl Pipeline {
             // Start multicast sender with the received data
             multicast.server(source_handler_receiver, retransmission_multicast_rx).unwrap();
         });
-
         
         // Start wifi_unicast thread
         let wifi_unicast_handler = thread::spawn(move || {

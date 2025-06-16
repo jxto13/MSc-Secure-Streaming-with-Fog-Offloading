@@ -51,6 +51,12 @@ use clap::{arg, Command};
 
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Set a custom panic hook to log panics and exit gracefully
+    std::panic::set_hook(Box::new(|panic_info| {
+        eprintln!("Panic occurred: {:?}", panic_info);
+        std::process::exit(1);
+    }));
+
     // Define the command structure
     let cmd = Command::new("streaming_server")
         .version("0.1.0")
@@ -267,6 +273,7 @@ async fn clean_client_session(client_sessions: Arc<ClientSessions>) {
     loop {
         interval.tick().await;
         client_sessions.remove_timed_out_clients();
+        info!("Cleaned up timed out clients");
     }
 }
 

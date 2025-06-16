@@ -4,6 +4,7 @@ use std::net::SocketAddr;
 use std::sync::Arc;
 
 use crossbeam_channel::Sender;
+use iris_shared::compression::decompress_data;
 use log::error;
 use openssl::ecdsa::EcdsaSig;
 use openssl::sha::sha256;
@@ -26,17 +27,6 @@ impl MyReportService {
     pub fn udp_receiver(client_sessions: Arc<ClientSessions>, reports_channel: Sender<(SocketAddr, ClientReport)>) {
         // Start the UDP receiver thread
 
-        fn decompress_data(data: &[u8]) -> Vec<u8> {
-            use flate2::read::GzDecoder;
-            use std::io::Read;
-
-            let mut decoder = GzDecoder::new(data);
-            let mut decompressed_data = Vec::new();
-
-            decoder.read_to_end(&mut decompressed_data).unwrap();
-            decompressed_data
-        }
-
         std::thread::spawn(move || {
             use mio::net::UdpSocket;
             use mio::{Events, Interest, Poll, Token};
@@ -51,7 +41,7 @@ impl MyReportService {
             let mut events = Events::with_capacity(1);
 
             // Setup the UDP socket.
-            let addr = format!("0.0.0.0:{}", CONFIG.get().unwrap().retransmission.port).parse().unwrap();
+            let addr = format!("0.0.0.0:{}", CONFIG.get().unwrap().settings.retransmission_port).parse().unwrap();
 
             let mut socket = UdpSocket::bind(addr).unwrap();
 

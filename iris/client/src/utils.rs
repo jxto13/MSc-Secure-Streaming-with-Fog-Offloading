@@ -1,21 +1,8 @@
 
-use openssl::ec::EcKey;
 use openssl::error::ErrorStack;
 use openssl::hash::MessageDigest;
 use openssl::pkey::{PKey, Private};
 use openssl::x509::{X509NameBuilder, X509Req, X509ReqBuilder};
-
-use super::proto::SessionKey;
-
-#[derive(Debug, Clone, Default)]
-pub struct SessionConfig {
-    pub current_key: SessionKey,
-    pub next_key: SessionKey,
-    pub ec_server_certificate: Vec<u8>,
-    pub epoch: u32,
-    pub client_ec_certificate: Vec<u8>,
-    pub client_ec_key: Option<EcKey<Private>>
-}
 
 /// Make a X509 request with the given private key
 pub fn mk_request(key_pair: &PKey<Private>) -> Result<X509Req, ErrorStack> {

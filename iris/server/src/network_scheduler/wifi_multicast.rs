@@ -122,9 +122,6 @@ impl WiFiMulticast {
                                             error!("Failed to send retransmission over multicast: {}", e);
                                         }
                                         
-                                        // Record the retransmission data sent.
-                                        self.bandwidth_manager.record_retransmission(data.len());
-
                                         // Update the retransmissions sender rate.
                                         metrics.retransmissions_sender_rate.add(data.len() as i64); // Update the gauge value
                                         
@@ -143,9 +140,6 @@ impl WiFiMulticast {
                                             error!("Failed to send data over multicast: {}", e);
                                         }
                                         
-                                        // Record the multicast data sent.
-                                        self.bandwidth_manager.record_multicast(data.len());
-
                                         // Update the multicast sender rate.
                                         metrics.multicast_sender_rate.add(data.len() as i64 ); // Update the gauge value
                                         

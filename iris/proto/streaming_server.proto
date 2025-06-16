@@ -74,6 +74,14 @@ message RetransmissionPacket {
     TransmissionPacket packet = 1;
 }
 
+// PacketWrapper is a wrapper for the packets to allow for different types of packets
+message PacketWrapper {
+  oneof packet_type {
+    TransmissionPacket transmission_packet = 1;
+    RetransmissionPacket retransmission_packet = 2;
+  }
+}
+
 // ----------------------------------------------------------------------------------------------------------- //
 
 // Reporting Service

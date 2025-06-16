@@ -1,4 +1,4 @@
-use crossbeam_channel::{Receiver, Sender, TryRecvError};
+use crossbeam_channel::{tick, Receiver, Sender, TryRecvError};
 use iris_shared::padding;
 use log::{error, info};
 use openssl::ec::{EcKey, EcKeyRef};
@@ -10,7 +10,8 @@ use prost::Message;
 use std::collections::VecDeque;
 use std::error::Error;
 use std::io::Cursor;
-use std::time::Instant;
+use std::thread;
+use std::time::{Duration, Instant};
 
 use grid::Grid as Matrix;
 
@@ -18,10 +19,18 @@ use openssl::ecdsa::EcdsaSig;
 
 use iris_shared::crypto_utils::decrypt;
 
-use crate::proto::{SessionKey, TransmissionPacket, VideoData, MatrixReportBitmap, RetransmissionPacket};
-use crate::SESSION_CONFIG;
+use crate::proto::{MatrixReportBitmap, PacketWrapper, RetransmissionPacket, SessionKey, TransmissionPacket, VideoData};
+use crate::receiver::ReceiverType;
+use crate::proto::packet_wrapper::PacketType;
+use crate::SESSION;
 
 use super::proto::ClientReport;
+
+#[derive(Debug)]
+pub enum TickType {
+    Report,
+    DecodeToApp,
+}
 
 #[derive(Default,Debug)]
 /// A struct to track the state of a matrix.
@@ -281,7 +290,7 @@ fn validate_packet(packet: &mut TransmissionPacket, x509_public_key: &EcKey<Publ
 
 /// Process a packet and check if it belongs to a new matrix or an old matrix in the buffer.
 fn process_packet(buffer: &mut VecDeque<MatrixTracker>, packet: TransmissionPacket, current_key: &mut SessionKey, next_key: &mut Option<SessionKey>) {
-    let session_config = SESSION_CONFIG.get().unwrap().read().unwrap();
+    let session_config = SESSION.get().unwrap().read().unwrap();
 
     // Check if the buffer is empty
     if buffer.is_empty() {
@@ -356,7 +365,7 @@ fn process_retransmission_packet(buffer: &mut VecDeque<MatrixTracker>, packet: T
 /// Check if the key rotation is necessary and rotate the key if necessary. Only called when the tracker is created.
 fn check_key_rotation(matrix: &mut MatrixTracker, packet: &TransmissionPacket, current_key: &mut SessionKey, next_key: &mut Option<SessionKey>) {
     // Get the session config
-    let session_config = SESSION_CONFIG.get().unwrap().read().unwrap();
+    let session_config = SESSION.get().unwrap().read().unwrap();
 
     // Check if the matrix index is a multiple of the epoch
     if matrix.matrix_index % session_config.epoch == 0 {
@@ -415,18 +424,17 @@ fn rotate_key(current_key: &mut SessionKey, next_key: &mut Option<SessionKey>, n
 }
 
 pub fn start(
-    multicast_receiver: Receiver<Vec<u8>>,
-    unicast_receiver: Receiver<Vec<u8>>,
+    data_receiver: Receiver<(ReceiverType, Vec<u8>)>,
     decode_data_sender: Sender<Vec<u8>>,
     client_report_sender: Sender<ClientReport>,
-) -> Result<(), Box<dyn Error>> {
+) {
 
     let mut buffer: VecDeque<MatrixTracker> = VecDeque::new();
 
-    let session_config = SESSION_CONFIG.get().unwrap().read().unwrap();
+    let session_config = SESSION.get().unwrap().read().unwrap();
 
     // Public Key from Server to verify packets signature
-    let x509_public_key = X509::from_pem(&session_config.ec_server_certificate)?.public_key()?.ec_key().unwrap();
+    let x509_public_key = X509::from_pem(&session_config.ec_server_certificate).unwrap().public_key().unwrap().ec_key().unwrap();
 
     // Current encryption key and Option for next encryption key
     let mut current_key_session = session_config.current_key.clone();
@@ -437,162 +445,288 @@ pub fn start(
         ec_key
     } else {
         error!("Client EC Key is not set.");
-        return Err("Client EC Key is not set.".into());
+        // return Err("Client EC Key is not set.".into());
+        panic!("Client EC Key is not set.");
     };
 
-    // Get the current time using Instant
-    let now = Instant::now();
-    let mut report_timer = now;
-    let mut flush_buffer_timer = now;
-    
     let mut report_counter= 0;
     let client_id = sha256(&client_ec_key.public_key_to_der().unwrap()).to_vec();
+    
+    
+    let rint = Duration::from_millis(200); // interval between retries
+    let d = Duration::from_millis(1000);   // total retry window
+    let max_rounds = d.as_millis() / rint.as_millis(); // 5
+    
+    let retry_tick = tick(rint);
+    let mut attempt = 0;
 
-    // Main loop to receive all packets from receiving threads
     loop {
+        crossbeam_channel::select_biased! {
+            recv(retry_tick) -> _ => {
 
-        {   
-            // Calculate the elapsed time since the last report
-            let elapsed = report_timer.elapsed();
+                let tick = if attempt == max_rounds {
+                    attempt = 0; // Reset attempt after reaching max rounds
+                    TickType::DecodeToApp
+                } else {
+                    attempt += 1; // Increment attempt 
+                    TickType::Report
+                };
 
-            // If 200 milliseconds have passed, send a report
-            if elapsed >= std::time::Duration::from_millis(200) {
+                // Match the tick type 
+                match tick {
+                    TickType::Report => {
 
-                
-                if buffer.len() > 1 {
+                        // Check if the buffer has more than one item
+                        if buffer.len() < 1 {
+                            info!("Buffer is empty or has only one item, skipping report.");
+                            continue;
+                        }
 
-                    // Create a new ClientReport
-                    let mut report = ClientReport {
-                        client_id: client_id.clone(),
-                        counter: report_counter.clone(),
-                        reports: Vec::with_capacity(buffer.len() - 1),
-                        signature: vec![0, 255],
-                    };
+                        // Create a new ClientReport
+                        let mut report = ClientReport {
+                            client_id: client_id.clone(),
+                            counter: report_counter.clone(),
+                            reports: Vec::with_capacity(buffer.len() - 1),
+                            signature: vec![0, 255],
+                        };
 
+                        // Iterate over the buffer and collect reports
+                        for item in buffer.iter().take(buffer.len() - 1) {
+                            report.reports.push(MatrixReportBitmap {
+                                matrix_index: item.matrix_index,
+                                bitmap: item.bitmap.clone(),
+                            });
+                        }
+
+                        // Sign the report
+                        report.signature = EcdsaSig::sign(&sha256(&report.encode_to_vec()), &client_ec_key).unwrap().to_der().unwrap();
+
+                        // Send the report
+                        client_report_sender.send(report).unwrap();
+
+                        // Increment the report counter
+                        report_counter += 1;
                     
-                    for item in buffer.iter().take(buffer.len() - 1) {
-                        report.reports.push(MatrixReportBitmap {
-                            matrix_index: item.matrix_index,
-                            bitmap: item.bitmap.clone(),
-                        });
+                    },
+                    TickType::DecodeToApp => {
+                        info!("Decoding to application layer...");
+                        
+                        // Check if the buffer has more than one item
+                        if buffer.len() > 1 {
+            
+                            // Drain all elements except the last one
+                            let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
+            
+                            for mut item in drained {
+                                
+                                // Reconstruct the matrix
+                                item.reconstruct_matrix(&client_ec_key).unwrap();
+
+                                log::debug!("Missing packets: {:?} - {:?}", item.matrix_index, item.missing_indexes());
+
+                                // Decode the matrix to the application layer
+                                decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key).unwrap();
+                            }
+            
+                        }
+
                     }
-
-                    // Sign the report
-                    report.signature = EcdsaSig::sign(&sha256(&report.encode_to_vec()), &client_ec_key).unwrap().to_der().unwrap();
-
-                    // Send the report
-                    client_report_sender.send(report).unwrap();
-
-                    // Increment the report counter
-                    report_counter += 1;
-                }   
-
-                // Update the report timer
-                report_timer = Instant::now();
-            }
-        }
-
-        {
-            // Calculate the elapsed time since the last flush
-            let elapsed = flush_buffer_timer.elapsed();
-
-            if elapsed >= std::time::Duration::from_millis(1000) {
-
-                // Check size of buffer
-                if buffer.len() > 1 {
-    
-                    // Drain all elements except the last one
-                    let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
-    
-                    for mut item in drained {
-                        log::debug!("Missing packets: {:?} - {:?}", item.matrix_index, item.missing_indexes());
-
-
-                        // Reconstruct the matrix
-                        // item.reconstruct_matrix(&client_ec_key).unwrap();
-
-                        // info!("Missing packets after reconstruct: {:?} - {:?}", item.matrix_index, item.missing_indexes());
-
-                        // Decode the matrix to the application layer
-                        decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key).unwrap();
-                    }
-    
                 }
-    
-                // Reset timer
-                flush_buffer_timer = Instant::now();
-            }
-        }
+                
+            },
+            
+            // Receive data from the channel
+            recv(data_receiver) -> msg => {
+                // Attempt to receive data from the channel
+                let (source, data) = match msg {
+                    Ok(val) => val,
+                    Err(err) => {
+                        println!("Channel closed: {:?}", err);
+                        break;
+                    }
+                };
 
+                let wrapper: Vec<u8> = match source {
+                    // This can be helpful to track metrics
+                    ReceiverType::Multicast=>{
+                        data
+                    },
+                    ReceiverType::Unicast=>{
+                        data
+                    },
+                    ReceiverType::WifiAware => {
+                        data
+                    }
+                };
 
-        // Try to receive and decode multicast packets  
-        match multicast_receiver.try_recv() {
-            Ok(payload_bytes) => {
-                // Attempt to decode as a TransmissionPacket
-                if let Ok(mut transmission) = TransmissionPacket::decode(&*payload_bytes) {
-                    // Validate the packet signature, if invalid, skip the packet
-                    if validate_packet(&mut transmission, &x509_public_key) {
-                        // Process the packet if valid
-                        process_packet(&mut buffer, transmission, &mut current_key_session, &mut next_key_session);
-                    } else {
-                        // Invalid packet, skip
+                // Attempt to decode the wrapper as a PacketWrapper
+                let packet_wrapper = match PacketWrapper::decode(&*wrapper) {
+                    Ok(pw) => pw,
+                    Err(err) => {
+                        error!("Failed to decode PacketWrapper: {}", err);
                         continue;
                     }
-                }
+                };
 
-                // Attempt to decode as a RetransmissionPacket
-                if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
-                    if let Some(packet) = retransmission.packet {
-
-                        // Missing logic to decode linear combination with the other packets of matrix
-                        // info!("RetransmissionPacket contained packet: {:?} - {:?}", packet.matrix, packet.index);
-                        process_retransmission_packet(&mut buffer, packet);
-
-                    } else {
-                        eprintln!("RetransmissionPacket contained no packet.");
-                    }
-                }
-            }
-            Err(TryRecvError::Empty) => {
-                // No message available, continue looping
-            }
-            Err(TryRecvError::Disconnected) => {
-                // The channel is closed, continue loop
-                // panic!("Multicast channel disconnected.");
-            }
-        }
-
-        // Try to receive and decode unicast packets  
-        match unicast_receiver.try_recv() {
-            Ok(payload_bytes) => {
-
-                // Attempt to decode as a RetransmissionPacket
-                if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
-                    if let Some(mut packet) = retransmission.packet {
-
+                match packet_wrapper.packet_type {
+                    Some(PacketType::TransmissionPacket(mut transmission)) => {
                         // Validate the packet signature, if invalid, skip the packet
-                        if validate_packet(&mut packet, &x509_public_key) {
+                        if validate_packet(&mut transmission, &x509_public_key) {
                             // Process the packet if valid
-                            process_retransmission_packet(&mut buffer, packet);
+                            process_packet(&mut buffer, transmission, &mut current_key_session, &mut next_key_session);
                         } else {
                             // Invalid packet, skip
                             continue;
                         }
-                        
-                    } else {
-                        eprintln!("RetransmissionPacket contained no packet.");
+                    }
+                    Some(PacketType::RetransmissionPacket(retransmission)) => {
+                        // handle RetransmissionPacket
+                        if let Some(packet) = retransmission.packet {
+                            // Missing logic to decode linear combination with the other packets of matrix
+                            // info!("RetransmissionPacket contained packet: {:?} - {:?}", packet.matrix, packet.index);
+                            process_retransmission_packet(&mut buffer, packet);
+
+                        } else {
+                            eprintln!("RetransmissionPacket contained no packet.");
+                        }
+                    }
+                    None => {
+                        // no packet set — error or ignore
                     }
                 }
-            }
-            Err(TryRecvError::Empty) => {
-                // No message available, continue looping
-            }
-            Err(TryRecvError::Disconnected) => {
-                // The channel is closed, continue loop
-                panic!("Multicast channel disconnected.");
+
+
             }
         }
     }
+    // Main loop to receive all packets from receiving threads
+    // loop {
+        
+    //     crossbeam_channel::select! {
+    //         recv(timers_receiver) -> tick => {
+    //             match tick {
+    //                 Ok(TickType::Report) => {
+
+    //                     // Check if the buffer has more than one item
+    //                     if buffer.len() < 1 {
+    //                         info!("Buffer is empty or has only one item, skipping report.");
+    //                         continue;
+    //                     }
+
+    //                     // Create a new ClientReport
+    //                     let mut report = ClientReport {
+    //                         client_id: client_id.clone(),
+    //                         counter: report_counter.clone(),
+    //                         reports: Vec::with_capacity(buffer.len() - 1),
+    //                         signature: vec![0, 255],
+    //                     };
+
+    //                     // Iterate over the buffer and collect reports
+    //                     for item in buffer.iter().take(buffer.len() - 1) {
+    //                         report.reports.push(MatrixReportBitmap {
+    //                             matrix_index: item.matrix_index,
+    //                             bitmap: item.bitmap.clone(),
+    //                         });
+    //                     }
+
+    //                     // Sign the report
+    //                     report.signature = EcdsaSig::sign(&sha256(&report.encode_to_vec()), &client_ec_key).unwrap().to_der().unwrap();
+
+    //                     // Send the report
+    //                     client_report_sender.send(report).unwrap();
+
+    //                     // Increment the report counter
+    //                     report_counter += 1;
+                    
+    //                 },
+    //                 Ok(TickType::DecodeToApp) => {
+                        
+    //                     // Check if the buffer has more than one item
+    //                     if buffer.len() > 1 {
+            
+    //                         // Drain all elements except the last one
+    //                         let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
+            
+    //                         for mut item in drained {
+                                
+    //                             // Reconstruct the matrix
+    //                             item.reconstruct_matrix(&client_ec_key).unwrap();
+
+    //                             log::debug!("Missing packets: {:?} - {:?}", item.matrix_index, item.missing_indexes());
+
+    //                             // Decode the matrix to the application layer
+    //                             decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key).unwrap();
+    //                         }
+            
+    //                     }
+
+    //                 },
+    //                 Err(_) => {
+    //                     error!("Timers channel disconnected.");
+    //                 }
+    //             }
+    //         },
+    //         recv(multicast_receiver) -> payload => {
+    //             match payload {
+    //                 Ok(payload_bytes) => {
+    //                     // Attempt to decode as a TransmissionPacket
+    //                     if let Ok(mut transmission) = TransmissionPacket::decode(&*payload_bytes) {
+    //                         // Validate the packet signature, if invalid, skip the packet
+    //                         if validate_packet(&mut transmission, &x509_public_key) {
+    //                             // Process the packet if valid
+    //                             process_packet(&mut buffer, transmission, &mut current_key_session, &mut next_key_session);
+    //                         } else {
+    //                             // Invalid packet, skip
+    //                             continue;
+    //                         }
+    //                     }
+
+    //                     // Attempt to decode as a RetransmissionPacket
+    //                     if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
+    //                         if let Some(packet) = retransmission.packet {
+
+    //                             // Missing logic to decode linear combination with the other packets of matrix
+    //                             // info!("RetransmissionPacket contained packet: {:?} - {:?}", packet.matrix, packet.index);
+    //                             process_retransmission_packet(&mut buffer, packet);
+
+    //                         } else {
+    //                             eprintln!("RetransmissionPacket contained no packet.");
+    //                         }
+    //                     }
+    //                 },
+    //                 Err(recv_error) => {
+    //                     // No message available, continue looping
+    //                     error!("Failed to receive multicast packet: {}", recv_error);
+    //                 }
+    //             }
+    //         },
+
+    //         recv(unicast_receiver) -> payload => {
+    //             match payload {
+    //                 Ok(payload_bytes) => {
+    //                     // Attempt to decode as a RetransmissionPacket
+    //                     if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
+    //                         if let Some(mut packet) = retransmission.packet {
+    //                             // Validate the packet signature, if invalid, skip the packet
+    //                             if validate_packet(&mut packet, &x509_public_key) {
+    //                                 // Process the packet if valid
+    //                                 process_retransmission_packet(&mut buffer, packet);
+    //                             }
+    //                         } else {
+    //                             error!("RetransmissionPacket contained no packet.");
+    //                         }
+    //                     }
+    //                 },
+    //                 Err(recv_error) => {
+    //                     // No message available, continue looping
+    //                     error!("Failed to receive unicast packet: {}", recv_error);
+    //                 }
+    //             }
+    //         },
+            
+
+    //     }
+    // }
 }
 
 

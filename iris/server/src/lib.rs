@@ -64,7 +64,6 @@ pub struct Multicast {
 
 #[derive(Deserialize, Debug)]
 pub struct Retransmission {
-    pub port: usize,
     pub wifi_multicast: bool,
     pub wifi_unicast: bool,
     pub interval: usize
@@ -77,6 +76,7 @@ pub struct Prometheus {
 
 #[derive(Deserialize, Debug)]
 pub struct Settings {
+    pub retransmission_port: u64,
     pub timeout_clients: u64,
     pub transmissions_interval: u64
 }

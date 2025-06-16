@@ -74,7 +74,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // }
     
     // Attempt to start the receiver
-    let receiver = match iris_client::start(&ip_string) {
+    let receiver = match iris_client::start_client(&ip_string) {
         Ok(receiver) => receiver,
         Err(e) => {
             error!("Failed to start receiver: {}", e);

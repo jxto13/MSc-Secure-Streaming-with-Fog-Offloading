@@ -92,6 +92,24 @@ pub struct RetransmissionPacket {
     #[prost(message, optional, tag = "1")]
     pub packet: ::core::option::Option<TransmissionPacket>,
 }
+/// PacketWrapper is a wrapper for the packets to allow for different types of packets
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct PacketWrapper {
+    #[prost(oneof = "packet_wrapper::PacketType", tags = "1, 2")]
+    pub packet_type: ::core::option::Option<packet_wrapper::PacketType>,
+}
+/// Nested message and enum types in `PacketWrapper`.
+pub mod packet_wrapper {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum PacketType {
+        #[prost(message, tag = "1")]
+        TransmissionPacket(super::TransmissionPacket),
+        #[prost(message, tag = "2")]
+        RetransmissionPacket(super::RetransmissionPacket),
+    }
+}
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MatrixReportBitmap {

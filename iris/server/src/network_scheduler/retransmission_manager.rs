@@ -91,6 +91,8 @@ impl RetransmissionManager {
                 }
             }
 
+
+            
             //                 metrics.clients.with_label_values(&[&client_id]).set(1.0);
             //                 let _ = metrics.clients.remove_label_values(&[&client_id]);
             

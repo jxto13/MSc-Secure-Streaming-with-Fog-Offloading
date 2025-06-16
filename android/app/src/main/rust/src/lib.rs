@@ -20,98 +20,6 @@ pub mod android {
         Runtime::new().expect("Failed to create Tokio runtime")
     });
 
-    use std::net::{IpAddr, Ipv4Addr};
-    use tokio::net::UdpSocket;
-
-    use tokio::time::interval;
-
-    async fn receive_multicast_packets() {
-        let multicast_ip = Ipv4Addr::new(239, 255, 0, 1); // Example multicast IP
-        let multicast_port = 12345;
-        let any_addr = Ipv4Addr::UNSPECIFIED;
-
-        let socket_addr = SocketAddr::new(IpAddr::V4(any_addr), multicast_port);
-
-        match UdpSocket::bind(socket_addr).await {
-            Ok(socket) => {
-                // Join the multicast group on all interfaces (0.0.0.0)
-                if let Err(e) = socket.join_multicast_v4(multicast_ip, any_addr) {
-                    error!("Failed to join multicast group: {}", e);
-                    return;
-                }
-
-                info!("Listening for multicast packets on {}:{}", multicast_ip, multicast_port);
-
-                let mut buf = vec![0u8; 2048];
-                let mut total_bytes: u64 = 0;
-                let mut last_log = Instant::now();
-
-                let mut bitrate_timer = interval(Duration::from_secs(1));
-
-                loop {
-                    tokio::select! {
-                        Ok((len, addr)) = socket.recv_from(&mut buf) => {
-                            //info!("Received {} bytes from {}", len, addr);
-                            total_bytes += len as u64;
-                        }
-
-                        _ = bitrate_timer.tick() => {
-                            let elapsed_secs = last_log.elapsed().as_secs_f64();
-                            let bitrate_bps = (total_bytes as f64 * 8.0) / elapsed_secs;
-
-                            info!(
-                                "Current bitrate: {:.2} kbps",
-                                bitrate_bps / 1000.0
-                            );
-
-                            // Reset for the next interval
-                            total_bytes = 0;
-                            last_log = Instant::now();
-                        }
-                    }
-                }
-            }
-            Err(e) => {
-                error!("Failed to bind UDP socket: {}", e);
-            }
-        }
-    }   
-
-
-    async fn receive_udp_packets(buffer_ptr: *mut u8, buffer_len: usize) {
-        let multicast_ip = Ipv4Addr::new(192, 168, 1, 131);
-        let multicast_port = 1234;
-        let any_addr = Ipv4Addr::UNSPECIFIED;
-        let socket_addr = SocketAddr::new(IpAddr::V4(any_addr), multicast_port);
-
-        match UdpSocket::bind(socket_addr).await {
-            Ok(socket) => {
-                info!("Listening for packets on {}:{}", multicast_ip, multicast_port);
-
-                let mut buf = vec![0u8; 2048];
-                loop {
-                    tokio::select! {
-                        Ok((len, addr)) = socket.recv_from(&mut buf) => {
-                            info!("Received {} bytes from {}", len, addr);
-
-                            // Safety: Write data to Java ByteBuffer memory
-                            unsafe {
-                                if len <= buffer_len {
-                                    std::ptr::copy_nonoverlapping(buf.as_ptr(), buffer_ptr, len);
-                                } else {
-                                    error!("Received data length {} exceeds Java buffer size {}", len, buffer_len);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            Err(e) => {
-                error!("Failed to bind UDP socket: {}", e);
-            }
-        }
-    }
-
     #[no_mangle]
     pub extern "system" fn Java_pt_iris_services_RustService_startClient(
         _env: JNIEnv,
@@ -144,7 +52,7 @@ pub mod android {
             std::mem::forget(file); // avoid closing fd
 
             // Start the iris client
-            let client = match iris_client::start(&"stream1.iris.dcc.fc.up.pt".to_string()) {
+            let client = match iris_client::start_client(&"stream1.iris.dcc.fc.up.pt".to_string()) {
                 Ok(c) => c,
                 Err(e) => {
                     eprintln!("Failed to start iris client: {:?}", e);
@@ -328,7 +236,7 @@ pub mod android {
     
 
         thread::spawn(||{
-           let client = iris_client::start(&"stream1.iris.dcc.fc.up.pt".to_string()).unwrap();
+           let client = iris_client::start_client(&"stream1.iris.dcc.fc.up.pt".to_string()).unwrap();
 
     
            for item in client {

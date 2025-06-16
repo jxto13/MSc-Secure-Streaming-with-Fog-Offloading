@@ -1,4 +1,6 @@
 use crate::metrics::get_metrics;
+use crate::proto::packet_wrapper::PacketType;
+use crate::proto::{PacketWrapper};
 use crate::{proto, CONFIG, MANAGER, MATRIX_BUFFER};
 
 use crossbeam_channel::{Receiver, Sender};
@@ -217,8 +219,14 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         for col in transmission_matrix.iter_cols() {
 
             for item in col {
+                // Wrap the item in PacketWrapper
+                let packet = PacketWrapper {
+                    packet_type: Some(PacketType::TransmissionPacket(item.clone())),
+                };
+
                 // Serialize IrisPacket
-                let iris_serialized_data = item.encode_to_vec();
+                let iris_serialized_data = packet.encode_to_vec();
+                
                 // Send the buffer
                 tx.send(iris_serialized_data).unwrap_or_else(|e| {
                     panic!("error sending data {:?}", e);
