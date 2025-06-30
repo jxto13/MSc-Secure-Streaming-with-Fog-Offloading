@@ -33,6 +33,7 @@ flate2 = "1.1.1"
 rurel = "0.6.0"
 tracing = "0.1.41"
 tracing-subscriber = "0.3.19"
+hex = "0.4.3"
 
 # This compiles openssl for android using NDK
 [target.'cfg(target_os = "android")'.dependencies]

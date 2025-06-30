@@ -3,19 +3,27 @@ use std::net::{IpAddr, SocketAddr};
 use std::time::{Duration, Instant};
 
 use crossbeam_channel::Receiver;
+use dashmap::mapref::multiple::RefMulti;
 use dashmap::DashMap;
 
 use grid::Grid;
+use iris_shared::bandwidth_utils::BandwidthManager;
+use log::{debug, error, info};
+use openssl::sha::sha256;
 use openssl::x509::X509;
 use proto::{ClientReport, MatrixReportBitmap};
 
+use crate::metrics::ClientMetric;
 use crate::{proto, CONFIG};
 
 #[derive(Debug)]
 pub struct ClientData {
-    pub last_seen: Instant,               // Last time the client was seen
-    pub cert: X509,                       // Client certificate
-    pub reports: Vec<MatrixReportBitmap>, // Matrix, Bitmap
+    pub client_id: Vec<u8>,                     // Client ID using sha256 hash from public key
+    pub last_seen: Instant,                     // Last time the client was seen
+    pub cert: X509,                             // Client certificate
+    pub ip: IpAddr,                             // Client IP address
+    pub reports: Vec<MatrixReportBitmap>,       // Matrix, Bitmap
+    pub bandwidth_manager: BandwidthManager,    // Bandwidth manager for the client
 }
 
 impl ClientData {
@@ -41,7 +49,7 @@ impl ClientData {
 
 #[derive(Debug)]
 pub struct ClientSessions {
-    pub clients: DashMap<IpAddr, ClientData>, // Client address, Client data
+    pub clients: DashMap<Vec<u8>, ClientData>, // ClientID, Client data
     pub reports_channel: Receiver<(SocketAddr, ClientReport)>, // Channel for receiving reports
 }
 
@@ -55,37 +63,47 @@ impl ClientSessions {
 
     /// Removes clients that have timed out and their associated reports.
     pub fn remove_timed_out_clients(&self) {
-        let timeout = Duration::from_secs(CONFIG.get().unwrap().settings.timeout_clients);
+        let timeout = Duration::from_millis(CONFIG.get().unwrap().settings.timeout_clients);
         let now = Instant::now();
-        self.clients
-            .retain(|_, client_data| now.duration_since(client_data.last_seen) <= timeout);
+        let metrics = crate::metrics::get_metrics();
+
+        debug!("Clients State: {:?}", self.clients);
+
+        let timed_out_keys: Vec<_> = self.clients.iter()
+            .filter(|entry| now.duration_since(entry.value().last_seen) > timeout)
+            .map(|entry| entry.key().clone())
+            .collect();
+
+        for key in timed_out_keys {
+            info!("Removing client: {:?}", key.to_vec());
+            self.clients.remove(&key);
+
+            let client_id_hex = hex::encode(&key);
+            metrics.clear_client_metrics(&client_id_hex);
+        }
+
     }
 
     pub fn start_manager(&self) {
 
-        for (client_addr,report) in &self.reports_channel {
+        for (report_socket,report) in &self.reports_channel {
 
-            // info!("Received report: {:?}", report);
-
-            match self.clients.get_mut(&client_addr.ip()){
+            // Get the client from the client_sessions
+           match self.clients.get_mut(&report.client_id) {
                 Some(mut client_data) => {
-                    // Update the last seen time
                     client_data.last_seen = Instant::now();
-                    // Add the report to the client data
-
                     client_data.reports = report.reports;
+
+                    if client_data.ip != report_socket.ip() {
+                        client_data.ip = report_socket.ip();
+                    }
+                    
                 }
                 None => {
-                    // If the client is not found, create a new entry
-                    // let cert = self.get_client_cert(client_addr);
-                    // if let Some(cert) = cert {
-                    //     self.add_client(client_addr, cert);
-                    //     self.clients.get_mut(client_addr).unwrap().reports.push((report.matrix_index, report.bitmap));
-                    // } else {
-                    //     info!("Client certificate not found for address: {:?}", client_addr);
-                    // }
+                    error!("Received report from unknown client: {:?}", report.client_id);
                 }
             }
+
             
         }
 
@@ -93,9 +111,9 @@ impl ClientSessions {
     }
 
     // Get the client cert from IpAddr
-    pub fn get_client_cert(&self, client_addr: IpAddr) -> Option<X509> {
+    pub fn get_client_cert(&self, client_id: &Vec<u8>) -> Option<X509> {
         // Get the client data for the given address
-        if let Some(value) = self.clients.get(&client_addr) {
+        if let Some(value) = self.clients.get(client_id) {
             Some(value.cert.clone())
         } else {
             None
@@ -104,15 +122,27 @@ impl ClientSessions {
 
     // Add client to the session
     pub fn add_client(&self, client_addr: IpAddr, cert: X509) {
+        let client_id = sha256(&cert.public_key().unwrap().public_key_to_der().unwrap()).to_vec();
+
         // Create local data
         let client_data = ClientData {
+            client_id: client_id.clone(),
             last_seen: Instant::now(),
             cert,
+            ip: client_addr,
             reports: Vec::new(),
+            bandwidth_manager: BandwidthManager::new(CONFIG.get().unwrap().retransmission.unicast_bitrate), // or hardcode bitrate here
         };
+        
+        // Create a hex representation of the client ID for metrics
+        let client_id_hex = hex::encode(&client_id);
 
         // Insert the client in the session
-        self.clients.insert(client_addr, client_data);
+        self.clients.insert(client_id, client_data);
+
+        // Add the client to the metrics
+        let metrics = crate::metrics::get_metrics();
+        metrics.add_client(&client_id_hex);
 
     }
 
@@ -137,11 +167,71 @@ impl ClientSessions {
 
         // Calculate packet loss percentage
         if total_expected_packets == 0 {
-            return -1.0; // Avoid division by zero
+            return 0.0; // Avoid division by zero
         }
 
         // Calculate the percentage of received packets overall
         (missing_packets as f32 / total_expected_packets as f32) * 100.0
+    }
+
+    pub fn get_client_packet_loss(&self, client: &RefMulti<'_, Vec<u8>, ClientData>) -> f64 {
+        let client_data = client.value();
+        let mut missing_packets = 0; // Deduplicated packets
+        let mut total_expected_packets = 0; // Total packets expected
+
+        // Iterate over all reports for the client
+        for report in &client_data.reports {
+            // Decode bitmap to get received packet indices
+            let missing_packets_len = ClientData::find_zero_indices(&report.bitmap).len();
+
+            // Add to the set of unique packets
+            missing_packets += missing_packets_len;
+
+            // Update the total expected packets
+            total_expected_packets += report.bitmap.len();
+        }
+
+        // Calculate packet loss percentage for this client
+        if total_expected_packets == 0 {
+            return 0.0; // Avoid division by zero
+        }
+
+        let packet_loss = (missing_packets as f64 / total_expected_packets as f64) * 100.0;
+        
+        packet_loss
+
+        
+    }
+
+    pub fn get_client_unicast_rate(&self, client: &RefMulti<'_, Vec<u8>, ClientData>) -> f64 {
+        let client_data = client.value();
+        // Get the unicast rate from the bandwidth manager
+        client_data.bandwidth_manager.get_rate_kbps() as f64
+    }
+
+    /// Updates the metrics for connected clients and their individual metrics.
+    pub fn update_metrics(&self) {
+        // Get the metrics instance
+        let metrics = crate::metrics::get_metrics(); // get the Arc<Metrics>
+
+        // Update connected clients metric
+        metrics.connected_clients.set(self.clients.len() as i64);
+
+        // Set metric values for all clients
+        for client in self.clients.iter() {
+            // Get the client key (client ID)
+            let client_id_bytes = client.key();
+
+            // Convert client ID to hex string for metrics
+            let client_id_hex = hex::encode(client_id_bytes);
+
+            // Set unicast rate for client
+            metrics.client_metric(ClientMetric::UnicastRate).with_label_values(&[&client_id_hex]).set(self.get_client_unicast_rate(&client));
+
+            // Set packet loss for client 
+            metrics.client_metric(ClientMetric::PacketLoss).with_label_values(&[&client_id_hex]).set(self.get_client_packet_loss(&client));
+        }
+         
     }
 
     /// Generates the NC matrix and returns it along with the list of client addresses.
@@ -151,13 +241,13 @@ impl ClientSessions {
         // this returns a vector with the matrix_index and its nc_matrix for all players, a snapshot of the current state
 
         for entry in &self.clients {
-            let (client_addr, client_data) = entry.pair();
+            let (_client_id, client_data) = entry.pair();
             for report in client_data.reports.iter() {
                 let (matrix, clients_vec) = nc_matrixes
                     .entry(report.matrix_index)
                     .or_insert((Grid::new(0, 0), Vec::new()));
                 matrix.push_row(report.bitmap.clone());
-                clients_vec.push(client_addr.clone());
+                clients_vec.push(client_data.ip.clone());
             }
         }
 

@@ -1,11 +1,7 @@
 use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
-use crossbeam_channel::Receiver;
 use std::io;
-use std::net::{IpAddr, Ipv4Addr, SocketAddr};
-use std::str::FromStr;
-use std::thread::sleep;
-use std::time::{Duration, Instant};
+use std::net::{IpAddr, SocketAddr};
 // use pnet_datalink::interfaces;
 use log::{info, error};
 

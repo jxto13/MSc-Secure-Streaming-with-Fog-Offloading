@@ -8,7 +8,7 @@ use super::encoder;
 
 // Define an enum for different types of data sources. Currently, it only supports file-based sources.
 pub enum DataSource {
-    UDP(String), // A variant representing a file data source with the file path as a string.
+    MPEGTS(String), // A variant representing a file data source with the file path as a string.
     // Add more variants here if needed, e.g., Network(String), etc.
 }
 
@@ -40,7 +40,7 @@ impl DataHandler {
 
         // Match on the data source type and read the data accordingly.
         match &self.source {
-            DataSource::UDP(ip_source) => read(ip_source.to_string(), data_source_sender).unwrap(),
+            DataSource::MPEGTS(ip_source) => read(ip_source.to_string(), data_source_sender).unwrap(),
             // Handle other data sources here, e.g., Network(String) => read_network_and_send(url, data_source_sender),
         }
 

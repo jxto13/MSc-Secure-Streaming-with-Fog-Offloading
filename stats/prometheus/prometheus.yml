@@ -27,4 +27,4 @@ scrape_configs:
 
     static_configs:
       - targets: ["172.22.0.1:9186"]
-      - targets: ["streaming-server:9186"]
+      - targets: ["172.22.0.102:9186"]

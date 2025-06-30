@@ -250,9 +250,11 @@ pub mod bandwidth_utils {
     use std::time::{Duration, Instant};
 
     /// Tracks bandwidth usage for a single client.
+    #[derive(Debug)]
     pub struct BandwidthManager {
-        bitrate: usize,       // in kbit/s
-        bytes_sent: usize,    // total bytes sent in the interval
+        bitrate: usize,        // in kbit/s
+        bytes_sent: usize,     // current interval
+        last_second_bytes: usize, // previous full second
         interval_start: Instant,
     }
 
@@ -261,6 +263,7 @@ pub mod bandwidth_utils {
             Self {
                 bitrate: bitrate_kbps,
                 bytes_sent: 0,
+                last_second_bytes: 0,
                 interval_start: Instant::now(),
             }
         }
@@ -272,18 +275,17 @@ pub mod bandwidth_utils {
         fn reset_if_needed(&mut self) {
             if self.interval_start.elapsed() >= Duration::from_secs(1) {
                 self.interval_start = Instant::now();
+                self.last_second_bytes = self.bytes_sent;
                 self.bytes_sent = 0;
             }
         }
 
-        /// Checks if a packet of the given size can be sent.
         pub fn can_send(&mut self, packet_size: usize) -> bool {
             self.reset_if_needed();
             let allowed = self.allowed_bytes_per_second();
             (self.bytes_sent + packet_size) <= allowed
         }
 
-        /// Tries to send a packet, returning true if it fits the budget.
         pub fn try_send(&mut self, packet_size: usize) -> bool {
             if self.can_send(packet_size) {
                 self.bytes_sent += packet_size;
@@ -291,6 +293,11 @@ pub mod bandwidth_utils {
             } else {
                 false
             }
+        }
+
+        /// Returns the bandwidth usage in the last full second, in kbit/s
+        pub fn get_rate_kbps(&self) -> usize {
+            (self.last_second_bytes * 8) / 1_000
         }
     }
 
@@ -320,6 +327,10 @@ pub mod bandwidth_utils {
             let mut entry = self.clients.entry(client_id.to_string())
                 .or_insert_with(|| BandwidthManager::new(self.bitrate_kbps));
             entry.try_send(packet_size)
+        }
+        /// Returns the last full second's bandwidth usage for a client in kbit/s
+        pub fn get_rate_kbps(&self, client_id: &str) -> Option<usize> {
+            self.clients.get(client_id).map(|m| m.get_rate_kbps())
         }
     }
 }

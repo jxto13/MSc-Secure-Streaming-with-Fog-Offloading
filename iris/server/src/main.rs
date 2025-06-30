@@ -6,7 +6,7 @@ mod metrics;
 mod nts_service;
 
 use std::sync::RwLock;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use std::{sync::Arc, thread};
 use std::path::PathBuf;
 
@@ -50,7 +50,53 @@ use network_scheduler::pipeline::Pipeline;
 use clap::{arg, Command};
 
 
+/// Start the Prometheus exporter
+/// This function binds the exporter to the address specified in the configuration file
+fn start_prometheus_exporter() {
+
+    // Parse address used to bind exporter to.
+    let prometheus_port = &CONFIG.get().unwrap().prometheus.port;
+    let socket_addr = format!("0.0.0.0:{}", prometheus_port).parse().unwrap();
+
+    // Start exporter and update metrics every five seconds.
+    prometheus_exporter::start(socket_addr).expect("can not start exporter");
+
+    // Initialize the metrics
+    init_metrics();
+}
+
+/// Periodically clean up client sessions using `tokio::time::interval`
+async fn clean_client_session(client_sessions: Arc<ClientSessions>) {
+    let config = CONFIG.get().unwrap();
+    let mut interval = tokio::time::interval(Duration::from_millis(config.settings.timeout_clients));
+
+    loop {
+        // Wait for the next tick
+        interval.tick().await;
+
+        // Clean up timed out clients
+        client_sessions.remove_timed_out_clients();
+    }
+}
+
+/// Periodically update packet loss metrics using `tokio::time::interval`
+async fn update_metrics(client_sessions: Arc<ClientSessions>) {
+    let mut interval = tokio::time::interval(Duration::from_millis(1000));
+
+    loop {
+        // Wait for the next tick
+        interval.tick().await;
+
+        // Update the metrics for client sessions
+        client_sessions.update_metrics();
+    }
+}
+
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize the thread handlers
+    let mut handlers = vec![];
+
     // Set a custom panic hook to log panics and exit gracefully
     std::panic::set_hook(Box::new(|panic_info| {
         eprintln!("Panic occurred: {:?}", panic_info);
@@ -104,8 +150,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Set the global CONFIG instance
     CONFIG.set(config).expect("Failed to set CONFIG");
-
-    MATRIX_BUFFER.set(Arc::new(MatrixHistory::new(64))).expect("Failed to set MATRIX_BUFFER");
+    
+    MATRIX_BUFFER.set(Arc::new(MatrixHistory::new(64, Duration::from_millis(CONFIG.get().unwrap().retransmission.deadline)))).expect("Failed to set MATRIX_BUFFER");
     
     // Start the Prometheus exporter
     start_prometheus_exporter();
@@ -130,73 +176,49 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let (source_handler_sender, source_handler_receiver) = unbounded();
     let (reports_channel_sender, reports_channel_receiver) = unbounded();
     
-    // Choose the data source
+    // Choose the data source (THIS WILL SPAWN THREADS INSIDE *not handled by the main thread*)
     let source = match CONFIG.get().unwrap().multicast.data_source.as_str() {
-        "udp" => DataSource::UDP(CONFIG.get().unwrap().multicast.ip_source.clone()),
+        "udp_mpegts" => DataSource::MPEGTS(CONFIG.get().unwrap().multicast.ip_source.clone()),
         _ => panic!("Invalid data_source value in config"),
     };
     
-    let source_handler = thread::spawn(move || {
+    handlers.push(("source_handler", thread::spawn(move || {
         // Create a DataHandler instance based on datasource
         DataHandler::new(source, source_handler_sender).start();
-    });
+    })));
     
 
     // Create the client sessions
     let client_sessions = Arc::new(ClientSessions::new(reports_channel_receiver));
 
     // Start client_sessions thread
-    let client_sessions_handler = thread::spawn({
+    handlers.push(("client_sessions_handler",thread::spawn({
         let client_sessions = Arc::clone(&client_sessions);
         move || {
+            // Start the client sessions manager, this processes incoming reports
             client_sessions.start_manager();
         }
-    });
+    })));
 
-    // Get the retransmission config
-    let retransmission_config = &CONFIG.get().unwrap().retransmission;
-    
     // Create the pipeline
-    let pipeline= Arc::new(Pipeline::new(Arc::clone(&client_sessions),retransmission_config.wifi_multicast, retransmission_config.wifi_unicast));
-
-    let pipeline_handler = {
-        let pipeline = Arc::clone(&pipeline);
-        thread::spawn(move || {
-            pipeline.start(source_handler_receiver);
-        })
-    };
-
-    // Creates the reporting sink
-    MyReportService::new(Arc::clone(&client_sessions), reports_channel_sender);
-
-    // Create a std thread and setup tokio for gRPC Server with tokio runtime
-    let grpc_server_handler = thread::spawn({
-        let rt = Arc::clone(&rt);
+    handlers.push(("pipeline_handler", thread::spawn({
         let client_sessions = Arc::clone(&client_sessions);
         move || {
-        // Run async code using the Tokio runtime
-        rt.block_on(async {
+            Pipeline::start(client_sessions,source_handler_receiver);
+        }
+    })));
 
-            // listen to all ipv4 addresses
-            let addr = format!("0.0.0.0:{}", CONFIG.get().unwrap().grpc.port).parse().unwrap();
-            
+    // Creates the reporting sink
+    handlers.push(("reporting_sink_handler", thread::spawn({
+        let client_sessions = Arc::clone(&client_sessions);
+        move || {
+            // Start the UDP receiver for reports
+            MyReportService::receiver(client_sessions, reports_channel_sender);
+        }
+    })));
 
-            // Start grpc server this will block execution because of await
-            Server::builder()
-                .tls_config(ServerTlsConfig::new().identity(Identity::from_pem(certificates.server_cert, certificates.server_key))).unwrap()
-                .add_service(crypto::ca_service::get_service(certificates.ca_cert, certificates.ca_private_key, client_sessions)) // Responsible for signing the client certificates
-                .add_service(key_service)
-                .add_service(NtsServiceServer::new(MyNtsService::default()))
-                .serve(addr)
-                .await
-                .unwrap_or_else(|err| {
-                    // Handle the error if creating the runtime fails
-                    panic!("Error creating gRPC server: {}", err);
-                });
-        });
-    }});
-
-    let handle = thread::spawn(|| {
+    // Create a thread to handle stdin input (will be removed in production)
+    handlers.push(("stdin_handler", thread::spawn(|| {
         use std::io::BufRead;
         let stdin = std::io::stdin();
         let metrics = metrics::get_metrics();
@@ -223,77 +245,47 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 Err(e) => eprintln!("Error reading line: {}", e),
             }
         }
+    })));
+    
+
+    let client_sessions_clone = Arc::clone(&client_sessions);
+    
+    // Run async code using the Tokio runtime
+    rt.spawn(async {
+
+        // Listen to all IPV4 addresses
+        let addr = format!("0.0.0.0:{}", CONFIG.get().unwrap().grpc.port).parse().unwrap();
+        
+        // Start grpc server this will block execution because of await
+        Server::builder()
+            .tls_config(ServerTlsConfig::new().identity(Identity::from_pem(certificates.server_cert, certificates.server_key))).unwrap()
+            .add_service(crypto::ca_service::get_service(certificates.ca_cert, certificates.ca_private_key, client_sessions_clone)) // Responsible for signing the client certificates
+            .add_service(key_service)
+            .add_service(NtsServiceServer::new(MyNtsService::default()))
+            .serve(addr)
+            .await
+            .unwrap_or_else(|err| {
+                // Handle the error if creating the runtime fails
+                panic!("Error creating gRPC server: {}", err);
+            });
     });
 
     // Start the periodic task
     rt.spawn(clean_client_session(Arc::clone(&client_sessions)));
-    rt.spawn(update_packet_loss_metrics(Arc::clone(&client_sessions)));
+    rt.spawn(update_metrics(Arc::clone(&client_sessions)));
     
-    // Wait for the thread to finish (e.g., when EOF is reached)
-    if let Err(e) = handle.join() {
-        panic!("handle panicked: {:?}", e);
+    // Wait for all threads to finish
+    for (name, handler) in handlers {
+        if let Err(e) = handler.join() {
+            panic!("{} panicked: {:?}", name, e);
+        }
     }
-    // Join the threads and propagate any panics
-    if let Err(e) = client_sessions_handler.join() {
-        panic!("client_sessions_handler panicked: {:?}", e);
-    }
-    if let Err(e) = source_handler.join() {
-        panic!("source_handler panicked: {:?}", e);
-    }
-    if let Err(e) = pipeline_handler.join() {
-        panic!("pipeline_handler panicked: {:?}", e);
-    }
-    if let Err(e) = grpc_server_handler.join() {
-        panic!("grpc_server_handler panicked: {:?}", e);
-    }
-    
+     
     Ok(())
 }
 
-/// Start the Prometheus exporter
-/// This function binds the exporter to the address specified in the configuration file
-fn start_prometheus_exporter() {
 
-    // Parse address used to bind exporter to.
-    let prometheus_port = &CONFIG.get().unwrap().prometheus.port;
-    let socket_addr = format!("0.0.0.0:{}", prometheus_port).parse().unwrap();
 
-    // Start exporter and update metrics every five seconds.
-    prometheus_exporter::start(socket_addr).expect("can not start exporter");
-
-    // Initialize the metrics
-    init_metrics();
-}
-
-/// Periodically clean up client sessions using `tokio::time::interval`
-async fn clean_client_session(client_sessions: Arc<ClientSessions>) {
-    let config = CONFIG.get().unwrap();
-    let mut interval = tokio::time::interval(Duration::from_secs(config.settings.timeout_clients));
-
-    loop {
-        interval.tick().await;
-        client_sessions.remove_timed_out_clients();
-        info!("Cleaned up timed out clients");
-    }
-}
-
-/// Periodically update packet loss metrics using `tokio::time::interval`
-async fn update_packet_loss_metrics(client_sessions: Arc<ClientSessions>) {
-    let mut interval = tokio::time::interval(Duration::from_secs(1));
-    let metrics = metrics::get_metrics();
-
-    loop {
-        interval.tick().await;
-
-        // Calculate packet loss and update the metric
-        let packet_loss = client_sessions.calculate_packet_loss();
-        
-        // If packet_loss is -1.0, it means that the client_sessions is empty
-        if packet_loss != -1.0 {
-            metrics.packet_loss.set(packet_loss.into());
-        }
-    }
-}
 
 /// ------------------------------------------ Matrix History -------------------------------------------------------------
 /// A struct to hold the matrix data and its index
@@ -301,6 +293,7 @@ async fn update_packet_loss_metrics(client_sessions: Arc<ClientSessions>) {
 pub struct IndexedMatrix {
     pub index: usize,
     pub data: Grid<TransmissionPacket>,
+    pub created_at: Instant,
 }
 
 #[derive(Debug)]
@@ -308,15 +301,17 @@ pub struct MatrixHistory {
     matrices: Vec<RwLock<Option<IndexedMatrix>>>,
     capacity: usize,
     latest_index: RwLock<Option<usize>>,
+    deadline: Duration,
 }
 impl MatrixHistory {
-    pub fn new(capacity: usize) -> Self {
+    pub fn new(capacity: usize, deadline: Duration) -> Self {
         MatrixHistory {
             matrices: (0..capacity)
                 .map(|_| RwLock::new(None))
                 .collect(),
             capacity,
             latest_index: RwLock::new(None),
+            deadline
         }
     }
 
@@ -332,7 +327,12 @@ impl MatrixHistory {
         let slot_index = index % self.capacity;
         let slot = &self.matrices[slot_index];
         let mut slot_guard = slot.write().unwrap();
-        *slot_guard = Some(IndexedMatrix { index, data: grid });
+
+        *slot_guard = Some(IndexedMatrix { 
+            index, 
+            data: grid, 
+            created_at: Instant::now() 
+        });
     
         let mut latest_guard = self.latest_index.write().unwrap();
         *latest_guard = Some(index);

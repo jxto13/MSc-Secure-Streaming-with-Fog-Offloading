@@ -382,6 +382,8 @@ fn check_key_rotation(matrix: &mut MatrixTracker, packet: &TransmissionPacket, c
                 // remove padding from payload
                 let deppaded_payload = padding::depad(&packet.payload).unwrap();
 
+                // IMPORTANT TO SOLVE, WHEN CLIENT IS WAITING FOR MATRIX DATA AND IT HAS THE KEY, WHEN DATA ARRIVES IT ALREADY OUT OF DATE
+
                 // Decrypt the matrix with the next_key, because the matrix is from the next epoch
                 let decrypted_plaintext = decrypt(&deppaded_payload, &next_key_value.key, &next_key_value.iv).unwrap();
 
@@ -451,7 +453,6 @@ pub fn start(
 
     let mut report_counter= 0;
     let client_id = sha256(&client_ec_key.public_key_to_der().unwrap()).to_vec();
-    
     
     let rint = Duration::from_millis(200); // interval between retries
     let d = Duration::from_millis(1000);   // total retry window
@@ -581,11 +582,17 @@ pub fn start(
                     }
                     Some(PacketType::RetransmissionPacket(retransmission)) => {
                         // handle RetransmissionPacket
-                        if let Some(packet) = retransmission.packet {
-                            // Missing logic to decode linear combination with the other packets of matrix
-                            // info!("RetransmissionPacket contained packet: {:?} - {:?}", packet.matrix, packet.index);
-                            process_retransmission_packet(&mut buffer, packet);
-
+                        if let Some(mut packet) = retransmission.packet {
+                            // Validate the packet signature, if invalid, skip the packet
+                            if validate_packet(&mut packet, &x509_public_key) {
+                            // Process the packet if valid
+                                // Missing logic to decode linear combination with the other packets of matrix
+                                // info!("RetransmissionPacket contained packet: {:?} - {:?}", packet.matrix, packet.index);
+                                process_retransmission_packet(&mut buffer, packet);
+                            } else {
+                                // Invalid packet, skip
+                                continue;
+                            }
                         } else {
                             eprintln!("RetransmissionPacket contained no packet.");
                         }
@@ -599,134 +606,6 @@ pub fn start(
             }
         }
     }
-    // Main loop to receive all packets from receiving threads
-    // loop {
-        
-    //     crossbeam_channel::select! {
-    //         recv(timers_receiver) -> tick => {
-    //             match tick {
-    //                 Ok(TickType::Report) => {
-
-    //                     // Check if the buffer has more than one item
-    //                     if buffer.len() < 1 {
-    //                         info!("Buffer is empty or has only one item, skipping report.");
-    //                         continue;
-    //                     }
-
-    //                     // Create a new ClientReport
-    //                     let mut report = ClientReport {
-    //                         client_id: client_id.clone(),
-    //                         counter: report_counter.clone(),
-    //                         reports: Vec::with_capacity(buffer.len() - 1),
-    //                         signature: vec![0, 255],
-    //                     };
-
-    //                     // Iterate over the buffer and collect reports
-    //                     for item in buffer.iter().take(buffer.len() - 1) {
-    //                         report.reports.push(MatrixReportBitmap {
-    //                             matrix_index: item.matrix_index,
-    //                             bitmap: item.bitmap.clone(),
-    //                         });
-    //                     }
-
-    //                     // Sign the report
-    //                     report.signature = EcdsaSig::sign(&sha256(&report.encode_to_vec()), &client_ec_key).unwrap().to_der().unwrap();
-
-    //                     // Send the report
-    //                     client_report_sender.send(report).unwrap();
-
-    //                     // Increment the report counter
-    //                     report_counter += 1;
-                    
-    //                 },
-    //                 Ok(TickType::DecodeToApp) => {
-                        
-    //                     // Check if the buffer has more than one item
-    //                     if buffer.len() > 1 {
-            
-    //                         // Drain all elements except the last one
-    //                         let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
-            
-    //                         for mut item in drained {
-                                
-    //                             // Reconstruct the matrix
-    //                             item.reconstruct_matrix(&client_ec_key).unwrap();
-
-    //                             log::debug!("Missing packets: {:?} - {:?}", item.matrix_index, item.missing_indexes());
-
-    //                             // Decode the matrix to the application layer
-    //                             decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key).unwrap();
-    //                         }
-            
-    //                     }
-
-    //                 },
-    //                 Err(_) => {
-    //                     error!("Timers channel disconnected.");
-    //                 }
-    //             }
-    //         },
-    //         recv(multicast_receiver) -> payload => {
-    //             match payload {
-    //                 Ok(payload_bytes) => {
-    //                     // Attempt to decode as a TransmissionPacket
-    //                     if let Ok(mut transmission) = TransmissionPacket::decode(&*payload_bytes) {
-    //                         // Validate the packet signature, if invalid, skip the packet
-    //                         if validate_packet(&mut transmission, &x509_public_key) {
-    //                             // Process the packet if valid
-    //                             process_packet(&mut buffer, transmission, &mut current_key_session, &mut next_key_session);
-    //                         } else {
-    //                             // Invalid packet, skip
-    //                             continue;
-    //                         }
-    //                     }
-
-    //                     // Attempt to decode as a RetransmissionPacket
-    //                     if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
-    //                         if let Some(packet) = retransmission.packet {
-
-    //                             // Missing logic to decode linear combination with the other packets of matrix
-    //                             // info!("RetransmissionPacket contained packet: {:?} - {:?}", packet.matrix, packet.index);
-    //                             process_retransmission_packet(&mut buffer, packet);
-
-    //                         } else {
-    //                             eprintln!("RetransmissionPacket contained no packet.");
-    //                         }
-    //                     }
-    //                 },
-    //                 Err(recv_error) => {
-    //                     // No message available, continue looping
-    //                     error!("Failed to receive multicast packet: {}", recv_error);
-    //                 }
-    //             }
-    //         },
-
-    //         recv(unicast_receiver) -> payload => {
-    //             match payload {
-    //                 Ok(payload_bytes) => {
-    //                     // Attempt to decode as a RetransmissionPacket
-    //                     if let Ok(retransmission) = RetransmissionPacket::decode(&*payload_bytes) {
-    //                         if let Some(mut packet) = retransmission.packet {
-    //                             // Validate the packet signature, if invalid, skip the packet
-    //                             if validate_packet(&mut packet, &x509_public_key) {
-    //                                 // Process the packet if valid
-    //                                 process_retransmission_packet(&mut buffer, packet);
-    //                             }
-    //                         } else {
-    //                             error!("RetransmissionPacket contained no packet.");
-    //                         }
-    //                     }
-    //                 },
-    //                 Err(recv_error) => {
-    //                     // No message available, continue looping
-    //                     error!("Failed to receive unicast packet: {}", recv_error);
-    //                 }
-    //             }
-    //         },
-            
-
-    //     }
-    // }
 }
 
 

@@ -2,7 +2,7 @@ use crate::CONFIG;
 
 use std::sync::{Arc, RwLock};
 
-use crate::proto;
+use crate::proto::{self, BiggyBackData};
 
 use proto::key_service_server::{KeyService, KeyServiceServer};
 use proto::{KeyResponse, SessionKey};
@@ -51,13 +51,21 @@ impl KeyService for MyKeyService {
         let current_key = self.get_current_key();
         let next_key = self.get_next_key();
         let certificate = self.get_certificate();
+        let config = CONFIG.get().unwrap();
 
         Ok(Response::new(KeyResponse {
             current_key: Some(current_key),
             next_key: Some(next_key),
             certificate,
-            epoch: CONFIG.get().unwrap().multicast.epoch as u32,
-            reports_interval: CONFIG.get().unwrap().settings.transmissions_interval as u32,
+            biggy_back_data: Some(BiggyBackData {
+                epoch: config.multicast.epoch as u32,
+                client_reporting_interval: config.settings.client_reporting_interval as u32,
+                client_sliding_window: config.settings.client_sliding_window as u32,
+                retransmission_port: config.retransmission.port as u32,
+                unicast_port: config.retransmission.port as u32,
+                multicast_address: config.multicast.ip_multicast.clone(),
+                multicast_port: config.multicast.port_multicast as u32,
+            })
         }))
     }
 }

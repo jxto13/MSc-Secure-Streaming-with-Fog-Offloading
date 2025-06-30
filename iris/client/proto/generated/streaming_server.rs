@@ -24,6 +24,31 @@ pub struct CertificateResponse {
     pub signed_cert: ::prost::alloc::vec::Vec<u8>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct BiggyBackData {
+    /// this is the number of matrix to rotate the key
+    #[prost(uint32, tag = "1")]
+    pub epoch: u32,
+    /// this is the interval in seconds to send client reports
+    #[prost(uint32, tag = "2")]
+    pub client_reporting_interval: u32,
+    /// this is the sliding window size for client reports
+    #[prost(uint32, tag = "3")]
+    pub client_sliding_window: u32,
+    /// this is the port for retransmission packets
+    #[prost(uint32, tag = "4")]
+    pub retransmission_port: u32,
+    /// this is the port for unicast packets
+    #[prost(uint32, tag = "5")]
+    pub unicast_port: u32,
+    /// this is the address for multicast packets
+    #[prost(string, tag = "6")]
+    pub multicast_address: ::prost::alloc::string::String,
+    /// this is the port for multicast packets
+    #[prost(uint32, tag = "7")]
+    pub multicast_port: u32,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct RequestKey {}
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -35,12 +60,9 @@ pub struct KeyResponse {
     pub next_key: ::core::option::Option<SessionKey>,
     #[prost(bytes = "vec", tag = "3")]
     pub certificate: ::prost::alloc::vec::Vec<u8>,
-    /// this is the number of matrix to rotate the key
-    #[prost(uint32, tag = "4")]
-    pub epoch: u32,
-    /// piggypack the key response to know when to send client reports
-    #[prost(uint32, tag = "5")]
-    pub reports_interval: u32,
+    /// this is the data to know when to send client reports
+    #[prost(message, optional, tag = "4")]
+    pub biggy_back_data: ::core::option::Option<BiggyBackData>,
 }
 /// Session Key
 #[allow(clippy::derive_partial_eq_without_eq)]

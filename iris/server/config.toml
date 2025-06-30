@@ -18,7 +18,7 @@ port = 50052 # unicast port for retransmissions
 
 [multicast]
 # Stream Config
-data_source = "udp"
+data_source = "udp_mpegts"
 
 # This ip source is for docker network
 # ip_source = "172.22.0.102:1234"
@@ -27,19 +27,21 @@ data_source = "udp"
 ip_source = "172.22.0.1:1234"
 
 # Multicast Config
-interface = "veth0" 
+interface = "host-br" 
 # interface = "wlp92s0"
 # interface = "eth0"
 # interface = "enp0s20f0u3u1u2"
 
-ip_multicast = "239.255.0.1:50050"
+ip_multicast = "239.255.0.1"
+port_multicast = 1234 # port for multicast stream
+
 bitrate = 3000 # kbit/s
 
 # Matrix Config
 row = 10
 col = 10
-row_fec = 1 # can be 0 if network loss allows it
-col_fec = 1 # can be 0 if network loss allows it
+row_fec = 0 # can be 0 if network loss allows it
+col_fec = 0 # can be 0 if network loss allows it
 
 epoch = 10 # number of matrix to rotate encryption key
 
@@ -52,12 +54,15 @@ mtu_size = 1500 # default in most AP or routers
 [retransmission]
 wifi_multicast = true
 wifi_unicast = true
-interval = 15 # in miliseconds
+unicast_bitrate = 1000 # kbit/s, this is the bitrate for unicast retransmissions per client, this is the maximum bitrate that the server will use to retransmit data to clients
+interval = 150 # in miliseconds, this is the time between retransmissions rounds
+deadline = 1000 # in miliseconds, this is the time before a matrix is not considered valid for retransmissions
+port = 50053 # port for report sink, this is the port that the clients will send reports to the server
 
 [prometheus]
 port = 9186 # bind prometheus to all interfaces
 
 [settings]
-retransmission_port = 50053 # port for report sink
-timeout_clients = 5 # in seconds
-transmissions_interval = 100 # in miliseconds
+timeout_clients = 5000 # in miliseconds
+client_reporting_interval = 200 # in miliseconds
+client_sliding_window = 5 # number of reports that will be send to the server before the client decodes the data to application layer

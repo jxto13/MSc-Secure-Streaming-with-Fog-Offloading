@@ -65,8 +65,12 @@ impl WiFiMulticast {
         let addr = SocketAddr::new(IpAddr::V4(ipv4_address), 0);
         let mut socket = UdpSocket::bind(addr)?;
 
+        // Get the multicast IP and port from the configuration.
         let ip_multicast = &CONFIG.get().unwrap().multicast.ip_multicast;
-        let addr = ip_multicast.parse::<SocketAddr>().unwrap();
+        let port_multicast = CONFIG.get().unwrap().multicast.port_multicast;
+
+        // Parse the multicast address and port.
+        let addr = format!("{}:{}",ip_multicast,port_multicast).parse::<SocketAddr>().unwrap();
 
         // Define the multicast address and port.
         let multicast_address = match addr.ip() {
