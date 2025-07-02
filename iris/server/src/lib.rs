@@ -88,6 +88,14 @@ pub struct Settings {
     pub client_sliding_window: u64
 }
 
+#[derive(Deserialize, Debug)]
+pub struct DynamicValues{
+    pub fec_row_redundancy: usize,
+    pub fec_col_redundancy: usize,
+    pub data_row_size: usize,
+    pub data_col_size: usize,
+    pub block_size: usize,
+}
 
 pub fn read_config(filename: &str) -> Result<Config, Box<dyn Error>> {
     let config_content = fs::read_to_string(filename)?;
@@ -101,11 +109,31 @@ pub fn read_config(filename: &str) -> Result<Config, Box<dyn Error>> {
     }
 }
 
-fn log_toml_error(err: &TomlError, config_content: &str) {
-    // General deserialization error message
-    error!("Failed to deserialize config: {}", err);
 
-    // Attempt to provide context by highlighting the line causing the error
+fn log_toml_error(err: &TomlError, config_content: &str) {
+    let err_msg = err.to_string();
+    error!("Failed to deserialize config: {}", err_msg);
+
+    // Look for missing field info in the error message (serde error messages often contain `missing field 'fieldname'`)
+    let missing_fields: Vec<&str> = err_msg
+        .split(',')
+        .filter_map(|part| {
+            let part = part.trim();
+            if part.starts_with("missing field") {
+                // Extract the field name between single quotes
+                let start_quote = part.find('\'')?;
+                let end_quote = part[start_quote+1..].find('\'')?;
+                Some(&part[start_quote+1..start_quote+1+end_quote])
+            } else {
+                None
+            }
+        })
+        .collect();
+
+    if !missing_fields.is_empty() {
+        error!("Missing required field(s): {:?}", missing_fields);
+    }
+
     if let Some(span) = err.span() {
         let start = span.start;
         let lines: Vec<&str> = config_content.lines().collect();

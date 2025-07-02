@@ -15,6 +15,153 @@ fn insert_value<T>(matrix: &mut Vec<Vec<T>>, position: usize, matrix_size: usize
 mod tests {
     use std::{net::SocketAddr, vec};
 
+    #[test]
+    fn test_multicast_simulation_various_matrices() {
+        fn multicast_simulation(mut clients: Vec<Vec<u8>>) -> (bool, Vec<String>) {
+            let num_clients = clients.len();
+            let num_packets = clients[0].len();
+            let mut sent_packets = Vec::new();
+
+            loop {
+                // Count missing packets per column
+                let mut missing_count = vec![0; num_packets];
+                for client in &clients {
+                    for (j, &p) in client.iter().enumerate() {
+                        if p == 0 {
+                            missing_count[j] += 1;
+                        }
+                    }
+                }
+
+                // If all packets are received, break
+                if missing_count.iter().all(|&x| x == 0) {
+                    break;
+                }
+
+                // Find the packet with the most missing
+                let (max_idx, &max_val) = missing_count
+                    .iter()
+                    .enumerate()
+                    .max_by_key(|&(_, &val)| val)
+                    .unwrap();
+
+                // If only one type of packet is missing, send it
+                if missing_count.iter().filter(|&&x| x > 0).count() == 1 {
+                    sent_packets.push(format!("Send packet {}", max_idx));
+                    for client in clients.iter_mut() {
+                        client[max_idx] = 1;
+                    }
+                    continue;
+                }
+
+                // Otherwise, try to find a pair of packets that are missing together
+                let mut found_pair = false;
+                for i in 0..num_packets {
+                    for j in (i + 1)..num_packets {
+                        // Check if all remaining missing packets are in columns i and j
+                        let mut only_i_j = true;
+                        for client in &clients {
+                            for k in 0..num_packets {
+                                if client[k] == 0 && k != i && k != j {
+                                    only_i_j = false;
+                                }
+                            }
+                        }
+                        if only_i_j && (missing_count[i] > 0 && missing_count[j] > 0) {
+                            // Send XOR of i and j
+                            sent_packets.push(format!("Send packet {}⊕{}", i, j));
+                            for client in clients.iter_mut() {
+                                if client[i] == 0 || client[j] == 0 {
+                                    client[i] = 1;
+                                    client[j] = 1;
+                                }
+                            }
+                            found_pair = true;
+                            break;
+                        }
+                    }
+                    if found_pair {
+                        break;
+                    }
+                }
+
+                // If no pair found, send the most-missing packet
+                if !found_pair {
+                    sent_packets.push(format!("Send packet {}", max_idx));
+                    for client in clients.iter_mut() {
+                        client[max_idx] = 1;
+                    }
+                }
+            }
+
+            // Check if all packets are received
+            let all_received = clients.iter().all(|c| c.iter().all(|&p| p == 1));
+            (all_received, sent_packets)
+        }
+
+
+        // Test with various matrices
+        let matrices = vec![
+            vec![
+                vec![1, 0, 0, 1],
+                vec![1, 1, 0, 1],
+                vec![1, 0, 0, 1],
+                vec![1, 1, 0, 0],
+            ],
+            vec![
+                vec![0, 0, 1],
+                vec![1, 0, 0],
+                vec![0, 1, 0],
+            ],
+            vec![
+                vec![1, 1, 1],
+                vec![1, 1, 1],
+            ],
+            vec![
+                vec![0, 0, 0],
+                vec![0, 0, 0],
+            ],
+            // Case: diagonal missing
+            vec![
+                vec![0, 1, 1],
+                vec![1, 0, 1],
+                vec![1, 1, 0],
+            ],
+            // Case: one client missing all
+            vec![
+                vec![0, 0, 0, 0],
+                vec![1, 1, 1, 1],
+                vec![1, 1, 1, 1],
+            ],
+            // Case: two clients, alternate missing
+            vec![
+                vec![1, 0, 1, 0],
+                vec![0, 1, 0, 1],
+            ],
+            // Case: all but one packet missing for all
+            vec![
+                vec![1, 0, 0, 0],
+                vec![1, 0, 0, 0],
+                vec![1, 0, 0, 0],
+            ],
+            // Case: random missing
+            vec![
+                vec![1, 0, 1, 1],
+                vec![0, 1, 0, 1],
+                vec![1, 1, 0, 0],
+            ],
+        ];
+
+        for (i, matrix) in matrices.into_iter().enumerate() {
+            let (all_received, sent_packets) = multicast_simulation(matrix);
+            println!("Matrix {}:", i + 1);
+            for pkt in sent_packets {
+                println!("  {}", pkt);
+            }
+            println!("  All packets received? {}\n", all_received);
+        }
+    }
+
 
     #[test]
     fn test_dash_map_capacity(){

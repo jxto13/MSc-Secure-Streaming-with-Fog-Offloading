@@ -1,11 +1,12 @@
 use crate::metrics::get_metrics;
 use crate::proto::packet_wrapper::PacketType;
 use crate::proto::{PacketWrapper};
-use crate::{proto, CONFIG, MANAGER, MATRIX_BUFFER};
+use crate::{proto, CONFIG, DYNAMIC_VALUES, MANAGER, MATRIX_BUFFER};
 
 use crossbeam_channel::{Receiver, Sender};
 use iris_shared::crypto_utils::encrypt;
 use iris_shared::padding;
+use log::info;
 use prost::Message;
 use proto::{TransmissionPacket, VideoData};
 
@@ -20,6 +21,8 @@ use grid::Grid as Matrix;
 pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     let config = &CONFIG.get().unwrap().multicast;
     let matrix_buffer = MATRIX_BUFFER.get().unwrap();
+    let manager = MANAGER.get().unwrap();
+    let dynamic_values = DYNAMIC_VALUES.get().unwrap();
     
     let num_rows: usize = config.row;
     let num_cols: usize = config.col;
@@ -34,17 +37,13 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
     // Create counters
     let mut matrix_counter = 0;
     let mut epoch = 0;
-    
-    let metrics = get_metrics();
-    
+        
     // Create transmission matrix
     while let Ok(matrix) = rx.recv() {
         
         let mut transmission_matrix: Matrix<TransmissionPacket> = Matrix::new(0, 0);
         
         let mut matrix_index = 0;
-
-        let manager = MANAGER.get().unwrap();
 
         // If epoch is equal to config, rotate keys and reset counter
         if epoch == config.epoch {
@@ -66,8 +65,13 @@ pub fn start(rx: Receiver<Matrix<Vec<u8>>>, tx: Sender<Vec<u8>>) {
         let current_key = binding.get_current_key();
         let next_key = binding.get_next_key();
 
-        let fec_params = (metrics.fec_row.get() as usize, metrics.fec_col.get() as usize);
+        // Get dynamic values lock
+        let dynamic_values_lock = dynamic_values.read().unwrap();
 
+        let fec_params = (dynamic_values_lock.fec_row_redundancy, dynamic_values_lock.fec_col_redundancy);
+
+        // Drop the lock to avoid deadlocks
+        drop(dynamic_values_lock);
 
         // Create encoders objects (This can be put on the loop for dynamic fec_rows and fec_cols changes)
         let mut row_encoder = match ReedSolomonEncoder::new(

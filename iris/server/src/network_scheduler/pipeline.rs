@@ -5,10 +5,11 @@ use std::thread;
 
 
 use crate::membership_manager::client_sessions::ClientSessions;
+use crate::network_scheduler;
 use super::wifi_multicast::WiFiMulticast;
 use super::wifi_unicast::WiFiUnicast;
 use super::retransmission_manager::RetransmissionManager;
-
+use network_scheduler::retransmission_manager::Phase;
 
 
 // Struct representing the pipeline composed of the components
@@ -45,7 +46,8 @@ impl Pipeline {
         })));
         
         // Start unicast sender
-        RetransmissionManager::handle_retransmissions(client_sessions, retransmission_multicast_tx.clone(), retransmission_unicast_tx.clone());
+        let mut manager = RetransmissionManager::new(vec![Phase::Multicast, Phase::Unicast]);
+        manager.handle_retransmissions(client_sessions, retransmission_multicast_tx.clone(), retransmission_unicast_tx.clone());
     }
 
 }

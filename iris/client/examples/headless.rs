@@ -42,37 +42,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     let ip_str: &str = ip_path.to_str().expect("Invalid UTF-8 in path");
     let ip_string: String = ip_str.to_string();
     
-    // // Check if it's an IP address or hostname
-    // if ip_str.parse::<std::net::IpAddr>().is_ok() {
-    //     info!("Parsed IP address: {}", ip_str);
-    // } else {
-    //     info!("Input is a hostname, attempting DNS resolution...");
-
-    //     // Attempt DNS resolution and filter only IPv4 addresses
-    //     match (ip_str, 0).to_socket_addrs() {
-    //         Ok(addrs) => {
-    //             let ipv4_addrs: Vec<_> = addrs
-    //                 .filter_map(|addr| {
-    //                     if let IpAddr::V4(ipv4) = addr.ip() {
-    //                         Some(ipv4.to_string())
-    //                     } else {
-    //                         None
-    //                     }
-    //                 })
-    //                 .collect();
-
-    //             if !ipv4_addrs.is_empty() {
-    //                 for ipv4 in ipv4_addrs {
-    //                     info!("Resolved IPv4: {}", ipv4);
-    //                 }
-    //             } else {
-    //                 error!("No IPv4 addresses found for the hostname.");
-    //             }
-    //         }
-    //         Err(err) => error!("Failed to resolve hostname: {}", err),
-    //     }
-    // }
-    
     // Attempt to start the receiver
     let receiver = match iris_client::start_client(&ip_string) {
         Ok(receiver) => receiver,

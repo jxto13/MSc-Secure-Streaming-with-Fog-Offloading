@@ -4,6 +4,7 @@ mod source_handler;
 mod membership_manager;
 mod metrics;
 mod nts_service;
+mod reinforcement_learning;
 
 use std::sync::RwLock;
 use std::time::{Duration, Instant};
@@ -31,9 +32,11 @@ use proto::TransmissionPacket;
 use iris_server::{read_config,Config};
 
 use client_sessions::ClientSessions;
+use tracing_subscriber::field::debug;
 use crate::nts_service::MyNtsService;
 use crate::metrics::init_metrics;
-
+use crate::metrics::Metrics;
+use iris_server::DynamicValues;
 
 // Import protobuff
 pub mod proto {
@@ -44,6 +47,8 @@ pub mod proto {
 static CONFIG: OnceCell<Config> = OnceCell::new();
 static MANAGER: OnceCell<Arc<RwLock<KeyManager>>> = OnceCell::new();
 static MATRIX_BUFFER: OnceCell<Arc<MatrixHistory>> = OnceCell::new();
+static METRICS: OnceCell<Arc<Metrics>> = OnceCell::new();
+static DYNAMIC_VALUES: OnceCell<Arc<RwLock<DynamicValues>>> = OnceCell::new();
 
 // Custom
 use network_scheduler::pipeline::Pipeline;
@@ -99,9 +104,34 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Set a custom panic hook to log panics and exit gracefully
     std::panic::set_hook(Box::new(|panic_info| {
-        eprintln!("Panic occurred: {:?}", panic_info);
+        let location = panic_info.location()
+            .map(|l| format!("{}:{}", l.file(), l.line()))
+            .unwrap_or_else(|| "unknown location".to_string());
+
+        let message = match panic_info.payload().downcast_ref::<&str>() {
+            Some(s) => *s,
+            None => match panic_info.payload().downcast_ref::<String>() {
+                Some(s) => s.as_str(),
+                None => "Unknown panic message",
+            },
+        };
+
+        eprintln!("\n==== Panic occurred! ====");
+        eprintln!("Message  : {}", message);
+        eprintln!("Location : {}", location);
+
+        // Optionally print backtrace if enabled
+        if std::env::var("RUST_BACKTRACE").unwrap_or_default() == "1" {
+            eprintln!("Backtrace:\n{:?}", std::backtrace::Backtrace::force_capture());
+        } else {
+            eprintln!("(Enable backtrace with `RUST_BACKTRACE=1`)");
+        }
+
+        eprintln!("=========================\n");
+
         std::process::exit(1);
     }));
+
 
     // Define the command structure
     let cmd = Command::new("streaming_server")
@@ -156,6 +186,20 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Start the Prometheus exporter
     start_prometheus_exporter();
 
+    // Initialize the dynamic values
+    let dynamic_values = Arc::new(RwLock::new(
+        DynamicValues {
+            fec_row_redundancy: CONFIG.get().unwrap().multicast.row_fec,
+            fec_col_redundancy: CONFIG.get().unwrap().multicast.col_fec,
+            data_row_size: CONFIG.get().unwrap().multicast.row,
+            data_col_size: CONFIG.get().unwrap().multicast.col,
+            block_size: CONFIG.get().unwrap().multicast.shard_size,
+        }
+    ));
+
+    // Set the global DYNAMIC_VALUES instance
+    DYNAMIC_VALUES.set(dynamic_values).expect("Failed to set DYNAMIC_VALUES");
+
     // Set up a Tokio runtime
     let rt = Arc::new(Runtime::new().unwrap());
     
@@ -178,7 +222,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     // Choose the data source (THIS WILL SPAWN THREADS INSIDE *not handled by the main thread*)
     let source = match CONFIG.get().unwrap().multicast.data_source.as_str() {
-        "udp_mpegts" => DataSource::MPEGTS(CONFIG.get().unwrap().multicast.ip_source.clone()),
+        "mpegts" => DataSource::MPEGTS(CONFIG.get().unwrap().multicast.ip_source.clone()),
         _ => panic!("Invalid data_source value in config"),
     };
     
@@ -246,7 +290,117 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     })));
+
+    handlers.push(("reinforcement_learning_handler", thread::spawn({
+        let client_sessions = Arc::clone(&client_sessions);
+        move || {   
+
+            // use crate::reinforcement_learning::agent::QLearningAgent;
+            // use crate::reinforcement_learning::action::Direction;
+            // use crate::reinforcement_learning::action::FecDataAction;
+            // use crate::reinforcement_learning::state::State;
+
+            // let directions = [Direction::Increase, Direction::Decrease, Direction::NoChange];
+            // let mut actions = Vec::new();
+
+            // // Get the dynamic values from the global static instance
+            // let dynamic_values = DYNAMIC_VALUES.get().unwrap();
+
+            // // Read the dynamic values with a read lock
+            // let dynamic_values_read = dynamic_values.read().unwrap();
+
+            // // Initialize current sizes (should come from your system state)
+            // let mut current_fec_row = dynamic_values_read.fec_row_redundancy;
+            // let mut current_fec_col = dynamic_values_read.fec_col_redundancy;
+
+
+            // // Pull data matrix size from static config
+            // let config = CONFIG.get().unwrap();
+            // let data_row = config.multicast.row;
+            // let data_col = config.multicast.col;
+       
+            // // drop the read lock to allow other threads to modify dynamic values
+            // drop(dynamic_values_read);
+
+            // // Generate all combinations of actions
+            // for &fec_row_dir in &directions {
+            //     for &fec_col_dir in &directions {
+
+            //         // Calculate candidate new sizes
+            //         let new_fec_row = adjust_size(current_fec_row, fec_row_dir);
+            //         let new_fec_col = adjust_size(current_fec_col, fec_col_dir);
+
+            //         // Check bandwidth constraint
+            //         let overhead_ratio = (new_fec_row + new_fec_col) as f64 / (data_row * data_col) as f64;                    
+            //         if overhead_ratio <= 0.4 {
+            //             actions.push(FecDataAction {
+            //                 fec_row: fec_row_dir,
+            //                 fec_col: fec_col_dir,
+            //             });
+            //         }
+            //     }      
+                
+            // }
+
+            // fn adjust_size(size: usize, dir: Direction) -> usize {
+            //     match dir {
+            //         Direction::Increase => size + 1,
+            //         Direction::Decrease => size.saturating_sub(1).max(1),
+            //         Direction::NoChange => size,
+            //     }
+            // }
+
+            // let mut agent = QLearningAgent::new(actions, 0.1, 0.9, 0.2);
+
+            // fn measure_reward(
+            //     state: &State,
+            //     action: &FecDataAction,
+            //     current_fec_row: usize,
+            //     current_fec_col: usize,
+            //     data_row: usize,
+            //     data_col: usize
+            // ) -> f64 {
+            //     let new_fec_row = adjust_size(current_fec_row, action.fec_row);
+            //     let new_fec_col = adjust_size(current_fec_col, action.fec_col);
+
+            //     let overhead_ratio = (new_fec_row + new_fec_col) as f64 / (data_row * data_col) as f64;
+            //     let cost = overhead_ratio * 10.0; // penalize FEC usage
+
+            //     -1.5 * (state.loss_bin as f64) - cost
+            // }
+
+
+            // loop {
+            //     let state = client_sessions.get_session_state();
+            //     let action = agent.choose_action(state.clone());
+
+            //     // Use current values for reward BEFORE applying action
+            //     let reward = measure_reward(&state, &action, current_fec_row, current_fec_col, data_row, data_col);
+
+            //     let new_fec_row = adjust_size(current_fec_row, action.fec_row);
+            //     let new_fec_col = adjust_size(current_fec_col, action.fec_col);
+
+            //     {
+            //         let mut dynamic_values = DYNAMIC_VALUES.get().unwrap().write().unwrap();
+            //         dynamic_values.fec_row_redundancy = new_fec_row;
+            //         dynamic_values.fec_col_redundancy = new_fec_col;
+            //     }
+
+            //     log::debug!("State: {:?}, Action: {:?}, Reward: {}", state, action, reward);
+
+            //     std::thread::sleep(std::time::Duration::from_secs(5));
+
+            //     let next_state = client_sessions.get_session_state();
+            //     agent.update(state, action.clone(), reward, next_state);
+
+            //     // Update current state after action
+            //     current_fec_row = new_fec_row;
+            //     current_fec_col = new_fec_col;
+            // }
+
+            // reinforcement_learning::beta::start(&client_sessions);
     
+    }})));
 
     let client_sessions_clone = Arc::clone(&client_sessions);
     

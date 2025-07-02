@@ -66,6 +66,7 @@ message VideoData {
     SessionKey next_key = 3;
 }
 
+// TransmissionPacket is a packet that contains the video data and metadata
 message TransmissionPacket {
     uint32 matrix = 1;
     uint32 index = 2;
@@ -77,10 +78,19 @@ message TransmissionPacket {
     bytes packet_signature = 10; // signed sha256
 }
 
+message XORPacket {
+    uint32 matrix = 1; // this is the matrix index
+    bytes indexes = 2; // this is the indexes of the packets that are XORed
+    bytes payload = 3; // this payload is encrypted
+    bytes packet_signature = 4; // signed sha256
+}
+
 // RetransmissionPacket is a packet with a single TransmissionPacket 
 message RetransmissionPacket {
-    // probably will need a array saying what packets is on the linear combination
-    TransmissionPacket packet = 1;
+    oneof retransmission_type {
+        XORPacket xor_packet = 1; // this is the xor packet
+        TransmissionPacket transmission_packet = 2; // this is the transmission packet
+    }
 }
 
 // PacketWrapper is a wrapper for the packets to allow for different types of packets
@@ -98,6 +108,12 @@ service ReportService {
     rpc ReportSink (ClientReport) returns (TimestampResponse);
 }
 
+message ReportMetrics {
+    uint32 multicast_retransmissions = 1; // this is the number of multicast retransmissions
+    uint32 unicast_retransmissions = 2; // this is the number of unicast retransmissions
+    uint32 wifi_aware_retransmissions = 3; // this is the number of wifi aware retransmissions
+}
+
 message MatrixReportBitmap {
     uint32 matrix_index = 1;
     bytes bitmap = 2; // only sends data row and collumn bitmap
@@ -106,8 +122,9 @@ message MatrixReportBitmap {
 message ClientReport {
     bytes client_id = 1; // this is the client id
     uint32 counter = 2; // this is the counter to prevent replay attacks
-    repeated MatrixReportBitmap reports = 3; // this is the bitmap of the matrix
-    bytes signature = 4; // signed sha256
+    ReportMetrics metrics = 3; // this is the metrics of the client 
+    repeated MatrixReportBitmap reports = 4; // this is the bitmap of the matrix
+    bytes signature = 5; // signed sha256
 }
 
 // ----------------------------------------------------------------------------------------------------------- //

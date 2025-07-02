@@ -4,7 +4,7 @@ use crate::crypto::utils;
 use crate::membership_manager::client_sessions::ClientSessions;
 use crate::proto;
 
-use log::info;
+use log::{error, info};
 use tonic::{Request, Response, Status};
 use proto::certificate_service_server::{CertificateService, CertificateServiceServer};
 
@@ -85,16 +85,21 @@ impl CertificateService for MyCertificateService {
 
         // Verify that this cert was issued by this ca
         match ca_cert.issued(&cert) {
-            X509VerifyResult::OK => info!("Certificate verified for client: {:?}", request.remote_addr().unwrap()),
-            ver_err => info!("Failed to verify certificate for client: {} - {}", request.remote_addr().unwrap(), ver_err),
-        };
+            X509VerifyResult::OK => {
+                info!("Certificate verified for client: {:?}", request.remote_addr().unwrap());
+                Ok(Response::new(proto::ValidationCertificateResponse {
+                    auth: true
+                }))
+            } 
+            ver_err =>{
+                // If the verification fails, we log the error and return an error response
+                error!("Failed to verify certificate for client: {} - {}", request.remote_addr().unwrap(), ver_err);
+                Ok(Response::new(proto::ValidationCertificateResponse {
+                    auth: false
+                }))
+            }
+        }
 
-        // For demonstration, let's assume it always succeeds
-        let response = proto::ValidationCertificateResponse {
-            auth: true,
-        };
-
-        Ok(Response::new(response))
     }
     
 }

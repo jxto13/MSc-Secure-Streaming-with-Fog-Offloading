@@ -18,7 +18,7 @@ port = 50052 # unicast port for retransmissions
 
 [multicast]
 # Stream Config
-data_source = "udp_mpegts"
+data_source = "mpegts"
 
 # This ip source is for docker network
 # ip_source = "172.22.0.102:1234"
@@ -33,7 +33,7 @@ interface = "host-br"
 # interface = "enp0s20f0u3u1u2"
 
 ip_multicast = "239.255.0.1"
-port_multicast = 1234 # port for multicast stream
+port_multicast = 50050 # port for multicast stream
 
 bitrate = 3000 # kbit/s
 
@@ -55,7 +55,7 @@ mtu_size = 1500 # default in most AP or routers
 wifi_multicast = true
 wifi_unicast = true
 unicast_bitrate = 1000 # kbit/s, this is the bitrate for unicast retransmissions per client, this is the maximum bitrate that the server will use to retransmit data to clients
-interval = 150 # in miliseconds, this is the time between retransmissions rounds
+interval = 500 # in miliseconds, this is the time between retransmissions rounds
 deadline = 1000 # in miliseconds, this is the time before a matrix is not considered valid for retransmissions
 port = 50053 # port for report sink, this is the port that the clients will send reports to the server
 

@@ -84,6 +84,7 @@ pub struct VideoData {
     #[prost(message, optional, tag = "3")]
     pub next_key: ::core::option::Option<SessionKey>,
 }
+/// TransmissionPacket is a packet that contains the video data and metadata
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct TransmissionPacket {
@@ -106,13 +107,43 @@ pub struct TransmissionPacket {
     #[prost(bytes = "vec", tag = "10")]
     pub packet_signature: ::prost::alloc::vec::Vec<u8>,
 }
+#[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, PartialEq, ::prost::Message)]
+pub struct XorPacket {
+    /// this is the matrix index
+    #[prost(uint32, tag = "1")]
+    pub matrix: u32,
+    /// this is the indexes of the packets that are XORed
+    #[prost(bytes = "vec", tag = "2")]
+    pub indexes: ::prost::alloc::vec::Vec<u8>,
+    /// this payload is encrypted
+    #[prost(bytes = "vec", tag = "3")]
+    pub payload: ::prost::alloc::vec::Vec<u8>,
+    /// signed sha256
+    #[prost(bytes = "vec", tag = "4")]
+    pub packet_signature: ::prost::alloc::vec::Vec<u8>,
+}
 /// RetransmissionPacket is a packet with a single TransmissionPacket
 #[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct RetransmissionPacket {
-    /// probably will need a array saying what packets is on the linear combination
-    #[prost(message, optional, tag = "1")]
-    pub packet: ::core::option::Option<TransmissionPacket>,
+    #[prost(oneof = "retransmission_packet::RetransmissionType", tags = "1, 2")]
+    pub retransmission_type: ::core::option::Option<
+        retransmission_packet::RetransmissionType,
+    >,
+}
+/// Nested message and enum types in `RetransmissionPacket`.
+pub mod retransmission_packet {
+    #[allow(clippy::derive_partial_eq_without_eq)]
+    #[derive(Clone, PartialEq, ::prost::Oneof)]
+    pub enum RetransmissionType {
+        /// this is the xor packet
+        #[prost(message, tag = "1")]
+        XorPacket(super::XorPacket),
+        /// this is the transmission packet
+        #[prost(message, tag = "2")]
+        TransmissionPacket(super::TransmissionPacket),
+    }
 }
 /// PacketWrapper is a wrapper for the packets to allow for different types of packets
 #[allow(clippy::derive_partial_eq_without_eq)]
@@ -133,6 +164,19 @@ pub mod packet_wrapper {
     }
 }
 #[allow(clippy::derive_partial_eq_without_eq)]
+#[derive(Clone, Copy, PartialEq, ::prost::Message)]
+pub struct ReportMetrics {
+    /// this is the number of multicast retransmissions
+    #[prost(uint32, tag = "1")]
+    pub multicast_retransmissions: u32,
+    /// this is the number of unicast retransmissions
+    #[prost(uint32, tag = "2")]
+    pub unicast_retransmissions: u32,
+    /// this is the number of wifi aware retransmissions
+    #[prost(uint32, tag = "3")]
+    pub wifi_aware_retransmissions: u32,
+}
+#[allow(clippy::derive_partial_eq_without_eq)]
 #[derive(Clone, PartialEq, ::prost::Message)]
 pub struct MatrixReportBitmap {
     #[prost(uint32, tag = "1")]
@@ -150,11 +194,14 @@ pub struct ClientReport {
     /// this is the counter to prevent replay attacks
     #[prost(uint32, tag = "2")]
     pub counter: u32,
+    /// this is the metrics of the client
+    #[prost(message, optional, tag = "3")]
+    pub metrics: ::core::option::Option<ReportMetrics>,
     /// this is the bitmap of the matrix
-    #[prost(message, repeated, tag = "3")]
+    #[prost(message, repeated, tag = "4")]
     pub reports: ::prost::alloc::vec::Vec<MatrixReportBitmap>,
     /// signed sha256
-    #[prost(bytes = "vec", tag = "4")]
+    #[prost(bytes = "vec", tag = "5")]
     pub signature: ::prost::alloc::vec::Vec<u8>,
 }
 #[allow(clippy::derive_partial_eq_without_eq)]

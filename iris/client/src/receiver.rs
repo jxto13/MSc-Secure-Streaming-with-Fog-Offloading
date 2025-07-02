@@ -7,11 +7,47 @@ use log::{error, info};
 use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ReceiverType {
-    Multicast,
-    Unicast,
-    WifiAware
+macro_rules! create_enum_and_counters {
+    (
+        $enum_name:ident {
+            $($variant:ident),* $(,)?
+        }
+    ) => {
+        #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+        pub enum $enum_name {
+            $($variant),*
+        }
+
+        #[derive(Debug, Default)]
+        pub struct RetransmissionCounters {
+            $(
+                #[allow(non_snake_case)]
+                pub $variant: usize,
+            )*
+        }
+
+        impl RetransmissionCounters {
+            pub fn increment(&mut self, receiver_type: $enum_name) {
+                match receiver_type {
+                    $( $enum_name::$variant => self.$variant += 1 ),*
+                }
+            }
+
+            pub fn get(&self, receiver_type: $enum_name) -> usize {
+                match receiver_type {
+                    $( $enum_name::$variant => self.$variant ),*
+                }
+            }
+        }
+    };
+}
+
+create_enum_and_counters! {
+    ReceiverType {
+        Multicast,
+        Unicast,
+        WifiAware,
+    }
 }
 
 pub enum Command {

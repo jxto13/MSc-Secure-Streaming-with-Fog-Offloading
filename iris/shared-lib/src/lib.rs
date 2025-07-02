@@ -108,7 +108,7 @@ pub mod padding {
             panic!("Target size must be a multiple of the AES block size (16 bytes)");
         }
         if target_size < data.len() {
-            panic!("Target size must be greater than or equal to the data length");
+            panic!("Target size must be greater than or equal to the data length: {} < {}", target_size, data.len());
         }
         let padding_len = target_size - data.len();
         data.extend(vec![0; padding_len - 1]);
@@ -125,6 +125,15 @@ pub mod padding {
             return Err("Invalid padding length");
         }
         Ok(data[..data.len() - padding_len].to_vec())
+    }
+}
+
+pub fn next_multiple_of_64(n: u32) -> u32 {
+    let remainder = n % 64;
+    if remainder == 0 {
+        n
+    } else {
+        n + (64 - remainder)
     }
 }
 
@@ -148,6 +157,121 @@ pub mod xor {
             end -= 1;
         }
         vec[..end].to_vec()
+    }
+}
+
+pub mod multicast_retransmission{
+    use grid::Grid;
+
+    #[derive(Debug, Clone, Hash, PartialEq, Eq)]
+    pub enum SendAction {
+        Packet(usize),
+        Xor(usize, usize),
+    }
+
+    pub fn compute(
+        network_coding_matrix: &mut Grid<u8>,
+        already_sent: &std::collections::HashSet<SendAction>,
+    ) -> (bool, Vec<SendAction>) {
+        let num_clients = network_coding_matrix.rows();
+        let num_packets = network_coding_matrix.cols();
+        let mut sent_packets = Vec::new();
+
+        loop {
+            // Count missing packets per column
+            let mut missing_count = vec![0; num_packets];
+            for row in 0..num_clients {
+                for col in 0..num_packets {
+                    if network_coding_matrix[(row, col)] == 0 {
+                        missing_count[col] += 1;
+                    }
+                }
+            }
+
+            // If all packets are received, break
+            if missing_count.iter().all(|&x| x == 0) {
+                break;
+            }
+
+            // Find the packet with the most missing, skipping already sent
+            let mut max_idx = None;
+            let mut max_val = 0;
+            for (idx, &val) in missing_count.iter().enumerate() {
+                if val > max_val && !already_sent.contains(&SendAction::Packet(idx)) {
+                    max_val = val;
+                    max_idx = Some(idx);
+                }
+            }
+
+            // If only one type of packet is missing, send it (if not already sent)
+            let missing_types: Vec<_> = missing_count
+                .iter()
+                .enumerate()
+                .filter(|&(_, &x)| x > 0)
+                .collect();
+            if missing_types.len() == 1 {
+                let idx = missing_types[0].0;
+                if !already_sent.contains(&SendAction::Packet(idx)) {
+                    sent_packets.push(SendAction::Packet(idx));
+                    for row in 0..num_clients {
+                        network_coding_matrix[(row, idx)] = 1;
+                    }
+                }
+                break;
+            }
+
+            // Try to find a pair of packets that are missing together, skipping already sent XORs
+            let mut found_pair = false;
+            for i in 0..num_packets {
+                for j in (i + 1)..num_packets {
+                    if already_sent.contains(&SendAction::Xor(i, j)) {
+                        continue;
+                    }
+                    // Check if all remaining missing packets are in columns i and j
+                    let mut only_i_j = true;
+                    for row in 0..num_clients {
+                        for k in 0..num_packets {
+                            if network_coding_matrix[(row, k)] == 0 && k != i && k != j {
+                                only_i_j = false;
+                            }
+                        }
+                    }
+                    if only_i_j && (missing_count[i] > 0 && missing_count[j] > 0) {
+                        // Send XOR of i and j
+                        sent_packets.push(SendAction::Xor(i, j));
+                        for row in 0..num_clients {
+                            if network_coding_matrix[(row, i)] == 0 || network_coding_matrix[(row, j)] == 0 {
+                                network_coding_matrix[(row, i)] = 1;
+                                network_coding_matrix[(row, j)] = 1;
+                            }
+                        }
+                        found_pair = true;
+                        break;
+                    }
+                }
+                if found_pair {
+                    break;
+                }
+            }
+
+            // If no pair found, send the most-missing packet (if not already sent)
+            if !found_pair {
+                if let Some(idx) = max_idx {
+                    sent_packets.push(SendAction::Packet(idx));
+                    for row in 0..num_clients {
+                        network_coding_matrix[(row, idx)] = 1;
+                    }
+                } else {
+                    break;
+                }
+            }
+        }
+
+        // Check if all packets are received
+        let all_received = (0..num_clients)
+            .all(|row| (0..num_packets).all(|col| network_coding_matrix[(row, col)] == 1));
+
+        (all_received, sent_packets)
     }
 }
 

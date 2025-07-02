@@ -62,6 +62,10 @@ async fn create_channel(ip: &String) -> Result<Channel, Box<dyn std::error::Erro
     // Use Channel::builder instead of Channel::from_static
     let channel = Channel::builder(channel_url.parse()?) // Convert String to Uri
         .tls_config(tls_config)? // Apply the TLS configuration
+        .keep_alive_timeout(Duration::from_secs(10))
+        .keep_alive_while_idle(true)
+        .http2_keep_alive_interval(Duration::from_secs(10))
+        .keep_alive_timeout(Duration::from_secs(10))
         .connect()
         .await?;
 

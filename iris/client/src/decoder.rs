@@ -1,6 +1,6 @@
 use crossbeam_channel::{tick, Receiver, Sender, TryRecvError};
 use iris_shared::padding;
-use log::{error, info};
+use log::{debug, error, info};
 use openssl::ec::{EcKey, EcKeyRef};
 use openssl::pkey::{Private, Public};
 use openssl::sha::sha256;
@@ -10,8 +10,7 @@ use prost::Message;
 use std::collections::VecDeque;
 use std::error::Error;
 use std::io::Cursor;
-use std::thread;
-use std::time::{Duration, Instant};
+use std::time::Duration;
 
 use grid::Grid as Matrix;
 
@@ -19,8 +18,9 @@ use openssl::ecdsa::EcdsaSig;
 
 use iris_shared::crypto_utils::decrypt;
 
-use crate::proto::{MatrixReportBitmap, PacketWrapper, RetransmissionPacket, SessionKey, TransmissionPacket, VideoData};
-use crate::receiver::ReceiverType;
+use crate::proto::retransmission_packet::RetransmissionType;
+use crate::proto::{MatrixReportBitmap, PacketWrapper, ReportMetrics, RetransmissionPacket, SessionKey, TransmissionPacket, VideoData, XorPacket};
+use crate::receiver::{ReceiverType, RetransmissionCounters};
 use crate::proto::packet_wrapper::PacketType;
 use crate::SESSION;
 
@@ -104,6 +104,12 @@ impl MatrixTracker {
         }
 
 
+    }
+
+    /// Returns a reference to the packet at the given (row, col) if it exists.
+    pub fn get_packet(&self, row: usize, col: usize) -> Option<&TransmissionPacket> {
+        // Try to get the Option<TransmissionPacket> from the matrix
+        self.matrix_packets.get(row, col).and_then(|opt_packet| opt_packet.as_ref())
     }
 
     /// Reconstruct the matrix using the Reed-Solomon algorithm.
@@ -288,6 +294,30 @@ fn validate_packet(packet: &mut TransmissionPacket, x509_public_key: &EcKey<Publ
     true
 }
 
+fn validate_xor_packet(xor_packet: &mut XorPacket, x509_public_key: &EcKey<Public>) -> bool {
+    // Get the signature from the packet and put the packet_signature field with 0's to calculate local hash computation
+    let signature = match EcdsaSig::from_der(&xor_packet.packet_signature) {
+        Ok(sig) => sig,
+        Err(err) => {
+            error!("Invalid signature format: {}", err);
+            return false;
+        }
+    };
+
+    // Set the packet_signature field to 0's to calculate the hash
+    xor_packet.packet_signature = vec![0, 255];
+    let message_hash = sha256(&xor_packet.encode_to_vec());
+
+    // Verify the signature
+    if let Err(err) = signature.verify(&message_hash, &x509_public_key) {
+        error!("Signature verification failed: {}", err);
+        return false;
+    }
+
+    // Validate the packet
+    true
+}
+
 /// Process a packet and check if it belongs to a new matrix or an old matrix in the buffer.
 fn process_packet(buffer: &mut VecDeque<MatrixTracker>, packet: TransmissionPacket, current_key: &mut SessionKey, next_key: &mut Option<SessionKey>) {
     let session_config = SESSION.get().unwrap().read().unwrap();
@@ -419,6 +449,7 @@ fn check_key_rotation(matrix: &mut MatrixTracker, packet: &TransmissionPacket, c
     } 
 }
 
+
 /// Rotate the current key and next key.
 fn rotate_key(current_key: &mut SessionKey, next_key: &mut Option<SessionKey>, new_key: SessionKey) {
     *current_key = next_key.take().unwrap();
@@ -451,7 +482,7 @@ pub fn start(
         panic!("Client EC Key is not set.");
     };
 
-    let mut report_counter= 0;
+    let mut report_counter= 1;
     let client_id = sha256(&client_ec_key.public_key_to_der().unwrap()).to_vec();
     
     let rint = Duration::from_millis(200); // interval between retries
@@ -460,6 +491,8 @@ pub fn start(
     
     let retry_tick = tick(rint);
     let mut attempt = 0;
+
+    let mut counters = RetransmissionCounters::default();
 
     loop {
         crossbeam_channel::select_biased! {
@@ -479,7 +512,7 @@ pub fn start(
 
                         // Check if the buffer has more than one item
                         if buffer.len() < 1 {
-                            info!("Buffer is empty or has only one item, skipping report.");
+                            debug!("Buffer is empty or has only one item, skipping report.");
                             continue;
                         }
 
@@ -487,6 +520,11 @@ pub fn start(
                         let mut report = ClientReport {
                             client_id: client_id.clone(),
                             counter: report_counter.clone(),
+                            metrics: Some(ReportMetrics {
+                                multicast_retransmissions: counters.get(ReceiverType::Multicast) as u32,
+                                unicast_retransmissions: counters.get(ReceiverType::Unicast) as u32,
+                                wifi_aware_retransmissions: counters.get(ReceiverType::WifiAware) as u32,
+                            }),
                             reports: Vec::with_capacity(buffer.len() - 1),
                             signature: vec![0, 255],
                         };
@@ -510,10 +548,11 @@ pub fn start(
                     
                     },
                     TickType::DecodeToApp => {
-                        info!("Decoding to application layer...");
                         
                         // Check if the buffer has more than one item
                         if buffer.len() > 1 {
+
+                            info!("Decoding to application layer...");
             
                             // Drain all elements except the last one
                             let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
@@ -542,10 +581,13 @@ pub fn start(
                 let (source, data) = match msg {
                     Ok(val) => val,
                     Err(err) => {
-                        println!("Channel closed: {:?}", err);
+                        error!("Channel closed: {:?}", err);
                         break;
                     }
                 };
+
+                // This if for tracking if i increamented the multicast retransmissions counter
+                let is_multicast = false;
 
                 let wrapper: Vec<u8> = match source {
                     // This can be helpful to track metrics
@@ -553,9 +595,13 @@ pub fn start(
                         data
                     },
                     ReceiverType::Unicast=>{
+                        // Increment the unicast retransmissions counter
+                        counters.increment(ReceiverType::Unicast);
                         data
                     },
                     ReceiverType::WifiAware => {
+                        // Increment the wifi aware retransmissions counter
+                        counters.increment(ReceiverType::WifiAware);
                         data
                     }
                 };
@@ -582,19 +628,130 @@ pub fn start(
                     }
                     Some(PacketType::RetransmissionPacket(retransmission)) => {
                         // handle RetransmissionPacket
-                        if let Some(mut packet) = retransmission.packet {
-                            // Validate the packet signature, if invalid, skip the packet
-                            if validate_packet(&mut packet, &x509_public_key) {
-                            // Process the packet if valid
-                                // Missing logic to decode linear combination with the other packets of matrix
-                                // info!("RetransmissionPacket contained packet: {:?} - {:?}", packet.matrix, packet.index);
-                                process_retransmission_packet(&mut buffer, packet);
-                            } else {
-                                // Invalid packet, skip
-                                continue;
+                        match retransmission.retransmission_type {
+
+                            Some(RetransmissionType::XorPacket(mut packet)) => {
+
+                                // Validate the packet signature, if invalid, skip the packet
+                                if validate_xor_packet(&mut packet, &x509_public_key) {
+
+                                    // Check if the packet is multicast retransmission
+                                    if is_multicast {
+                                        // Increment the multicast retransmissions counter
+                                        counters.increment(ReceiverType::Multicast);
+                                    }
+
+                                    // Find the matrix tracker for this packet
+                                    for tracker in buffer.iter_mut(){
+                                        if packet.matrix == tracker.matrix_index {
+
+                                            // Get the indexes of the packet
+                                            if packet.indexes.len() != 2 {
+                                                error!("XorPacket must have exactly two indexes, found: {}", packet.indexes.len());
+                                                continue;
+                                            }
+
+                                            let i = packet.indexes[0] as usize;
+                                            let j = packet.indexes[1] as usize;
+
+                                            let (row_i, col_i) = (i / tracker.cols as usize, i % tracker.cols as usize);
+                                            let (row_j, col_j) = (j / tracker.cols as usize, j % tracker.cols as usize);
+
+                                            // Check if the packets at the indexes exist in the matrix
+                                            if tracker.matrix_packets.get(row_i, col_i).is_none() && tracker.matrix_packets.get(row_j, col_j).is_none() {
+                                                error!("XorPacket indexes out of bounds or packets not found in the matrix: ({}, {}) and ({}, {})", row_i, col_i, row_j, col_j);
+                                                continue;
+                                            }
+                                            // Get the packets at the indexes
+                                            let mut original_shards = Vec::new();
+
+                                            debug!("XorPacket indexes: ({}, {}) and ({}, {})", row_i, col_i, row_j, col_j);
+                                            // Get the first packet 
+                                            if let Some(packet) = tracker.get_packet(row_i, col_i) {
+                                                original_shards.push((0,packet.encode_to_vec()));
+                                            };
+
+                                            // Get the second packet
+                                            if let Some(packet) = tracker.get_packet(row_j, col_j) {
+                                                original_shards.push((1,packet.encode_to_vec()  ));
+                                            };
+
+                                            if original_shards.len() != 1 {
+                                                error!("XorPacket must have exactly one original shard, found: {}", original_shards.len());
+                                                continue;
+                                            }
+
+                                            let target_size = iris_shared::next_multiple_of_64(original_shards[0].1.len() as u32) as usize;
+
+                                            // Pad the original shards to the target size
+                                            for (_pos, data) in original_shards.iter_mut() {
+                                                padding::pad(data, target_size);
+                                            }
+
+                                            // One of the packets is missing, so we can recover it
+                                            if original_shards.len() == 1 {
+
+                                                let recovery_shards = vec![(0, &packet.payload)];
+                                                if let Ok(recovered) = reed_solomon_16::decode(
+                                                    packet.indexes.len(), // total number of original shards
+                                                    1,                   // total number of recovery shards
+                                                    original_shards,
+                                                    recovery_shards,
+                                                ) {
+                                                    for (_pos, mut data) in recovered {
+
+                                                        iris_shared::padding::depad(&mut data).unwrap();
+
+                                                        // Create a new TransmissionPacket with the recovered data
+                                                        if let Ok(transmission) = TransmissionPacket::decode(&*data) {
+                                                            // No need to verify the signature again, as it was already done in validate_xor_packet
+
+                                                            info!("Recovered packet: {:?}", transmission.index);
+                                                            // Process the packet if valid
+                                                            tracker.add_packet(&transmission);
+                                                        }
+                                                        
+                                                    }
+                                                }
+
+                                            } else {
+                                                error!("XorPacket must have exactly one original shard");
+                                                continue;
+                                            }
+                                            
+
+                                        }
+                                    }
+
+                                
+                                } else {
+                                    // Invalid packet, skip
+                                    continue;
+                                }
                             }
-                        } else {
-                            eprintln!("RetransmissionPacket contained no packet.");
+                            // This is a normal TransmissionPacket inside a RetransmissionPacket 
+                            Some(RetransmissionType::TransmissionPacket(mut packet)) => {
+                                
+                                // Validate the packet signature, if invalid, skip the packet
+                                if validate_packet(&mut packet, &x509_public_key) {
+
+                                    // Check if the packet is multicast retransmission
+                                    if is_multicast {
+                                        // Increment the multicast retransmissions counter
+                                        counters.increment(ReceiverType::Multicast);
+                                    }
+
+                                    debug!("Received retransmission packet for matrix: {} packet {}", packet.matrix, packet.index);
+                                    // Process the packet if valid
+                                    process_retransmission_packet(&mut buffer, packet);
+                                } else {
+                                    // Invalid packet, skip
+                                    continue;
+                                }
+                            }
+                            None => {
+                                error!("RetransmissionPacket contained no retransmission type.");
+                            }
                         }
                     }
                     None => {

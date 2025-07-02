@@ -14,7 +14,9 @@ use openssl::x509::X509;
 use proto::{ClientReport, MatrixReportBitmap};
 
 use crate::metrics::ClientMetric;
-use crate::{proto, CONFIG};
+use crate::reinforcement_learning::state::State;
+
+use crate::{proto, CONFIG, DYNAMIC_VALUES};
 
 #[derive(Debug)]
 pub struct ClientData {
@@ -22,6 +24,7 @@ pub struct ClientData {
     pub last_seen: Instant,                     // Last time the client was seen
     pub cert: X509,                             // Client certificate
     pub ip: IpAddr,                             // Client IP address
+    pub report_counter: u32,                    // Counter for reports received from the client
     pub reports: Vec<MatrixReportBitmap>,       // Matrix, Bitmap
     pub bandwidth_manager: BandwidthManager,    // Bandwidth manager for the client
 }
@@ -67,18 +70,18 @@ impl ClientSessions {
         let now = Instant::now();
         let metrics = crate::metrics::get_metrics();
 
-        debug!("Clients State: {:?}", self.clients);
-
+        // Collect keys of clients that have timed out
         let timed_out_keys: Vec<_> = self.clients.iter()
             .filter(|entry| now.duration_since(entry.value().last_seen) > timeout)
             .map(|entry| entry.key().clone())
             .collect();
 
+        // Log the number of timed out clients
         for key in timed_out_keys {
-            info!("Removing client: {:?}", key.to_vec());
             self.clients.remove(&key);
-
+            
             let client_id_hex = hex::encode(&key);
+            info!("Removing client: {:?}", client_id_hex); // Log the first 8 bytes of the client ID
             metrics.clear_client_metrics(&client_id_hex);
         }
 
@@ -89,7 +92,7 @@ impl ClientSessions {
         for (report_socket,report) in &self.reports_channel {
 
             // Get the client from the client_sessions
-           match self.clients.get_mut(&report.client_id) {
+            match self.clients.get_mut(&report.client_id) {
                 Some(mut client_data) => {
                     client_data.last_seen = Instant::now();
                     client_data.reports = report.reports;
@@ -130,6 +133,7 @@ impl ClientSessions {
             last_seen: Instant::now(),
             cert,
             ip: client_addr,
+            report_counter: 0,
             reports: Vec::new(),
             bandwidth_manager: BandwidthManager::new(CONFIG.get().unwrap().retransmission.unicast_bitrate), // or hardcode bitrate here
         };
@@ -203,6 +207,13 @@ impl ClientSessions {
         
     }
 
+    pub fn get_session_state(&self) -> State {
+        // Calculate the overall packet loss
+        let packet_loss = self.calculate_packet_loss();
+
+        State::from_loss(packet_loss)
+    }
+
     pub fn get_client_unicast_rate(&self, client: &RefMulti<'_, Vec<u8>, ClientData>) -> f64 {
         let client_data = client.value();
         // Get the unicast rate from the bandwidth manager
@@ -214,11 +225,22 @@ impl ClientSessions {
         // Get the metrics instance
         let metrics = crate::metrics::get_metrics(); // get the Arc<Metrics>
 
-        // Update connected clients metric
-        metrics.connected_clients.set(self.clients.len() as i64);
+        // Update global metrics
+        {
+            // Update connected clients metric
+            metrics.connected_clients.set(self.clients.len() as i64);
+
+            // Update FEC row and column metrics
+            let dynamic_values_lock = DYNAMIC_VALUES.get().unwrap().read().unwrap();
+            metrics.fec_row.set(dynamic_values_lock.fec_row_redundancy as i64);
+            metrics.fec_col.set(dynamic_values_lock.fec_col_redundancy as i64);
+
+        }
+
 
         // Set metric values for all clients
         for client in self.clients.iter() {
+
             // Get the client key (client ID)
             let client_id_bytes = client.key();
 

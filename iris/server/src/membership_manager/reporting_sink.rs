@@ -1,4 +1,4 @@
-use crate::{proto, CONFIG};
+use crate::{proto, CONFIG, MANAGER};
 
 use std::net::SocketAddr;
 use std::sync::Arc;
@@ -81,6 +81,13 @@ impl MyReportService {
                                 let client_cert = match client_sessions.get_client_cert(&report.client_id) {
                                     Some(cert) => cert,
                                     None => {
+                                        // Edge case where client is still connected but the certificate is not found
+                                        // This can happen if the client certificate is not yet registered in the client_sessions
+                                        // or if the client has disconnected and the certificate has been removed.
+
+                                        // If the client certificate is not found, we log an error and continue
+                                        // to the next packet.
+                                        // This is a critical error, as we cannot verify the signature without the certificate.
                                         error!("Client certificate not found for {}", source_address.ip());
                                         continue;
                                     }
@@ -93,8 +100,22 @@ impl MyReportService {
                                     continue;
                                 }
                                 
+                                // Verify the report counter
+                                if let Some(mut client_data) = client_sessions.clients.get_mut(&report.client_id) {
+                                    // If the report counter menus 1 is equal to the current report counter, we increment it
+                                    if report.counter > client_data.report_counter {
+                                        client_data.report_counter = report.counter ;
+                                    } else {
+                                        // If the report counter is not greater, we skip processing this report
+                                        error!("Report counter is not greater than the current counter for client {:?}", report.client_id);
+                                        continue;
+                                    }
+                                } else {
+                                    error!("Client data not found for client {:?}", report.client_id);
+                                    continue;
+                                }
                                 
-                                // If the signature is valid, we can process the report. 
+                                // If the signature is valid, and report counter is verified we can process the report. 
                                 // Also because is a valid report, we pass the ip address to the client session to update if
                                 // needed. It can be a client roaming 
                                 
