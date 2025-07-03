@@ -17,7 +17,7 @@ use openssl::nid::Nid;
 use openssl::pkey::PKey;
 
 use std::net::{Ipv4Addr, SocketAddr};
-use std::sync::{Arc, Mutex, RwLock};
+use std::sync::{Arc, RwLock};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -34,7 +34,7 @@ use tokio::runtime::Runtime;
 
 use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
-use chrono::{DateTime, Utc};
+use chrono::DateTime;
 
 use log::{error, info};
 
@@ -304,6 +304,7 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
         let unicast_port = SESSION.get().unwrap().read().unwrap().unicast_port;
         // Bind to the unicast address and port
         let unicast_addr = format!("0.0.0.0:{}", unicast_port).parse().unwrap();
+        info!("Unicast socket bound to: {}", unicast_addr);
         let unicast_socket = mio::net::UdpSocket::bind(unicast_addr).unwrap();
         command_sender
             .send(Command::AddSocket(unicast_socket, ReceiverType::Unicast))

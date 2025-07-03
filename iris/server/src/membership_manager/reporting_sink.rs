@@ -1,4 +1,4 @@
-use crate::{proto, CONFIG, MANAGER};
+use crate::{proto, CONFIG};
 
 use std::net::SocketAddr;
 use std::sync::Arc;

@@ -7,7 +7,8 @@ use super::retransmission_manager::RetransmissionManager;
 use super::wifi_multicast::WiFiMulticast;
 use super::wifi_unicast::WiFiUnicast;
 use crate::membership_manager::client_sessions::ClientSessions;
-use crate::network_scheduler;
+use crate::network_scheduler::retransmission_manager::PhaseConfig;
+use crate::{network_scheduler, CONFIG};
 use network_scheduler::retransmission_manager::Phase;
 
 // Struct representing the pipeline composed of the components
@@ -19,6 +20,9 @@ impl Pipeline {
         // Create channels for retransmission
         let (retransmission_multicast_tx, retransmission_multicast_rx) = unbounded();
         let (retransmission_unicast_tx, retransmission_unicast_rx) = unbounded();
+
+        // Get the config
+        let config = CONFIG.get().unwrap();
 
         // Create a vector to hold the thread handlers
         let mut handlers = Vec::new();
@@ -47,8 +51,19 @@ impl Pipeline {
             }),
         ));
 
+        let phases = vec![
+            PhaseConfig {
+                phase: Phase::Multicast,
+                enabled: config.retransmission.wifi_multicast,
+            },
+            PhaseConfig {
+                phase: Phase::Unicast,
+                enabled: config.retransmission.wifi_unicast,
+            },
+        ];
+
         // Start unicast sender
-        let mut manager = RetransmissionManager::new(vec![Phase::Multicast, Phase::Unicast]);
+        let mut manager = RetransmissionManager::new(phases);
         manager.handle_retransmissions(
             client_sessions,
             retransmission_multicast_tx.clone(),

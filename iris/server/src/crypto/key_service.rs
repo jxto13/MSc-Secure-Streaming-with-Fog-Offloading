@@ -65,7 +65,7 @@ impl KeyService for MyKeyService {
                 client_reporting_interval: config.settings.client_reporting_interval as u32,
                 client_sliding_window: config.settings.client_sliding_window as u32,
                 retransmission_port: config.retransmission.port as u32,
-                unicast_port: config.retransmission.port as u32,
+                unicast_port: config.unicast.port as u32,
                 multicast_address: config.multicast.ip_multicast.clone(),
                 multicast_port: config.multicast.port_multicast as u32,
             }),

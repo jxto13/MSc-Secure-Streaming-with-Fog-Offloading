@@ -8,7 +8,7 @@ use dashmap::DashMap;
 
 use grid::Grid;
 use iris_shared::bandwidth_utils::BandwidthManager;
-use log::{debug, error, info};
+use log::{error, info};
 use openssl::sha::sha256;
 use openssl::x509::X509;
 use proto::{ClientReport, MatrixReportBitmap};
@@ -17,6 +17,13 @@ use crate::metrics::ClientMetric;
 use crate::reinforcement_learning::state::State;
 
 use crate::{proto, CONFIG, DYNAMIC_VALUES};
+
+pub fn find_zero_indices(vec: &Vec<u8>) -> Vec<usize> {
+    vec.iter()
+        .enumerate()
+        .filter_map(|(index, &value)| if value == 0 { Some(index) } else { None })
+        .collect()
+}
 
 #[derive(Debug)]
 pub struct ClientData {
@@ -30,25 +37,13 @@ pub struct ClientData {
 }
 
 impl ClientData {
-    fn find_zero_indices(vec: &Vec<u8>) -> Vec<usize> {
-        vec.iter()
-            .enumerate()
-            .filter_map(|(index, &value)| if value == 0 { Some(index) } else { None })
-            .collect()
-    }
-
-    pub fn get_missing_packets(&self) -> Option<Vec<(u32, Vec<usize>)>> {
-        if self.reports.is_empty() {
-            return None;
+    pub fn get_missing_packets(&self, matrix_id: u32) -> Option<Vec<usize>> {
+        for report in &self.reports {
+            if report.matrix_index == matrix_id {
+                return Some(find_zero_indices(&report.bitmap));
+            }
         }
-
-        let results: Vec<(u32, Vec<usize>)> = self
-            .reports
-            .iter()
-            .map(|report| (report.matrix_index, Self::find_zero_indices(&report.bitmap)))
-            .collect();
-
-        Some(results)
+        None
     }
 }
 
@@ -159,7 +154,7 @@ impl ClientSessions {
         for client in &self.clients {
             for report in &client.reports {
                 // Decode bitmap to get received packet indices
-                let missing_packets_len = ClientData::find_zero_indices(&report.bitmap).len();
+                let missing_packets_len = find_zero_indices(&report.bitmap).len();
 
                 // Add to the set of unique packets
                 missing_packets += missing_packets_len;
@@ -186,7 +181,7 @@ impl ClientSessions {
         // Iterate over all reports for the client
         for report in &client_data.reports {
             // Decode bitmap to get received packet indices
-            let missing_packets_len = ClientData::find_zero_indices(&report.bitmap).len();
+            let missing_packets_len = find_zero_indices(&report.bitmap).len();
 
             // Add to the set of unique packets
             missing_packets += missing_packets_len;

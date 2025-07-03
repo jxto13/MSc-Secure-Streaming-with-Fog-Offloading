@@ -2,18 +2,17 @@ use std::collections::{HashMap, HashSet};
 use std::vec;
 use std::{net::IpAddr, sync::Arc, time::Duration};
 
+use crate::membership_manager::client_sessions;
 use crate::proto::packet_wrapper::PacketType;
 use crate::proto::retransmission_packet::RetransmissionType;
+use crate::proto::RetransmissionPacket;
 use crate::proto::{PacketWrapper, XorPacket};
 use crate::{membership_manager::client_sessions::ClientSessions, MATRIX_BUFFER};
-use crate::{metrics::get_metrics, proto::RetransmissionPacket};
 use crate::{CONFIG, MANAGER};
-use grid::Grid;
 use iris_shared::multicast_retransmission::SendAction;
-use iris_shared::source_coding::{find_optimal_retransmissions, Transmission};
 use iris_shared::{multicast_retransmission, next_multiple_of_64, padding};
 
-use crossbeam_channel::{select, tick, Sender};
+use crossbeam_channel::{tick, Sender};
 use log::{debug, error, info};
 use openssl::ecdsa::EcdsaSig;
 use openssl::sha::sha256;
@@ -26,6 +25,12 @@ pub enum Phase {
     Unicast,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct PhaseConfig {
+    pub phase: Phase,
+    pub enabled: bool,
+}
+
 impl Phase {
     fn next(self) -> Self {
         match self {
@@ -35,13 +40,6 @@ impl Phase {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-struct PacketKey {
-    matrix_id: usize,
-    packet_idx: usize,
-}
-
-// Track when a packet was last sent: in which phase and round
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 struct PacketSentInfo {
     phase_index: usize,
@@ -49,14 +47,14 @@ struct PacketSentInfo {
 }
 
 pub struct RetransmissionManager {
-    packet_states: HashMap<PacketKey, PacketSentInfo>,
-    phases: Vec<Phase>, // allow variable phases
+    packet_states: HashMap<SendAction, PacketSentInfo>,
+    phases: Vec<PhaseConfig>,
     phase_index: usize,
     round: usize,
 }
 
 impl RetransmissionManager {
-    pub fn new(phases: Vec<Phase>) -> Self {
+    pub fn new(phases: Vec<PhaseConfig>) -> Self {
         assert!(!phases.is_empty());
         Self {
             packet_states: HashMap::new(),
@@ -67,27 +65,25 @@ impl RetransmissionManager {
     }
 
     fn advance_phase(&mut self) {
-        self.phase_index += 1;
-        if self.phase_index >= self.phases.len() {
-            self.phase_index = 0;
-            self.round += 1;
+        let num_phases = self.phases.len();
+        for _ in 0..num_phases {
+            self.phase_index = (self.phase_index + 1) % num_phases;
+            if self.phase_index == 0 {
+                self.round += 1;
+            }
+            if self.phases[self.phase_index].enabled {
+                return;
+            }
         }
     }
 
-    // returns true if (current_phase_index, current_round) is at least
-    // one full cycle after (last_sent_phase_index, last_sent_round)
     fn can_retransmit(
         &self,
         last_sent: &PacketSentInfo,
         current_phase_index: usize,
         current_round: usize,
     ) -> bool {
-        let phases_count = self.phases.len();
-        let last_pos = last_sent.round * phases_count + last_sent.phase_index;
-        let current_pos = current_round * phases_count + current_phase_index;
-
-        // allow retransmit only if we advanced at least a full cycle ahead
-        current_pos > last_pos + (phases_count - 1)
+        !(last_sent.phase_index == current_phase_index && last_sent.round == current_round)
     }
 
     pub fn handle_retransmissions(
@@ -100,18 +96,21 @@ impl RetransmissionManager {
         let matrix_buffer = MATRIX_BUFFER.get().unwrap();
         let manager = MANAGER.get().unwrap();
 
-        // Get the current EC key from the manager
         let ec_key = {
             let binding = manager.read().unwrap();
             binding.get_ec_key().clone()
         };
 
-        // Set global interval ticker
         let interval_ticker = tick(Duration::from_millis(config.retransmission.interval as u64));
 
         for _ in interval_ticker {
-            let current_phase = self.phases[self.phase_index];
-            println!("Round {}, Phase {:?}", self.round, current_phase);
+            let phase_config = self.phases[self.phase_index];
+            if !phase_config.enabled {
+                self.advance_phase();
+                continue;
+            }
+
+            let current_phase = phase_config.phase;
 
             match current_phase {
                 Phase::Multicast => {
@@ -123,26 +122,22 @@ impl RetransmissionManager {
                             continue;
                         }
 
-                        println!("Matrix {}:", matrix_id);
-
-                        // Build already_sent set from packet_states for this phase
                         let already_sent: HashSet<SendAction> = self
                             .packet_states
                             .iter()
-                            .filter_map(|(key, info)| {
+                            .filter_map(|(action, info)| {
                                 if !self.can_retransmit(info, self.phase_index, self.round) {
-                                    Some(SendAction::Packet(key.packet_idx))
+                                    Some(action.clone())
                                 } else {
                                     None
                                 }
                             })
                             .collect();
 
-                        // Here, multicast packets
                         let sent_packets =
                             multicast_retransmission::compute(&mut matrix, &already_sent);
 
-                        let matrix = match matrix_buffer.get_matrix(matrix_id as usize) {
+                        let buffer_matrix = match matrix_buffer.get_matrix(matrix_id as usize) {
                             Some(m) => m,
                             None => {
                                 error!("Matrix {} not found in buffer, skipping.", matrix_id);
@@ -151,18 +146,8 @@ impl RetransmissionManager {
                         };
 
                         for pkt in sent_packets {
-                            let packet_idx = match pkt {
-                                SendAction::Packet(idx) => idx,
-                                SendAction::Xor(i, _) => i,
-                            };
-
-                            let key = PacketKey {
-                                matrix_id: matrix_id as usize,
-                                packet_idx,
-                            };
-
                             self.packet_states.insert(
-                                key,
+                                pkt.clone(),
                                 PacketSentInfo {
                                     phase_index: self.phase_index,
                                     round: self.round,
@@ -171,76 +156,64 @@ impl RetransmissionManager {
 
                             match pkt {
                                 SendAction::Packet(idx) => {
-                                    debug!("Multicast packet {}", idx);
-                                    // Build the RetransmissionPacket with packet info
-                                    let row = idx / matrix.cols() as usize;
-                                    let col = idx % matrix.cols() as usize;
+                                    let row = idx / buffer_matrix.cols() as usize;
+                                    let col = idx % buffer_matrix.cols() as usize;
 
-                                    match matrix.get(row, col) {
-                                        Some(packet) => {
-                                            // Send the packet via multicast channel
-                                            let wrapper = PacketWrapper {
-                                                packet_type: Some(PacketType::RetransmissionPacket(
-                                                    RetransmissionPacket {
-                                                        retransmission_type: Some(
-                                                            RetransmissionType::TransmissionPacket(
-                                                                packet.clone(),
-                                                            ),
+                                    if let Some(packet) = buffer_matrix.get(row, col) {
+                                        let wrapper = PacketWrapper {
+                                            packet_type: Some(PacketType::RetransmissionPacket(
+                                                RetransmissionPacket {
+                                                    retransmission_type: Some(
+                                                        RetransmissionType::TransmissionPacket(
+                                                            packet.clone(),
                                                         ),
-                                                    },
-                                                )),
-                                            };
-
-                                            multicast_tx
-                                                .send(wrapper.encode_to_vec())
-                                                .expect("Failed to send multicast channel");
-                                        }
-                                        None => {
-                                            error!(
-                                                "  Packet {} not found in matrix {}, skipping.",
-                                                idx, matrix_id
-                                            );
-                                        }
+                                                    ),
+                                                },
+                                            )),
+                                        };
+                                        multicast_tx
+                                            .send(wrapper.encode_to_vec())
+                                            .expect("Failed to send multicast packet");
+                                    } else {
+                                        error!(
+                                            "Packet {} not found in matrix {}, skipping.",
+                                            idx, matrix_id
+                                        );
                                     }
                                 }
                                 SendAction::Xor(i, j) => {
-                                    debug!("  Multicast packet {}⊕{}", i, j);
-
-                                    // Get the packets for i and j
-                                    let (row_i, col_i) =
-                                        (i / matrix.cols() as usize, i % matrix.cols() as usize);
-                                    let (row_j, col_j) =
-                                        (j / matrix.cols() as usize, j % matrix.cols() as usize);
-
-                                    let mut packet_i = match matrix.get(row_i, col_i) {
+                                    let mut shard_i = match buffer_matrix.get(
+                                        i / buffer_matrix.cols() as usize,
+                                        i % buffer_matrix.cols() as usize,
+                                    ) {
                                         Some(p) => p.encode_to_vec(),
                                         None => {
                                             error!(
-                                                "  Packet {} not found in matrix {}, skipping.",
+                                                "Packet {} not found in matrix {}, skipping.",
                                                 i, matrix_id
                                             );
                                             continue;
                                         }
                                     };
-
-                                    let mut packet_j = match matrix.get(row_j, col_j) {
+                                    let mut shard_j = match buffer_matrix.get(
+                                        j / buffer_matrix.cols() as usize,
+                                        j % buffer_matrix.cols() as usize,
+                                    ) {
                                         Some(p) => p.encode_to_vec(),
                                         None => {
                                             error!(
-                                                "  Packet {} not found in matrix {}, skipping.",
+                                                "Packet {} not found in matrix {}, skipping.",
                                                 j, matrix_id
                                             );
                                             continue;
                                         }
                                     };
 
-                                    // Use the max length of the two packets for padding
-                                    let max_len = packet_i.len().max(packet_j.len());
+                                    let max_len = shard_i.len().max(shard_j.len());
                                     let shard_size = next_multiple_of_64(max_len as u32);
 
-                                    info!("Shard size for Reed-Solomon encoding: {}", shard_size);
-                                    padding::pad(&mut packet_i, shard_size as usize);
-                                    padding::pad(&mut packet_j, shard_size as usize);
+                                    padding::pad(&mut shard_i, shard_size as usize);
+                                    padding::pad(&mut shard_j, shard_size as usize);
 
                                     let mut encoder =
                                         match ReedSolomonEncoder::new(2, 1, shard_size as usize) {
@@ -254,18 +227,17 @@ impl RetransmissionManager {
                                             }
                                         };
 
-                                    // Encode the packets using Reed-Solomon
-                                    if let Err(e) = encoder.add_original_shard(packet_i) {
+                                    if let Err(e) = encoder.add_original_shard(shard_i) {
                                         error!("Failed to add shard i: {}", e);
                                         continue;
                                     }
-                                    if let Err(e) = encoder.add_original_shard(packet_j) {
+                                    if let Err(e) = encoder.add_original_shard(shard_j) {
                                         error!("Failed to add shard j: {}", e);
                                         continue;
                                     }
 
-                                    let result = match encoder.encode() {
-                                        Ok(r) => r,
+                                    let recovery_shard = match encoder.encode() {
+                                        Ok(r) => r.recovery_iter().next().unwrap().to_vec(),
                                         Err(e) => {
                                             error!(
                                                 "Failed to encode packets with Reed-Solomon: {}",
@@ -275,19 +247,11 @@ impl RetransmissionManager {
                                         }
                                     };
 
-                                    let recovery_shard = match result.recovery_iter().next() {
-                                        Some(s) => s.to_vec(),
-                                        None => {
-                                            error!("No recovery shard produced by Reed-Solomon encoder.");
-                                            continue;
-                                        }
-                                    };
-
                                     let mut xor_packet = XorPacket {
                                         matrix: matrix_id as u32,
-                                        indexes: vec![i.try_into().unwrap(), j.try_into().unwrap()],
+                                        indexes: vec![i as u8, j as u8],
                                         payload: recovery_shard,
-                                        packet_signature: vec![], // Will be filled below
+                                        packet_signature: vec![],
                                     };
 
                                     let message_hash = sha256(&xor_packet.encode_to_vec());
@@ -298,7 +262,6 @@ impl RetransmissionManager {
                                             continue;
                                         }
                                     };
-
                                     xor_packet.packet_signature = signature;
 
                                     let wrapper = PacketWrapper {
@@ -316,11 +279,102 @@ impl RetransmissionManager {
                                     }
                                 }
                             }
-                            // TODO: multicast_tx.send(...)
                         }
                     }
                 }
-                Phase::Unicast => {} // Add other phases here as needed
+                Phase::Unicast => {
+                    let nc_matrix = client_sessions.generate_nc_matrix();
+
+                    for (matrix_id, (nc_matrix, clients_vector)) in nc_matrix {
+                        if nc_matrix.is_empty() {
+                            continue;
+                        }
+
+                        let buffer_matrix = match matrix_buffer.get_matrix(matrix_id as usize) {
+                            Some(m) => m,
+                            None => {
+                                error!("Matrix {} not found in buffer, skipping.", matrix_id);
+                                continue;
+                            }
+                        };
+
+                        for (client_index, row_iterator) in nc_matrix.iter_rows().enumerate() {
+                            let row_vector: Vec<u8> = row_iterator.cloned().collect();
+                            let missing_indices = client_sessions::find_zero_indices(&row_vector);
+
+                            if missing_indices.is_empty() {
+                                debug!(
+                                    "No missing indices for client {} in matrix {}, skipping.",
+                                    client_index, matrix_id
+                                );
+                                continue;
+                            }
+
+                            let client_addr = match clients_vector.get(client_index) {
+                                Some(addr) => *addr,
+                                None => {
+                                    error!(
+                                        "No client address for index {} in matrix {}",
+                                        client_index, matrix_id
+                                    );
+                                    continue;
+                                }
+                            };
+
+                            for packet_idx in missing_indices {
+                                let action = SendAction::Packet(packet_idx as usize);
+                                let should_send = match self.packet_states.get(&action) {
+                                    Some(info) => {
+                                        self.can_retransmit(info, self.phase_index, self.round)
+                                    }
+                                    None => true,
+                                };
+
+                                if !should_send {
+                                    continue;
+                                }
+
+                                self.packet_states.insert(
+                                    action.clone(),
+                                    PacketSentInfo {
+                                        phase_index: self.phase_index,
+                                        round: self.round,
+                                    },
+                                );
+
+                                let row = packet_idx as usize / buffer_matrix.cols() as usize;
+                                let col = packet_idx as usize % buffer_matrix.cols() as usize;
+
+                                if let Some(packet) = buffer_matrix.get(row, col) {
+                                    let wrapper = PacketWrapper {
+                                        packet_type: Some(PacketType::RetransmissionPacket(
+                                            RetransmissionPacket {
+                                                retransmission_type: Some(
+                                                    RetransmissionType::TransmissionPacket(
+                                                        packet.clone(),
+                                                    ),
+                                                ),
+                                            },
+                                        )),
+                                    };
+                                    if let Err(e) =
+                                        unicast_tx.send((wrapper.encode_to_vec(), client_addr))
+                                    {
+                                        error!(
+                                            "Failed to send unicast packet to {}: {}",
+                                            client_addr, e
+                                        );
+                                    }
+                                } else {
+                                    error!(
+                                        "Packet {} not found in matrix {}, skipping.",
+                                        packet_idx, matrix_id
+                                    );
+                                }
+                            }
+                        }
+                    }
+                }
             }
 
             self.advance_phase();

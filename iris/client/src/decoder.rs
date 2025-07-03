@@ -1,4 +1,4 @@
-use crossbeam_channel::{tick, Receiver, Sender, TryRecvError};
+use crossbeam_channel::{tick, Receiver, Sender};
 use iris_shared::padding;
 use log::{debug, error, info};
 use openssl::ec::{EcKey, EcKeyRef};
@@ -21,8 +21,8 @@ use iris_shared::crypto_utils::decrypt;
 use crate::proto::packet_wrapper::PacketType;
 use crate::proto::retransmission_packet::RetransmissionType;
 use crate::proto::{
-    MatrixReportBitmap, PacketWrapper, ReportMetrics, RetransmissionPacket, SessionKey,
-    TransmissionPacket, VideoData, XorPacket,
+    MatrixReportBitmap, PacketWrapper, ReportMetrics, SessionKey, TransmissionPacket, VideoData,
+    XorPacket,
 };
 use crate::receiver::{ReceiverType, RetransmissionCounters};
 use crate::SESSION;
@@ -189,7 +189,6 @@ impl MatrixTracker {
                         packet.packet_signature = signature;
 
                         tracker.add_packet(&packet);
-                        log::debug!("Reconstructed packet: {:?}", packet.index);
                         new_packets_added = true;
                     }
                 }
@@ -251,7 +250,6 @@ impl MatrixTracker {
                         packet.packet_signature = signature;
 
                         tracker.add_packet(&packet);
-                        log::debug!("Reconstructed packet: {:?}", packet.index);
 
                         new_packets_added = true;
                     }
@@ -265,7 +263,7 @@ impl MatrixTracker {
     }
 
     /// Checks if matrix is complete or not
-    fn is_complete(&self) -> bool {
+    fn _is_complete(&self) -> bool {
         for item in self.matrix_packets.iter() {
             if item.is_none() {
                 return false;
@@ -689,18 +687,15 @@ pub fn start(
                                             let i = packet.indexes[0] as usize;
                                             let j = packet.indexes[1] as usize;
 
+                                            info!("Received XorPacket for matrix: {} indexes: ({}, {})", packet.matrix, i, j);
+
                                             let (row_i, col_i) = (i / tracker.cols as usize, i % tracker.cols as usize);
                                             let (row_j, col_j) = (j / tracker.cols as usize, j % tracker.cols as usize);
 
-                                            // Check if the packets at the indexes exist in the matrix
-                                            if tracker.matrix_packets.get(row_i, col_i).is_none() && tracker.matrix_packets.get(row_j, col_j).is_none() {
-                                                error!("XorPacket indexes out of bounds or packets not found in the matrix: ({}, {}) and ({}, {})", row_i, col_i, row_j, col_j);
-                                                continue;
-                                            }
+
                                             // Get the packets at the indexes
                                             let mut original_shards = Vec::new();
 
-                                            debug!("XorPacket indexes: ({}, {}) and ({}, {})", row_i, col_i, row_j, col_j);
                                             // Get the first packet
                                             if let Some(packet) = tracker.get_packet(row_i, col_i) {
                                                 original_shards.push((0,packet.encode_to_vec()));
@@ -766,7 +761,7 @@ pub fn start(
                             }
                             // This is a normal TransmissionPacket inside a RetransmissionPacket
                             Some(RetransmissionType::TransmissionPacket(mut packet)) => {
-
+                                info!("Received retransmission packet for matrix: {} packet {}", packet.matrix, packet.index);
                                 // Validate the packet signature, if invalid, skip the packet
                                 if validate_packet(&mut packet, &x509_public_key) {
 

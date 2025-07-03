@@ -283,147 +283,127 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }),
     ));
 
-    // Create a thread to handle stdin input (will be removed in production)
-    handlers.push((
-        "stdin_handler",
-        thread::spawn(|| {
-            use std::io::BufRead;
-            let stdin = std::io::stdin();
-            let metrics = metrics::get_metrics();
-            for line in stdin.lock().lines() {
-                match line {
-                    Ok(input) => {
-                        let parts: Vec<&str> = input.trim().split_whitespace().collect();
-                        if parts.len() != 2 {
-                            eprintln!("Please enter exactly two numbers separated by a space.");
-                            continue;
-                        }
-
-                        let a = parts[0].parse::<i32>();
-                        let b = parts[1].parse::<i32>();
-
-                        match (a, b) {
-                            (Ok(x), Ok(y)) => {
-                                metrics.fec_row.set(x as i64);
-                                metrics.fec_col.set(y as i64);
-                            }
-                            _ => eprintln!("Invalid input. Make sure both entries are integers."),
-                        }
-                    }
-                    Err(e) => eprintln!("Error reading line: {}", e),
-                }
-            }
-        }),
-    ));
-
     handlers.push((
         "reinforcement_learning_handler",
         thread::spawn({
             let client_sessions = Arc::clone(&client_sessions);
             move || {
+                use crate::reinforcement_learning::action::Direction;
+                use crate::reinforcement_learning::action::FecDataAction;
+                use crate::reinforcement_learning::agent::QLearningAgent;
+                use crate::reinforcement_learning::state::State;
 
-                // use crate::reinforcement_learning::agent::QLearningAgent;
-                // use crate::reinforcement_learning::action::Direction;
-                // use crate::reinforcement_learning::action::FecDataAction;
-                // use crate::reinforcement_learning::state::State;
+                let directions = [
+                    Direction::Increase,
+                    Direction::Decrease,
+                    Direction::NoChange,
+                ];
+                let mut actions = Vec::new();
 
-                // let directions = [Direction::Increase, Direction::Decrease, Direction::NoChange];
-                // let mut actions = Vec::new();
+                // Get the dynamic values from the global static instance
+                let dynamic_values = DYNAMIC_VALUES.get().unwrap();
 
-                // // Get the dynamic values from the global static instance
-                // let dynamic_values = DYNAMIC_VALUES.get().unwrap();
+                // Read the dynamic values with a read lock
+                let dynamic_values_read = dynamic_values.read().unwrap();
 
-                // // Read the dynamic values with a read lock
-                // let dynamic_values_read = dynamic_values.read().unwrap();
+                // Initialize current sizes (should come from your system state)
+                let mut current_fec_row = dynamic_values_read.fec_row_redundancy;
+                let mut current_fec_col = dynamic_values_read.fec_col_redundancy;
 
-                // // Initialize current sizes (should come from your system state)
-                // let mut current_fec_row = dynamic_values_read.fec_row_redundancy;
-                // let mut current_fec_col = dynamic_values_read.fec_col_redundancy;
+                // Pull data matrix size from static config
+                let config = CONFIG.get().unwrap();
+                let data_row = config.multicast.row;
+                let data_col = config.multicast.col;
 
-                // // Pull data matrix size from static config
-                // let config = CONFIG.get().unwrap();
-                // let data_row = config.multicast.row;
-                // let data_col = config.multicast.col;
+                // drop the read lock to allow other threads to modify dynamic values
+                drop(dynamic_values_read);
 
-                // // drop the read lock to allow other threads to modify dynamic values
-                // drop(dynamic_values_read);
+                // Generate all combinations of actions
+                for &fec_row_dir in &directions {
+                    for &fec_col_dir in &directions {
+                        // Calculate candidate new sizes
+                        let new_fec_row = adjust_size(current_fec_row, fec_row_dir);
+                        let new_fec_col = adjust_size(current_fec_col, fec_col_dir);
 
-                // // Generate all combinations of actions
-                // for &fec_row_dir in &directions {
-                //     for &fec_col_dir in &directions {
+                        // Check bandwidth constraint
+                        let overhead_ratio =
+                            (new_fec_row + new_fec_col) as f64 / (data_row * data_col) as f64;
+                        if overhead_ratio <= 0.4 {
+                            actions.push(FecDataAction {
+                                fec_row: fec_row_dir,
+                                fec_col: fec_col_dir,
+                            });
+                        }
+                    }
+                }
 
-                //         // Calculate candidate new sizes
-                //         let new_fec_row = adjust_size(current_fec_row, fec_row_dir);
-                //         let new_fec_col = adjust_size(current_fec_col, fec_col_dir);
+                fn adjust_size(size: usize, dir: Direction) -> usize {
+                    match dir {
+                        Direction::Increase => size + 1,
+                        Direction::Decrease => size.saturating_sub(1).max(1),
+                        Direction::NoChange => size,
+                    }
+                }
 
-                //         // Check bandwidth constraint
-                //         let overhead_ratio = (new_fec_row + new_fec_col) as f64 / (data_row * data_col) as f64;
-                //         if overhead_ratio <= 0.4 {
-                //             actions.push(FecDataAction {
-                //                 fec_row: fec_row_dir,
-                //                 fec_col: fec_col_dir,
-                //             });
-                //         }
-                //     }
+                let mut agent = QLearningAgent::new(actions, 0.1, 0.9, 0.2);
 
-                // }
+                fn measure_reward(
+                    state: &State,
+                    action: &FecDataAction,
+                    current_fec_row: usize,
+                    current_fec_col: usize,
+                    data_row: usize,
+                    data_col: usize,
+                ) -> f64 {
+                    let new_fec_row = adjust_size(current_fec_row, action.fec_row);
+                    let new_fec_col = adjust_size(current_fec_col, action.fec_col);
 
-                // fn adjust_size(size: usize, dir: Direction) -> usize {
-                //     match dir {
-                //         Direction::Increase => size + 1,
-                //         Direction::Decrease => size.saturating_sub(1).max(1),
-                //         Direction::NoChange => size,
-                //     }
-                // }
+                    let overhead_ratio =
+                        (new_fec_row + new_fec_col) as f64 / (data_row * data_col) as f64;
+                    let cost = overhead_ratio * 10.0; // penalize FEC usage
 
-                // let mut agent = QLearningAgent::new(actions, 0.1, 0.9, 0.2);
+                    -1.5 * (state.loss_bin as f64) - cost
+                }
 
-                // fn measure_reward(
-                //     state: &State,
-                //     action: &FecDataAction,
-                //     current_fec_row: usize,
-                //     current_fec_col: usize,
-                //     data_row: usize,
-                //     data_col: usize
-                // ) -> f64 {
-                //     let new_fec_row = adjust_size(current_fec_row, action.fec_row);
-                //     let new_fec_col = adjust_size(current_fec_col, action.fec_col);
+                loop {
+                    let state = client_sessions.get_session_state();
+                    let action = agent.choose_action(state.clone());
 
-                //     let overhead_ratio = (new_fec_row + new_fec_col) as f64 / (data_row * data_col) as f64;
-                //     let cost = overhead_ratio * 10.0; // penalize FEC usage
+                    // Use current values for reward BEFORE applying action
+                    let reward = measure_reward(
+                        &state,
+                        &action,
+                        current_fec_row,
+                        current_fec_col,
+                        data_row,
+                        data_col,
+                    );
 
-                //     -1.5 * (state.loss_bin as f64) - cost
-                // }
+                    let new_fec_row = adjust_size(current_fec_row, action.fec_row);
+                    let new_fec_col = adjust_size(current_fec_col, action.fec_col);
 
-                // loop {
-                //     let state = client_sessions.get_session_state();
-                //     let action = agent.choose_action(state.clone());
+                    {
+                        let mut dynamic_values = DYNAMIC_VALUES.get().unwrap().write().unwrap();
+                        dynamic_values.fec_row_redundancy = new_fec_row;
+                        dynamic_values.fec_col_redundancy = new_fec_col;
+                    }
 
-                //     // Use current values for reward BEFORE applying action
-                //     let reward = measure_reward(&state, &action, current_fec_row, current_fec_col, data_row, data_col);
+                    log::debug!(
+                        "State: {:?}, Action: {:?}, Reward: {}",
+                        state,
+                        action,
+                        reward
+                    );
 
-                //     let new_fec_row = adjust_size(current_fec_row, action.fec_row);
-                //     let new_fec_col = adjust_size(current_fec_col, action.fec_col);
+                    std::thread::sleep(std::time::Duration::from_secs(2));
 
-                //     {
-                //         let mut dynamic_values = DYNAMIC_VALUES.get().unwrap().write().unwrap();
-                //         dynamic_values.fec_row_redundancy = new_fec_row;
-                //         dynamic_values.fec_col_redundancy = new_fec_col;
-                //     }
+                    let next_state = client_sessions.get_session_state();
+                    agent.update(state, action.clone(), reward, next_state);
 
-                //     log::debug!("State: {:?}, Action: {:?}, Reward: {}", state, action, reward);
-
-                //     std::thread::sleep(std::time::Duration::from_secs(5));
-
-                //     let next_state = client_sessions.get_session_state();
-                //     agent.update(state, action.clone(), reward, next_state);
-
-                //     // Update current state after action
-                //     current_fec_row = new_fec_row;
-                //     current_fec_col = new_fec_col;
-                // }
-
-                // reinforcement_learning::beta::start(&client_sessions);
+                    // Update current state after action
+                    current_fec_row = new_fec_row;
+                    current_fec_col = new_fec_col;
+                }
             }
         }),
     ));
