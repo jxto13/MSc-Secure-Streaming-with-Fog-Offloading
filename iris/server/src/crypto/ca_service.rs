@@ -5,8 +5,8 @@ use crate::membership_manager::client_sessions::ClientSessions;
 use crate::proto;
 
 use log::{error, info};
-use tonic::{Request, Response, Status};
 use proto::certificate_service_server::{CertificateService, CertificateServiceServer};
+use tonic::{Request, Response, Status};
 
 use openssl::pkey::{PKey, Private};
 use openssl::x509::{X509Req, X509VerifyResult, X509};
@@ -18,11 +18,15 @@ pub struct MyCertificateService {
 }
 
 impl MyCertificateService {
-    pub fn new(ca_cert: X509, ca_key_pair: PKey<Private>, client_sessions: Arc<ClientSessions>) -> Self {
+    pub fn new(
+        ca_cert: X509,
+        ca_key_pair: PKey<Private>,
+        client_sessions: Arc<ClientSessions>,
+    ) -> Self {
         MyCertificateService {
             ca_cert,
             ca_private_key: ca_key_pair,
-            client_sessions
+            client_sessions,
         }
     }
 }
@@ -35,7 +39,7 @@ impl CertificateService for MyCertificateService {
     ) -> Result<Response<proto::CertificateResponse>, Status> {
         // Extract the remote address from the request
         let request_addr = request.remote_addr().unwrap();
-    
+
         // Extract CSR from the request
         let csr = request.into_inner().csr;
 
@@ -44,7 +48,7 @@ impl CertificateService for MyCertificateService {
             Ok(csr) => csr,
             Err(_) => return Err(Status::invalid_argument("Invalid CSR")),
         };
-        
+
         // Sign the certificate with the CA
         let signed_cert = utils::sign_request_with_ca(&csr, &self.ca_cert, &self.ca_private_key);
 
@@ -53,21 +57,24 @@ impl CertificateService for MyCertificateService {
             Ok(cert) => cert,
             Err(_) => return Err(Status::internal("Failed to sign certificate")),
         };
-        
+
         // Return the signed certificate
         let response = proto::CertificateResponse {
-            signed_cert: cert_pem.to_pem().map_err(|_| Status::internal("Failed to serialize certificate"))?,
+            signed_cert: cert_pem
+                .to_pem()
+                .map_err(|_| Status::internal("Failed to serialize certificate"))?,
         };
 
         // Add client to the client sessions
-        self.client_sessions.add_client(request_addr.ip(), cert_pem.clone());
+        self.client_sessions
+            .add_client(request_addr.ip(), cert_pem.clone());
 
         Ok(Response::new(response))
     }
 
     async fn verify_certificate(
         &self,
-        mut request: Request<proto::SignedCertificateRequest>
+        mut request: Request<proto::SignedCertificateRequest>,
     ) -> Result<Response<proto::ValidationCertificateResponse>, Status> {
         let request_ref = request.get_mut();
 
@@ -86,24 +93,37 @@ impl CertificateService for MyCertificateService {
         // Verify that this cert was issued by this ca
         match ca_cert.issued(&cert) {
             X509VerifyResult::OK => {
-                info!("Certificate verified for client: {:?}", request.remote_addr().unwrap());
+                info!(
+                    "Certificate verified for client: {:?}",
+                    request.remote_addr().unwrap()
+                );
                 Ok(Response::new(proto::ValidationCertificateResponse {
-                    auth: true
+                    auth: true,
                 }))
-            } 
-            ver_err =>{
+            }
+            ver_err => {
                 // If the verification fails, we log the error and return an error response
-                error!("Failed to verify certificate for client: {} - {}", request.remote_addr().unwrap(), ver_err);
+                error!(
+                    "Failed to verify certificate for client: {} - {}",
+                    request.remote_addr().unwrap(),
+                    ver_err
+                );
                 Ok(Response::new(proto::ValidationCertificateResponse {
-                    auth: false
+                    auth: false,
                 }))
             }
         }
-
     }
-    
 }
 
-pub fn get_service(ca_cert: X509,ca_key_pair: PKey<Private>, client_sessions: Arc<ClientSessions>) -> CertificateServiceServer<MyCertificateService> {
-    CertificateServiceServer::new(MyCertificateService::new(ca_cert,ca_key_pair,client_sessions))
+pub fn get_service(
+    ca_cert: X509,
+    ca_key_pair: PKey<Private>,
+    client_sessions: Arc<ClientSessions>,
+) -> CertificateServiceServer<MyCertificateService> {
+    CertificateServiceServer::new(MyCertificateService::new(
+        ca_cert,
+        ca_key_pair,
+        client_sessions,
+    ))
 }

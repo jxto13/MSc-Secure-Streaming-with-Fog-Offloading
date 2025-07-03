@@ -1,10 +1,10 @@
 // lib.rs
 use std::fs;
 
+use log::error;
 use serde::Deserialize;
-use toml::de::Error as TomlError;
 use std::error::Error;
-use log::error; // using `log` crate
+use toml::de::Error as TomlError; // using `log` crate
 
 #[derive(Deserialize, Debug)]
 pub struct Config {
@@ -15,7 +15,7 @@ pub struct Config {
     pub multicast: Multicast,
     pub retransmission: Retransmission,
     pub prometheus: Prometheus,
-    pub settings: Settings
+    pub settings: Settings,
 }
 
 #[derive(Deserialize, Debug)]
@@ -41,7 +41,7 @@ pub struct GRPC {
 
 #[derive(Deserialize, Debug)]
 pub struct Unicast {
-    pub port: u16
+    pub port: u16,
 }
 
 #[derive(Deserialize, Debug)]
@@ -60,10 +60,10 @@ pub struct Multicast {
     pub col_fec: usize,
 
     pub epoch: usize,
-       
+
     pub data_size: usize,
     pub shard_size: usize,
-    pub mtu_size: usize
+    pub mtu_size: usize,
 }
 
 #[derive(Deserialize, Debug)]
@@ -78,18 +78,18 @@ pub struct Retransmission {
 
 #[derive(Deserialize, Debug)]
 pub struct Prometheus {
-    pub port: usize
+    pub port: usize,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct Settings {
     pub timeout_clients: u64,
     pub client_reporting_interval: u64,
-    pub client_sliding_window: u64
+    pub client_sliding_window: u64,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct DynamicValues{
+pub struct DynamicValues {
     pub fec_row_redundancy: usize,
     pub fec_col_redundancy: usize,
     pub data_row_size: usize,
@@ -109,7 +109,6 @@ pub fn read_config(filename: &str) -> Result<Config, Box<dyn Error>> {
     }
 }
 
-
 fn log_toml_error(err: &TomlError, config_content: &str) {
     let err_msg = err.to_string();
     error!("Failed to deserialize config: {}", err_msg);
@@ -122,8 +121,8 @@ fn log_toml_error(err: &TomlError, config_content: &str) {
             if part.starts_with("missing field") {
                 // Extract the field name between single quotes
                 let start_quote = part.find('\'')?;
-                let end_quote = part[start_quote+1..].find('\'')?;
-                Some(&part[start_quote+1..start_quote+1+end_quote])
+                let end_quote = part[start_quote + 1..].find('\'')?;
+                Some(&part[start_quote + 1..start_quote + 1 + end_quote])
             } else {
                 None
             }

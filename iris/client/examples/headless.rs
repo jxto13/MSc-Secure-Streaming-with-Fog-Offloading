@@ -1,11 +1,11 @@
-use std::error::Error;
-use std::net::IpAddr;
-use std::path::PathBuf;
-use log::{error, info};
-use std::io;
 use clap::{arg, Command};
+use log::{error, info};
+use std::error::Error;
+use std::io;
+use std::net::IpAddr;
 use std::net::ToSocketAddrs;
-use tracing_subscriber::{fmt};
+use std::path::PathBuf;
+use tracing_subscriber::fmt;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // Initialize the logger
@@ -41,7 +41,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Convert &PathBuf to &String
     let ip_str: &str = ip_path.to_str().expect("Invalid UTF-8 in path");
     let ip_string: String = ip_str.to_string();
-    
+
     // Attempt to start the receiver
     let receiver = match iris_client::start_client(&ip_string) {
         Ok(receiver) => receiver,
@@ -51,9 +51,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     };
 
-    for _item in receiver {
-        
-    }
+    for _item in receiver {}
 
     Ok(())
 }

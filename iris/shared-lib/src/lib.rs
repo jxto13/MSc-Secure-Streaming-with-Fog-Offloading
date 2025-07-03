@@ -43,7 +43,8 @@ impl<K: PartialEq, V> ConcurrentVector<K, V> {
     where
         V: Clone,
     {
-        self.data.iter()
+        self.data
+            .iter()
             .map(|(_, v)| v.read().unwrap().clone())
             .collect()
     }
@@ -108,7 +109,11 @@ pub mod padding {
             panic!("Target size must be a multiple of the AES block size (16 bytes)");
         }
         if target_size < data.len() {
-            panic!("Target size must be greater than or equal to the data length: {} < {}", target_size, data.len());
+            panic!(
+                "Target size must be greater than or equal to the data length: {} < {}",
+                target_size,
+                data.len()
+            );
         }
         let padding_len = target_size - data.len();
         data.extend(vec![0; padding_len - 1]);
@@ -160,7 +165,7 @@ pub mod xor {
     }
 }
 
-pub mod multicast_retransmission{
+pub mod multicast_retransmission {
     use grid::Grid;
 
     #[derive(Debug, Clone, Hash, PartialEq, Eq)]
@@ -172,10 +177,12 @@ pub mod multicast_retransmission{
     pub fn compute(
         network_coding_matrix: &mut Grid<u8>,
         already_sent: &std::collections::HashSet<SendAction>,
-    ) -> (bool, Vec<SendAction>) {
+    ) -> Vec<SendAction> {
         let num_clients = network_coding_matrix.rows();
         let num_packets = network_coding_matrix.cols();
         let mut sent_packets = Vec::new();
+
+        let mut sent_set = already_sent.clone();
 
         loop {
             // Count missing packets per column
@@ -197,7 +204,7 @@ pub mod multicast_retransmission{
             let mut max_idx = None;
             let mut max_val = 0;
             for (idx, &val) in missing_count.iter().enumerate() {
-                if val > max_val && !already_sent.contains(&SendAction::Packet(idx)) {
+                if val > max_val && !sent_set.contains(&SendAction::Packet(idx)) {
                     max_val = val;
                     max_idx = Some(idx);
                 }
@@ -211,8 +218,9 @@ pub mod multicast_retransmission{
                 .collect();
             if missing_types.len() == 1 {
                 let idx = missing_types[0].0;
-                if !already_sent.contains(&SendAction::Packet(idx)) {
+                if !sent_set.contains(&SendAction::Packet(idx)) {
                     sent_packets.push(SendAction::Packet(idx));
+                    sent_set.insert(SendAction::Packet(idx));
                     for row in 0..num_clients {
                         network_coding_matrix[(row, idx)] = 1;
                     }
@@ -224,7 +232,7 @@ pub mod multicast_retransmission{
             let mut found_pair = false;
             for i in 0..num_packets {
                 for j in (i + 1)..num_packets {
-                    if already_sent.contains(&SendAction::Xor(i, j)) {
+                    if sent_set.contains(&SendAction::Xor(i, j)) {
                         continue;
                     }
                     // Check if all remaining missing packets are in columns i and j
@@ -239,8 +247,11 @@ pub mod multicast_retransmission{
                     if only_i_j && (missing_count[i] > 0 && missing_count[j] > 0) {
                         // Send XOR of i and j
                         sent_packets.push(SendAction::Xor(i, j));
+                        sent_set.insert(SendAction::Xor(i, j));
                         for row in 0..num_clients {
-                            if network_coding_matrix[(row, i)] == 0 || network_coding_matrix[(row, j)] == 0 {
+                            if network_coding_matrix[(row, i)] == 0
+                                || network_coding_matrix[(row, j)] == 0
+                            {
                                 network_coding_matrix[(row, i)] = 1;
                                 network_coding_matrix[(row, j)] = 1;
                             }
@@ -258,6 +269,7 @@ pub mod multicast_retransmission{
             if !found_pair {
                 if let Some(idx) = max_idx {
                     sent_packets.push(SendAction::Packet(idx));
+                    sent_set.insert(SendAction::Packet(idx));
                     for row in 0..num_clients {
                         network_coding_matrix[(row, idx)] = 1;
                     }
@@ -267,17 +279,13 @@ pub mod multicast_retransmission{
             }
         }
 
-        // Check if all packets are received
-        let all_received = (0..num_clients)
-            .all(|row| (0..num_packets).all(|col| network_coding_matrix[(row, col)] == 1));
-
-        (all_received, sent_packets)
+        sent_packets
     }
 }
 
 pub mod nc_type {
     use grid::Grid;
-    use std::collections::{HashSet};
+    use std::collections::HashSet;
 
     // Represents a retransmission strategy
     #[derive(Debug)]
@@ -376,8 +384,8 @@ pub mod bandwidth_utils {
     /// Tracks bandwidth usage for a single client.
     #[derive(Debug)]
     pub struct BandwidthManager {
-        bitrate: usize,        // in kbit/s
-        bytes_sent: usize,     // current interval
+        bitrate: usize,           // in kbit/s
+        bytes_sent: usize,        // current interval
         last_second_bytes: usize, // previous full second
         interval_start: Instant,
     }
@@ -441,14 +449,18 @@ pub mod bandwidth_utils {
 
         /// Checks if a packet can be sent for the client without sending it.
         pub fn can_send(&self, client_id: &str, packet_size: usize) -> bool {
-            let mut entry = self.clients.entry(client_id.to_string())
+            let mut entry = self
+                .clients
+                .entry(client_id.to_string())
                 .or_insert_with(|| BandwidthManager::new(self.bitrate_kbps));
             entry.can_send(packet_size)
         }
 
         /// Attempts to send a packet for a client.
         pub fn try_send(&self, client_id: &str, packet_size: usize) -> bool {
-            let mut entry = self.clients.entry(client_id.to_string())
+            let mut entry = self
+                .clients
+                .entry(client_id.to_string())
                 .or_insert_with(|| BandwidthManager::new(self.bitrate_kbps));
             entry.try_send(packet_size)
         }
@@ -458,7 +470,6 @@ pub mod bandwidth_utils {
         }
     }
 }
-
 
 pub mod rlnc {
 
@@ -668,14 +679,12 @@ pub mod source_coding {
     }
 }
 
-
 pub mod compression {
     use flate2::read::GzDecoder;
-    use std::io::Read;
-    use flate2::Compression;
-    use std::io::Write;
     use flate2::write::GzEncoder;
-
+    use flate2::Compression;
+    use std::io::Read;
+    use std::io::Write;
 
     // Helper function for decompressing GZIP data
     pub fn decompress_data(data: &[u8]) -> Vec<u8> {
@@ -695,9 +704,9 @@ pub mod compression {
 #[cfg(test)]
 mod tests {
     use super::rlnc::RLNC;
+    use super::source_coding::{run_test, Transmission};
     use crate::crypto_utils::{decrypt, encrypt};
     use crate::padding::{depad, pad};
-    use super::source_coding::{Transmission, run_test};
 
     #[test]
     fn test_simple_case() {
@@ -707,52 +716,34 @@ mod tests {
             vec![1, 0, 0, 1],
             vec![1, 1, 0, 0],
         ];
-        let expected = vec![
-            Transmission::Single(2),
-            Transmission::Xor(vec![1, 3]),
-        ];
+        let expected = vec![Transmission::Single(2), Transmission::Xor(vec![1, 3])];
         run_test(matrix, expected);
     }
 
     #[test]
     fn test_all_missing_same() {
-        let matrix = vec![
-            vec![1, 0, 1],
-            vec![1, 0, 1],
-            vec![1, 0, 1],
-        ];
+        let matrix = vec![vec![1, 0, 1], vec![1, 0, 1], vec![1, 0, 1]];
         let expected = vec![Transmission::Single(1)];
         run_test(matrix, expected);
     }
 
     #[test]
     fn test_can_use_triple_xor() {
-        let matrix = vec![
-            vec![0, 1, 1],
-            vec![1, 0, 1],
-            vec![1, 1, 0],
-        ];
+        let matrix = vec![vec![0, 1, 1], vec![1, 0, 1], vec![1, 1, 0]];
         let expected = vec![Transmission::Xor(vec![0, 1, 2])];
         run_test(matrix, expected);
     }
 
     #[test]
     fn test_double_xor_works() {
-        let matrix = vec![
-            vec![1, 0],
-            vec![0, 1],
-        ];
+        let matrix = vec![vec![1, 0], vec![0, 1]];
         let expected = vec![Transmission::Xor(vec![0, 1])];
         run_test(matrix, expected);
     }
 
     #[test]
     fn test_individual_sends() {
-        let matrix = vec![
-            vec![0, 0, 1],
-            vec![0, 1, 0],
-            vec![1, 0, 0],
-        ];
+        let matrix = vec![vec![0, 0, 1], vec![0, 1, 0], vec![1, 0, 0]];
 
         let expected = vec![
             Transmission::Single(0),
@@ -761,7 +752,6 @@ mod tests {
         ];
         run_test(matrix, expected);
     }
-
 
     #[test]
     fn test_rlnc() {

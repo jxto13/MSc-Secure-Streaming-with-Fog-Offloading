@@ -4,8 +4,8 @@ use std::time::{Duration, Instant};
 
 use crossbeam_channel::{Receiver, Sender};
 use log::{error, info};
-use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
+use mio::{Events, Interest, Poll, Token};
 
 macro_rules! create_enum_and_counters {
     (
@@ -66,7 +66,10 @@ pub struct DynamicReceiver {
 }
 
 impl DynamicReceiver {
-    pub fn new(data_receiver_sender: Sender<(ReceiverType, Vec<u8>)>, command_receiver: crossbeam_channel::Receiver<Command>) -> io::Result<Self> {
+    pub fn new(
+        data_receiver_sender: Sender<(ReceiverType, Vec<u8>)>,
+        command_receiver: crossbeam_channel::Receiver<Command>,
+    ) -> io::Result<Self> {
         Ok(Self {
             poll: Poll::new()?,
             sockets: HashMap::new(),
@@ -74,17 +77,16 @@ impl DynamicReceiver {
             next_token_id: 0,
             counters: HashMap::new(),
             data_receiver_sender,
-            command_receiver
+            command_receiver,
         })
     }
-    
+
     /// Run the event loop indefinitely.
     pub fn run(&mut self) -> Result<(), Box<dyn std::error::Error>> {
         let mut events = Events::with_capacity(1024);
         let mut buf = [0u8; 65535];
 
         loop {
-
             // Process commands first
             while let Ok(cmd) = self.command_receiver.try_recv() {
                 match cmd {
@@ -92,14 +94,14 @@ impl DynamicReceiver {
                         let token = Token(self.next_token_id);
                         self.next_token_id += 1;
 
-                        self.poll.registry().register(&mut socket, token, Interest::READABLE)?;
+                        self.poll
+                            .registry()
+                            .register(&mut socket, token, Interest::READABLE)?;
                         self.sockets.insert(token, socket);
                         self.receiver_types.insert(token, receiver_type);
                         self.counters.insert(token, (0, 0, Instant::now()));
 
                         info!("Added {:?} socket with token {:?}", receiver_type, token);
-
-        
                     }
                     Command::RemoveSocket(token) => {
                         if let Some(mut socket) = self.sockets.remove(&token) {
@@ -115,20 +117,24 @@ impl DynamicReceiver {
             }
 
             // Poll Mio for events, blocking until we get an event.
-            self.poll.poll(&mut events, Some(Duration::from_millis(100)))?;
+            self.poll
+                .poll(&mut events, Some(Duration::from_millis(100)))?;
 
             for event in events.iter() {
                 let token = event.token();
 
                 if let Some(socket) = self.sockets.get(&token) {
                     let receiver_type = *self.receiver_types.get(&token).unwrap();
-                    let (ref mut last_sec_bytes, ref mut total_bytes, ref mut last_reset) = self.counters.get_mut(&token).unwrap();
+                    let (ref mut last_sec_bytes, ref mut total_bytes, ref mut last_reset) =
+                        self.counters.get_mut(&token).unwrap();
 
                     loop {
                         match socket.recv_from(&mut buf) {
                             Ok((size, _src)) => {
                                 // Send data through the channel
-                                self.data_receiver_sender.send((receiver_type, buf[..size].to_vec())).unwrap();
+                                self.data_receiver_sender
+                                    .send((receiver_type, buf[..size].to_vec()))
+                                    .unwrap();
 
                                 // Update counters
                                 *last_sec_bytes += size as u64;
@@ -147,7 +153,10 @@ impl DynamicReceiver {
                             }
                             Err(e) if e.kind() == io::ErrorKind::WouldBlock => break,
                             Err(e) => {
-                                error!("{:?} token {:?} receive error: {}", receiver_type, token, e);
+                                error!(
+                                    "{:?} token {:?} receive error: {}",
+                                    receiver_type, token, e
+                                );
                                 break;
                             }
                         }
@@ -159,4 +168,3 @@ impl DynamicReceiver {
         }
     }
 }
-

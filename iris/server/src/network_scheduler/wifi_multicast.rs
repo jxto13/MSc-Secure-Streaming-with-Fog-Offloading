@@ -1,12 +1,12 @@
-use iris_shared::bandwidth_utils::BandwidthManager;
-use mio::{Events, Interest, Poll, Token};
-use mio::net::UdpSocket;
 use crossbeam_channel::Receiver;
+use iris_shared::bandwidth_utils::BandwidthManager;
+use log::error;
+use mio::net::UdpSocket;
+use mio::{Events, Interest, Poll, Token};
+use pnet::datalink::interfaces;
 use pnet::ipnetwork::IpNetwork;
 use std::io;
 use std::net::{IpAddr, SocketAddr};
-use pnet::datalink::interfaces;
-use log::error;
 
 use crate::metrics::get_metrics;
 use crate::CONFIG;
@@ -14,9 +14,8 @@ use crate::CONFIG;
 // A token to allow us to identify which event is for the `UdpSocket`.
 const SERVER: Token = Token(0);
 
-
 /// A struct representing a WiFi Multicast sender.
-pub struct WiFiMulticast{
+pub struct WiFiMulticast {
     bandwidth_manager: BandwidthManager,
 }
 
@@ -35,12 +34,17 @@ impl WiFiMulticast {
     ///
     /// * `data_receiver` - A receiver for receiving data to be sent over multicast.
     /// * `retransmissions_rx` - A receiver for retransmitted data to be sent over multicast.
-    pub fn server(&mut self, data_receiver: Receiver<Vec<u8>>, retransmissions_rx: Receiver<Vec<u8>>) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn server(
+        &mut self,
+        data_receiver: Receiver<Vec<u8>>,
+        retransmissions_rx: Receiver<Vec<u8>>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         // Get the list of network interfaces.
         let interfaces = interfaces();
 
         // Find the specific network interface by name.
-        let interface = interfaces.into_iter()
+        let interface = interfaces
+            .into_iter()
             .find(|iface| iface.name == CONFIG.get().unwrap().multicast.interface)
             .expect("Failed to get the network interface");
 
@@ -70,7 +74,9 @@ impl WiFiMulticast {
         let port_multicast = CONFIG.get().unwrap().multicast.port_multicast;
 
         // Parse the multicast address and port.
-        let addr = format!("{}:{}",ip_multicast,port_multicast).parse::<SocketAddr>().unwrap();
+        let addr = format!("{}:{}", ip_multicast, port_multicast)
+            .parse::<SocketAddr>()
+            .unwrap();
 
         // Define the multicast address and port.
         let multicast_address = match addr.ip() {
@@ -94,7 +100,8 @@ impl WiFiMulticast {
 
         // Register the socket with the poll instance.
         poll.registry()
-            .register(&mut socket, SERVER, Interest::WRITABLE).unwrap();
+            .register(&mut socket, SERVER, Interest::WRITABLE)
+            .unwrap();
 
         // Create storage for events.
         let mut events = Events::with_capacity(1024);
@@ -115,7 +122,7 @@ impl WiFiMulticast {
             // Process each event.
             for event in events.iter() {
                 match event.token() {
-                    SERVER => {                                
+                    SERVER => {
                         // Handle data from both channels. If data is available on both channels, the retransmissions channel will be prioritized.
                         crossbeam_channel::select_biased! {
                             recv(retransmissions_rx) -> retransmission => {
@@ -125,10 +132,10 @@ impl WiFiMulticast {
                                         if let Err(e) = socket.send(&data) {
                                             error!("Failed to send retransmission over multicast: {}", e);
                                         }
-                                        
+
                                         // Update the retransmissions sender rate.
                                         metrics.retransmissions_sender_rate.add(data.len() as i64); // Update the gauge value
-                                        
+
                                     }
                                     Err(err) => {
                                         // Retransmission channel closed
@@ -143,10 +150,10 @@ impl WiFiMulticast {
                                         if let Err(e) = socket.send(&data) {
                                             error!("Failed to send data over multicast: {}", e);
                                         }
-                                        
+
                                         // Update the multicast sender rate.
                                         metrics.multicast_sender_rate.add(data.len() as i64 ); // Update the gauge value
-                                        
+
                                     }
                                     Err(err) => {
                                         // Data channel closed.

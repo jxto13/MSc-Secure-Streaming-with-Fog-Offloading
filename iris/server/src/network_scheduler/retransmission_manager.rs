@@ -5,13 +5,13 @@ use std::{net::IpAddr, sync::Arc, time::Duration};
 use crate::proto::packet_wrapper::PacketType;
 use crate::proto::retransmission_packet::RetransmissionType;
 use crate::proto::{PacketWrapper, XorPacket};
-use crate::{CONFIG, MANAGER};
 use crate::{membership_manager::client_sessions::ClientSessions, MATRIX_BUFFER};
 use crate::{metrics::get_metrics, proto::RetransmissionPacket};
+use crate::{CONFIG, MANAGER};
 use grid::Grid;
-use iris_shared::{multicast_retransmission, next_multiple_of_64, padding};
 use iris_shared::multicast_retransmission::SendAction;
 use iris_shared::source_coding::{find_optimal_retransmissions, Transmission};
+use iris_shared::{multicast_retransmission, next_multiple_of_64, padding};
 
 use crossbeam_channel::{select, tick, Sender};
 use log::{debug, error, info};
@@ -104,7 +104,7 @@ impl RetransmissionManager {
         let ec_key = {
             let binding = manager.read().unwrap();
             binding.get_ec_key().clone()
-        }; 
+        };
 
         // Set global interval ticker
         let interval_ticker = tick(Duration::from_millis(config.retransmission.interval as u64));
@@ -113,10 +113,8 @@ impl RetransmissionManager {
             let current_phase = self.phases[self.phase_index];
             println!("Round {}, Phase {:?}", self.round, current_phase);
 
-
             match current_phase {
                 Phase::Multicast => {
-
                     let nc_matrix = client_sessions.generate_nc_matrix();
 
                     for (matrix_id, (mut matrix, _clients_vector)) in nc_matrix {
@@ -128,7 +126,8 @@ impl RetransmissionManager {
                         println!("Matrix {}:", matrix_id);
 
                         // Build already_sent set from packet_states for this phase
-                        let already_sent: HashSet<SendAction> = self.packet_states
+                        let already_sent: HashSet<SendAction> = self
+                            .packet_states
                             .iter()
                             .filter_map(|(key, info)| {
                                 if !self.can_retransmit(info, self.phase_index, self.round) {
@@ -139,10 +138,10 @@ impl RetransmissionManager {
                             })
                             .collect();
 
-
                         // Here, multicast packets
-                        let (all_received, sent_packets) = multicast_retransmission::compute(&mut matrix, &already_sent);
-                        
+                        let sent_packets =
+                            multicast_retransmission::compute(&mut matrix, &already_sent);
+
                         let matrix = match matrix_buffer.get_matrix(matrix_id as usize) {
                             Some(m) => m,
                             None => {
@@ -161,7 +160,7 @@ impl RetransmissionManager {
                                 matrix_id: matrix_id as usize,
                                 packet_idx,
                             };
-                            
+
                             self.packet_states.insert(
                                 key,
                                 PacketSentInfo {
@@ -173,10 +172,10 @@ impl RetransmissionManager {
                             match pkt {
                                 SendAction::Packet(idx) => {
                                     debug!("Multicast packet {}", idx);
-                                    // Build the RetransmissionPacket with packet info  
+                                    // Build the RetransmissionPacket with packet info
                                     let row = idx / matrix.cols() as usize;
                                     let col = idx % matrix.cols() as usize;
-                                    
+
                                     match matrix.get(row, col) {
                                         Some(packet) => {
                                             // Send the packet via multicast channel
@@ -192,27 +191,34 @@ impl RetransmissionManager {
                                                 )),
                                             };
 
-                                            multicast_tx.send(wrapper.encode_to_vec()).expect("Failed to send multicast channel");
-                                            
+                                            multicast_tx
+                                                .send(wrapper.encode_to_vec())
+                                                .expect("Failed to send multicast channel");
                                         }
                                         None => {
-                                            error!("  Packet {} not found in matrix {}, skipping.", idx, matrix_id);
+                                            error!(
+                                                "  Packet {} not found in matrix {}, skipping.",
+                                                idx, matrix_id
+                                            );
                                         }
                                     }
-                                    
                                 }
                                 SendAction::Xor(i, j) => {
                                     debug!("  Multicast packet {}⊕{}", i, j);
 
-                                    // --- Reed-Solomon XOR encoding ---
                                     // Get the packets for i and j
-                                    let (row_i, col_i) = (i / matrix.cols() as usize, i % matrix.cols() as usize);
-                                    let (row_j, col_j) = (j / matrix.cols() as usize, j % matrix.cols() as usize);
+                                    let (row_i, col_i) =
+                                        (i / matrix.cols() as usize, i % matrix.cols() as usize);
+                                    let (row_j, col_j) =
+                                        (j / matrix.cols() as usize, j % matrix.cols() as usize);
 
                                     let mut packet_i = match matrix.get(row_i, col_i) {
                                         Some(p) => p.encode_to_vec(),
                                         None => {
-                                            error!("  Packet {} not found in matrix {}, skipping.", i, matrix_id);
+                                            error!(
+                                                "  Packet {} not found in matrix {}, skipping.",
+                                                i, matrix_id
+                                            );
                                             continue;
                                         }
                                     };
@@ -220,49 +226,81 @@ impl RetransmissionManager {
                                     let mut packet_j = match matrix.get(row_j, col_j) {
                                         Some(p) => p.encode_to_vec(),
                                         None => {
-                                            error!("  Packet {} not found in matrix {}, skipping.", j, matrix_id);
+                                            error!(
+                                                "  Packet {} not found in matrix {}, skipping.",
+                                                j, matrix_id
+                                            );
                                             continue;
                                         }
                                     };
 
-                                    let shard_size = next_multiple_of_64(packet_i.encode_to_vec().len() as u32);
+                                    // Use the max length of the two packets for padding
+                                    let max_len = packet_i.len().max(packet_j.len());
+                                    let shard_size = next_multiple_of_64(max_len as u32);
 
                                     info!("Shard size for Reed-Solomon encoding: {}", shard_size);
-                                    padding::pad(&mut packet_i, shard_size as usize); 
+                                    padding::pad(&mut packet_i, shard_size as usize);
                                     padding::pad(&mut packet_j, shard_size as usize);
 
-                                    let mut encoder = match ReedSolomonEncoder::new(
-                                        2, 
-                                        1,
-                                        shard_size as usize
-                                    ) {
-                                        Ok(enc) => enc,
-                                        Err(e) => {
-                                            error!("Failed to create Reed-Solomon encoder: {}", e);
-                                            return;
-                                        }
+                                    let mut encoder =
+                                        match ReedSolomonEncoder::new(2, 1, shard_size as usize) {
+                                            Ok(enc) => enc,
+                                            Err(e) => {
+                                                error!(
+                                                    "Failed to create Reed-Solomon encoder: {}",
+                                                    e
+                                                );
+                                                continue;
+                                            }
+                                        };
 
-                                    };
-                                    
                                     // Encode the packets using Reed-Solomon
-                                    encoder.add_original_shard(packet_i).unwrap();
-                                    encoder.add_original_shard(packet_j).unwrap();
+                                    if let Err(e) = encoder.add_original_shard(packet_i) {
+                                        error!("Failed to add shard i: {}", e);
+                                        continue;
+                                    }
+                                    if let Err(e) = encoder.add_original_shard(packet_j) {
+                                        error!("Failed to add shard j: {}", e);
+                                        continue;
+                                    }
 
-                                    let result = encoder.encode().expect("Failed to encode packets with Reed-Solomon");                                    
+                                    let result = match encoder.encode() {
+                                        Ok(r) => r,
+                                        Err(e) => {
+                                            error!(
+                                                "Failed to encode packets with Reed-Solomon: {}",
+                                                e
+                                            );
+                                            continue;
+                                        }
+                                    };
+
+                                    let recovery_shard = match result.recovery_iter().next() {
+                                        Some(s) => s.to_vec(),
+                                        None => {
+                                            error!("No recovery shard produced by Reed-Solomon encoder.");
+                                            continue;
+                                        }
+                                    };
 
                                     let mut xor_packet = XorPacket {
                                         matrix: matrix_id as u32,
-                                        indexes: vec![i.try_into().unwrap(),j.try_into().unwrap()] ,
-                                        payload: result.recovery_iter().next().unwrap().to_vec(),
-                                        packet_signature: vec![0, 255], // Placeholder for signature
+                                        indexes: vec![i.try_into().unwrap(), j.try_into().unwrap()],
+                                        payload: recovery_shard,
+                                        packet_signature: vec![], // Will be filled below
                                     };
 
                                     let message_hash = sha256(&xor_packet.encode_to_vec());
-                                    let signature = EcdsaSig::sign(&message_hash, &ec_key).unwrap().to_der().unwrap();
+                                    let signature = match EcdsaSig::sign(&message_hash, &ec_key) {
+                                        Ok(sig) => sig.to_der().unwrap_or_default(),
+                                        Err(e) => {
+                                            error!("Failed to sign XOR packet: {}", e);
+                                            continue;
+                                        }
+                                    };
 
                                     xor_packet.packet_signature = signature;
 
-                                    // Create a new packet for the XORed data
                                     let wrapper = PacketWrapper {
                                         packet_type: Some(PacketType::RetransmissionPacket(
                                             RetransmissionPacket {
@@ -273,18 +311,16 @@ impl RetransmissionManager {
                                         )),
                                     };
 
-                                    // Send the XOR packet via multicast channel
-                                    multicast_tx.send(wrapper.encode_to_vec()).expect("Failed to send multicast channel");
+                                    if let Err(e) = multicast_tx.send(wrapper.encode_to_vec()) {
+                                        error!("Failed to send multicast channel: {}", e);
+                                    }
                                 }
                             }
-                        // TODO: multicast_tx.send(...)
+                            // TODO: multicast_tx.send(...)
                         }
                     }
-
                 }
-                Phase::Unicast => {
-
-                } // Add other phases here as needed
+                Phase::Unicast => {} // Add other phases here as needed
             }
 
             self.advance_phase();

@@ -1,5 +1,5 @@
-use tonic::{Request, Response, Status};
 use chrono::Utc;
+use tonic::{Request, Response, Status};
 
 use crate::proto::{nts_service_server::NtsService, TimestampRequest, TimestampResponse};
 

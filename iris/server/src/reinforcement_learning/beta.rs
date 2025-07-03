@@ -34,11 +34,15 @@ impl State for MyState {
 
     fn reward(&self) -> f64 {
         let fec_total = self.fec_rows + self.fec_cols;
-        
+
         match self.packet_loss_bin {
             0 => {
                 // No loss: reward low FEC, penalize high FEC
-                if fec_total <= 1 { 10.0 } else { 10.0 - (fec_total as f64 * 3.0) }
+                if fec_total <= 1 {
+                    10.0
+                } else {
+                    10.0 - (fec_total as f64 * 3.0)
+                }
             }
             1 => {
                 // Low loss: optimal FEC around 2-3
@@ -87,8 +91,6 @@ impl Agent<MyState> for MyAgent {
     }
 
     fn take_action(&mut self, action: &MyAction) {
-
-
         let dynamic_values = DYNAMIC_VALUES.get().unwrap();
 
         let mut dynamic_values_lock = dynamic_values.write().unwrap();
@@ -115,7 +117,6 @@ impl Agent<MyState> for MyAgent {
         // Update dynamic values
         dynamic_values_lock.fec_row_redundancy = self.state.fec_rows as usize;
         dynamic_values_lock.fec_col_redundancy = self.state.fec_cols as usize;
-        
     }
 }
 
@@ -151,7 +152,10 @@ impl<S: State> OnlineQTrainer<S> {
         let q_sa = self.get_q(s, a);
         let new_q = q_sa + self.alpha * (reward + self.gamma * max_q_next - q_sa);
 
-        self.q.entry(s.clone()).or_default().insert(a.clone(), new_q);
+        self.q
+            .entry(s.clone())
+            .or_default()
+            .insert(a.clone(), new_q);
     }
 
     fn best_action(&self, state: &S, actions: &[S::A]) -> Option<S::A> {
@@ -241,12 +245,14 @@ pub fn start(client_sessions: &ClientSessions) {
         // Get current state first
         let current_state = agent.current_state().clone();
         let actions = current_state.actions();
-        
+
         // Choose action based on current state
-        let action = if rand::random::<f64>() < 0.2 { // Increased exploration
+        let action = if rand::random::<f64>() < 0.2 {
+            // Increased exploration
             explorer.pick_action(&mut agent)
         } else {
-            trainer.best_action(&current_state, &actions)
+            trainer
+                .best_action(&current_state, &actions)
                 .unwrap_or_else(|| explorer.pick_action(&mut agent))
         };
 
@@ -265,7 +271,7 @@ pub fn start(client_sessions: &ClientSessions) {
 
         // Update the environment observation
         agent.state.packet_loss_bin = packet_loss_bin as u8;
-        
+
         // Get next state and calculate reward
         let next_state = agent.current_state().clone();
         let reward = next_state.reward();

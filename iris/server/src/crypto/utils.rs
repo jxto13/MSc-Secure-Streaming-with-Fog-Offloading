@@ -1,4 +1,3 @@
-
 use openssl::asn1::Asn1Time;
 use openssl::bn::{BigNum, MsbOption};
 use openssl::error::ErrorStack;
@@ -12,7 +11,7 @@ use openssl::x509::extension::{
 use openssl::x509::{X509NameBuilder, X509Ref, X509Req, X509ReqBuilder, X509};
 
 use std::fs::File;
-use std::io::{self, Write, Read};
+use std::io::{self, Read, Write};
 use std::path::Path;
 
 use crate::CONFIG;
@@ -81,14 +80,17 @@ pub fn mk_request(key_pair: &PKey<Private>) -> Result<X509Req, ErrorStack> {
     let x509_name = x509_name.build();
     req_builder.set_subject_name(&x509_name)?;
 
-
     req_builder.sign(key_pair, MessageDigest::sha256())?;
     let req = req_builder.build();
     Ok(req)
 }
 
 /// Sign an X509 request with the given CA certificate
-pub fn sign_request_with_ca(req: &X509Req, ca_cert: &X509Ref, ca_key_pair: &PKeyRef<Private>) -> Result<X509, ErrorStack> {
+pub fn sign_request_with_ca(
+    req: &X509Req,
+    ca_cert: &X509Ref,
+    ca_key_pair: &PKeyRef<Private>,
+) -> Result<X509, ErrorStack> {
     let mut cert_builder = X509::builder()?;
     cert_builder.set_version(2)?;
     let serial_number = {
@@ -116,7 +118,8 @@ pub fn sign_request_with_ca(req: &X509Req, ca_cert: &X509Ref, ca_key_pair: &PKey
             .build()?,
     )?;
 
-    let subject_key_identifier = SubjectKeyIdentifier::new().build(&cert_builder.x509v3_context(Some(ca_cert), None))?;
+    let subject_key_identifier =
+        SubjectKeyIdentifier::new().build(&cert_builder.x509v3_context(Some(ca_cert), None))?;
     cert_builder.append_extension(subject_key_identifier)?;
 
     let auth_key_identifier = AuthorityKeyIdentifier::new()

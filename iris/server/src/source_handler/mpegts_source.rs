@@ -1,21 +1,19 @@
 use crate::metrics::get_metrics;
 use crate::CONFIG;
 use crossbeam_channel::{unbounded, Sender};
-use log::{error, warn};
 use grid::Grid as Matrix;
-use mio::{Events, Interest, Poll, Token};
+use log::{error, warn};
 use mio::net::UdpSocket;
-use std::{ io, thread};
+use mio::{Events, Interest, Poll, Token};
+use std::{io, thread};
 
 // A token to allow us to identify which event is for the `UdpSocket`.
 const UDP_SOCKET: Token = Token(0);
 
 pub fn read(ip_source: String, tx: Sender<Matrix<Vec<u8>>>) -> Result<(), io::Error> {
-
     let (ipc_channel_tx, ipc_channel_rx) = unbounded();
-    
+
     thread::spawn(move || {
-      
         // Buffer to store the UDP packet data.
         let mut buf = [0; 1 << 16];
 
@@ -43,14 +41,17 @@ pub fn read(ip_source: String, tx: Sender<Matrix<Vec<u8>>>) -> Result<(), io::Er
         };
 
         // Register the socket with the token and interest.
-        if let Err(e) = poll.registry().register(&mut socket, UDP_SOCKET, Interest::READABLE) {
+        if let Err(e) = poll
+            .registry()
+            .register(&mut socket, UDP_SOCKET, Interest::READABLE)
+        {
             error!("Failed to register socket with poll: {}", e);
             return;
         }
 
         // Variables for bandwidth logging
         let metrics = get_metrics();
-        
+
         // Event loop.
         loop {
             // Poll to check for events.
@@ -67,13 +68,13 @@ pub fn read(ip_source: String, tx: Sender<Matrix<Vec<u8>>>) -> Result<(), io::Er
                     loop {
                         match socket.recv_from(&mut buf) {
                             Ok((packet_size, _source_address)) => {
-
                                 if let Err(e) = ipc_channel_tx.send(buf[..packet_size].to_vec()) {
                                     panic!("Error sending data from udp_source: {:?}", e);
                                 }
 
                                 {
-                                    metrics.data_source_rate.add(packet_size as i64 ); // Update the gauge value
+                                    metrics.data_source_rate.add(packet_size as i64);
+                                    // Update the gauge value
                                 }
                             }
                             Err(e) if e.kind() == io::ErrorKind::WouldBlock => {
@@ -111,8 +112,14 @@ pub fn read(ip_source: String, tx: Sender<Matrix<Vec<u8>>>) -> Result<(), io::Er
         let shard_size: usize = config.shard_size;
 
         // Ensure constraints for data_size and shard_size
-        assert!(data_size % 188 == 0, "data_size must be a multiple of 188 bytes.");
-        assert!(data_size + 113 < shard_size, "data_size + 113 must be less than shard_size.");
+        assert!(
+            data_size % 188 == 0,
+            "data_size must be a multiple of 188 bytes."
+        );
+        assert!(
+            data_size + 113 < shard_size,
+            "data_size + 113 must be less than shard_size."
+        );
 
         let mut ts_buffer = Vec::new(); // Buffer to store incoming MPEG-TS data.
 
@@ -164,9 +171,6 @@ pub fn read(ip_source: String, tx: Sender<Matrix<Vec<u8>>>) -> Result<(), io::Er
             // Keep only unprocessed data in ts_buffer.
             ts_buffer.drain(..start_index);
         }
-
-        
-
     });
 
     Ok(())

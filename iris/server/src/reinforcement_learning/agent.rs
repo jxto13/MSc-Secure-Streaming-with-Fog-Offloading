@@ -1,14 +1,18 @@
 // reinforcement_learning/agent.rs
 
-use std::collections::HashMap;
 use log::info;
 use rand::{prelude::*, rng};
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
 use std::fs;
 use std::hash::Hash;
 
 #[derive(Serialize, Deserialize)]
-pub struct QLearningAgent<S, A> where S: Eq + Hash + Clone, A: Eq + Hash + Clone {
+pub struct QLearningAgent<S, A>
+where
+    S: Eq + Hash + Clone,
+    A: Eq + Hash + Clone,
+{
     q_table: HashMap<(S, A), f64>,
     actions: Vec<A>,
     alpha: f64,
@@ -58,12 +62,17 @@ where
             .map(|a| self.q_value(&next_state, a))
             .fold(f64::NEG_INFINITY, f64::max);
 
-        let q = self.q_table.entry((state.clone(), action.clone())).or_insert(0.0);
+        let q = self
+            .q_table
+            .entry((state.clone(), action.clone()))
+            .or_insert(0.0);
         *q += self.alpha * (reward + self.gamma * max_next_q - *q);
     }
 
     fn q_value(&self, state: &S, action: &A) -> f64 {
-        *self.q_table.get(&(state.clone(), action.clone())).unwrap_or(&0.0)
+        *self
+            .q_table
+            .get(&(state.clone(), action.clone()))
+            .unwrap_or(&0.0)
     }
-
 }

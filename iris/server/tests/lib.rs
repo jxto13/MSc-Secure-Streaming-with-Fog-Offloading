@@ -4,12 +4,10 @@ fn insert_value<T>(matrix: &mut Vec<Vec<T>>, position: usize, matrix_size: usize
 
     if row < matrix_size && col < matrix_size {
         matrix[row][col] = value;
-     } else {
+    } else {
         println!("Invalid position!");
-     }
+    }
 }
-
-
 
 #[cfg(test)]
 mod tests {
@@ -99,7 +97,6 @@ mod tests {
             (all_received, sent_packets)
         }
 
-
         // Test with various matrices
         let matrices = vec![
             vec![
@@ -108,48 +105,19 @@ mod tests {
                 vec![1, 0, 0, 1],
                 vec![1, 1, 0, 0],
             ],
-            vec![
-                vec![0, 0, 1],
-                vec![1, 0, 0],
-                vec![0, 1, 0],
-            ],
-            vec![
-                vec![1, 1, 1],
-                vec![1, 1, 1],
-            ],
-            vec![
-                vec![0, 0, 0],
-                vec![0, 0, 0],
-            ],
+            vec![vec![0, 0, 1], vec![1, 0, 0], vec![0, 1, 0]],
+            vec![vec![1, 1, 1], vec![1, 1, 1]],
+            vec![vec![0, 0, 0], vec![0, 0, 0]],
             // Case: diagonal missing
-            vec![
-                vec![0, 1, 1],
-                vec![1, 0, 1],
-                vec![1, 1, 0],
-            ],
+            vec![vec![0, 1, 1], vec![1, 0, 1], vec![1, 1, 0]],
             // Case: one client missing all
-            vec![
-                vec![0, 0, 0, 0],
-                vec![1, 1, 1, 1],
-                vec![1, 1, 1, 1],
-            ],
+            vec![vec![0, 0, 0, 0], vec![1, 1, 1, 1], vec![1, 1, 1, 1]],
             // Case: two clients, alternate missing
-            vec![
-                vec![1, 0, 1, 0],
-                vec![0, 1, 0, 1],
-            ],
+            vec![vec![1, 0, 1, 0], vec![0, 1, 0, 1]],
             // Case: all but one packet missing for all
-            vec![
-                vec![1, 0, 0, 0],
-                vec![1, 0, 0, 0],
-                vec![1, 0, 0, 0],
-            ],
+            vec![vec![1, 0, 0, 0], vec![1, 0, 0, 0], vec![1, 0, 0, 0]],
             // Case: random missing
-            vec![
-                vec![1, 0, 1, 1],
-                vec![0, 1, 0, 1],
-                vec![1, 1, 0, 0],
-            ],
+            vec![vec![1, 0, 1, 1], vec![0, 1, 0, 1], vec![1, 1, 0, 0]],
         ];
 
         for (i, matrix) in matrices.into_iter().enumerate() {
@@ -162,28 +130,27 @@ mod tests {
         }
     }
 
-
     #[test]
-    fn test_dash_map_capacity(){
+    fn test_dash_map_capacity() {
         #[derive(Debug, Clone)]
         struct Matrix {
             // Assuming a 2D matrix (you can modify this as needed)
             data: Vec<Vec<i32>>,
-            index: usize,  // Index associated with the matrix
+            index: usize, // Index associated with the matrix
         }
 
         struct MatrixHistory {
-            matrices: Vec<Option<Matrix>>,  // Vec of Option to handle empty slots
+            matrices: Vec<Option<Matrix>>, // Vec of Option to handle empty slots
             capacity: usize,
             next_index: usize, // Index where the next matrix will go
-            size: usize, // Current number of matrices in the buffer
+            size: usize,       // Current number of matrices in the buffer
         }
 
         impl MatrixHistory {
             // Constructor to create a new MatrixHistory
             fn new(capacity: usize) -> Self {
                 MatrixHistory {
-                    matrices: vec![None; capacity],  // Initialize with None values
+                    matrices: vec![None; capacity], // Initialize with None values
                     capacity,
                     next_index: 0,
                     size: 0,
@@ -220,14 +187,26 @@ mod tests {
         }
 
         let mut history = MatrixHistory::new(3); // Store the last 3 matrices
-        
+
         // Add matrices with specific index numbers
-        history.add_matrix(Matrix { data: vec![vec![1, 2], vec![3, 4]], index: 101 });
-        history.add_matrix(Matrix { data: vec![vec![5, 6], vec![7, 8]], index: 102 });
-        history.add_matrix(Matrix { data: vec![vec![9, 10], vec![11, 12]], index: 103 });
+        history.add_matrix(Matrix {
+            data: vec![vec![1, 2], vec![3, 4]],
+            index: 101,
+        });
+        history.add_matrix(Matrix {
+            data: vec![vec![5, 6], vec![7, 8]],
+            index: 102,
+        });
+        history.add_matrix(Matrix {
+            data: vec![vec![9, 10], vec![11, 12]],
+            index: 103,
+        });
 
         // Adding a new matrix will remove the oldest one
-        history.add_matrix(Matrix { data: vec![vec![13, 14], vec![15, 16]], index: 104 });
+        history.add_matrix(Matrix {
+            data: vec![vec![13, 14], vec![15, 16]],
+            index: 104,
+        });
 
         // Access matrices by their index
         if let Some(matrix) = history.get_matrix(101) {
@@ -244,13 +223,10 @@ mod tests {
         } else {
             println!("No matrix found with index 999");
         }
-        
-
-
     }
 
     #[test]
-    fn sort_ips(){
+    fn sort_ips() {
         use std::net::IpAddr;
         let mut ips = vec![
             "10.0.0.1".parse::<IpAddr>().unwrap(),
@@ -277,8 +253,6 @@ mod tests {
             println!("{}", ip);
         }
     }
-
-   
 
     #[test]
     fn compression_test() {
@@ -309,25 +283,23 @@ mod tests {
         let decompressed = decompress_data(&compressed);
         println!("Decompressed size: {}", decompressed.len());
         assert_eq!(data.to_vec(), decompressed);
-        
-
     }
-    
+
     #[test]
     fn test_xor_with_padding() {
         fn xor_with_padding(vec1: Vec<u8>, vec2: Vec<u8>) -> Vec<u8> {
             let max_len = vec1.len().max(vec2.len());
             let mut result = Vec::with_capacity(max_len);
-        
+
             for i in 0..max_len {
                 let byte1 = *vec1.get(i).unwrap_or(&0);
                 let byte2 = *vec2.get(i).unwrap_or(&0);
                 result.push(byte1 ^ byte2);
             }
-        
+
             result
         }
-        
+
         fn depad_vector(vec: Vec<u8>) -> Vec<u8> {
             let mut end = vec.len();
             while end > 0 && vec[end - 1] == 0 {
@@ -351,18 +323,18 @@ mod tests {
         assert_eq!(depad_vector(recovered_vec1), vec1);
         assert_eq!(depad_vector(recovered_vec2), vec2);
     }
-        
+
     #[test]
     fn test_nc_3() {
-        use std::collections::{HashSet, HashMap};
         use grid::Grid;
+        use std::collections::{HashMap, HashSet};
 
         // Represents a retransmission strategy
         #[derive(Debug)]
         enum Transmission {
-            Unicast(usize, usize),            // (Receiver, Packet)
-            Multicast(usize),                 // (Packet)
-            XorMulticast(usize, usize),       // (Packet1, Packet2)
+            Unicast(usize, usize),      // (Receiver, Packet)
+            Multicast(usize),           // (Packet)
+            XorMulticast(usize, usize), // (Packet1, Packet2)
         }
 
         // Function to compute the best retransmission strategy
@@ -390,7 +362,7 @@ mod tests {
             // Track covered receivers and which packets they've recovered
             let mut uncovered: Vec<HashSet<usize>> = receiver_sets.clone();
             let mut updated_loss_matrix = loss_matrix.clone(); // To track recovered packets
-            
+
             // Calculate miss counts and sort packets by most missed
             let mut packets_with_miss_counts: Vec<(usize, usize)> = receiver_sets
                 .iter()
@@ -401,8 +373,8 @@ mod tests {
             packets_with_miss_counts.sort_by(|a, b| b.1.cmp(&a.1)); // Sort by miss_count descending
 
             println!("Packets with miss counts: {:?}", packets_with_miss_counts);
-            
-             // Process packets in priority order
+
+            // Process packets in priority order
             for (packet_index, _miss_count) in packets_with_miss_counts {
                 // Skip if all receivers have the packet
                 if receiver_sets[packet_index].is_empty() {
@@ -422,8 +394,14 @@ mod tests {
 
                 for j in packet_index + 1..num_packets {
                     // Compute union of receivers missing P_i and P_j
-                    let union_set: HashSet<_> = receiver_sets[packet_index].union(&receiver_sets[j]).cloned().collect();
-                    let xor_set: HashSet<_> = receiver_sets[packet_index].symmetric_difference(&receiver_sets[j]).cloned().collect();
+                    let union_set: HashSet<_> = receiver_sets[packet_index]
+                        .union(&receiver_sets[j])
+                        .cloned()
+                        .collect();
+                    let xor_set: HashSet<_> = receiver_sets[packet_index]
+                        .symmetric_difference(&receiver_sets[j])
+                        .cloned()
+                        .collect();
 
                     // Cost of multicasting XOR pair
                     let pair_cost = multicast_cost;
@@ -454,7 +432,9 @@ mod tests {
                     // Multicast XOR pair
                     best_transmissions.push(Transmission::XorMulticast(packet1, packet2));
                     for &receiver in &best_pair_union {
-                        if receiver_sets[packet1].contains(&receiver) || receiver_sets[packet2].contains(&receiver) {
+                        if receiver_sets[packet1].contains(&receiver)
+                            || receiver_sets[packet2].contains(&receiver)
+                        {
                             uncovered[receiver].remove(&packet1);
                             uncovered[receiver].remove(&packet2);
                             *updated_loss_matrix.get_mut(receiver, packet1).unwrap() = 1;
@@ -483,19 +463,24 @@ mod tests {
 
         fn main() {
             // Example loss matrix: rows = receivers, columns = packets
-            let loss_matrix = Grid::from_vec(vec![
-                vec![1, 0, 0, 1], // Receiver 1
-                vec![1, 1, 0, 1], // Receiver 2
-                vec![1, 0, 0, 1], // Receiver 3
-                vec![1, 1, 0, 0] // Receiver 4
-            ].concat(), 4);
+            let loss_matrix = Grid::from_vec(
+                vec![
+                    vec![1, 0, 0, 1], // Receiver 1
+                    vec![1, 1, 0, 1], // Receiver 2
+                    vec![1, 0, 0, 1], // Receiver 3
+                    vec![1, 1, 0, 0], // Receiver 4
+                ]
+                .concat(),
+                4,
+            );
 
             // Bandwidth costs
             let multicast_cost = 1.0;
             let unicast_cost = 1.5;
 
             // Compute the best retransmissions and the final loss matrix
-            let (transmissions, final_loss_matrix) = retransmit(loss_matrix, multicast_cost, unicast_cost);
+            let (transmissions, final_loss_matrix) =
+                retransmit(loss_matrix, multicast_cost, unicast_cost);
 
             // Output the result
             println!("Best Transmissions:");
@@ -512,22 +497,22 @@ mod tests {
                 println!("{:?}", row_vec);
             }
         }
-        
+
         main();
     }
 
     #[test]
     fn test_nc_2() {
-        use std::collections::{HashSet, HashMap};
+        use std::collections::{HashMap, HashSet};
 
         // Represents a retransmission strategy
         #[derive(Debug)]
         enum Transmission {
-            Unicast(usize, usize),            // (Receiver, Packet)
-            Multicast(usize),                 // (Packet)
-            XorMulticast(usize, usize),       // (Packet1, Packet2)
+            Unicast(usize, usize),      // (Receiver, Packet)
+            Multicast(usize),           // (Packet)
+            XorMulticast(usize, usize), // (Packet1, Packet2)
         }
-        
+
         // Function to compute the best retransmission strategy
         fn retransmit(
             loss_matrix: Vec<Vec<u8>>, // Loss matrix: 1 = packet missing, 0 = received
@@ -537,7 +522,7 @@ mod tests {
             let num_receivers = loss_matrix.len();
             let num_packets = loss_matrix[0].len();
             let mut best_transmissions: Vec<Transmission> = Vec::new();
-        
+
             // Precompute receiver sets for each packet
             let mut receiver_sets: Vec<HashSet<usize>> = Vec::new();
             for packet in 0..num_packets {
@@ -549,43 +534,47 @@ mod tests {
                 }
                 receiver_sets.push(receivers);
             }
-        
+
             // Track covered receivers and which packets they've recovered
             let mut uncovered: Vec<HashSet<usize>> = receiver_sets.clone();
             let mut updated_loss_matrix = loss_matrix.clone(); // To track recovered packets
-        
+
             for i in 0..num_packets {
                 // Skip if all receivers have the packet
                 if receiver_sets[i].is_empty() {
                     continue;
                 }
-        
+
                 // Unicast cost for this packet
                 let unicast_cost_i = receiver_sets[i].len() as f64 * unicast_cost;
-        
+
                 // Multicast cost for this packet
                 let multicast_cost_i = multicast_cost;
-        
+
                 // Evaluate XOR pairing
                 let mut best_pair_cost = f64::MAX;
                 let mut best_pair: Option<(usize, usize)> = None;
                 let mut best_pair_union: HashSet<usize> = HashSet::new();
-        
+
                 for j in i + 1..num_packets {
                     // Compute union of receivers missing P_i and P_j
-                    let union_set: HashSet<_> = receiver_sets[i].union(&receiver_sets[j]).cloned().collect();
-                    let xor_set: HashSet<_> = receiver_sets[i].symmetric_difference(&receiver_sets[j]).cloned().collect();
-        
+                    let union_set: HashSet<_> =
+                        receiver_sets[i].union(&receiver_sets[j]).cloned().collect();
+                    let xor_set: HashSet<_> = receiver_sets[i]
+                        .symmetric_difference(&receiver_sets[j])
+                        .cloned()
+                        .collect();
+
                     // Cost of multicasting XOR pair
                     let pair_cost = multicast_cost;
-        
+
                     if pair_cost < best_pair_cost {
                         best_pair_cost = pair_cost;
                         best_pair = Some((i, j));
                         best_pair_union = union_set;
                     }
                 }
-        
+
                 // Decide the best strategy
                 if unicast_cost_i < multicast_cost_i && unicast_cost_i < best_pair_cost {
                     // Unicast
@@ -605,7 +594,9 @@ mod tests {
                     // Multicast XOR pair
                     best_transmissions.push(Transmission::XorMulticast(packet1, packet2));
                     for &receiver in &best_pair_union {
-                        if receiver_sets[packet1].contains(&receiver) || receiver_sets[packet2].contains(&receiver) {
+                        if receiver_sets[packet1].contains(&receiver)
+                            || receiver_sets[packet2].contains(&receiver)
+                        {
                             uncovered[receiver].remove(&packet1);
                             uncovered[receiver].remove(&packet2);
                             updated_loss_matrix[receiver][packet1] = 1;
@@ -613,14 +604,14 @@ mod tests {
                         }
                     }
                 }
-        
+
                 // Debug: Print intermediate states
                 println!("After processing packet {}: ", i);
                 println!("Best Transmissions: {:?}", best_transmissions);
                 println!("Updated Loss Matrix: {:?}", updated_loss_matrix);
                 println!("Uncovered: {:?}", uncovered);
             }
-        
+
             // Handle any remaining uncovered packets with unicast or multicast
             for receiver in 0..num_receivers {
                 for &packet in &uncovered[receiver] {
@@ -628,10 +619,10 @@ mod tests {
                     updated_loss_matrix[receiver][packet] = 1;
                 }
             }
-        
+
             (best_transmissions, updated_loss_matrix)
         }
-        
+
         fn main() {
             // Example loss matrix: rows = receivers, columns = packets
             let loss_matrix = vec![
@@ -641,41 +632,42 @@ mod tests {
                 vec![1, 0, 0, 1, 0], // Receiver 4
                 vec![0, 0, 0, 0, 1], // Receiver 5
             ];
-        
+
             // Bandwidth costs
             let multicast_cost = 1.0;
             let unicast_cost = 1.5;
-        
+
             // Compute the best retransmissions and the final loss matrix
-            let (transmissions, final_loss_matrix) = retransmit(loss_matrix, multicast_cost, unicast_cost);
-        
+            let (transmissions, final_loss_matrix) =
+                retransmit(loss_matrix, multicast_cost, unicast_cost);
+
             // Output the result
             println!("Best Transmissions:");
             for transmission in transmissions {
                 println!("{:?}", transmission);
             }
-        
+
             println!("\nFinal Loss Matrix:");
             for row in final_loss_matrix {
                 println!("{:?}", row);
             }
         }
-        
+
         main();
     }
 
     #[test]
     fn test_nc() {
-        use std::collections::{HashSet, HashMap};
+        use std::collections::{HashMap, HashSet};
 
         // Represents a retransmission strategy
         #[derive(Debug)]
         enum Transmission {
-            Unicast(usize, usize),            // (Receiver, Packet)
-            Multicast(usize),                 // (Packet)
-            XorMulticast(usize, usize),       // (Packet1, Packet2)
+            Unicast(usize, usize),      // (Receiver, Packet)
+            Multicast(usize),           // (Packet)
+            XorMulticast(usize, usize), // (Packet1, Packet2)
         }
-        
+
         // Function to compute the best retransmission strategy
         fn retransmit(
             loss_matrix: Vec<Vec<u8>>, // Loss matrix: 1 = packet missing, 0 = received
@@ -685,7 +677,7 @@ mod tests {
             let num_receivers = loss_matrix.len();
             let num_packets = loss_matrix[0].len();
             let mut best_transmissions: Vec<Transmission> = Vec::new();
-        
+
             // Precompute receiver sets for each packet
             let mut receiver_sets: Vec<HashSet<usize>> = Vec::new();
             for packet in 0..num_packets {
@@ -697,43 +689,47 @@ mod tests {
                 }
                 receiver_sets.push(receivers);
             }
-        
+
             // Track covered receivers and which packets they've recovered
             let mut uncovered: Vec<HashSet<usize>> = receiver_sets.clone();
             let mut updated_loss_matrix = loss_matrix.clone(); // To track recovered packets
-        
+
             for i in 0..num_packets {
                 // Skip if all receivers have the packet
                 if receiver_sets[i].is_empty() {
                     continue;
                 }
-        
+
                 // Unicast cost for this packet
                 let unicast_cost_i = receiver_sets[i].len() as f64 * unicast_cost;
-        
+
                 // Multicast cost for this packet
                 let multicast_cost_i = multicast_cost;
-        
+
                 // Evaluate XOR pairing
                 let mut best_pair_cost = f64::MAX;
                 let mut best_pair: Option<(usize, usize)> = None;
                 let mut best_pair_union: HashSet<usize> = HashSet::new();
-        
+
                 for j in i + 1..num_packets {
                     // Compute union of receivers missing P_i and P_j
-                    let union_set: HashSet<_> = receiver_sets[i].union(&receiver_sets[j]).cloned().collect();
-                    let xor_set: HashSet<_> = receiver_sets[i].symmetric_difference(&receiver_sets[j]).cloned().collect();
-        
+                    let union_set: HashSet<_> =
+                        receiver_sets[i].union(&receiver_sets[j]).cloned().collect();
+                    let xor_set: HashSet<_> = receiver_sets[i]
+                        .symmetric_difference(&receiver_sets[j])
+                        .cloned()
+                        .collect();
+
                     // Cost of multicasting XOR pair
                     let pair_cost = multicast_cost;
-        
+
                     if pair_cost < best_pair_cost {
                         best_pair_cost = pair_cost;
                         best_pair = Some((i, j));
                         best_pair_union = union_set;
                     }
                 }
-        
+
                 // Decide the best strategy
                 if unicast_cost_i < multicast_cost_i && unicast_cost_i < best_pair_cost {
                     // Unicast
@@ -753,7 +749,9 @@ mod tests {
                     // Multicast XOR pair
                     best_transmissions.push(Transmission::XorMulticast(packet1, packet2));
                     for &receiver in &best_pair_union {
-                        if receiver_sets[packet1].contains(&receiver) || receiver_sets[packet2].contains(&receiver) {
+                        if receiver_sets[packet1].contains(&receiver)
+                            || receiver_sets[packet2].contains(&receiver)
+                        {
                             uncovered[receiver].remove(&packet1);
                             uncovered[receiver].remove(&packet2);
                             updated_loss_matrix[receiver][packet1] = 1;
@@ -762,7 +760,7 @@ mod tests {
                     }
                 }
             }
-        
+
             // Handle any remaining uncovered packets with unicast or multicast
             for receiver in 0..num_receivers {
                 for &packet in &uncovered[receiver] {
@@ -770,10 +768,10 @@ mod tests {
                     updated_loss_matrix[receiver][packet] = 1;
                 }
             }
-        
+
             (best_transmissions, updated_loss_matrix)
         }
-        
+
         fn main() {
             // Example loss matrix: rows = receivers, columns = packets
             let loss_matrix = vec![
@@ -783,26 +781,27 @@ mod tests {
                 vec![1, 0, 0, 1, 0], // Receiver 4
                 vec![0, 0, 0, 0, 1], // Receiver 5
             ];
-        
+
             // Bandwidth costs
             let multicast_cost = 1.0;
             let unicast_cost = 1.5;
-        
+
             // Compute the best retransmissions and the final loss matrix
-            let (transmissions, final_loss_matrix) = retransmit(loss_matrix, multicast_cost, unicast_cost);
-        
+            let (transmissions, final_loss_matrix) =
+                retransmit(loss_matrix, multicast_cost, unicast_cost);
+
             // Output the result
             println!("Best Transmissions:");
             for transmission in transmissions {
                 println!("{:?}", transmission);
             }
-        
+
             println!("\nFinal Loss Matrix:");
             for row in final_loss_matrix {
                 println!("{:?}", row);
             }
         }
-        
+
         main();
     }
 
@@ -817,7 +816,7 @@ mod tests {
         // A token to allow us to identify which event is for the `UdpSocket`.
         const UDP_SOCKET: Token = Token(0);
 
-        fn server(rx: crossbeam_channel::Receiver<(Vec<u8>,SocketAddr)>) -> io::Result<()> {
+        fn server(rx: crossbeam_channel::Receiver<(Vec<u8>, SocketAddr)>) -> io::Result<()> {
             use mio::net::UdpSocket;
 
             env_logger::init();
@@ -835,7 +834,8 @@ mod tests {
 
             // Register our socket with the token defined above and an interest in being
             // `READABLE`.
-            poll.registry().register(&mut socket, UDP_SOCKET, Interest::WRITABLE)?;
+            poll.registry()
+                .register(&mut socket, UDP_SOCKET, Interest::WRITABLE)?;
 
             println!("You can connect to the server using `nc`:");
             println!(" $ nc -u 127.0.0.1 9000");
@@ -862,10 +862,10 @@ mod tests {
                     // make sure it's valid none the less.
                     match event.token() {
                         UDP_SOCKET => {
-                            let message  =rx.recv().unwrap();
+                            let message = rx.recv().unwrap();
 
                             socket.send_to(&message.0, message.1)?;
-                        },
+                        }
                         _ => {
                             // This should never happen as we only registered our
                             // `UdpSocket` using the `UDP_SOCKET` token, but if it ever
@@ -886,13 +886,10 @@ mod tests {
             server(rx).unwrap();
         });
 
-        tx.send((messages[0].0.as_bytes().to_vec(),messages[0].1)).unwrap();
+        tx.send((messages[0].0.as_bytes().to_vec(), messages[0].1))
+            .unwrap();
 
         handler.join().unwrap();
-        
-        
-
-
     }
 
     #[test]
@@ -903,7 +900,7 @@ mod tests {
                 .filter_map(|(index, &value)| if value == 0 { Some(index) } else { None })
                 .collect()
         }
-        
+
         fn apply_to_tuples(vec_of_tuples: Vec<(i32, Vec<u8>)>) -> Vec<(i32, Vec<usize>)> {
             vec_of_tuples
                 .into_iter()
@@ -911,7 +908,7 @@ mod tests {
                 .collect()
         }
 
-        let reports =[
+        let reports = [
             (1, vec![1, 1, 1, 0, 0, 0]),
             (2, vec![0, 0, 0, 0, 0, 0]),
             (3, vec![1, 1, 1, 1, 1, 1]),
@@ -920,14 +917,12 @@ mod tests {
         let result = apply_to_tuples(reports.to_vec());
 
         println!("{:?}", result);
-
-
     }
 
     #[test]
     fn test_encrpt() {
-        use openssl::symm::{Cipher, Crypter, Mode};
         use openssl::rand::rand_bytes;
+        use openssl::symm::{Cipher, Crypter, Mode};
 
         fn encrypt_aes_256_cbc(plaintext: &[u8], key: &[u8], iv: &[u8]) -> Vec<u8> {
             let cipher = Cipher::aes_256_cbc();
@@ -956,17 +951,20 @@ mod tests {
 
         let key = b"01234567890123456789012345678901"; // 32 bytes key for AES-256
         let iv = b"0123456789012345"; // 16 bytes IV for AES-CBC
-    
+
         let plaintext = b"Hello, world!";
         let ciphertext = encrypt_aes_256_cbc(plaintext, key, iv);
         println!("Ciphertext: {:?}", ciphertext);
-    
+
         let decrypted_plaintext = decrypt_aes_256_cbc(&ciphertext, key, iv);
-        println!("Decrypted plaintext: {:?}", String::from_utf8(decrypted_plaintext).unwrap());
+        println!(
+            "Decrypted plaintext: {:?}",
+            String::from_utf8(decrypted_plaintext).unwrap()
+        );
 
         // fn generate_random_bytes(size: usize) -> Vec<u8> {
         //     use openssl::rand::rand_bytes;
-            
+
         //     let mut buf = vec![0; size];
         //     rand_bytes(&mut buf).expect("Failed to generate random bytes");
         //     buf
@@ -977,18 +975,16 @@ mod tests {
         // let key = generate_random_bytes(32); // 256 bits for AES-256
         // let iv = generate_random_bytes(16);  // 128 bits for AES block size
         // let encrypted_data = iris_shared::crypto_utils::encrypt(data, &key, &iv, 1280);
-    
+
         // let decryped_data = iris_shared::crypto_utils::decrypt(&encrypted_data, &key, &iv);
 
         // assert_eq!(data.to_vec(), decryped_data);
-    
     }
 
     #[test]
     fn test_encryption_decryption() {
-
-        use openssl::symm::{Cipher, Crypter, Mode};
         use openssl::rand::rand_bytes;
+        use openssl::symm::{Cipher, Crypter, Mode};
 
         fn generate_random_bytes(length: usize) -> Vec<u8> {
             let mut bytes = vec![0; length];
@@ -1027,7 +1023,7 @@ mod tests {
         }
 
         let key = generate_random_bytes(32); // 32 bytes for AES-256
-        let iv = generate_random_bytes(16);  // 16 bytes for AES block size
+        let iv = generate_random_bytes(16); // 16 bytes for AES block size
 
         let plaintext = b"Hello, OpenSSL in Rust WDAWDAWD AFWA!adwawdaw";
 
@@ -1035,7 +1031,10 @@ mod tests {
         println!("Ciphertext: {:?}", ciphertext.len());
 
         let decrypted_plaintext = decrypt(&ciphertext, &key, &iv);
-        println!("Decrypted plaintext: {:?}", String::from_utf8(decrypted_plaintext.clone()).unwrap());
+        println!(
+            "Decrypted plaintext: {:?}",
+            String::from_utf8(decrypted_plaintext.clone()).unwrap()
+        );
 
         assert_eq!(plaintext.to_vec(), decrypted_plaintext);
     }
@@ -1044,7 +1043,6 @@ mod tests {
     fn slices() {
         let slices: Vec<_> = "-r 30 -video_size 640x480 -i /dev/video0 -c:v libx264 -b:a 2048k -preset ultrafast -tune zerolatency -f mpegts".split_whitespace().collect();
         println!("{:?}", slices);
-
     }
 
     #[test]
@@ -1111,15 +1109,13 @@ mod tests {
         assert_eq!(&decrypted_plaintext[..plaintext.len()], plaintext);
     }
 
-
     #[test]
     fn test_sign_message() {
-
         use openssl::ec::{EcGroup, EcKey};
-        use openssl::nid::Nid;
-        use openssl::sign::Signer;
         use openssl::hash::MessageDigest;
+        use openssl::nid::Nid;
         use openssl::pkey::PKey;
+        use openssl::sign::Signer;
         use openssl::sign::Verifier;
 
         // Generate EC key pair
@@ -1148,12 +1144,12 @@ mod tests {
     }
 
     #[test]
-    fn tst_signature_3(){
-        use openssl::ecdsa::EcdsaSig;
+    fn tst_signature_3() {
         use openssl::ec::{EcGroup, EcKey};
+        use openssl::ecdsa::EcdsaSig;
         use openssl::nid::Nid;
-        use openssl::sha::sha256;
         use openssl::pkey::Private;
+        use openssl::sha::sha256;
 
         // Generate EC key pair
         let group: EcGroup = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
@@ -1201,18 +1197,18 @@ mod tests {
     }
 
     #[test]
-    fn tst_signature_2(){
-        use openssl::hash::MessageDigest;
-        use openssl::ecdsa::EcdsaSig;
+    fn tst_signature_2() {
         use openssl::ec::{EcGroup, EcKey};
-        use openssl::nid::Nid;
-        use openssl::sha::sha256;
+        use openssl::ecdsa::EcdsaSig;
         use openssl::error::ErrorStack;
-        use openssl::x509::X509Req;
-        use openssl::pkey::Private;
+        use openssl::hash::MessageDigest;
+        use openssl::nid::Nid;
         use openssl::pkey::PKey;
-        use openssl::x509::X509ReqBuilder;
+        use openssl::pkey::Private;
+        use openssl::sha::sha256;
         use openssl::x509::X509NameBuilder;
+        use openssl::x509::X509Req;
+        use openssl::x509::X509ReqBuilder;
 
         // Generate EC key pair
         let group: EcGroup = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
@@ -1281,13 +1277,11 @@ mod tests {
         assert!(is_valid);
     }
 
-
-
     #[test]
     fn encrypt() {
-        use openssl::encrypt::{Encrypter, Decrypter};
-        use openssl::rsa::{Rsa, Padding};
+        use openssl::encrypt::{Decrypter, Encrypter};
         use openssl::pkey::PKey;
+        use openssl::rsa::{Padding, Rsa};
 
         // Generate a keypair
         let keypair = Rsa::generate(2048).unwrap();
@@ -1321,12 +1315,11 @@ mod tests {
         assert_eq!(&*decrypted, data);
     }
 
-
     #[test]
-    fn enumerate(){
-        let n = 10;  // The total count
+    fn enumerate() {
+        let n = 10; // The total count
         let start = 5; // The starting point
-        let end = n;  // The endpoint
+        let end = n; // The endpoint
 
         // Calculate m dynamically, for example, based on the range from start to end
         let m = end - start;
@@ -1353,35 +1346,37 @@ mod tests {
         ];
 
         let recovery = reed_solomon_16::encode(
-            3, // total number of original shards
-            5, // total number of recovery shards
+            3,        // total number of original shards
+            5,        // total number of recovery shards
             original, // all original shards
-        ).unwrap();
+        )
+        .unwrap();
 
         let restored = reed_solomon_16::decode(
             3, // total number of original shards
             5, // total number of recovery shards
-            [  // provided original shards with indexes
+            [
+                // provided original shards with indexes
                 (1, &original[1]),
             ],
-            [  // provided recovery shards with indexes
+            [
+                // provided recovery shards with indexes
                 (1, &recovery[1]),
                 (4, &recovery[4]),
             ],
-        ).unwrap();
+        )
+        .unwrap();
 
         for item in restored.clone() {
-
             println!("{:?}", item.1.len());
         }
-
 
         assert_eq!(restored[&0], original[0]);
         assert_eq!(restored[&2], original[2]);
     }
 
     #[test]
-    fn grid_row_iter () {
+    fn grid_row_iter() {
         use grid::*;
         let grid: Grid<u8> = grid![[1,2][3,4]];
         for ((row, col), i) in grid.indexed_iter() {
@@ -1413,7 +1408,7 @@ mod tests {
         let postion = 5;
         // Calculate the row and column indices without subtracting 1
         let row = postion / matrix_size;
-        let col = postion  % matrix_size;
+        let col = postion % matrix_size;
         insert_value(&mut matrix, postion, matrix_size, 10);
 
         assert_eq!(matrix[row][col], 10);
@@ -1421,8 +1416,8 @@ mod tests {
 
     #[test]
     fn test_encrypt_decrypt() {
-        use openssl::symm::{Cipher, Crypter, Mode};
         use openssl::rand::rand_bytes;
+        use openssl::symm::{Cipher, Crypter, Mode};
 
         fn generate_random_bytes(size: usize) -> Vec<u8> {
             let mut buf = vec![0; size];
@@ -1430,7 +1425,12 @@ mod tests {
             buf
         }
 
-        fn encrypt(cipher: Cipher, data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, openssl::error::ErrorStack> {
+        fn encrypt(
+            cipher: Cipher,
+            data: &[u8],
+            key: &[u8],
+            iv: &[u8],
+        ) -> Result<Vec<u8>, openssl::error::ErrorStack> {
             let mut crypter = Crypter::new(cipher, Mode::Encrypt, key, Some(iv))?;
             let mut ciphertext = vec![0; data.len() + cipher.block_size()];
             let mut count = crypter.update(data, &mut ciphertext)?;
@@ -1439,7 +1439,12 @@ mod tests {
             Ok(ciphertext)
         }
 
-        fn decrypt(cipher: Cipher, data: &[u8], key: &[u8], iv: &[u8]) -> Result<Vec<u8>, openssl::error::ErrorStack> {
+        fn decrypt(
+            cipher: Cipher,
+            data: &[u8],
+            key: &[u8],
+            iv: &[u8],
+        ) -> Result<Vec<u8>, openssl::error::ErrorStack> {
             let mut crypter = Crypter::new(cipher, Mode::Decrypt, key, Some(iv))?;
             let mut plaintext = vec![0; data.len() + cipher.block_size()];
             let mut count = crypter.update(data, &mut plaintext)?;
@@ -1453,13 +1458,12 @@ mod tests {
         println!("original data size: {:?}", data.len());
 
         let key = generate_random_bytes(32); // 256 bits for AES-256
-        let iv = generate_random_bytes(16);  // 128 bits for AES block size
+        let iv = generate_random_bytes(16); // 128 bits for AES block size
 
-        let encrypted_data = encrypt(Cipher::aes_256_cbc(), data, &key, &iv)
-            .expect("Failed to encrypt data");
+        let encrypted_data =
+            encrypt(Cipher::aes_256_cbc(), data, &key, &iv).expect("Failed to encrypt data");
 
         println!("encrypted data size: {:?}", encrypted_data.len());
-
 
         let decrypted_data = decrypt(Cipher::aes_256_cbc(), &encrypted_data, &key, &iv)
             .expect("Failed to decrypt data");
@@ -1468,13 +1472,9 @@ mod tests {
     }
 
     #[test]
-    fn add_row_fec(){
-
+    fn add_row_fec() {
         // Define the input vectors
-        let input = vec![
-            vec![1, 2, 3],
-            vec![4, 5, 6],
-        ];
+        let input = vec![vec![1, 2, 3], vec![4, 5, 6]];
 
         // Transpose the input using map and zip
         let transposed: Vec<Vec<_>> = (0..input[0].len())
@@ -1489,27 +1489,18 @@ mod tests {
 
         // Define the input vectors
 
-        let input = vec![
-            vec![1, 4],
-            vec![2, 5],
-            vec![3, 6],
-        ];
+        let input = vec![vec![1, 4], vec![2, 5], vec![3, 6]];
 
         // Transpose the rows, appending columns to the matrix
         let transposed_fec: Vec<Vec<_>> = (0..input[0].len())
-        .map(|row_index| {
-            input.iter().map(|row| row[row_index].clone()).collect()
-        })
-        .collect();
-
+            .map(|row_index| input.iter().map(|row| row[row_index].clone()).collect())
+            .collect();
 
         // Print the transposed vector of arrays
         for row in &transposed_fec {
             println!("{:?}", row);
         }
 
-
         //assert_eq!(dm, dm1);
-
     }
 }

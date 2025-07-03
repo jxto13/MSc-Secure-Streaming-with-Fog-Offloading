@@ -1,8 +1,8 @@
-use std::error::Error;
-use std::process::{Command, Stdio};
-use std::io::{self, Read, Write};
-use std::thread;
 use log::{error, info, warn};
+use std::error::Error;
+use std::io::{self, Read, Write};
+use std::process::{Command, Stdio};
+use std::thread;
 
 fn main() -> Result<(), Box<dyn Error>> {
     // Initialize the logger
@@ -11,7 +11,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         .format_target(true)
         .format_timestamp_millis()
         .init();
-
 
     // Attempt to start the receiver
     let receiver = match iris_client::start_client(&"stream1.iris.dcc.fc.up.pt".to_string()) {
@@ -24,7 +23,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     // Start the ffplay (mpv) process
     let mut ffplay = Command::new("mpv")
-
         .args(&["-"])
         .stdin(Stdio::piped())
         // .stdout(Stdio::piped()) // Capture stdout for packet handling
@@ -35,7 +33,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             error!("Failed to start ffplay process: {}", e);
             io::Error::new(io::ErrorKind::Other, "Failed to start ffplay process")
         })?;
-    
+
     // Get handle to ffplay's stdin
     let mut ffplay_stdin = ffplay.stdin.take().ok_or_else(|| {
         error!("Failed to open ffplay stdin");
@@ -67,7 +65,6 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
         }
     }
-
 
     // Wait for the receiver thread to finish
     receiver_thread.join().map_err(|e| {

@@ -6,19 +6,18 @@ pub mod android {
     use std::net::{SocketAddr, ToSocketAddrs};
     use std::os::fd::{FromRawFd, RawFd};
     use std::thread;
-    
+
     use android_logger::{self, init_once};
     use jni::objects::{JByteBuffer, JClass, JString};
     use jni::sys::jint;
     use jni::JNIEnv;
     use log::{error, info};
     use once_cell::sync::Lazy;
-    use tokio::runtime::Runtime;
     use std::time::{Duration, Instant};
-    
-    static TOKIO_RT: Lazy<Runtime> = Lazy::new(|| {
-        Runtime::new().expect("Failed to create Tokio runtime")
-    });
+    use tokio::runtime::Runtime;
+
+    static TOKIO_RT: Lazy<Runtime> =
+        Lazy::new(|| Runtime::new().expect("Failed to create Tokio runtime"));
 
     #[no_mangle]
     pub extern "system" fn Java_pt_iris_services_RustService_startClient(
@@ -62,7 +61,6 @@ pub mod android {
 
             // Loop over incoming data
             for item in client {
-
                 if let Err(e) = writer.write_all(&item) {
                     eprintln!("Write error: {:?}", e);
                     break;
@@ -71,7 +69,6 @@ pub mod android {
 
             eprintln!("Client stream ended.");
         });
-        
 
         // let message = b"Hello from Rust via ParcelFileDescriptor!\n";
 
@@ -102,7 +99,6 @@ pub mod android {
         //             .expect("Failed to bind UDP socket");
 
         //         println!("UDP listener started on 192.168.1.131:1234");
-
 
         //         // SAFELY wrap fd
         //         let file = unsafe { std::fs::File::from_raw_fd(fd) };
@@ -139,16 +135,15 @@ pub mod android {
         // });
     }
 
-
     #[no_mangle]
     pub extern "system" fn Java_pt_iris_services_RustService_startService(
         _: JNIEnv,
         _: JClass,
         _: JString,
     ) {
-        // Init the log of android 
+        // Init the log of android
         init_once(
-    android_logger::Config::default()
+            android_logger::Config::default()
                 .with_max_level(log::LevelFilter::Trace)
                 .with_tag("RustApp"),
         );
@@ -156,10 +151,10 @@ pub mod android {
         // Log that the Rust app is starting
         info!("Rust app is starting...");
 
-        use tokio::net::UdpSocket;
         use std::net::{Ipv4Addr, SocketAddrV4};
-        use tokio::runtime::Runtime;
         use tokio::io;
+        use tokio::net::UdpSocket;
+        use tokio::runtime::Runtime;
 
         // Spawn async task without blocking the JNI thread
         // thread::spawn(|| {
@@ -174,17 +169,17 @@ pub mod android {
 
         //     // Create a new Tokio runtime
         //     let rt = Runtime::new().unwrap();
-            
+
         //     rt.block_on(async {
         //         let multicast_addr: Ipv4Addr = "239.255.0.1".parse().expect("Invalid multicast address");
         //         let port = 9999;
         //         let local_addr: SocketAddr = format!("0.0.0.0:{}", port).parse().unwrap();
 
         //         let socket = UdpSocket::bind(local_addr).await.expect("Failed to bind socket");
-                
+
         //         // Join the multicast group
         //         socket.join_multicast_v4(multicast_addr, Ipv4Addr::UNSPECIFIED).expect("Failed to join multicast group");
-                
+
         //         const MAX_DATAGRAM_SIZE: usize = 65_507;
         //         let mut data = vec![0u8; MAX_DATAGRAM_SIZE];
 
@@ -197,13 +192,11 @@ pub mod android {
         //     })
         // });
 
-        
         // fn is_same_subnet(ip1: Ipv4Addr, ip2: Ipv4Addr, netmask: Ipv4Addr) -> bool {
         //     let ip1_int = u32::from(ip1) & u32::from(netmask);
         //     let ip2_int = u32::from(ip2) & u32::from(netmask);
         //     ip1_int == ip2_int
         // }
-    
 
         // use pnet::datalink;
         // use std::net::{IpAddr,Ipv4Addr};
@@ -218,13 +211,13 @@ pub mod android {
         //     if let SocketAddr::V4(v4) = addr {
         //         let resolved_ip = v4.ip().clone();
         //         info!("Resolved IP: {}", resolved_ip);
-    
+
         //         for interface in datalink::interfaces() {
         //             for ip_net in &interface.ips {
         //                 if let IpAddr::V4(ip) = ip_net.ip() {
         //                     if let IpAddr::V4(netmask) = ip_net.mask() {
         //                         if is_same_subnet(ip, resolved_ip, netmask) {
-        //                             info!("Interface {} has IPv4 {} on the same subnet as {}", 
+        //                             info!("Interface {} has IPv4 {} on the same subnet as {}",
         //                                  interface.name, ip, resolved_ip);
         //                         }
         //                     }
@@ -233,15 +226,12 @@ pub mod android {
         //         }
         //     }
         // }
-    
 
-        thread::spawn(||{
-           let client = iris_client::start_client(&"stream1.iris.dcc.fc.up.pt".to_string()).unwrap();
+        thread::spawn(|| {
+            let client =
+                iris_client::start_client(&"stream1.iris.dcc.fc.up.pt".to_string()).unwrap();
 
-    
-           for item in client {
-           }
-
+            for item in client {}
         });
     }
 }

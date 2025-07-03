@@ -10,7 +10,7 @@ use crate::proto;
 pub struct KeyManager {
     current_key: SessionKey,
     next_key: SessionKey,
-    ec_key: EcKey<Private>
+    ec_key: EcKey<Private>,
 }
 
 impl KeyManager {
@@ -18,17 +18,14 @@ impl KeyManager {
         KeyManager {
             current_key: Self::generate_new_key(),
             next_key: Self::generate_new_key(),
-            ec_key
+            ec_key,
         }
     }
-    
+
     fn generate_new_key() -> SessionKey {
         let key = Self::generate_random_bytes(32); // 256 bits for AES-256
-        let iv = Self::generate_random_bytes(16);  // 128 bits for AES block size
-        SessionKey {
-            key,
-            iv,
-        }
+        let iv = Self::generate_random_bytes(16); // 128 bits for AES block size
+        SessionKey { key, iv }
     }
 
     fn generate_random_bytes(size: usize) -> Vec<u8> {
@@ -38,8 +35,8 @@ impl KeyManager {
     }
 
     pub fn rotate_key(&mut self) {
-       self.current_key = self.next_key.clone();
-       self.next_key = Self::generate_new_key();
+        self.current_key = self.next_key.clone();
+        self.next_key = Self::generate_new_key();
     }
 
     pub fn get_current_key(&self) -> &SessionKey {
@@ -53,5 +50,4 @@ impl KeyManager {
     pub fn get_ec_key(&self) -> &EcKey<Private> {
         &self.ec_key
     }
-
 }

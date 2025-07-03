@@ -1,15 +1,18 @@
+use log::{error, info};
+use openssl::ec::{EcGroup, EcKey};
+use openssl::nid::Nid;
 use openssl::pkey::{PKey, Private};
 use openssl::rsa::Rsa;
 use openssl::x509::X509;
-use openssl::ec::{EcGroup, EcKey};
-use openssl::nid::Nid;
-use log::{error, info};
-use std::path::PathBuf;
 use std::fs;
 use std::fs::create_dir_all;
+use std::path::PathBuf;
 
+use crate::crypto::utils::{
+    file_exists, load_certificate_from_file, load_private_key_from_file, mk_ca_cert, mk_request,
+    sign_request_with_ca,
+};
 use crate::crypto::utils::{save_certificate_to_file, save_private_key_to_file};
-use crate::crypto::utils::{mk_request, sign_request_with_ca, mk_ca_cert, file_exists, load_private_key_from_file, load_certificate_from_file};
 
 pub struct Certificates {
     pub ca_cert: X509,
@@ -32,11 +35,16 @@ pub fn load_or_create_certificates() -> Result<Certificates, Box<dyn std::error:
     let key_file_path = certs_dir.join("ca_private_key.pem");
 
     let (ca_cert, ca_private_key): (X509, PKey<Private>);
-    
-    // Generate or load CA Certificates 
-    if crate::crypto::utils::file_exists(cert_file_path.to_str().unwrap()) && file_exists(key_file_path.to_str().unwrap()) {
+
+    // Generate or load CA Certificates
+    if crate::crypto::utils::file_exists(cert_file_path.to_str().unwrap())
+        && file_exists(key_file_path.to_str().unwrap())
+    {
         // Load the certificate and private key from the files
-        match (load_certificate_from_file(cert_file_path.to_str().unwrap()), load_private_key_from_file(key_file_path.to_str().unwrap())) {
+        match (
+            load_certificate_from_file(cert_file_path.to_str().unwrap()),
+            load_private_key_from_file(key_file_path.to_str().unwrap()),
+        ) {
             (Ok(cert), Ok(pkey)) => {
                 info!("Loaded certificate and private key from files:");
                 ca_cert = cert;

@@ -1,29 +1,26 @@
-use mio::{Events, Interest, Poll, Token};
 use mio::net::UdpSocket;
+use mio::{Events, Interest, Poll, Token};
 use std::io;
 use std::net::{IpAddr, SocketAddr};
 // use pnet_datalink::interfaces;
-use log::{info, error};
+use log::{error, info};
 
 use crate::metrics::get_metrics;
 use crate::CONFIG;
 
- // A token to allow us to identify which event is for the `UdpSocket`.
- const UDP_SOCKET: Token = Token(0);
+// A token to allow us to identify which event is for the `UdpSocket`.
+const UDP_SOCKET: Token = Token(0);
 
 /// A struct representing a WiFi Unicast sender.
-pub struct WiFiUnicast {
-}
+pub struct WiFiUnicast {}
 
 impl WiFiUnicast {
     /// Creates a new instance of `WiFiUnicast` with a specified bitrate.
     pub fn new() -> Self {
-        Self {
-        }
+        Self {}
     }
 
     pub fn server(&mut self, rx: crossbeam_channel::Receiver<(Vec<u8>, IpAddr)>) -> io::Result<()> {
-
         // Create a poll instance.
         let mut poll = Poll::new()?;
 
@@ -36,11 +33,12 @@ impl WiFiUnicast {
         let mut socket = UdpSocket::bind(addr)?;
 
         // Register our socket with the token defined above and an interest in being `WRITABLE`.
-        poll.registry().register(&mut socket, UDP_SOCKET, Interest::WRITABLE)?;
+        poll.registry()
+            .register(&mut socket, UDP_SOCKET, Interest::WRITABLE)?;
 
         let port = CONFIG.get().unwrap().unicast.port;
 
-        // Get metrics 
+        // Get metrics
         let metrics = get_metrics();
 
         // Our event loop.
@@ -60,17 +58,15 @@ impl WiFiUnicast {
                 // make sure it's valid none the less.
                 match event.token() {
                     UDP_SOCKET => {
-                        
                         if let Ok(message) = rx.recv() {
                             let client = SocketAddr::new(message.1, port);
                             if let Err(err) = socket.send_to(&message.0, client) {
                                 error!("Failed to send UDP message: {}", err);
-                            } 
+                            }
 
                             metrics.unicast_sender_rate.add(message.0.len() as i64);
                         }
-                        
-                    },
+                    }
                     _ => {
                         // This should never happen as we only registered our
                         // `UdpSocket` using the `UDP_SOCKET` token, but if it ever
@@ -84,5 +80,3 @@ impl WiFiUnicast {
 }
 
 // create a mio pooling group, create a queue for the unicast packet, wawit for the socket to be ready to write, send the packet
-
-

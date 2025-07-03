@@ -19,14 +19,14 @@ use std::io;
 
 const UDP_SOCKET: Token = Token(0);
 
-
 #[derive(Debug)]
-pub struct MyReportService {
-}
+pub struct MyReportService {}
 
 impl MyReportService {
-
-    pub fn receiver(client_sessions: Arc<ClientSessions>, reports_channel: Sender<(SocketAddr, ClientReport)>) {
+    pub fn receiver(
+        client_sessions: Arc<ClientSessions>,
+        reports_channel: Sender<(SocketAddr, ClientReport)>,
+    ) {
         // Create a poll instance.
         let mut poll = Poll::new().unwrap();
         // Create storage for events. Since we will only register a single socket, a
@@ -34,7 +34,9 @@ impl MyReportService {
         let mut events = Events::with_capacity(1);
 
         // Setup the UDP socket.
-        let addr = format!("0.0.0.0:{}", CONFIG.get().unwrap().retransmission.port).parse().unwrap();
+        let addr = format!("0.0.0.0:{}", CONFIG.get().unwrap().retransmission.port)
+            .parse()
+            .unwrap();
 
         let mut socket = UdpSocket::bind(addr).unwrap();
 
@@ -69,8 +71,11 @@ impl MyReportService {
                         match socket.recv_from(&mut buf) {
                             Ok((packet_size, source_address)) => {
                                 // Echo the data.
-                                let mut report = ClientReport::decode(decompress_data(&buf[..packet_size]).as_slice()).unwrap();
-                                
+                                let mut report = ClientReport::decode(
+                                    decompress_data(&buf[..packet_size]).as_slice(),
+                                )
+                                .unwrap();
+
                                 let signature = EcdsaSig::from_der(&report.signature).unwrap();
                                 report.signature = vec![0, 255];
 
@@ -78,47 +83,61 @@ impl MyReportService {
                                 let local_hash = sha256(&report.encode_to_vec());
 
                                 // Get the client certificate from the client_sessions
-                                let client_cert = match client_sessions.get_client_cert(&report.client_id) {
-                                    Some(cert) => cert,
-                                    None => {
-                                        // Edge case where client is still connected but the certificate is not found
-                                        // This can happen if the client certificate is not yet registered in the client_sessions
-                                        // or if the client has disconnected and the certificate has been removed.
+                                let client_cert =
+                                    match client_sessions.get_client_cert(&report.client_id) {
+                                        Some(cert) => cert,
+                                        None => {
+                                            // Edge case where client is still connected but the certificate is not found
+                                            // This can happen if the client certificate is not yet registered in the client_sessions
+                                            // or if the client has disconnected and the certificate has been removed.
 
-                                        // If the client certificate is not found, we log an error and continue
-                                        // to the next packet.
-                                        // This is a critical error, as we cannot verify the signature without the certificate.
-                                        error!("Client certificate not found for {}", source_address.ip());
-                                        continue;
-                                    }
-                                    
-                                };
+                                            // If the client certificate is not found, we log an error and continue
+                                            // to the next packet.
+                                            // This is a critical error, as we cannot verify the signature without the certificate.
+                                            error!(
+                                                "Client certificate not found for {}",
+                                                source_address.ip()
+                                            );
+                                            continue;
+                                        }
+                                    };
 
                                 // Verify the signature using the public key from the client certificate
-                                if !signature.verify(&local_hash, &client_cert.public_key().unwrap().ec_key().unwrap()).unwrap() {
+                                if !signature
+                                    .verify(
+                                        &local_hash,
+                                        &client_cert.public_key().unwrap().ec_key().unwrap(),
+                                    )
+                                    .unwrap()
+                                {
                                     error!("Signature verification failed");
                                     continue;
                                 }
-                                
+
                                 // Verify the report counter
-                                if let Some(mut client_data) = client_sessions.clients.get_mut(&report.client_id) {
+                                if let Some(mut client_data) =
+                                    client_sessions.clients.get_mut(&report.client_id)
+                                {
                                     // If the report counter menus 1 is equal to the current report counter, we increment it
                                     if report.counter > client_data.report_counter {
-                                        client_data.report_counter = report.counter ;
+                                        client_data.report_counter = report.counter;
                                     } else {
                                         // If the report counter is not greater, we skip processing this report
                                         error!("Report counter is not greater than the current counter for client {:?}", report.client_id);
                                         continue;
                                     }
                                 } else {
-                                    error!("Client data not found for client {:?}", report.client_id);
+                                    error!(
+                                        "Client data not found for client {:?}",
+                                        report.client_id
+                                    );
                                     continue;
                                 }
-                                
-                                // If the signature is valid, and report counter is verified we can process the report. 
+
+                                // If the signature is valid, and report counter is verified we can process the report.
                                 // Also because is a valid report, we pass the ip address to the client session to update if
-                                // needed. It can be a client roaming 
-                                
+                                // needed. It can be a client roaming
+
                                 // Send the report to the reports channel
                                 if let Err(_) = reports_channel.send((source_address, report)) {
                                     error!("Failed to send report to channel");
@@ -146,6 +165,5 @@ impl MyReportService {
                 }
             }
         }
-        
     }
 }

@@ -1,5 +1,5 @@
+use prometheus_exporter::prometheus::core::{AtomicF64, AtomicI64, GenericGauge, GenericGaugeVec};
 use prometheus_exporter::prometheus::{opts, register_gauge_vec, register_int_gauge};
-use prometheus_exporter::prometheus::core::{AtomicF64, AtomicI64, GenericGaugeVec, GenericGauge};
 use std::sync::Arc;
 
 use crate::METRICS;
@@ -26,8 +26,13 @@ macro_rules! client_metrics {
 }
 
 // Define client metrics
-client_metrics!(UnicastRate, PacketLoss, 
-                MulticastRetransmissions, UnicastRetransmissions, WifiAwareRetransmissions);
+client_metrics!(
+    UnicastRate,
+    PacketLoss,
+    MulticastRetransmissions,
+    UnicastRetransmissions,
+    WifiAwareRetransmissions
+);
 
 // Struct to group related metrics
 #[derive(Debug)]
@@ -53,59 +58,65 @@ impl Metrics {
             let (name, help) = match metric {
                 ClientMetric::UnicastRate => ("unicast_rate_client", "Unicast rate per client"),
                 ClientMetric::PacketLoss => ("packet_loss_client", "Packet loss per client"),
-                ClientMetric::MulticastRetransmissions => ("multicast_retransmissions_client", "Multicast retransmissions per client"),
-                ClientMetric::UnicastRetransmissions => ("unicast_retransmissions_client", "Unicast retransmissions per client"),
-                ClientMetric::WifiAwareRetransmissions => ("wifi_aware_retransmissions_client", "Wifi Aware retransmissions per client"),
+                ClientMetric::MulticastRetransmissions => (
+                    "multicast_retransmissions_client",
+                    "Multicast retransmissions per client",
+                ),
+                ClientMetric::UnicastRetransmissions => (
+                    "unicast_retransmissions_client",
+                    "Unicast retransmissions per client",
+                ),
+                ClientMetric::WifiAwareRetransmissions => (
+                    "wifi_aware_retransmissions_client",
+                    "Wifi Aware retransmissions per client",
+                ),
             };
 
-            let gauge_vec = register_gauge_vec!(
-                opts!(name, help),
-                &["client_id"]
-            ).unwrap();
+            let gauge_vec = register_gauge_vec!(opts!(name, help), &["client_id"]).unwrap();
 
             client_metrics.push(gauge_vec);
         }
 
         Metrics {
             data_source_rate: register_int_gauge!(opts!(
-                "data_source_rate", 
+                "data_source_rate",
                 "Rate of incoming UDP Stream"
-            )).unwrap(),
-            
+            ))
+            .unwrap(),
+
             multicast_sender_rate: register_int_gauge!(opts!(
-                "multicast_sender_rate", 
+                "multicast_sender_rate",
                 "Rate of what is being sent over multicast"
-            )).unwrap(),
+            ))
+            .unwrap(),
 
             retransmissions_sender_rate: register_int_gauge!(opts!(
-                "retransmissions_sender_rate", 
+                "retransmissions_sender_rate",
                 "Rate of retransmissions being sent over multicast"
-            )).unwrap(),
+            ))
+            .unwrap(),
 
             unicast_sender_rate: register_int_gauge!(opts!(
-                "unicast_sender_rate", 
+                "unicast_sender_rate",
                 "Rate of what is being sent over unicast"
-            )).unwrap(),
-            
+            ))
+            .unwrap(),
+
             report_sink_rate: register_int_gauge!(opts!(
-                "report_sink_rate", 
+                "report_sink_rate",
                 "Rate of reporting sink is receiving from clients"
-            )).unwrap(),
+            ))
+            .unwrap(),
 
-            fec_row: register_int_gauge!(opts!(
-                "fec_row", 
-                "Number of rows for FEC"
-            )).unwrap(),
+            fec_row: register_int_gauge!(opts!("fec_row", "Number of rows for FEC")).unwrap(),
 
-            fec_col: register_int_gauge!(opts!(
-                "fec_col", 
-                "Number of columns for FEC"
-            )).unwrap(),
+            fec_col: register_int_gauge!(opts!("fec_col", "Number of columns for FEC")).unwrap(),
 
             connected_clients: register_int_gauge!(opts!(
                 "connected_clients",
                 "Total number of currently connected clients"
-            )).unwrap(),
+            ))
+            .unwrap(),
 
             client_metrics,
         }

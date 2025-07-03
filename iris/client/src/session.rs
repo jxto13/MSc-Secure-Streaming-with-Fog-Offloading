@@ -22,4 +22,3 @@ pub struct ClientSession {
     pub multicast_address: String, // This is the address for multicast packets
     pub multicast_port: u32,
 }
-

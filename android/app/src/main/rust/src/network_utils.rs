@@ -12,8 +12,7 @@ use std::time::Duration;
 // Setup some tokens to allow us to identify which event is for which socket.
 const SERVER: Token = Token(0);
 
-pub fn loopback_tcp_server( transport_layer_channel_receiver: Receiver<Vec<u8>>) -> io::Result<()> {
-
+pub fn loopback_tcp_server(transport_layer_channel_receiver: Receiver<Vec<u8>>) -> io::Result<()> {
     // Create a poll instance.
     let mut poll = Poll::new()?;
     let mut events = Events::with_capacity(128);
@@ -23,14 +22,13 @@ pub fn loopback_tcp_server( transport_layer_channel_receiver: Receiver<Vec<u8>>)
     let mut server = TcpListener::bind(addr)?;
 
     // Register the server with poll.
-    poll.registry().register(&mut server, SERVER, Interest::READABLE)?;
+    poll.registry()
+        .register(&mut server, SERVER, Interest::READABLE)?;
 
     let mut connections = HashMap::new();
     let mut unique_token = Token(SERVER.0 + 1);
 
     println!("Server running on 127.0.0.1:9000");
-
-
 
     loop {
         if let Err(err) = poll.poll(&mut events, Some(Duration::from_millis(100))) {
@@ -105,10 +103,7 @@ fn broadcast_message(connections: &mut HashMap<Token, TcpStream>, message: Vec<u
 }
 
 /// Handles readable and writable events.
-fn handle_connection_event(
-    connection: &mut TcpStream,
-    event: &Event,
-) -> io::Result<bool> {
+fn handle_connection_event(connection: &mut TcpStream, event: &Event) -> io::Result<bool> {
     if event.is_readable() {
         let mut buffer = vec![0; 4096];
         match connection.read(&mut buffer) {
