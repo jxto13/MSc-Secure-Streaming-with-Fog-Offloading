@@ -86,12 +86,12 @@ pub fn run_learning_loop(client_sessions: Arc<ClientSessions>) {
             dynamic_values.fec_col_redundancy = new_fec_col;
         }
 
-        log::debug!(
-            "State: {:?}, Action: {:?}, Reward: {}",
-            state,
-            action,
-            reward
-        );
+        // log::debug!(
+        //     "State: {:?}, Action: {:?}, Reward: {}",
+        //     state,
+        //     action,
+        //     reward
+        // );
 
         std::thread::sleep(std::time::Duration::from_secs(2));
 

@@ -1,38 +1,38 @@
 services:
 
-  streaming-server-dev:
-    image: debian-protobuf:latest
-    container_name: streaming-server-dev
-    restart: on-failure
-    ports:
-      - "50051:50051"
-    volumes:
-      - "./server/certs:/usr/tmp/certs"
-      - "./server/proto/generated:/usr/tmp/proto/generated"
-      - "../target/release/streaming_server:/usr/tmp/streaming-server"
-      - ./server/config_docker.toml:/usr/tmp/config.toml
-    networks:
-      iris-network:
-        ipv4_address: 172.22.0.102
-    command: ["/usr/tmp/streaming-server", "--config", "/usr/tmp/config.toml"]
+  # streaming-server-dev:
+  #   image: debian-protobuf:latest
+  #   container_name: streaming-server-dev
+  #   restart: on-failure
+  #   ports:
+  #     - "50051:50051"
+  #   volumes:
+  #     - "./server/certs:/usr/tmp/certs"
+  #     - "./server/proto/generated:/usr/tmp/proto/generated"
+  #     - "../target/release/streaming_server:/usr/tmp/streaming-server"
+  #     - ./server/config_docker.toml:/usr/tmp/config.toml
+  #   networks:
+  #     iris-network:
+  #       ipv4_address: 172.22.0.102
+  #   command: ["/usr/tmp/streaming-server", "--config", "/usr/tmp/config.toml"]
 
-  client-dev:
-    image: debian-protobuf:latest
-    deploy:
-      replicas: 1  # Replace with your desired number of replicas (N)
-    restart: on-failure
-    volumes:
-      - "./client/proto/generated:/usr/tmp/proto/generated"
-      - "../target/release/examples/headless:/usr/tmp/client"
-    networks:
-      - iris-network
-    extra_hosts:
-      - "stream1.iris.dcc.fc.up.pt:172.22.0.102" # Very important because of the tls certificate
-    command: ["/usr/tmp/client", "--ip", "stream1.iris.dcc.fc.up.pt"]
+  # client-dev:
+  #   image: debian-protobuf:latest
+  #   deploy:
+  #     replicas: 1  # Replace with your desired number of replicas (N)
+  #   restart: on-failure
+  #   volumes:
+  #     - "./client/proto/generated:/usr/tmp/proto/generated"
+  #     - "../target/release/examples/headless:/usr/tmp/client"
+  #   networks:
+  #     - iris-network
+  #   extra_hosts:
+  #     - "stream1.iris.dcc.fc.up.pt:172.22.0.102" # Very important because of the tls certificate
+  #   command: ["/usr/tmp/client", "--ip", "stream1.iris.dcc.fc.up.pt"]
 
 
   streaming-server:
-    image: iris-server:0.1.1
+    image: iris-server:0.1.2
     container_name: streaming-server
     build: 
       context: .
@@ -47,7 +47,7 @@ services:
         ipv4_address: 172.22.0.102
 
   client:
-    image: iris-client:0.1.1
+    image: iris-client:0.1.2
     build:
       context: .
       dockerfile: client/Dockerfile

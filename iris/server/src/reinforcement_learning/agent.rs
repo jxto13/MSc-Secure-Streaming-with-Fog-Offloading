@@ -104,10 +104,10 @@ impl QLearningAgent {
         let mut rng = rng();
 
         if rng.random::<f64>() < self.epsilon {
-            info!("Choosing random action");
+            // info!("Choosing random action");
             self.actions.choose(&mut rng).unwrap().clone()
         } else {
-            info!("Choosing best action");
+            // info!("Choosing best action");
             self.actions
                 .iter()
                 .max_by(|a, b| {

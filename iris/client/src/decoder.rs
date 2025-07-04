@@ -619,11 +619,12 @@ pub fn start(
                 };
 
                 // This if for tracking if i increamented the multicast retransmissions counter
-                let is_multicast = false;
+                let mut is_multicast = false;
 
                 let wrapper: Vec<u8> = match source {
                     // This can be helpful to track metrics
                     ReceiverType::Multicast=>{
+                        is_multicast = true;
                         data
                     },
                     ReceiverType::Unicast=>{
@@ -686,7 +687,7 @@ pub fn start(
                                             let i = packet.indexes[0] as usize;
                                             let j = packet.indexes[1] as usize;
 
-                                            info!("Received XorPacket for matrix: {} indexes: ({}, {})", packet.matrix, i, j);
+                                            // info!("Received XorPacket for matrix: {} indexes: ({}, {})", packet.matrix, i, j);
 
                                             let (row_i, col_i) = (i / tracker.cols as usize, i % tracker.cols as usize);
                                             let (row_j, col_j) = (j / tracker.cols as usize, j % tracker.cols as usize);
@@ -735,7 +736,7 @@ pub fn start(
                                                         if let Ok(transmission) = TransmissionPacket::decode(&*data) {
                                                             // No need to verify the signature again, as it was already done in validate_xor_packet
 
-                                                            info!("Recovered packet: {:?}", transmission.index);
+                                                            // info!("Recovered packet: {:?}", transmission.index);
                                                             // Process the packet if valid
                                                             tracker.add_packet(&transmission);
                                                         }
@@ -760,7 +761,7 @@ pub fn start(
                             }
                             // This is a normal TransmissionPacket inside a RetransmissionPacket
                             Some(RetransmissionType::TransmissionPacket(mut packet)) => {
-                                info!("Received retransmission packet for matrix: {} packet {}", packet.matrix, packet.index);
+                                // info!("Received retransmission packet for matrix: {} packet {}", packet.matrix, packet.index);
                                 // Validate the packet signature, if invalid, skip the packet
                                 if validate_packet(&mut packet, &x509_public_key) {
 
@@ -770,7 +771,7 @@ pub fn start(
                                         counters.increment(ReceiverType::Multicast);
                                     }
 
-                                    debug!("Received retransmission packet for matrix: {} packet {}", packet.matrix, packet.index);
+                                    // debug!("Received retransmission packet for matrix: {} packet {}", packet.matrix, packet.index);
                                     // Process the packet if valid
                                     process_retransmission_packet(&mut buffer, packet);
                                 } else {
