@@ -4,16 +4,20 @@ use std::time::{Duration, Instant};
 
 use crossbeam_channel::Receiver;
 use dashmap::mapref::multiple::RefMulti;
+use dashmap::mapref::one::Ref;
 use dashmap::DashMap;
 
 use grid::Grid;
-use iris_shared::bandwidth_utils::BandwidthManager;
+use iris_shared::bandwidth_utils::{
+    BandwidthManager, ClientBandwidthLimiter, MulticastBandwidthManager,
+};
 use log::{error, info};
 use openssl::sha::sha256;
 use openssl::x509::X509;
 use proto::{ClientReport, MatrixReportBitmap};
 
 use crate::metrics::ClientMetric;
+use crate::proto::ReportMetrics;
 use crate::reinforcement_learning::state::State;
 
 use crate::{proto, CONFIG, DYNAMIC_VALUES};
@@ -27,13 +31,13 @@ pub fn find_zero_indices(vec: &Vec<u8>) -> Vec<usize> {
 
 #[derive(Debug)]
 pub struct ClientData {
-    pub client_id: Vec<u8>,  // Client ID using sha256 hash from public key
-    pub last_seen: Instant,  // Last time the client was seen
-    pub cert: X509,          // Client certificate
-    pub ip: IpAddr,          // Client IP address
-    pub report_counter: u32, // Counter for reports received from the client
+    pub client_id: Vec<u8>,     // Client ID using sha256 hash from public key
+    pub last_seen: Instant,     // Last time the client was seen
+    pub cert: X509,             // Client certificate
+    pub ip: IpAddr,             // Client IP address
+    pub metrics: ReportMetrics, // Client metrics
+    pub report_counter: u32,    // Counter for reports received from the client
     pub reports: Vec<MatrixReportBitmap>, // Matrix, Bitmap
-    pub bandwidth_manager: BandwidthManager, // Bandwidth manager for the client
 }
 
 impl ClientData {
@@ -50,6 +54,8 @@ impl ClientData {
 #[derive(Debug)]
 pub struct ClientSessions {
     pub clients: DashMap<Vec<u8>, ClientData>, // ClientID, Client data
+    pub client_bandwidth_manager: ClientBandwidthLimiter, // Bandwidth manager for clients
+    pub mutlicast_bandwidth_manager: MulticastBandwidthManager, // Bandwidth manager for multicast
     pub reports_channel: Receiver<(SocketAddr, ClientReport)>, // Channel for receiving reports
 }
 
@@ -57,6 +63,12 @@ impl ClientSessions {
     pub fn new(reports_channel: Receiver<(SocketAddr, ClientReport)>) -> Self {
         Self {
             clients: DashMap::new(), // Store client data
+            client_bandwidth_manager: ClientBandwidthLimiter::new(
+                CONFIG.get().unwrap().retransmission.unicast_bitrate,
+            ),
+            mutlicast_bandwidth_manager: MulticastBandwidthManager::new(
+                CONFIG.get().unwrap().multicast.bitrate,
+            ),
             reports_channel,
         }
     }
@@ -92,6 +104,7 @@ impl ClientSessions {
                 Some(mut client_data) => {
                     client_data.last_seen = Instant::now();
                     client_data.reports = report.reports;
+                    client_data.metrics = report.metrics.unwrap();
 
                     if client_data.ip != report_socket.ip() {
                         client_data.ip = report_socket.ip();
@@ -127,11 +140,9 @@ impl ClientSessions {
             last_seen: Instant::now(),
             cert,
             ip: client_addr,
+            metrics: ReportMetrics::default(),
             report_counter: 0,
             reports: Vec::new(),
-            bandwidth_manager: BandwidthManager::new(
-                CONFIG.get().unwrap().retransmission.unicast_bitrate,
-            ), // or hardcode bitrate here
         };
 
         // Create a hex representation of the client ID for metrics
@@ -143,6 +154,11 @@ impl ClientSessions {
         // Add the client to the metrics
         let metrics = crate::metrics::get_metrics();
         metrics.add_client(&client_id_hex);
+    }
+
+    // Get client data by client ID
+    pub fn get_client_data(&self, client_id: &Vec<u8>) -> Option<Ref<'_, Vec<u8>, ClientData>> {
+        self.clients.get(client_id)
     }
 
     /// Calculates overall packet loss across all clients.
@@ -210,7 +226,9 @@ impl ClientSessions {
     pub fn get_client_unicast_rate(&self, client: &RefMulti<'_, Vec<u8>, ClientData>) -> f64 {
         let client_data = client.value();
         // Get the unicast rate from the bandwidth manager
-        client_data.bandwidth_manager.get_rate_kbps() as f64
+        self.client_bandwidth_manager
+            .get_rate_kbps(&client_data.client_id)
+            .unwrap_or(0) as f64
     }
 
     /// Updates the metrics for connected clients and their individual metrics.
@@ -253,23 +271,39 @@ impl ClientSessions {
                 .client_metric(ClientMetric::PacketLoss)
                 .with_label_values(&[&client_id_hex])
                 .set(self.get_client_packet_loss(&client));
+
+            // Set counter for reports received from the client
+            metrics
+                .client_metric(ClientMetric::MulticastRetransmissions)
+                .with_label_values(&[&client_id_hex])
+                .set(client.value().metrics.multicast_retransmissions as f64);
+
+            metrics
+                .client_metric(ClientMetric::UnicastRetransmissions)
+                .with_label_values(&[&client_id_hex])
+                .set(client.value().metrics.unicast_retransmissions as f64);
+
+            metrics
+                .client_metric(ClientMetric::UnicastRetransmissions)
+                .with_label_values(&[&client_id_hex])
+                .set(client.value().metrics.unicast_retransmissions as f64);
         }
     }
 
     /// Generates the NC matrix and returns it along with the list of client addresses.
-    pub fn generate_nc_matrix(&self) -> BTreeMap<u32, (Grid<u8>, Vec<IpAddr>)> {
-        let mut nc_matrixes: BTreeMap<u32, (Grid<u8>, Vec<IpAddr>)> = BTreeMap::new();
+    pub fn generate_nc_matrix(&self) -> BTreeMap<u32, (Grid<u8>, Vec<(Vec<u8>, IpAddr)>)> {
+        let mut nc_matrixes: BTreeMap<u32, (Grid<u8>, Vec<(Vec<u8>, IpAddr)>)> = BTreeMap::new();
 
         // this returns a vector with the matrix_index and its nc_matrix for all players, a snapshot of the current state
 
         for entry in &self.clients {
-            let (_client_id, client_data) = entry.pair();
+            let (client_id, client_data) = entry.pair();
             for report in client_data.reports.iter() {
                 let (matrix, clients_vec) = nc_matrixes
                     .entry(report.matrix_index)
                     .or_insert((Grid::new(0, 0), Vec::new()));
                 matrix.push_row(report.bitmap.clone());
-                clients_vec.push(client_data.ip.clone());
+                clients_vec.push((client_id.clone(), client_data.ip.clone()));
             }
         }
 

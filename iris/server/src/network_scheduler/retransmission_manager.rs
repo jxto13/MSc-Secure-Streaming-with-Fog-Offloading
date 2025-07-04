@@ -46,8 +46,14 @@ struct PacketSentInfo {
     round: usize,
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+struct RetransmissionKey {
+    matrix_id: usize,
+    action: SendAction,
+}
+
 pub struct RetransmissionManager {
-    packet_states: HashMap<SendAction, PacketSentInfo>,
+    packet_states: HashMap<RetransmissionKey, PacketSentInfo>,
     phases: Vec<PhaseConfig>,
     phase_index: usize,
     round: usize,
@@ -115,6 +121,7 @@ impl RetransmissionManager {
             match current_phase {
                 Phase::Multicast => {
                     let nc_matrix = client_sessions.generate_nc_matrix();
+                    let multicast_bandwidth_manager = &client_sessions.mutlicast_bandwidth_manager;
 
                     for (matrix_id, (mut matrix, _clients_vector)) in nc_matrix {
                         if matrix.is_empty() {
@@ -125,9 +132,11 @@ impl RetransmissionManager {
                         let already_sent: HashSet<SendAction> = self
                             .packet_states
                             .iter()
-                            .filter_map(|(action, info)| {
-                                if !self.can_retransmit(info, self.phase_index, self.round) {
-                                    Some(action.clone())
+                            .filter_map(|(key, info)| {
+                                if key.matrix_id == matrix_id as usize
+                                    && !self.can_retransmit(info, self.phase_index, self.round)
+                                {
+                                    Some(key.action.clone())
                                 } else {
                                     None
                                 }
@@ -147,7 +156,10 @@ impl RetransmissionManager {
 
                         for pkt in sent_packets {
                             self.packet_states.insert(
-                                pkt.clone(),
+                                RetransmissionKey {
+                                    matrix_id: matrix_id.try_into().unwrap(),
+                                    action: pkt.clone(),
+                                },
                                 PacketSentInfo {
                                     phase_index: self.phase_index,
                                     round: self.round,
@@ -171,6 +183,19 @@ impl RetransmissionManager {
                                                 },
                                             )),
                                         };
+
+                                        let wrapper_vec = wrapper.encode_to_vec();
+                                        let can_send =
+                                            multicast_bandwidth_manager.try_send(wrapper_vec.len());
+
+                                        if !can_send {
+                                            debug!(
+                                                "Cannot send packet {}, bandwidth limit reached.",
+                                                idx
+                                            );
+                                            continue;
+                                        }
+
                                         multicast_tx
                                             .send(wrapper.encode_to_vec())
                                             .expect("Failed to send multicast packet");
@@ -274,6 +299,18 @@ impl RetransmissionManager {
                                         )),
                                     };
 
+                                    let wrapper_vec = wrapper.encode_to_vec();
+                                    let can_send =
+                                        multicast_bandwidth_manager.try_send(wrapper_vec.len());
+
+                                    if !can_send {
+                                        debug!(
+                                            "Cannot send XOR packet {}, bandwidth limit reached.",
+                                            format!("{},{}", i, j)
+                                        );
+                                        continue;
+                                    }
+
                                     if let Err(e) = multicast_tx.send(wrapper.encode_to_vec()) {
                                         error!("Failed to send multicast channel: {}", e);
                                     }
@@ -282,6 +319,7 @@ impl RetransmissionManager {
                         }
                     }
                 }
+
                 Phase::Unicast => {
                     let nc_matrix = client_sessions.generate_nc_matrix();
 
@@ -311,7 +349,7 @@ impl RetransmissionManager {
                             }
 
                             let client_addr = match clients_vector.get(client_index) {
-                                Some(addr) => *addr,
+                                Some(addr) => addr,
                                 None => {
                                     error!(
                                         "No client address for index {} in matrix {}",
@@ -323,7 +361,12 @@ impl RetransmissionManager {
 
                             for packet_idx in missing_indices {
                                 let action = SendAction::Packet(packet_idx as usize);
-                                let should_send = match self.packet_states.get(&action) {
+                                let key = RetransmissionKey {
+                                    matrix_id: matrix_id.try_into().unwrap(),
+                                    action: action.clone(),
+                                };
+
+                                let should_send = match self.packet_states.get(&key) {
                                     Some(info) => {
                                         self.can_retransmit(info, self.phase_index, self.round)
                                     }
@@ -335,7 +378,7 @@ impl RetransmissionManager {
                                 }
 
                                 self.packet_states.insert(
-                                    action.clone(),
+                                    key,
                                     PacketSentInfo {
                                         phase_index: self.phase_index,
                                         round: self.round,
@@ -357,11 +400,37 @@ impl RetransmissionManager {
                                             },
                                         )),
                                     };
+
+                                    let wrapper_vec = wrapper.encode_to_vec();
+
+                                    let client_entry =
+                                        client_sessions.get_client_data(&client_addr.0);
+
+                                    if client_entry.is_none() {
+                                        error!(
+                                            "Client data for {:?} not found, skipping.",
+                                            client_addr
+                                        );
+                                        continue;
+                                    }
+
+                                    let can_send = client_sessions
+                                        .client_bandwidth_manager
+                                        .try_send(&client_addr.0, wrapper_vec.len());
+
+                                    if !can_send {
+                                        debug!(
+                                            "Cannot send packet to {:?}, bandwidth limit reached.",
+                                            client_addr
+                                        );
+                                        continue;
+                                    }
+
                                     if let Err(e) =
-                                        unicast_tx.send((wrapper.encode_to_vec(), client_addr))
+                                        unicast_tx.send((wrapper.encode_to_vec(), client_addr.1))
                                     {
                                         error!(
-                                            "Failed to send unicast packet to {}: {}",
+                                            "Failed to send unicast packet to {:?}: {}",
                                             client_addr, e
                                         );
                                     }

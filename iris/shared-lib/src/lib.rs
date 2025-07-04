@@ -434,9 +434,10 @@ pub mod bandwidth_utils {
     }
 
     /// Thread-safe bandwidth limiter for multiple clients using DashMap.
+    #[derive(Debug)]
     pub struct ClientBandwidthLimiter {
         bitrate_kbps: usize,
-        clients: DashMap<String, BandwidthManager>,
+        clients: DashMap<Vec<u8>, BandwidthManager>,
     }
 
     impl ClientBandwidthLimiter {
@@ -448,25 +449,63 @@ pub mod bandwidth_utils {
         }
 
         /// Checks if a packet can be sent for the client without sending it.
-        pub fn can_send(&self, client_id: &str, packet_size: usize) -> bool {
+        pub fn can_send(&self, client_id: &[u8], packet_size: usize) -> bool {
             let mut entry = self
                 .clients
-                .entry(client_id.to_string())
+                .entry(client_id.to_vec())
                 .or_insert_with(|| BandwidthManager::new(self.bitrate_kbps));
             entry.can_send(packet_size)
         }
 
         /// Attempts to send a packet for a client.
-        pub fn try_send(&self, client_id: &str, packet_size: usize) -> bool {
+        pub fn try_send(&self, client_id: &[u8], packet_size: usize) -> bool {
             let mut entry = self
                 .clients
-                .entry(client_id.to_string())
+                .entry(client_id.to_vec())
                 .or_insert_with(|| BandwidthManager::new(self.bitrate_kbps));
             entry.try_send(packet_size)
         }
+
         /// Returns the last full second's bandwidth usage for a client in kbit/s
-        pub fn get_rate_kbps(&self, client_id: &str) -> Option<usize> {
+        pub fn get_rate_kbps(&self, client_id: &[u8]) -> Option<usize> {
             self.clients.get(client_id).map(|m| m.get_rate_kbps())
+        }
+    }
+
+    use std::sync::RwLock;
+
+    /// Wrapper around BandwidthManager for multicast traffic.
+    #[derive(Debug)]
+    pub struct MulticastBandwidthManager {
+        inner: RwLock<BandwidthManager>,
+    }
+
+    impl MulticastBandwidthManager {
+        /// Creates a new multicast manager with the given bitrate (in kbit/s).
+        pub fn new(bitrate_kbps: usize) -> Self {
+            Self {
+                inner: RwLock::new(BandwidthManager::new(bitrate_kbps)),
+            }
+        }
+
+        /// Checks if a packet of `packet_size` bytes can be sent now.
+        /// NOTE: This may update internal counters (calls reset_if_needed).
+        pub fn can_send(&self, packet_size: usize) -> bool {
+            // Requires write lock because `reset_if_needed` modifies state
+            let mut guard = self.inner.write().unwrap();
+            guard.can_send(packet_size)
+        }
+
+        /// Attempts to send the packet. Returns true if successful.
+        pub fn try_send(&self, packet_size: usize) -> bool {
+            let mut guard = self.inner.write().unwrap();
+            guard.try_send(packet_size)
+        }
+
+        /// Returns the bandwidth usage in the last full second (in kbit/s).
+        pub fn get_rate_kbps(&self) -> usize {
+            let guard = self.inner.read().unwrap();
+            guard.get_rate_kbps()
         }
     }
 }

@@ -518,9 +518,8 @@ pub fn start(
     let mut report_counter = 1;
     let client_id = sha256(&client_ec_key.public_key_to_der().unwrap()).to_vec();
 
-    let rint = Duration::from_millis(200); // interval between retries
-    let d = Duration::from_millis(1000); // total retry window
-    let max_rounds = d.as_millis() / rint.as_millis(); // 5
+    let rint = Duration::from_millis(session_config.client_reporting_interval as u64); // interval between retries
+    let max_rounds = session_config.client_sliding_window;
 
     let retry_tick = tick(rint);
     let mut attempt = 0;
@@ -825,8 +824,20 @@ fn decode_to_app_layer(
             let deppaded_payload = padding::depad(&value.payload).unwrap();
 
             // Decrypt the payload
+
             let decrypted_plaintext =
-                decrypt(&deppaded_payload, &session_key.key, &session_key.iv).unwrap();
+                match decrypt(&deppaded_payload, &session_key.key, &session_key.iv) {
+                    Ok(plaintext) => plaintext,
+                    Err(err) => {
+                        error!(
+                            "Decryption failed: {} \n Need to request current session key",
+                            err
+                        );
+                        continue;
+                    }
+                };
+
+            // Check if the decrypted payload is empty
             if decrypted_plaintext.is_empty() {
                 error!("Decryption failed or empty payload.");
                 continue;
