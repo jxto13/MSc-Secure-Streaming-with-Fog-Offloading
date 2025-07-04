@@ -14,6 +14,7 @@ pub struct Config {
     pub unicast: Unicast,
     pub multicast: Multicast,
     pub retransmission: Retransmission,
+    pub reinforcement_learning: ReinforcementLearning,
     pub prometheus: Prometheus,
     pub settings: Settings,
 }
@@ -74,6 +75,14 @@ pub struct Retransmission {
     pub interval: usize,
     pub deadline: u64,
     pub port: usize,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct ReinforcementLearning {
+    pub agent_data_path: String,
+    pub learning_rate: f64,    // alpha
+    pub discount_factor: f64,  // gamma
+    pub exploration_rate: f64, // epsilon
 }
 
 #[derive(Deserialize, Debug)]

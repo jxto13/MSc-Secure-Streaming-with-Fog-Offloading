@@ -59,6 +59,13 @@ interval = 100 # in miliseconds, this is the time between retransmissions rounds
 deadline = 1000 # in miliseconds, this is the time before a matrix is not considered valid for retransmissions
 port = 50053 # port for report sink, this is the port that the clients will send reports to the server
 
+[reinforcement_learning]
+agent_data_path = "../reinforcement_learning_data"
+learning_rate = 0.1 # alpha
+discount_factor = 0.9 # gamma
+exploration_rate = 0.1 # epsilon
+
+
 [prometheus]
 port = 9186 # bind prometheus to all interfaces
 
