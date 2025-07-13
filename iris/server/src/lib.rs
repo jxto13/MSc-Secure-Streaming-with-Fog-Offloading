@@ -101,9 +101,6 @@ pub struct Settings {
 pub struct DynamicValues {
     pub fec_row_redundancy: usize,
     pub fec_col_redundancy: usize,
-    pub data_row_size: usize,
-    pub data_col_size: usize,
-    pub block_size: usize,
 }
 
 pub fn read_config(filename: &str) -> Result<Config, Box<dyn Error>> {

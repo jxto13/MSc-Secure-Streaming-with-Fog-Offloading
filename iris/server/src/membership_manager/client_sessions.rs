@@ -284,9 +284,9 @@ impl ClientSessions {
                 .set(client.value().metrics.unicast_retransmissions as f64);
 
             metrics
-                .client_metric(ClientMetric::UnicastRetransmissions)
+                .client_metric(ClientMetric::WifiAwareRetransmissions)
                 .with_label_values(&[&client_id_hex])
-                .set(client.value().metrics.unicast_retransmissions as f64);
+                .set(client.value().metrics.wifi_aware_retransmissions as f64);
         }
     }
 

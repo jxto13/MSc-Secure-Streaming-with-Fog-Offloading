@@ -144,12 +144,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
                 .required(true)
                 .value_parser(clap::value_parser!(PathBuf))
                 .help("Path to the configuration file"),
-        )
-        .arg(
-            arg!(--"train")
-                .required(false)
-                .help("Enable training mode for RL simulation")
-                .action(clap::ArgAction::SetTrue),
         );
 
     // Parse command-line arguments
@@ -172,12 +166,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     //     // sets this to be the default, global collector for this application.
     //     .init();
 
-    if matches.get_flag("train") {
-        info!("------------------------- Training mode enabled  -------------------------");
-    } else {
-        info!("------------------------- Training mode disabled -------------------------");
-    }
-
     // Read configuration file
     let config = read_config(config_filename.to_str().unwrap())?;
 
@@ -198,9 +186,6 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let dynamic_values = Arc::new(RwLock::new(DynamicValues {
         fec_row_redundancy: CONFIG.get().unwrap().multicast.row_fec,
         fec_col_redundancy: CONFIG.get().unwrap().multicast.col_fec,
-        data_row_size: CONFIG.get().unwrap().multicast.row,
-        data_col_size: CONFIG.get().unwrap().multicast.col,
-        block_size: CONFIG.get().unwrap().multicast.shard_size,
     }));
 
     // Set the global DYNAMIC_VALUES instance

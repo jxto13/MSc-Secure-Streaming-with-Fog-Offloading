@@ -1,2 +1,13 @@
-\backcite {Fienup1982}{{1}{1.1}{section.1.1}}
-\backcite {Fienup1982}{{1}{1.1}{section.1.1}}
+\backcite {jung2017rust}{{5}{4}{chapter.4}}
+\backcite {matsakis2014rust}{{5}{4}{chapter.4}}
+\backcite {sharma2020comparison}{{5}{4}{chapter.4}}
+\backcite {akidau2015dataflow}{{5}{4.1}{section.4.1}}
+\backcite {mpeg1996ts}{{6}{4.1}{section.4.1}}
+\backcite {ffmpeg2023docs}{{6}{4.1}{section.4.1}}
+\backcite {nist2013aes}{{6}{4.1}{section.4.1}}
+\backcite {johnson2001ecdsa}{{6}{4.1}{section.4.1}}
+\backcite {sutton2018reinforcement}{{6}{4.1}{section.4.1}}
+\backcite {schulzrinne2003rtp}{{7}{4.2}{section.4.2}}
+\backcite {reed1960polynomial}{{8}{4.2.1}{subsection.4.2.1}}
+\backcite {Fienup1982}{{18}{7.1}{section.7.1}}
+\backcite {Fienup1982}{{18}{7.1}{section.7.1}}

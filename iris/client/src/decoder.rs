@@ -510,8 +510,6 @@ pub fn start(
     let client_ec_key = if let Some(ec_key) = &session_config.client_ec_key {
         ec_key
     } else {
-        error!("Client EC Key is not set.");
-        // return Err("Client EC Key is not set.".into());
         panic!("Client EC Key is not set.");
     };
 
@@ -668,12 +666,6 @@ pub fn start(
                                 // Validate the packet signature, if invalid, skip the packet
                                 if validate_xor_packet(&mut packet, &x509_public_key) {
 
-                                    // Check if the packet is multicast retransmission
-                                    if is_multicast {
-                                        // Increment the multicast retransmissions counter
-                                        counters.increment(ReceiverType::Multicast);
-                                    }
-
                                     // Find the matrix tracker for this packet
                                     for tracker in buffer.iter_mut(){
                                         if packet.matrix == tracker.matrix_index {
@@ -783,6 +775,13 @@ pub fn start(
                                 error!("RetransmissionPacket contained no retransmission type.");
                             }
                         }
+
+                        // Check if the packet is multicast retransmission
+                        if is_multicast {
+                            // Increment the multicast retransmissions counter
+                            counters.increment(ReceiverType::Multicast);
+                        }
+
                     }
                     None => {
                         // no packet set — error or ignore

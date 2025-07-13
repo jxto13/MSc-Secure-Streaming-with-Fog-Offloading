@@ -26,3 +26,1319 @@ parent={},%
 %
 }%
 
+\glsdefs@newdocentry{iris}%
+{%
+name={\acronymfont {\glsentryshort {iris}}},%
+sort={IRIS},%
+type={acronym},%
+first={IRIS},%
+firstplural={IRISs},%
+text={IRIS},%
+plural={IRISs},%
+description={Intelligent Reliable Internet Streaming},%
+descriptionplural={Intelligent Reliable Internet Streaming},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Intelligent Reliable Internet Streaming},%
+longplural={Intelligent Reliable Internet Streamings},%
+short={IRIS},%
+shortplural={IRISs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{tokio}%
+{%
+name={\acronymfont {\glsentryshort {tokio}}},%
+sort={Tokio},%
+type={acronym},%
+first={Tokio},%
+firstplural={Tokios},%
+text={Tokio},%
+plural={Tokios},%
+description={Asynchronous Rust Runtime},%
+descriptionplural={Asynchronous Rust Runtime},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Asynchronous Rust Runtime},%
+longplural={Asynchronous Rust Runtimes},%
+short={Tokio},%
+shortplural={Tokios},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{aes}%
+{%
+name={\acronymfont {\glsentryshort {aes}}},%
+sort={AES},%
+type={acronym},%
+first={AES},%
+firstplural={AESs},%
+text={AES},%
+plural={AESs},%
+description={Advanced Encryption Standard},%
+descriptionplural={Advanced Encryption Standard},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Advanced Encryption Standard},%
+longplural={Advanced Encryption Standards},%
+short={AES},%
+shortplural={AESs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{arm}%
+{%
+name={\acronymfont {\glsentryshort {arm}}},%
+sort={ARM},%
+type={acronym},%
+first={ARM},%
+firstplural={ARMs},%
+text={ARM},%
+plural={ARMs},%
+description={Advanced RISC Machine},%
+descriptionplural={Advanced RISC Machine},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Advanced RISC Machine},%
+longplural={Advanced RISC Machines},%
+short={ARM},%
+shortplural={ARMs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{wifi-aware}%
+{%
+name={\acronymfont {\glsentryshort {wifi-aware}}},%
+sort={Wi-Fi Aware},%
+type={acronym},%
+first={Wi-Fi Aware},%
+firstplural={Wi-Fi Awares},%
+text={Wi-Fi Aware},%
+plural={Wi-Fi Awares},%
+description={Wi-Fi Neighbor Awareness Networking},%
+descriptionplural={Wi-Fi Neighbor Awareness Networking},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Wi-Fi Neighbor Awareness Networking},%
+longplural={Wi-Fi Neighbor Awareness Networkings},%
+short={Wi-Fi Aware},%
+shortplural={Wi-Fi Awares},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{qos}%
+{%
+name={\acronymfont {\glsentryshort {qos}}},%
+sort={QoS},%
+type={acronym},%
+first={QoS},%
+firstplural={QoSs},%
+text={QoS},%
+plural={QoSs},%
+description={Quality of Service},%
+descriptionplural={Quality of Service},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Quality of Service},%
+longplural={Quality of Services},%
+short={QoS},%
+shortplural={QoSs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{grpc}%
+{%
+name={\acronymfont {\glsentryshort {grpc}}},%
+sort={gRPC},%
+type={acronym},%
+first={gRPC},%
+firstplural={gRPCs},%
+text={gRPC},%
+plural={gRPCs},%
+description={Google Remote Procedure Call},%
+descriptionplural={Google Remote Procedure Call},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Google Remote Procedure Call},%
+longplural={Google Remote Procedure Calls},%
+short={gRPC},%
+shortplural={gRPCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{tls}%
+{%
+name={\acronymfont {\glsentryshort {tls}}},%
+sort={TLS},%
+type={acronym},%
+first={TLS},%
+firstplural={TLSs},%
+text={TLS},%
+plural={TLSs},%
+description={Transport Layer Security},%
+descriptionplural={Transport Layer Security},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Transport Layer Security},%
+longplural={Transport Layer Securitys},%
+short={TLS},%
+shortplural={TLSs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{udp}%
+{%
+name={\acronymfont {\glsentryshort {udp}}},%
+sort={UDP},%
+type={acronym},%
+first={UDP},%
+firstplural={UDPs},%
+text={UDP},%
+plural={UDPs},%
+description={User Datagram Protocol},%
+descriptionplural={User Datagram Protocol},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={User Datagram Protocol},%
+longplural={User Datagram Protocols},%
+short={UDP},%
+shortplural={UDPs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{mpeg-ts}%
+{%
+name={\acronymfont {\glsentryshort {mpeg-ts}}},%
+sort={MPEG-TS},%
+type={acronym},%
+first={MPEG-TS},%
+firstplural={MPEG-TSs},%
+text={MPEG-TS},%
+plural={MPEG-TSs},%
+description={Moving Picture Experts Group Transport Stream},%
+descriptionplural={Moving Picture Experts Group Transport Stream},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Moving Picture Experts Group Transport Stream},%
+longplural={Moving Picture Experts Group Transport Streams},%
+short={MPEG-TS},%
+shortplural={MPEG-TSs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{fec}%
+{%
+name={\acronymfont {\glsentryshort {fec}}},%
+sort={FEC},%
+type={acronym},%
+first={FEC},%
+firstplural={FECs},%
+text={FEC},%
+plural={FECs},%
+description={Forward Error Correction},%
+descriptionplural={Forward Error Correction},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Forward Error Correction},%
+longplural={Forward Error Corrections},%
+short={FEC},%
+shortplural={FECs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{rtp}%
+{%
+name={\acronymfont {\glsentryshort {rtp}}},%
+sort={RTP},%
+type={acronym},%
+first={RTP},%
+firstplural={RTPs},%
+text={RTP},%
+plural={RTPs},%
+description={Real-time Transport Protocol},%
+descriptionplural={Real-time Transport Protocol},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Real-time Transport Protocol},%
+longplural={Real-time Transport Protocols},%
+short={RTP},%
+shortplural={RTPs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{pat}%
+{%
+name={\acronymfont {\glsentryshort {pat}}},%
+sort={PAT},%
+type={acronym},%
+first={PAT},%
+firstplural={PATs},%
+text={PAT},%
+plural={PATs},%
+description={Program Association Table},%
+descriptionplural={Program Association Table},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Program Association Table},%
+longplural={Program Association Tables},%
+short={PAT},%
+shortplural={PATs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{pmt}%
+{%
+name={\acronymfont {\glsentryshort {pmt}}},%
+sort={PMT},%
+type={acronym},%
+first={PMT},%
+firstplural={PMTs},%
+text={PMT},%
+plural={PMTs},%
+description={Program Map Table},%
+descriptionplural={Program Map Table},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Program Map Table},%
+longplural={Program Map Tables},%
+short={PMT},%
+shortplural={PMTs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{dwrr}%
+{%
+name={\acronymfont {\glsentryshort {dwrr}}},%
+sort={DWRR},%
+type={acronym},%
+first={DWRR},%
+firstplural={DWRRs},%
+text={DWRR},%
+plural={DWRRs},%
+description={Deficit Weighted Round Robin},%
+descriptionplural={Deficit Weighted Round Robin},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Deficit Weighted Round Robin},%
+longplural={Deficit Weighted Round Robins},%
+short={DWRR},%
+shortplural={DWRRs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{sha-256}%
+{%
+name={\acronymfont {\glsentryshort {sha-256}}},%
+sort={SHA-256},%
+type={acronym},%
+first={SHA-256},%
+firstplural={SHA-256s},%
+text={SHA-256},%
+plural={SHA-256s},%
+description={Secure Hash Algorithm 256-bit},%
+descriptionplural={Secure Hash Algorithm 256-bit},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Secure Hash Algorithm 256-bit},%
+longplural={Secure Hash Algorithm 256-bits},%
+short={SHA-256},%
+shortplural={SHA-256s},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{ecdsa}%
+{%
+name={\acronymfont {\glsentryshort {ecdsa}}},%
+sort={ECDSA},%
+type={acronym},%
+first={ECDSA},%
+firstplural={ECDSAs},%
+text={ECDSA},%
+plural={ECDSAs},%
+description={Elliptic Curve Digital Signature Algorithm},%
+descriptionplural={Elliptic Curve Digital Signature Algorithm},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Elliptic Curve Digital Signature Algorithm},%
+longplural={Elliptic Curve Digital Signature Algorithms},%
+short={ECDSA},%
+shortplural={ECDSAs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{hsm}%
+{%
+name={\acronymfont {\glsentryshort {hsm}}},%
+sort={HSM},%
+type={acronym},%
+first={HSM},%
+firstplural={HSMs},%
+text={HSM},%
+plural={HSMs},%
+description={Hardware Security Module},%
+descriptionplural={Hardware Security Module},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Hardware Security Module},%
+longplural={Hardware Security Modules},%
+short={HSM},%
+shortplural={HSMs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{cbc}%
+{%
+name={\acronymfont {\glsentryshort {cbc}}},%
+sort={CBC},%
+type={acronym},%
+first={CBC},%
+firstplural={CBCs},%
+text={CBC},%
+plural={CBCs},%
+description={Cipher Block Chaining},%
+descriptionplural={Cipher Block Chaining},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Cipher Block Chaining},%
+longplural={Cipher Block Chainings},%
+short={CBC},%
+shortplural={CBCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{ieee}%
+{%
+name={\acronymfont {\glsentryshort {ieee}}},%
+sort={IEEE},%
+type={acronym},%
+first={IEEE},%
+firstplural={IEEEs},%
+text={IEEE},%
+plural={IEEEs},%
+description={Institute of Electrical and Electronics Engineers},%
+descriptionplural={Institute of Electrical and Electronics Engineers},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Institute of Electrical and Electronics Engineers},%
+longplural={Institute of Electrical and Electronics Engineerss},%
+short={IEEE},%
+shortplural={IEEEs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{nan}%
+{%
+name={\acronymfont {\glsentryshort {nan}}},%
+sort={NAN},%
+type={acronym},%
+first={NAN},%
+firstplural={NANs},%
+text={NAN},%
+plural={NANs},%
+description={Neighbor Awareness Networking},%
+descriptionplural={Neighbor Awareness Networking},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Neighbor Awareness Networking},%
+longplural={Neighbor Awareness Networkings},%
+short={NAN},%
+shortplural={NANs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{mac}%
+{%
+name={\acronymfont {\glsentryshort {mac}}},%
+sort={MAC},%
+type={acronym},%
+first={MAC},%
+firstplural={MACs},%
+text={MAC},%
+plural={MACs},%
+description={Media Access Control},%
+descriptionplural={Media Access Control},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Media Access Control},%
+longplural={Media Access Controls},%
+short={MAC},%
+shortplural={MACs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{arq}%
+{%
+name={\acronymfont {\glsentryshort {arq}}},%
+sort={ARQ},%
+type={acronym},%
+first={ARQ},%
+firstplural={ARQs},%
+text={ARQ},%
+plural={ARQs},%
+description={Automatic Repeat Request},%
+descriptionplural={Automatic Repeat Request},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Automatic Repeat Request},%
+longplural={Automatic Repeat Requests},%
+short={ARQ},%
+shortplural={ARQs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{igmp}%
+{%
+name={\acronymfont {\glsentryshort {igmp}}},%
+sort={IGMP},%
+type={acronym},%
+first={IGMP},%
+firstplural={IGMPs},%
+text={IGMP},%
+plural={IGMPs},%
+description={Internet Group Management Protocol},%
+descriptionplural={Internet Group Management Protocol},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Internet Group Management Protocol},%
+longplural={Internet Group Management Protocols},%
+short={IGMP},%
+shortplural={IGMPs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{tcp}%
+{%
+name={\acronymfont {\glsentryshort {tcp}}},%
+sort={TCP},%
+type={acronym},%
+first={TCP},%
+firstplural={TCPs},%
+text={TCP},%
+plural={TCPs},%
+description={Transmission Control Protocol},%
+descriptionplural={Transmission Control Protocol},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Transmission Control Protocol},%
+longplural={Transmission Control Protocols},%
+short={TCP},%
+shortplural={TCPs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{rsa}%
+{%
+name={\acronymfont {\glsentryshort {rsa}}},%
+sort={RSA},%
+type={acronym},%
+first={RSA},%
+firstplural={RSAs},%
+text={RSA},%
+plural={RSAs},%
+description={Rivest-Shamir-Adleman},%
+descriptionplural={Rivest-Shamir-Adleman},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Rivest-Shamir-Adleman},%
+longplural={Rivest-Shamir-Adlemans},%
+short={RSA},%
+shortplural={RSAs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{ntp}%
+{%
+name={\acronymfont {\glsentryshort {ntp}}},%
+sort={NTP},%
+type={acronym},%
+first={NTP},%
+firstplural={NTPs},%
+text={NTP},%
+plural={NTPs},%
+description={Network Time Protocol},%
+descriptionplural={Network Time Protocol},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Network Time Protocol},%
+longplural={Network Time Protocols},%
+short={NTP},%
+shortplural={NTPs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{mtu}%
+{%
+name={\acronymfont {\glsentryshort {mtu}}},%
+sort={MTU},%
+type={acronym},%
+first={MTU},%
+firstplural={MTUs},%
+text={MTU},%
+plural={MTUs},%
+description={Maximum Transmission Unit},%
+descriptionplural={Maximum Transmission Unit},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Maximum Transmission Unit},%
+longplural={Maximum Transmission Units},%
+short={MTU},%
+shortplural={MTUs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{xor}%
+{%
+name={\acronymfont {\glsentryshort {xor}}},%
+sort={XOR},%
+type={acronym},%
+first={XOR},%
+firstplural={XORs},%
+text={XOR},%
+plural={XORs},%
+description={Exclusive OR},%
+descriptionplural={Exclusive OR},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Exclusive OR},%
+longplural={Exclusive ORs},%
+short={XOR},%
+shortplural={XORs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{protobuf}%
+{%
+name={\acronymfont {\glsentryshort {protobuf}}},%
+sort={Protobuf},%
+type={acronym},%
+first={Protobuf},%
+firstplural={Protobufs},%
+text={Protobuf},%
+plural={Protobufs},%
+description={Protocol Buffers},%
+descriptionplural={Protocol Buffers},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Protocol Buffers},%
+longplural={Protocol Bufferss},%
+short={Protobuf},%
+shortplural={Protobufs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{dqn}%
+{%
+name={\acronymfont {\glsentryshort {dqn}}},%
+sort={DQN},%
+type={acronym},%
+first={DQN},%
+firstplural={DQNs},%
+text={DQN},%
+plural={DQNs},%
+description={Deep Q-Network},%
+descriptionplural={Deep Q-Network},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Deep Q-Network},%
+longplural={Deep Q-Networks},%
+short={DQN},%
+shortplural={DQNs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{relu}%
+{%
+name={\acronymfont {\glsentryshort {relu}}},%
+sort={ReLU},%
+type={acronym},%
+first={ReLU},%
+firstplural={ReLUs},%
+text={ReLU},%
+plural={ReLUs},%
+description={Rectified Linear Unit},%
+descriptionplural={Rectified Linear Unit},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Rectified Linear Unit},%
+longplural={Rectified Linear Units},%
+short={ReLU},%
+shortplural={ReLUs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{gps}%
+{%
+name={\acronymfont {\glsentryshort {gps}}},%
+sort={GPS},%
+type={acronym},%
+first={GPS},%
+firstplural={GPSs},%
+text={GPS},%
+plural={GPSs},%
+description={Global Positioning System},%
+descriptionplural={Global Positioning System},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Global Positioning System},%
+longplural={Global Positioning Systems},%
+short={GPS},%
+shortplural={GPSs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{qr}%
+{%
+name={\acronymfont {\glsentryshort {qr}}},%
+sort={QR},%
+type={acronym},%
+first={QR},%
+firstplural={QRs},%
+text={QR},%
+plural={QRs},%
+description={Quick Response},%
+descriptionplural={Quick Response},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Quick Response},%
+longplural={Quick Responses},%
+short={QR},%
+shortplural={QRs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{nfc}%
+{%
+name={\acronymfont {\glsentryshort {nfc}}},%
+sort={NFC},%
+type={acronym},%
+first={NFC},%
+firstplural={NFCs},%
+text={NFC},%
+plural={NFCs},%
+description={Near Field Communication},%
+descriptionplural={Near Field Communication},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Near Field Communication},%
+longplural={Near Field Communications},%
+short={NFC},%
+shortplural={NFCs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{pin}%
+{%
+name={\acronymfont {\glsentryshort {pin}}},%
+sort={PIN},%
+type={acronym},%
+first={PIN},%
+firstplural={PINs},%
+text={PIN},%
+plural={PINs},%
+description={Personal Identification Number},%
+descriptionplural={Personal Identification Number},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Personal Identification Number},%
+longplural={Personal Identification Numbers},%
+short={PIN},%
+shortplural={PINs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{ecdh}%
+{%
+name={\acronymfont {\glsentryshort {ecdh}}},%
+sort={ECDH},%
+type={acronym},%
+first={ECDH},%
+firstplural={ECDHs},%
+text={ECDH},%
+plural={ECDHs},%
+description={Elliptic Curve Diffie-Hellman},%
+descriptionplural={Elliptic Curve Diffie-Hellman},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Elliptic Curve Diffie-Hellman},%
+longplural={Elliptic Curve Diffie-Hellmans},%
+short={ECDH},%
+shortplural={ECDHs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{rssi}%
+{%
+name={\acronymfont {\glsentryshort {rssi}}},%
+sort={RSSI},%
+type={acronym},%
+first={RSSI},%
+firstplural={RSSIs},%
+text={RSSI},%
+plural={RSSIs},%
+description={Received Signal Strength Indicator},%
+descriptionplural={Received Signal Strength Indicator},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Received Signal Strength Indicator},%
+longplural={Received Signal Strength Indicators},%
+short={RSSI},%
+shortplural={RSSIs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{mio}%
+{%
+name={\acronymfont {\glsentryshort {mio}}},%
+sort={Mio},%
+type={acronym},%
+first={Mio},%
+firstplural={Mios},%
+text={Mio},%
+plural={Mios},%
+description={Metal IO},%
+descriptionplural={Metal IO},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Metal IO},%
+longplural={Metal IOs},%
+short={Mio},%
+shortplural={Mios},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{dos}%
+{%
+name={\acronymfont {\glsentryshort {dos}}},%
+sort={DoS},%
+type={acronym},%
+first={DoS},%
+firstplural={DoSs},%
+text={DoS},%
+plural={DoSs},%
+description={Denial of Service},%
+descriptionplural={Denial of Service},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Denial of Service},%
+longplural={Denial of Services},%
+short={DoS},%
+shortplural={DoSs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{hmac}%
+{%
+name={\acronymfont {\glsentryshort {hmac}}},%
+sort={HMAC},%
+type={acronym},%
+first={HMAC},%
+firstplural={HMACs},%
+text={HMAC},%
+plural={HMACs},%
+description={Hash-based Message Authentication Code},%
+descriptionplural={Hash-based Message Authentication Code},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Hash-based Message Authentication Code},%
+longplural={Hash-based Message Authentication Codes},%
+short={HMAC},%
+shortplural={HMACs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{crl}%
+{%
+name={\acronymfont {\glsentryshort {crl}}},%
+sort={CRL},%
+type={acronym},%
+first={CRL},%
+firstplural={CRLs},%
+text={CRL},%
+plural={CRLs},%
+description={Certificate Revocation List},%
+descriptionplural={Certificate Revocation List},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Certificate Revocation List},%
+longplural={Certificate Revocation Lists},%
+short={CRL},%
+shortplural={CRLs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{ocsp}%
+{%
+name={\acronymfont {\glsentryshort {ocsp}}},%
+sort={OCSP},%
+type={acronym},%
+first={OCSP},%
+firstplural={OCSPs},%
+text={OCSP},%
+plural={OCSPs},%
+description={Online Certificate Status Protocol},%
+descriptionplural={Online Certificate Status Protocol},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Online Certificate Status Protocol},%
+longplural={Online Certificate Status Protocols},%
+short={OCSP},%
+shortplural={OCSPs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{ffmpeg}%
+{%
+name={\acronymfont {\glsentryshort {ffmpeg}}},%
+sort={FFmpeg},%
+type={acronym},%
+first={FFmpeg},%
+firstplural={FFmpegs},%
+text={FFmpeg},%
+plural={FFmpegs},%
+description={Fast Forward Moving Picture Experts Group},%
+descriptionplural={Fast Forward Moving Picture Experts Group},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Fast Forward Moving Picture Experts Group},%
+longplural={Fast Forward Moving Picture Experts Groups},%
+short={FFmpeg},%
+shortplural={FFmpegs},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{prometheus}%
+{%
+name={\acronymfont {\glsentryshort {prometheus}}},%
+sort={Prometheus},%
+type={acronym},%
+first={Prometheus},%
+firstplural={Prometheuss},%
+text={Prometheus},%
+plural={Prometheuss},%
+description={Monitoring System and Time Series Database},%
+descriptionplural={Monitoring System and Time Series Database},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Monitoring System and Time Series Database},%
+longplural={Monitoring System and Time Series Databases},%
+short={Prometheus},%
+shortplural={Prometheuss},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{grafana}%
+{%
+name={\acronymfont {\glsentryshort {grafana}}},%
+sort={Grafana},%
+type={acronym},%
+first={Grafana},%
+firstplural={Grafanas},%
+text={Grafana},%
+plural={Grafanas},%
+description={Analytics and Interactive Visualization Platform},%
+descriptionplural={Analytics and Interactive Visualization Platform},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Analytics and Interactive Visualization Platform},%
+longplural={Analytics and Interactive Visualization Platforms},%
+short={Grafana},%
+shortplural={Grafanas},%
+counter={page},%
+parent={},%
+%
+}%
+
+\glsdefs@newdocentry{osi}%
+{%
+name={\acronymfont {\glsentryshort {osi}}},%
+sort={OSI},%
+type={acronym},%
+first={OSI},%
+firstplural={OSIs},%
+text={OSI},%
+plural={OSIs},%
+description={Open Systems Interconnection},%
+descriptionplural={Open Systems Interconnection},%
+symbol={\relax },%
+symbolplural={\relax },%
+user1={},%
+user2={},%
+user3={},%
+user4={},%
+user5={},%
+user6={},%
+long={Open Systems Interconnection},%
+longplural={Open Systems Interconnections},%
+short={OSI},%
+shortplural={OSIs},%
+counter={page},%
+parent={},%
+%
+}%
+

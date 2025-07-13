@@ -3,7 +3,7 @@
 \providecommand\hyper@newdestlabel[2]{}
 \providecommand\HyField@AuxAddToFields[1]{}
 \providecommand\HyField@AuxAddToCoFields[2]{}
-\providecommand\babel@aux[2]{}
+\providecommand \babel@aux [2]{\global \let \babel@toc \@gobbletwo }
 \@nameuse{bbl@beforestart}
 \catcode `"\active 
 \bibstyle{IEEEtranN}
@@ -30,50 +30,179 @@
 \@writefile{toc}{\contentsline {chapter}{Table of Contents}{iv}{dummy.4}\protected@file@percent }
 \@writefile{toc}{\setcounter {tocdepth}{3}}
 \@writefile{toc}{\vspace  {0.3cm}}
-\@writefile{toc}{\contentsline {chapter}{List of Figures}{v}{dummy.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{List of Figures}{vi}{dummy.5}\protected@file@percent }
 \@writefile{toc}{\vspace  {0.3cm}}
-\citation{Fienup1982}
-\citation{Fienup1982}
 \pp@pagectr{footnote}{1}{9}{1}
-\@writefile{toc}{\contentsline {chapter}{\numberline {1}Chapter Title Here}{1}{chapter.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ChapterTemplate}{{1}{1}{Chapter Title Here}{chapter.1}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {1.1}Citations}{1}{section.1.1}\protected@file@percent }
-\@writefile{brf}{\backcite{Fienup1982}{{1}{1.1}{section.1.1}}}
-\@writefile{brf}{\backcite{Fienup1982}{{1}{1.1}{section.1.1}}}
-\@writefile{tdo}{\contentsline {todo}{\fcolorbox {red}{red!25}{\textcolor {red!25}{o}}\ You can make personal notes like this}{1}{section*.3}\protected@file@percent }
-\pgfsyspdfmark {pgfid1}{15922778}{28712866}
+\newlabel{Introduction}{{1}{1}{Introduction}{chapter.1}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {1.1}Motivation}{1}{section.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.2}Context}{1}{section.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.3}Problem}{2}{section.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {1.4}Strategy}{2}{section.1.4}\protected@file@percent }
+\pp@pagectr{footnote}{2}{11}{3}
+\@writefile{toc}{\contentsline {chapter}{\numberline {2}Background Work}{3}{chapter.2}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{BackgroundWork}{{2}{3}{Background Work}{chapter.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.1}Technologies}{3}{section.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.1}Secure Communication: gRPC, TLS, Self-Signed CA}{3}{subsection.2.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.2}MPEG-TS Streaming over UDP}{3}{subsection.2.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.3}Forward Error Correction: Reed-Solomon}{3}{subsection.2.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.4}Encryption: AES-256 with Rotating Keys}{3}{subsection.2.1.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.5}Signatures: ECDSA p256}{3}{subsection.2.1.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.6}Metrics: Prometheus and Grafana}{3}{subsection.2.1.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.7}Dynamic Offloading: Wi-Fi Aware}{3}{subsection.2.1.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.8}Serialization: Protobuf}{3}{subsection.2.1.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.9}Timers: Tokio Runtime}{3}{subsection.2.1.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.10}I/O: Mio}{3}{subsection.2.1.10}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.11}Communication: Blocking Channels}{3}{subsection.2.1.11}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.12}Memory Efficiency: Matrix Buffers}{3}{subsection.2.1.12}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.13}Testing: Linux Network Namespaces and Traffic Control}{3}{subsection.2.1.13}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}Non-State-of-the-Art Systems}{3}{section.2.2}\protected@file@percent }
+\pp@pagectr{footnote}{3}{12}{4}
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}State of the Art}{4}{chapter.3}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{State of the Art}{{3}{4}{State of the Art}{chapter.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}Existing Secure Streaming Protocols}{4}{section.3.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.2}Forward Error Correction}{4}{section.3.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.3}Encryption and Signatures}{4}{section.3.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.4}Dynamic Offloading}{4}{section.3.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.5}Bandwidth Management}{4}{section.3.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.6}Protobuf and Runtime Management}{4}{section.3.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.7}Testing and Development}{4}{section.3.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {3.8}Unique Contributions}{4}{section.3.8}\protected@file@percent }
+\citation{jung2017rust,matsakis2014rust}
+\citation{sharma2020comparison}
+\citation{akidau2015dataflow}
+\citation{mpeg1996ts,ffmpeg2023docs}
+\pp@pagectr{footnote}{4}{13}{5}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Design and Implementation}{5}{chapter.4}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{DesignAndImplementation}{{4}{5}{Design and Implementation}{chapter.4}{}}
+\@writefile{brf}{\backcite{jung2017rust}{{5}{4}{chapter.4}}}
+\@writefile{brf}{\backcite{matsakis2014rust}{{5}{4}{chapter.4}}}
+\@writefile{brf}{\backcite{sharma2020comparison}{{5}{4}{chapter.4}}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}System Architecture}{5}{section.4.1}\protected@file@percent }
+\@writefile{brf}{\backcite{akidau2015dataflow}{{5}{4.1}{section.4.1}}}
+\citation{nist2013aes,johnson2001ecdsa}
+\citation{sutton2018reinforcement}
+\citation{schulzrinne2003rtp}
+\@writefile{brf}{\backcite{mpeg1996ts}{{6}{4.1}{section.4.1}}}
+\@writefile{brf}{\backcite{ffmpeg2023docs}{{6}{4.1}{section.4.1}}}
+\@writefile{brf}{\backcite{nist2013aes}{{6}{4.1}{section.4.1}}}
+\@writefile{brf}{\backcite{johnson2001ecdsa}{{6}{4.1}{section.4.1}}}
+\@writefile{brf}{\backcite{sutton2018reinforcement}{{6}{4.1}{section.4.1}}}
+\citation{reed1960polynomial}
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}Protocol Design}{7}{section.4.2}\protected@file@percent }
+\@writefile{brf}{\backcite{schulzrinne2003rtp}{{7}{4.2}{section.4.2}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Transmission Matrix and Adjustable Forward Error Correction}{7}{subsection.4.2.1}\protected@file@percent }
+\newlabel{sec:transmission-matrix}{{4.2.1}{7}{Transmission Matrix and Adjustable Forward Error Correction}{subsection.4.2.1}{}}
+\@writefile{brf}{\backcite{reed1960polynomial}{{8}{4.2.1}{subsection.4.2.1}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}Space-Efficient Client Reports and Acknowledgment Mechanisms}{8}{subsection.4.2.2}\protected@file@percent }
+\newlabel{sec:space-efficient-reports}{{4.2.2}{8}{Space-Efficient Client Reports and Acknowledgment Mechanisms}{subsection.4.2.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}Multicast Network Coding and Source Coding}{9}{subsection.4.2.3}\protected@file@percent }
+\newlabel{sec:multicast-network-coding}{{4.2.3}{9}{Multicast Network Coding and Source Coding}{subsection.4.2.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.4}WiFi Multicast Retransmission Algorithms}{9}{subsection.4.2.4}\protected@file@percent }
+\newlabel{sec:multicast-retransmission}{{4.2.4}{9}{WiFi Multicast Retransmission Algorithms}{subsection.4.2.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.5}Unicast Retransmission and Client-Specific Recovery}{10}{subsection.4.2.5}\protected@file@percent }
+\newlabel{sec:unicast-retransmission}{{4.2.5}{10}{Unicast Retransmission and Client-Specific Recovery}{subsection.4.2.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.6}Network Scheduler Framework and Pipeline Architecture}{11}{subsection.4.2.6}\protected@file@percent }
+\newlabel{sec:network-scheduler}{{4.2.6}{11}{Network Scheduler Framework and Pipeline Architecture}{subsection.4.2.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.3}Advanced Protocol Implementation and Security Architecture}{11}{section.4.3}\protected@file@percent }
+\newlabel{sec:advanced-protocol-security}{{4.3}{11}{Advanced Protocol Implementation and Security Architecture}{section.4.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}Double Signature Schema and Stream Integrity}{11}{subsection.4.3.1}\protected@file@percent }
+\newlabel{sec:double-signature}{{4.3.1}{11}{Double Signature Schema and Stream Integrity}{subsection.4.3.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}Edge Cloud Security and Trust Management}{12}{subsection.4.3.2}\protected@file@percent }
+\newlabel{sec:edge-cloud-security}{{4.3.2}{12}{Edge Cloud Security and Trust Management}{subsection.4.3.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.3}Threat Model and Attack Mitigation}{13}{subsection.4.3.3}\protected@file@percent }
+\newlabel{sec:threat-model-mitigation}{{4.3.3}{13}{Threat Model and Attack Mitigation}{subsection.4.3.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.4}Mobility Support and Seamless Handoff}{13}{subsection.4.3.4}\protected@file@percent }
+\newlabel{sec:mobility-support}{{4.3.4}{13}{Mobility Support and Seamless Handoff}{subsection.4.3.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.5}Performance Optimization and Resource Management}{14}{subsection.4.3.5}\protected@file@percent }
+\newlabel{sec:performance-resource-optimization}{{4.3.5}{14}{Performance Optimization and Resource Management}{subsection.4.3.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}Implementation Summary and Integration}{15}{section.4.4}\protected@file@percent }
+\newlabel{sec:implementation-summary}{{4.4}{15}{Implementation Summary and Integration}{section.4.4}{}}
+\pp@pagectr{footnote}{5}{24}{16}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Evaluation}{16}{chapter.5}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{Evaluation}{{5}{16}{Evaluation}{chapter.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Performance Results}{16}{section.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.1}Latency, Throughput, and Reliability}{16}{subsection.5.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.2}Adaptive FEC and Retransmission Scheduling}{16}{subsection.5.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.3}Multicast Scalability}{16}{subsection.5.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.4}Wi-Fi Aware Offloading Efficiency}{16}{subsection.5.1.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.5}Authentication and Roaming}{16}{subsection.5.1.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.6}Tokio and Mio Runtime Efficiency}{16}{subsection.5.1.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.7}Bandwidth Management}{16}{subsection.5.1.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.8}Memory Optimization}{16}{subsection.5.1.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.9}Testing with Packet Loss (tc)}{16}{subsection.5.1.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}Comparison}{16}{section.5.2}\protected@file@percent }
+\pp@pagectr{footnote}{6}{25}{17}
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Conclusion}{17}{chapter.6}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{Conclusion}{{6}{17}{Conclusion}{chapter.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.1}Summary}{17}{section.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.2}Future Work}{17}{section.6.2}\protected@file@percent }
+\citation{Fienup1982}
+\citation{Fienup1982}
+\pp@pagectr{footnote}{7}{26}{18}
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}Chapter Title Here}{18}{chapter.7}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{ChapterTemplate}{{7}{18}{Chapter Title Here}{chapter.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.1}Citations}{18}{section.7.1}\protected@file@percent }
+\@writefile{brf}{\backcite{Fienup1982}{{18}{7.1}{section.7.1}}}
+\@writefile{brf}{\backcite{Fienup1982}{{18}{7.1}{section.7.1}}}
+\@writefile{tdo}{\contentsline {todo}{\fcolorbox {red}{red!25}{\textcolor {red!25}{o}}\ You can make personal notes like this}{18}{section*.3}\protected@file@percent }
+\pgfsyspdfmark {pgfid1}{16321883}{28712866}
 \pgfsyspdfmark {pgfid4}{35871284}{28574509}
 \pgfsyspdfmark {pgfid5}{37719579}{28433773}
-\@writefile{toc}{\contentsline {section}{\numberline {1.2}Figures}{1}{section.1.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1.1}{\ignorespaces FCUP's fat cat.}}{1}{figure.caption.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.2}Figures}{18}{section.7.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7.1}{\ignorespaces FCUP's fat cat.}}{18}{figure.caption.4}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:FCUPfatCat}{{1.1}{1}{FCUP's fat cat}{figure.caption.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1.2}{\ignorespaces FCUP's fat cat doing what cats do.}}{2}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:FCUPfatcatSide1}{{1.2}{2}{FCUP's fat cat doing what cats do}{figure.caption.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1.3}{\ignorespaces FCUP's fat cat.}}{2}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:FCUPfatcatSide2}{{1.3}{2}{FCUP's fat cat}{figure.caption.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1.4}{\ignorespaces FCUP's fat cat.}}{2}{figure.caption.6}\protected@file@percent }
-\newlabel{fig:FCUPfatcatSide3}{{1.4}{2}{FCUP's fat cat}{figure.caption.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {1.5}{\ignorespaces FCUP's fat cat.}}{2}{figure.caption.7}\protected@file@percent }
-\newlabel{fig:FCUPfatcatSide4}{{1.5}{2}{FCUP's fat cat}{figure.caption.7}{}}
+\newlabel{fig:FCUPfatCat}{{7.1}{18}{FCUP's fat cat}{figure.caption.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.2}{\ignorespaces FCUP's fat cat doing what cats do.}}{19}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:FCUPfatcatSide1}{{7.2}{19}{FCUP's fat cat doing what cats do}{figure.caption.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.3}{\ignorespaces FCUP's fat cat.}}{19}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:FCUPfatcatSide2}{{7.3}{19}{FCUP's fat cat}{figure.caption.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.4}{\ignorespaces FCUP's fat cat.}}{19}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:FCUPfatcatSide3}{{7.4}{19}{FCUP's fat cat}{figure.caption.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.5}{\ignorespaces FCUP's fat cat.}}{19}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:FCUPfatcatSide4}{{7.5}{19}{FCUP's fat cat}{figure.caption.7}{}}
 \transparent@use{.5}
-\@writefile{toc}{\contentsline {subsection}{\numberline {1.2.1}SVGs}{3}{subsection.1.2.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1.6}{\ignorespaces The test SVG image, as it is seen in Inkscape}}{3}{figure.caption.8}\protected@file@percent }
-\newlabel{fig:normal}{{1.6}{3}{The test SVG image, as it is seen in Inkscape}{figure.caption.8}{}}
-\newlabel{eq:emc2}{{1.1}{3}{SVGs}{equation.1.2.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {1.2.1.1}Automatic export}{3}{subsubsection.1.2.1.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {1.7}{\ignorespaces The test image, exported to PDF \emph  {with} \LaTeX  \ option.}}{4}{figure.caption.9}\protected@file@percent }
-\newlabel{fig:pdflatex}{{1.7}{4}{The test image, exported to PDF \emph {with} \LaTeX \ option}{figure.caption.9}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {1.3}Math}{4}{section.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2.1}SVGs}{20}{subsection.7.2.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7.6}{\ignorespaces The test SVG image, as it is seen in Inkscape}}{20}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:normal}{{7.6}{20}{The test SVG image, as it is seen in Inkscape}{figure.caption.8}{}}
+\newlabel{eq:emc2}{{7.1}{20}{SVGs}{equation.7.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.2.1.1}Automatic export}{20}{subsubsection.7.2.1.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7.7}{\ignorespaces The test image, exported to PDF \emph  {with} \LaTeX  \ option.}}{21}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:pdflatex}{{7.7}{21}{The test image, exported to PDF \emph {with} \LaTeX \ option}{figure.caption.9}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.3}Math}{21}{section.7.3}\protected@file@percent }
 \bibdata{Bibliography}
-\@writefile{toc}{\contentsline {section}{\numberline {1.4}Abreviations}{5}{section.1.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.4}Abreviations}{22}{section.7.4}\protected@file@percent }
 \@writefile{toc}{\vspace  {0.5cm}}
-\@writefile{toc}{\contentsline {chapter}{Bibliography}{5}{dummy.6}\protected@file@percent }
-\bibcite{Fienup1982}{{1}{}{{}}{{}}}
-\newlabel{AppendixX}{{6}{7}{Appendix Title Here}{appendix*.11}{}}
+\@writefile{toc}{\contentsline {chapter}{Bibliography}{22}{dummy.6}\protected@file@percent }
+\bibcite{jung2017rust}{{1}{}{{}}{{}}}
+\bibcite{matsakis2014rust}{{2}{}{{}}{{}}}
+\bibcite{klabnik2018rust}{{3}{}{{}}{{}}}
+\bibcite{sharma2020comparison}{{4}{}{{}}{{}}}
+\bibcite{akidau2015dataflow}{{5}{}{{}}{{}}}
+\bibcite{mpeg1996ts}{{6}{}{{}}{{}}}
+\bibcite{ffmpeg2023docs}{{7}{}{{}}{{}}}
+\bibcite{nist2013aes}{{8}{}{{}}{{}}}
+\bibcite{johnson2001ecdsa}{{9}{}{{}}{{}}}
+\bibcite{sutton2018reinforcement}{{10}{}{{}}{{}}}
+\bibcite{schulzrinne2003rtp}{{11}{}{{}}{{}}}
+\bibcite{reed1960polynomial}{{12}{}{{}}{{}}}
+\bibcite{Fienup1982}{{13}{}{{}}{{}}}
+\newlabel{AppendixX}{{6}{25}{Appendix Title Here}{appendix*.11}{}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
 \ttl@finishall
 \gdef\svg@ink@ver@settings{{\m@ne }{inkscape}{\m@ne }}
-\gdef \@abspage@last{15}
+\gdef \@abspage@last{33}
