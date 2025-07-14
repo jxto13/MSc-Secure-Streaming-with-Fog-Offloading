@@ -11,149 +11,112 @@
 % For referencing this chapter elsewhere, use \ref{ChapterTemplate}
 \label{DesignAndImplementation}
 
-This chapter presents the detailed design and implementation of the IRIS system, building upon the system requirements and architectural principles established in Chapter~\ref{Introduction}. To address the challenges of high-density Wi-Fi environments identified in the literature review (Chapter~\ref{State of the Art}), a secure livestreaming framework with fog offloading capabilities was developed. Implementation leverages Rust, chosen for its memory safety and concurrency guarantees without a garbage collector, which reduces common vulnerabilities such as buffer overflows and data races \cite{jung2017rust, matsakis2014rust}. In comparison to C++, Rust’s ownership model and strict compile-time checks help prevent undefined behavior and improve reliability in complex, high-performance systems \cite{sharma2020comparison}.
+This chapter presents the design and implementation of the IRIS system, building on the theoretical foundations established in Chapter~\ref{BackgroundWork} and addressing research gaps identified in Chapter~\ref{State of the Art}. The implementation integrates the technologies and concepts from the background work into a cohesive system optimized for secure livestreaming in high-density wireless environments.
+
+The IRIS architecture leverages Rust's memory safety guarantees and zero-cost abstractions to implement a high-performance streaming system that combines two-dimensional Reed-Solomon FEC, reinforcement learning adaptation, and certificate-based security in a unified framework.
 
 \section{System Architecture}
 
-The IRIS system implements a distributed microservices architecture comprising three interdependent components that collectively address the scalability and fault tolerance requirements outlined in Chapter~\ref{Introduction}. The central streaming server operates as a multi-threaded coordinator managing concurrent client sessions using Rust's Tokio runtime. The lightweight client library supports hardware-accelerated AES-256 decryption on mobile devices. The Android application implements Wi-Fi Aware mesh networking supporting automatic peer discovery and seamless handoff between infrastructure and peer-to-peer connections.
+IRIS implements the theoretical foundations from Chapter~\ref{BackgroundWork} through a distributed architecture with loosely coupled components that can scale independently while maintaining system coherence. The implementation integrates two-dimensional Reed-Solomon FEC, Q-learning adaptation, and PKI-based security through well-defined interfaces.
 
-The hub-and-spoke topology enables efficient one-to-many multicast distribution while maintaining individual client quality of service (QoS) guarantees through dedicated unicast channels for error recovery, as detailed in the evaluation results (Chapter~\ref{Evaluation}). The architecture implements strict separation between control plane and data plane operations, where control messages utilize secure gRPC channels over TLS 1.3 while data transmission employs optimized UDP multicast with custom headers. The producer-consumer pipeline architecture processes MPEG-TS streams through sequential stages: ingestion, segmentation, forward error correction (FEC) encoding, encryption, transmission scheduling, and delivery \cite{akidau2015dataflow}.
+\begin{figure}
+	\centering
+	\includegraphics[width=1\linewidth]
+	{DesignAndImplementation/system.png}
+	\caption{IRIS system architecture showing server-client interaction and network infrastructure.}
+\end{figure}%
 
-The source handler implements a robust ingestion mechanism supporting multiple input formats including MPEG-TS over UDP multicast, Real-time Transport Protocol (RTP) streams, and file-based sources with automatic format detection and transcoding capabilities through Restreamer integration \cite{mpeg1996ts,ffmpeg2023docs}. The module performs real-time stream validation ensuring compliance with MPEG-TS specifications, packet continuity counter verification, and Program Association Table (PAT) and Program Map Table (PMT) parsing for service identification. Critical to operational resilience, the source handler maintains client session state independently of input stream availability, enabling uninterrupted service during encoder failures, source transitions, or maintenance periods without requiring client reauthentication or reconnection.
+\subsection{Server Architecture}
+The server separates security operations from data processing through distinct control and data planes, where control plane prioritizes security and correctness while data plane optimizes for throughput and latency.
 
-The network scheduler implements a multi-tier queuing system with three priority levels: high-priority control messages (authentication, session management), medium-priority original data packets, and low-priority redundancy packets (FEC, retransmissions). The scheduler uses Deficit Weighted Round Robin (DWRR) algorithms ensuring fairness across clients while maintaining real-time delivery guarantees, with configurable per-client bandwidth thresholds and implementing congestion control through adaptive packet pacing based on receiver feedback. The membership manager maintains persistent client state using SHA-256 hashes of Elliptic Curve Digital Signature Algorithm (ECDSA) P-256 public keys as unique identifiers, enabling client roaming across network interfaces while preserving session continuity and security context, supporting seamless handoff between Wi-Fi networks, cellular connections, and peer-to-peer links as demonstrated in the mobility evaluation scenarios (Chapter~\ref{Evaluation}).
+Three gRPC services over TLS 1.3 handle control operations, with \texttt{CertificateService} implementing CA functionality for client enrollment, \texttt{KeyService} managing session keys with operational parameters, and \texttt{NtsService} providing time synchronization \cite{franke2020network}.
 
-The cryptographic module implements a hierarchical certificate authority supporting automated certificate lifecycle management with configurable validity periods and automatic renewal processes, and secure key rotation using ECDSA P-256 curves with Hardware Security Module (HSM) support where available. The module provides AES-256-CBC encryption for data payload protection and ECDSA digital signatures for message authentication through vectorized cryptographic operations \cite{nist2013aes,johnson2001ecdsa}. The reinforcement learning module implements a Q-learning agent with multi-dimensional state space capturing network conditions (packet loss, bandwidth utilization, client distribution) and action space controlling FEC parameters, retransmission timing, and bandwidth allocation policies, providing improved quality-of-experience metrics compared to static configuration as detailed in Chapter~\ref{Evaluation} \cite{sutton2018reinforcement}.
+Data plane centers on the processing pipeline transforming video streams into FEC-protected, encrypted packets, where \texttt{MatrixHistory} implements the two-dimensional FEC scheme described in Chapter~\ref{BackgroundWork}, maintaining circular buffers for retransmission support, while AES-256-GCM provides stream encryption with confidentiality and authenticity \cite{dworkin2007recommendation}.
 
+\texttt{Membership Manager} tracks sessions and aggregates quality reports, while \texttt{Reinforcement Learning Module} implements Q-learning as detailed in Chapter~\ref{BackgroundWork}, using feedback to adjust FEC redundancy and streaming parameters.
+
+\subsubsection{Source Handler and Pipeline Processing}
+The \texttt{Source Handler} ingests MPEG-TS streams through configurable input sources, supporting both live capture and file-based input for testing scenarios \cite{mpeg1996ts}. Input validation ensures stream integrity before processing, while buffering mechanisms handle timing variations in source delivery.
+
+The processing pipeline applies transformations in sequence: packetization divides input streams into fixed-size blocks suitable for FEC matrix organization, encryption protects packet contents using session-specific AES-256-GCM keys, and matrix organization arranges packets according to the two-dimensional FEC scheme described in Chapter~\ref{BackgroundWork}.
+
+Pipeline throughput optimization employs parallel processing where possible, with encryption operations vectorized across multiple packets and FEC encoding parallelized across matrix rows and columns. Memory management uses Rust's ownership system to eliminate copying overhead while maintaining safety guarantees.
+
+\subsubsection{Adaptive Parameter Management}
+The reinforcement learning module maintains Q-tables mapping network states to optimal FEC configuration parameters, where states encode aggregated client statistics including loss rates, timing variations, and geographical distribution \cite{watkins1992q}. Learning occurs continuously as new client reports arrive, enabling adaptation to evolving network conditions.
+
+State discretization balances learning efficiency with parameter granularity, using histogram-based approaches to convert continuous client metrics into discrete state representations. Action space includes FEC redundancy levels for both row and column protection, multicast transmission rates, and retransmission policies.
+
+Reward functions optimize multiple objectives including stream quality, network efficiency, and client satisfaction, using weighted combinations that reflect deployment priorities. Exploration strategies prevent premature convergence to suboptimal policies while ensuring acceptable performance during learning phases.
+
+\subsection{Client Architecture}
+The client library provides clean APIs abstracting session establishment and stream reception complexity, implementing concurrent processing pipelines that handle different stream aspects while maintaining thread safety through Rust's ownership model.
+
+Session establishment follows the certificate-based authentication described in Chapter~\ref{BackgroundWork}, generating ECDSA keys and obtaining CA-signed certificates, while clients maintain multicast sockets for primary reception and unicast sockets for targeted communications.
+
+The decoder implements inverse two-dimensional FEC, attempting recovery through row and column Reed-Solomon decoding, where failed FEC recovery triggers unicast retransmission requests, and quality monitoring tracks loss patterns, timing variations, and decoding success for server transmission.
+
+\subsubsection{Concurrent Processing Architecture}
+Client processing employs multiple concurrent threads coordinated through Rust's ownership and borrowing system, ensuring memory safety without runtime overhead \cite{matsakis2014rust}. The receiver thread manages UDP socket operations using non-blocking I/O, the decoder thread processes incoming packets and applies FEC recovery, and the reporter thread compiles and transmits quality statistics.
+
+Inter-thread communication uses lock-free queues where possible, minimizing contention and maintaining real-time processing capabilities. Rust's type system prevents data races and ensures that shared state modifications occur safely across thread boundaries.
+
+Thread scheduling priorities ensure that time-critical operations (packet reception, decoding) receive appropriate resources while background tasks (reporting, statistics) operate with lower priority. Adaptive scheduling adjusts priorities based on current network conditions and processing load.
+
+\subsubsection{Forward Error Correction Decoding}
+FEC decoding implements the inverse operations of the two-dimensional Reed-Solomon scheme from Chapter~\ref{BackgroundWork}, reconstructing original data from received packets and redundancy information. Matrix reconstruction attempts to recover lost packets through both row-wise and column-wise Reed-Solomon decoding, maximizing recovery probability for various loss patterns.
+
+Decoding prioritization processes row and column operations in parallel where possible, using available CPU cores to accelerate recovery operations. Early termination strategies halt decoding when sufficient packets are recovered, reducing computational overhead for lightly damaged matrices.
+
+Recovery failure handling triggers targeted retransmission requests through the unicast channel, specifying exact packet sequences needed for complete matrix reconstruction. Retransmission requests include priority information allowing the server to optimize delivery order based on client needs.
+
+\subsubsection{Quality Monitoring and Reporting}
+Continuous quality monitoring tracks multiple metrics including packet loss rates, timing jitter, decoding success rates, and buffer utilization across sliding time windows. Statistical aggregation provides both instantaneous and historical performance indicators suitable for server adaptation algorithms.
+
+Report generation balances information content with transmission efficiency, using compression algorithms optimized for network statistics to minimize reporting overhead. Adaptive reporting intervals adjust feedback frequency based on observed network dynamics and server requirements.
+
+Client-side caching maintains recent performance history, enabling local adaptation decisions while providing context for server-reported configuration changes. Cache management uses LRU policies to balance memory utilization with historical depth requirements.
 \section{Protocol Design}
 
-The IRIS streaming protocol extends beyond traditional UDP-based real-time protocols by implementing a seven-layer stack that addresses the specific challenges of wireless mesh environments identified in Chapter~\ref{State of the Art}. The protocol maintains compatibility with existing network infrastructure while providing enhanced reliability mechanisms specifically designed for high-density Wi-Fi scenarios \cite{schulzrinne2003rtp}.
+IRIS implements two-phase communication separating authenticated session establishment from high-performance data transmission, which leverages different transport protocol strengths while maintaining security and efficiency.
 
-The Physical Layer (Layer 1) leverages IEEE 802.11 standards with specific optimizations for Wi-Fi Aware Neighbor Awareness Networking (NAN) operating in the 2.4GHz band using discovery windows to minimize power consumption while maintaining efficient peer discovery times. The implementation supports channel bonding across different channel widths and adaptive power control based on proximity measurements. The Data Link Layer (Layer 2) implements custom Media Access Control (MAC) frame extensions for streaming optimization including priority queuing for time-sensitive packets, automatic repeat request (ARQ) bypass for redundant data, and adaptive contention window sizing based on network density measurements.
+\subsection{Control Plane Protocol}
+Session initiation uses four-step gRPC/TLS handshake establishing mutual authentication and distributing operational parameters, where the design minimizes round trips while ensuring complete configuration delivery.
 
-The Network Layer (Layer 3) supports both IPv4 and IPv6 addressing with multicast group management enabling efficient one-to-many distribution while supporting unicast fallback for individualized error recovery, as detailed in the network coding implementation (Section~\ref{sec:multicast-network-coding}). The implementation includes custom Internet Group Management Protocol (IGMP) extensions for rapid group membership changes. The Transport Layer (Layer 4) implements a hybrid protocol combining UDP's low-latency characteristics with reliability mechanisms typically associated with TCP, including selective acknowledgments, congestion window adaptation, and flow control mechanisms specifically tuned for real-time media streaming requirements.
+Handshake begins with TLS connection using server X.509 certificate verified against client's embedded CA certificate, followed by certificate-based authentication where clients generate ECDSA key pairs and submit PKCS\#10 requests, while the embedded CA validates and signs requests, creating session trust relationships.
 
-The custom Reliability Layer implements a sophisticated two-dimensional Reed-Solomon forward error correction scheme with mathematical foundations detailed in Chapter~\ref{BackgroundWork}. 
+\texttt{KeyService} distributes AES-256-GCM keys with operational parameters including multicast addresses, UDP ports, reporting intervals, and FEC configuration, where this batched approach reduces overhead while ensuring atomic delivery.
 
-\subsection{Transmission Matrix and Adjustable Forward Error Correction}
-\label{sec:transmission-matrix}
+Time synchronization uses simplified Network Time Security where clients measure RTT and adjust timestamps by RTT/2, which establishes common time reference for coordinated reporting and aligns feedback intervals.
 
-The system implements a novel two-dimensional Reed-Solomon forward error correction scheme using transmission matrices to optimize packet recovery efficiency in wireless environments. The source data is organized into matrices where rows represent temporal packets and columns represent spatial redundancy, enabling protection against both burst and random packet losses characteristic of 802.11 multicast transmission.
+\subsection{Data Plane Protocol}
+UDP transmission minimizes latency with packets structured for the two-dimensional FEC scheme described in Chapter~\ref{BackgroundWork}, where packets contain matrix coordinates, sequence numbers, and encrypted payloads protected by session keys.
 
-Row FEC operates across packets within transmission epochs providing immediate protection against burst losses typical in wireless environments, while column FEC operates across temporal epochs offering protection against sustained interference or mobility-related signal degradation. The adaptive FEC system dynamically adjusts redundancy levels based on observed network conditions, with the machine learning component (detailed in Section~\ref{sec:ml-integration}) providing improved resource utilization compared to static FEC schemes \cite{reed1960polynomial}.
+Multicast protocol organizes packets into transmission matrices with row and column redundancy distributed per FEC configuration, where clients reconstruct matrices and apply Reed-Solomon decoding for recovery, while failed FEC triggers unicast retransmission requests.
 
-The transmission matrix construction follows a systematic approach where original packets fill the initial positions, followed by row parity packets providing protection against burst losses, and column parity packets protecting against random losses. The matrix dimensions are dynamically adjusted based on network conditions, with configurations ranging from smaller matrices in stable environments to larger matrices in challenging conditions with higher packet loss rates.
+Client reporting uses compressed UDP packets at intervals from session establishment, including loss statistics, timing measurements, and quality metrics feeding the reinforcement learning algorithm.
 
-The adjustable FEC algorithm implements a sliding window approach that monitors network performance over configurable intervals and adjusts redundancy levels accordingly. The algorithm maintains historical data about different parity configurations and their effectiveness, selecting optimal settings that minimize total bandwidth consumption while meeting reliability requirements. Row parity provides burst loss protection with configurable redundancy levels, while column parity offers random loss protection with similar flexibility.
+\subsection{Security Framework}
+\label{sec:security-framework}
 
-\subsection{Space-Efficient Client Reports and Acknowledgment Mechanisms}
-\label{sec:space-efficient-reports}
+Security architecture addresses streaming threat models through layered protection at protocol and application levels, balancing security with performance for large client populations.
 
-The client feedback system addresses the fundamental asymmetry of wireless links where upstream bandwidth is significantly constrained compared to downstream capacity. Traditional acknowledgment mechanisms like positive ACK or negative NACK protocols impose excessive overhead, particularly problematic for mobile devices with limited upstream bandwidth and small network stack buffers.
+Control plane uses TLS 1.3 for transport protection and certificate-based client verification, which provides forward secrecy, prevents replay attacks, and restricts session key access to authorized clients.
 
-The system implements a bitmap-based periodic acknowledgment strategy that compresses reception state information using run-length encoding. Client reports include link type indicators (Wi-Fi or 4G), signal strength measurements (RSSI), the highest successfully decoded matrix number, and compressed bitmaps representing missing packets across all outstanding transmission matrices. This approach reduces acknowledgment overhead while providing comprehensive feedback for adaptation algorithms.
+Data plane employs AES-256-GCM with session-specific keys ensuring captured multicast packets remain confidential without decryption keys, where GCM authentication tags enable corruption and injection detection, while FEC provides additional integrity by rejecting packets incompatible with recovery matrices.
 
-The compression algorithm utilizes gzip encoding, which demonstrates superior performance compared to alternatives like 7z or RAR for the specific data structures used in client reports. The compression provides efficient data reduction while maintaining reasonable computational requirements.
+\subsubsection{Dual Cryptographic Certificate Architecture}
 
-\subsection{Multicast Network Coding and Source Coding}
-\label{sec:multicast-network-coding}
+IRIS implements a dual certificate architecture utilizing both RSA-2048 and Elliptic Curve P-256 certificates for complementary security functions, addressing different operational requirements within the streaming system.
 
-The multicast retransmission system implements sophisticated source coding algorithms to maximize bandwidth efficiency when recovering lost packets across multiple clients simultaneously. The approach constructs network coding matrices that represent the loss patterns of all active clients, enabling calculation of optimal linear combinations of packets that can recover multiple losses with minimal transmissions.
+RSA certificates provide transport layer security through TLS 1.3 connections for the control plane gRPC services. The server generates RSA-2048 certificates signed by the internal Certificate Authority, which clients verify during initial session establishment. This ensures secure communication channels for certificate signing requests, session key distribution, and time synchronization operations. RSA's computational characteristics suit these lower-frequency control operations where security takes precedence over performance.
 
-The source coding algorithm employs a greedy strategy that recursively evaluates packet combinations to identify those providing maximum recovery benefit. The algorithm operates under strict timing constraints with configurable deadlines to ensure real-time performance requirements are met. When multiple packets are lost across different clients, the system calculates XOR combinations using Galois Field GF($2^8$) arithmetic that can simultaneously recover multiple packets with a single transmission.
+Elliptic Curve certificates using the NIST P-256 curve enable high-performance packet authentication for data plane operations \cite{nist2013p256}. The server maintains an EC private key for signing multicast packets and retransmission data, while clients obtain corresponding EC certificates during enrollment for report signing. ECDSA signatures provide equivalent security to RSA with significantly smaller signature sizes and faster verification \cite{johnson2001ecdsa}, crucial for real-time multicast streaming where packet processing latency directly impacts system performance.
 
-The network coding matrix construction process filters packets based on multiple criteria including timeout status, multicast eligibility, and predicted reception probability from the machine learning subsystem. The filtering ensures that only packets with high recovery potential are considered for expensive multicast retransmissions, while preserving bandwidth for more recent data with higher priority.
+This architectural separation optimizes each cryptographic primitive for its specific use case: RSA for secure but infrequent control operations, and ECDSA for efficient but frequent data authentication. The dual approach enables security policy enforcement where control plane operations require strong authentication while data plane operations prioritize performance without compromising integrity verification.
 
-\subsection{WiFi Multicast Retransmission Algorithms}
-\label{sec:multicast-retransmission}
+Client enrollment demonstrates this integration where initial TLS connections use RSA certificates for secure channel establishment, followed by EC certificate generation for subsequent data plane authentication. This ensures appropriate security levels across different system components while maintaining operational efficiency.
 
-The WiFi multicast sub-scheduler implements adaptive retransmission strategies optimized for the broadcast nature of multicast transmission while addressing the reliability limitations inherent in 802.11 multicast. The scheduler operates on transmission matrices and employs sophisticated algorithms to determine optimal retransmission strategies that balance bandwidth efficiency with reliability requirements.
+Denial of service protection operates through certificate operation costs for control plane attacks, rapid malformed packet rejection, and adaptive capabilities increasing redundancy during apparent degradation.
 
-The multicast retransmission algorithm incorporates several key innovations: packet interleaving spreads losses across matrix rows to improve FEC efficiency, prediction-based filtering uses machine learning to avoid futile retransmissions, and bandwidth-aware scheduling ensures multicast retransmissions do not overwhelm available capacity. The interleaving strategy transmits packets by column rather than row order, distributing burst losses across multiple recovery groups.
 
-The algorithm implements runtime adjustable FEC parameters that dynamically modify redundancy levels based on observed network conditions. Historical performance data guides selection of optimal row and column parity levels, with the system continuously learning from past configurations to improve future decisions. This adaptive approach provides improved bandwidth utilization compared to static FEC schemes while maintaining equivalent reliability levels.
-
-\subsection{Unicast Retransmission and Client-Specific Recovery}
-\label{sec:unicast-retransmission}
-
-The unicast sub-schedulers handle individualized packet recovery for both WiFi and 4G connections, implementing client-specific algorithms that optimize retransmission strategies based on per-client loss patterns and capabilities. The unicast approach provides the final reliability layer when multicast retransmissions are insufficient or inappropriate for specific loss scenarios.
-
-The unicast retransmission algorithm employs an optimistic approach that assumes successful reception of recently transmitted packets unless explicit negative feedback is received. This strategy reduces unnecessary retransmissions while maintaining responsiveness to actual losses. The algorithm adjusts its optimism based on connection type (WiFi vs 4G) and matrix age, becoming more conservative for older matrices or 4G connections where retransmission opportunities are limited.
-
-FEC-aware recovery optimization minimizes retransmissions by leveraging the existing redundancy in transmission matrices. The algorithm calculates the minimum set of packets required for successful matrix reconstruction, considering both already received packets and available parity information. This approach significantly reduces retransmission overhead compared to simple packet-by-packet recovery strategies.
-
-\subsection{Network Scheduler Framework and Pipeline Architecture}
-\label{sec:network-scheduler}
-
-The network scheduler implements a modular pipeline architecture that coordinates multiple retransmission strategies in a hierarchical manner. The pipeline consists of three sequential stages: WiFi multicast for efficient broadcast recovery, WiFi unicast for individual client needs, and 4G unicast as the final fallback mechanism. This staged approach minimizes utilization of expensive 4G bandwidth while maximizing overall system efficiency.
-
-Each scheduler stage implements independent bandwidth management and filtering logic, enabling fine-grained control over resource allocation across different transmission modes. The bandwidth managers track utilization globally for multicast operations and per-client for unicast operations, enforcing configurable limits that prevent resource monopolization while ensuring fair access for all clients.
-
-The filtering components integrate with the machine learning prediction service to avoid transmissions unlikely to succeed, improving overall bandwidth efficiency. The prediction service uses Random Forest algorithms trained on network statistics including RSSI, client count, matrix configuration, and historical loss patterns to estimate transmission success probability with high accuracy.
-
-The scheduler maintains global client state that persists across different sub-schedulers, enabling seamless handoff and coordination between different retransmission mechanisms. Client sessions include comprehensive state information about pending matrices, capability descriptors, security context, and performance metrics that inform scheduling decisions across all pipeline stages.
-
-\section{Advanced Protocol Implementation and Security Architecture}
-\label{sec:advanced-protocol-security}
-
-\subsection{Double Signature Schema and Stream Integrity}
-\label{sec:double-signature}
-
-The system implements a novel double signature approach that ensures stream integrity and authenticity even when packets are reconstructed through network coding operations. This scheme addresses the fundamental challenge of maintaining cryptographic verification when packets are recovered using erasure coding techniques in edge cloud environments where untrusted devices participate in data reconstruction.
-
-The double signature schema operates on two levels: packet signatures verify the immediate sender's authorization (either the trusted server or an authenticated edge node), while video chunk signatures guarantee the authenticity of the original content creator (always the trusted server). This dual approach enables secure packet reconstruction by edge devices while preventing content tampering attacks.
-
-When an edge device reconstructs a missing packet using available data and parity information, it creates a new packet containing the recovered video chunk and signs it with its own private key. Receiving devices first verify the packet signature against the sender's certificate to ensure the sender is authorized to participate in the mesh network. Subsequently, they verify the embedded video chunk signature against the trusted server's certificate to confirm content authenticity. Only packets passing both verification stages are accepted for playback, ensuring complete stream integrity even in adversarial environments.
-
-\subsection{Edge Cloud Security and Trust Management}
-\label{sec:edge-cloud-security}
-
-The edge cloud security architecture implements comprehensive protection mechanisms designed to enable secure cooperation between untrusted mobile devices while preventing various attack vectors including performance attacks, content injection, and resource abuse. The trust model assumes that edge devices may be compromised or malicious, requiring security measures that maintain service integrity regardless of individual device behavior.
-
-Security-as-a-Service infrastructure provides centralized certificate authority functionality with automated certificate lifecycle management supporting configurable validity periods and seamless renewal processes. The system generates secure tokens for device-to-device authentication that supersede traditional password-based mechanisms for WiFi Direct and Bluetooth connections. These tokens enable automated connection establishment without user intervention while maintaining strong cryptographic authentication.
-
-The authentication framework implements hierarchical key derivation using ECDSA P-256 curves for device identity and ECDH key exchange for session establishment. Perfect forward secrecy is ensured through regular key rotation with embedded next-epoch keys in streaming packets, eliminating the need for additional secure channels during normal operation. When key gaps occur due to packet loss, TLS-based fallback mechanisms retrieve missing keys through secure channels.
-
-\subsection{Threat Model and Attack Mitigation}
-\label{sec:threat-model-mitigation}
-
-The comprehensive threat model addresses multiple attack vectors specific to crowdsourced edge cloud environments. Performance attacks attempt to degrade service quality through selective packet dropping, connection refusing, or bandwidth limiting. The system mitigates these attacks through redundant connectivity options and automatic fallback mechanisms that route traffic through alternative paths when performance degradation is detected.
-
-Content injection attacks attempt to introduce malicious or corrupted video content through compromised edge devices. The double signature schema effectively prevents these attacks since only the trusted server possesses the private keys necessary to create valid video chunk signatures. Even if attackers compromise edge devices and attempt to inject false content, the signature verification process will detect and reject invalid content.
-
-Sybil attacks involve creating multiple false identities to manipulate the system's trust and resource allocation mechanisms. While the certificate authority validation process makes large-scale Sybil attacks difficult, the system includes additional protections such as rate limiting on new certificate requests and behavioral analysis to detect suspicious patterns in certificate usage.
-
-Resource exhaustion attacks attempt to overwhelm system capacity through excessive connection requests, bandwidth consumption, or computational demands. Multi-layered protection includes hierarchical rate limiting at global and per-client levels, connection throttling that restricts new session establishment rates, and adaptive resource quotas that scale based on overall system load and individual client behavior patterns.
-
-\subsection{Mobility Support and Seamless Handoff}
-\label{sec:mobility-support}
-
-The system implements sophisticated mobility management enabling seamless transitions between different network interfaces and connection types without service interruption. The mobility framework supports handoffs between infrastructure WiFi, cellular networks, and peer-to-peer connections while maintaining session continuity and security context.
-
-The handoff mechanism operates proactively by monitoring signal strength, throughput, and latency metrics across all available network interfaces. When degradation is detected on the current connection, the system initiates parallel connections on alternative interfaces and performs seamless traffic migration. Session state preservation ensures that security keys, acknowledgment state, and quality adaptation parameters persist across handoffs.
-
-Connection diversity enables simultaneous utilization of multiple network paths for improved reliability and performance. The system can bond WiFi and cellular connections to aggregate bandwidth while using peer-to-peer links as backup paths. Dynamic load balancing distributes traffic across available connections based on capacity, cost, and reliability characteristics, optimizing overall user experience while minimizing data costs.
-
-\subsection{Performance Optimization and Resource Management}
-\label{sec:performance-resource-optimization}
-
-The implementation incorporates numerous performance optimizations that enable low-latency targets while supporting many concurrent connections. Zero-copy packet processing eliminates unnecessary memory allocations through reference counting and memory mapping techniques, reducing CPU overhead compared to traditional approaches.
-
-Memory management strategies include custom allocators optimized for streaming workloads, lock-free data structures using atomic operations for concurrent matrix access, and garbage collection minimization through object pooling. The Tokio runtime configuration utilizes work-stealing schedulers across multiple threads with priority-based task scheduling that gives precedence to time-critical operations.
-
-SIMD optimization leverages modern processor instruction sets for accelerated FEC operations, achieving high encoding throughput on modern architectures with vector instruction support. The cryptographic operations utilize hardware acceleration where available, including AES-NI instructions for encryption and specialized elliptic curve implementations for signature operations.
-
-Quality of service management implements hierarchical bandwidth allocation with configurable limits for different traffic classes. High-priority control messages receive guaranteed bandwidth allocation, while data traffic utilizes adaptive allocation based on network conditions and client requirements. Congestion control algorithms adapt transmission rates based on receiver feedback and network congestion indicators.
-
-\section{Implementation Summary and Integration}
-\label{sec:implementation-summary}
-
-This comprehensive design and implementation of the IRIS streaming system demonstrates a successful integration of multiple advanced technologies to address the complex challenges of high-density wireless streaming environments. The system architecture combines several key innovations: intelligent forward error correction with machine learning optimization, distributed edge cloud offloading using Wi-Fi Aware mesh networking, comprehensive security through multi-layered cryptographic protection, and adaptive quality control through reinforcement learning algorithms.
-
-The modular pipeline architecture enables efficient coordination between different transmission mechanisms while maintaining strict real-time performance requirements. The three-stage retransmission pipeline (WiFi multicast, WiFi unicast, 4G unicast) optimizes resource utilization by prioritizing cost-effective transmission methods while ensuring reliable delivery through adaptive fallback mechanisms. The comprehensive security framework protects against diverse attack vectors while enabling secure cooperation between untrusted edge devices through the novel double signature schema.
-
-Performance optimizations including zero-copy packet processing, SIMD-accelerated FEC operations, and lock-free concurrent data structures enable the system to achieve low latency targets while supporting many concurrent clients per server instance. The memory-efficient implementation demonstrates the feasibility of deploying the system in resource-constrained edge computing environments.
-
-The implementation leverages Rust's memory safety guarantees and high-performance async runtime to provide a robust foundation for mission-critical streaming applications. The extensive cross-references to foundational technologies (Chapter~\ref{BackgroundWork}) and performance validation (Chapter~\ref{Evaluation}) demonstrate the systematic approach taken to address the requirements identified in the literature review and system requirements analysis.
-
-The technical contributions presented in this chapter, including the adjustable transmission matrix approach, space-efficient client feedback mechanisms, and intelligent multicast network coding algorithms, advance the state-of-the-art in adaptive streaming systems. These innovations enable unprecedented adaptability to challenging network conditions while maintaining strong security and reliability guarantees essential for production deployments in high-density wireless environments.

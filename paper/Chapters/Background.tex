@@ -14,19 +14,111 @@
 % Write text in here
 % Use \subsection and \subsubsection to organize text
 
-\section{Technologies}
-\subsection{Secure Communication: gRPC, TLS, Self-Signed CA}
-\subsection{MPEG-TS Streaming over UDP}
-\subsection{Forward Error Correction: Reed-Solomon}
-\subsection{Encryption: AES-256 with Rotating Keys}
-\subsection{Signatures: ECDSA p256}
-\subsection{Metrics: Prometheus and Grafana}
-\subsection{Dynamic Offloading: Wi-Fi Aware}
-\subsection{Serialization: Protobuf}
-\subsection{Timers: Tokio Runtime}
-\subsection{I/O: Mio}
-\subsection{Communication: Blocking Channels}
-\subsection{Memory Efficiency: Matrix Buffers}
-\subsection{Testing: Linux Network Namespaces and Traffic Control}
+This chapter establishes the theoretical foundations underlying secure, adaptive livestreaming systems in high-density wireless environments. Rather than providing general overviews, this chapter focuses on the specific theoretical aspects and mathematical principles that enable robust error correction, adaptive optimization, and cryptographic security in wireless streaming scenarios.
 
-\section{Non-State-of-the-Art Systems}
+\section{Streaming Technologies and Protocols}
+
+\subsection{MPEG-TS Streaming over UDP}
+
+MPEG Transport Stream (MPEG-TS) represents a standardized container format for video content delivery \cite{mpeg1996ts}. Originally designed for broadcasting applications, MPEG-TS provides robust error resilience through its packet-based structure with 188-byte fixed-length packets that include synchronization bytes and error detection mechanisms.
+
+UDP (User Datagram Protocol) enables low-latency, connectionless transport suitable for real-time streaming applications. Unlike TCP, UDP does not provide reliability guarantees, requiring the application layer to handle packet loss through Forward Error Correction mechanisms. The combination of MPEG-TS over UDP balances efficient transmission with application-level error recovery.
+
+\subsection{UDP Multicast and Unicast}
+
+IP multicast enables efficient one-to-many content distribution by allowing network infrastructure to replicate packets rather than requiring the source to send individual copies \cite{ahlswede2000network}. Multicast addresses (224.0.0.0/4 in IPv4) enable scalable content delivery to multiple subscribers simultaneously.
+
+However, multicast suffers from reliability issues as the protocol operates on a best-effort basis without acknowledgments or retransmission mechanisms. This limitation necessitates combining multicast for primary content delivery with unicast channels for error recovery and control operations.
+
+\section{Error Correction Foundations}
+
+\subsection{Reed-Solomon Codes}
+
+Reed-Solomon codes provide optimal error correction capabilities for symbol erasure channels, where entire symbols (typically bytes) are either received correctly or lost completely \cite{reed1960polynomial}. These codes operate over Galois Fields GF($2^m$), with GF($2^8$) being common for byte-oriented applications.
+
+A Reed-Solomon code RS$(n,k)$ encodes $k$ data symbols into $n$ total symbols, enabling recovery of up to $t = (n-k)/2$ symbol errors or up to $(n-k)$ symbol erasures when error locations are known. The mathematical foundation relies on polynomial interpolation over finite fields, where data symbols form coefficients of a polynomial that is evaluated at multiple points to generate redundancy symbols.
+
+\subsection{Two-Dimensional Error Correction}
+
+Two-dimensional FEC schemes organize data into rectangular matrices where both rows and columns receive independent Reed-Solomon protection \cite{blomer2000practical}. This approach addresses the bursty nature of packet loss in wireless networks, where consecutive packets often fail together due to channel fading or interference.
+
+For a matrix $M$ with dimensions $r \times c$, row-wise encoding applies RS$(r+p_r, r)$ and column-wise encoding applies RS$(c+p_c, c)$, where $p_r$ and $p_c$ represent redundancy packets. This scheme recovers from burst losses up to $\min(p_r, p_c)$ consecutive packets while maintaining high recovery probability for random losses.
+
+\section{Cryptographic Foundations}
+
+\subsection{AES-256 Galois/Counter Mode}
+
+Advanced Encryption Standard (AES) with 256-bit keys provides symmetric encryption with 128-bit security strength \cite{nist2013aes}. Galois/Counter Mode (GCM) combines Counter Mode encryption with Galois Mode authentication to provide authenticated encryption \cite{dworkin2007recommendation}.
+
+Counter Mode enables parallel encryption by treating the cipher as a stream cipher, XORing plaintext with encrypted counter values. The counter ensures that identical plaintext blocks produce different ciphertext, preventing pattern analysis. Galois Mode generates authentication tags using polynomial multiplication over GF($2^{128}$), detecting both intentional tampering and transmission errors.
+
+\subsection{Elliptic Curve Cryptography}
+
+Elliptic Curve Digital Signature Algorithm (ECDSA) provides digital signatures with smaller key sizes compared to RSA while maintaining equivalent security levels \cite{johnson2001elliptic}. The NIST P-256 curve offers 128-bit security equivalent to 3072-bit RSA with significantly reduced computational and bandwidth overhead.
+
+ECDSA signatures consist of two integers (r,s) computed using the private key and message hash. Verification requires only the public key and signature, making it suitable for resource-constrained environments. The reduced signature size benefits streaming applications where authentication overhead must be minimized.
+
+\subsection{Public Key Infrastructure}
+
+X.509 certificates provide standardized public key authentication and distribution \cite{housley2002internet}. Certificate Signing Requests (CSR) following PKCS\#10 enable distributed key generation where clients create key pairs locally and submit public keys for certification \cite{nystrom2000pkcs}.
+
+Simplified PKI implementations with embedded Certificate Authority functionality can reduce deployment complexity while maintaining security properties. Self-signed root certificates eliminate external dependencies, making such systems suitable for isolated or high-security environments.
+
+\section{Machine Learning Foundations}
+
+\subsection{Reinforcement Learning and Q-Learning}
+
+Reinforcement Learning models decision-making as interaction between an agent and environment through states, actions, and rewards \cite{sutton2018reinforcement}. Q-learning provides a model-free approach to learning optimal policies by estimating action-value functions $Q(s,a)$ representing expected future rewards \cite{watkins1992q}.
+
+The Q-learning update rule:
+$$Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma \max_{a'} Q(s',a') - Q(s,a)]$$
+
+balances exploration and exploitation through the learning rate $\alpha$ and discount factor $\gamma$. This approach enables adaptive parameter adjustment without requiring explicit models of network dynamics.
+
+For streaming applications, the state space $S$ typically encompasses network conditions derived from client reports, the action space $A$ includes transmission parameters such as FEC redundancy levels, and rewards $R$ reflect quality metrics such as packet loss rates and user satisfaction. The Q-function $Q(s,a)$ estimates expected cumulative reward for taking action $a$ in state $s$, enabling systems to learn optimal configurations for varying network conditions.
+
+\section{Communication Protocols}
+
+\subsection{gRPC and Protocol Buffers}
+
+gRPC provides high-performance Remote Procedure Call framework built on HTTP/2 \cite{google2015grpc}. Features include multiplexing, flow control, header compression, and authentication. The framework supports streaming operations essential for real-time applications.
+
+Protocol Buffers enable efficient binary serialization with language independence and version compatibility \cite{google2008protobuf}. Variable-length encoding reduces message sizes, while field numbering supports schema evolution. The combination provides type-safe, efficient communication for control plane operations.
+
+\subsection{Transport Layer Security}
+
+TLS 1.3 provides secure communication channels with forward secrecy and reduced handshake latency \cite{rescorla2018tls13}. The protocol establishes authenticated, encrypted channels suitable for sensitive control operations while maintaining performance for real-time applications.
+
+\section{Implementation Technologies and Tools}
+
+\subsection{Rust Programming Language}
+
+Rust provides memory safety without garbage collection through ownership and borrowing mechanisms \cite{matsakis2014rust}. The type system prevents data races and memory errors at compile time, reducing security vulnerabilities common in systems programming languages.
+
+Rust's zero-cost abstractions enable high-level programming constructs without runtime overhead. The ownership model ensures deterministic resource management essential for real-time streaming applications.
+
+\subsection{Asynchronous Runtime: Tokio}
+
+Tokio provides an asynchronous runtime for Rust, enabling efficient handling of concurrent I/O operations \cite{tokio2023async}. The event-driven architecture scales to thousands of concurrent connections without the overhead of thread-per-connection models.
+
+Async/await syntax simplifies asynchronous programming while maintaining performance. The runtime coordinates task scheduling, I/O polling, and timer management essential for networking applications.
+
+\subsection{Low-Level I/O: Mio}
+
+Mio (Metal I/O) provides cross-platform, non-blocking I/O primitives for Rust \cite{mio2023async}. The library abstracts platform-specific event notification mechanisms (epoll, kqueue, IOCP) while maintaining zero-cost abstractions.
+
+The reactor pattern enables efficient event handling for network operations, supporting the high-throughput requirements of streaming applications while minimizing CPU usage.
+
+\section{Testing and Development Tools}
+
+\subsection{Linux Network Namespaces}
+
+Network namespaces provide isolated network stacks for testing complex network topologies without requiring physical infrastructure. Each namespace maintains independent routing tables, network interfaces, and iptables rules, enabling comprehensive testing of distributed systems.
+
+Traffic Control (tc) utilities enable precise network condition simulation, including packet loss, delay, and bandwidth limitations. This capability supports realistic testing of error correction and adaptive mechanisms under various network conditions.
+
+\subsection{Monitoring and Metrics}
+
+Prometheus provides time-series monitoring with pull-based metric collection \cite{prometheus2023monitoring}. Such systems capture performance metrics, error rates, and resource utilization essential for understanding system behavior under various conditions.
+
+Grafana enables visualization and alerting based on time-series metrics. The combination provides comprehensive observability for debugging and performance optimization during development and deployment.

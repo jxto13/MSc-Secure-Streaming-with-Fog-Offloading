@@ -11,13 +11,87 @@
 % For referencing this chapter elsewhere, use \ref{ChapterTemplate}
 \label{State of the Art}
 
-% Write text in here
-% Use \subsection and \subsubsection to organize text
-\section{Existing Secure Streaming Protocols}
-\section{Forward Error Correction}
-\section{Encryption and Signatures}
-\section{Dynamic Offloading}
-\section{Bandwidth Management}
-\section{Protobuf and Runtime Management}
-\section{Testing and Development}
-\section{Unique Contributions}
+This chapter examines existing research and technology in secure video streaming systems, providing comparative analysis with the IRIS approach presented in Chapter~\ref{DesignAndImplementation}. While Chapter~\ref{BackgroundWork} introduces fundamental technologies, this chapter evaluates how current solutions address similar challenges and identifies gaps that IRIS aims to fill.
+
+\section{Wireless Streaming Systems and Their Limitations}
+
+High-density wireless environments present fundamental challenges for real-time video streaming that traditional wired network solutions cannot adequately address \cite{bianchi2000performance, kumar2012interference}. The IEEE 802.11 protocol suffers from inherent limitations in dense deployments, where increasing client density leads to exponential degradation in per-client throughput due to collision domain expansion and hidden terminal problems \cite{heusse2003performance}.
+
+Packet loss in wireless networks exhibits distinct patterns compared to wired networks, with bursty loss characteristics arising from channel fading, interference, and mobility \cite{konrad2003survey, yajnik1999measurement}. These patterns challenge conventional Forward Error Correction schemes designed for random loss models, necessitating specialized approaches for wireless environments \cite{biersack2005performance}.
+
+Recent studies demonstrate that traditional TCP-based streaming protocols perform poorly in high-density scenarios due to congestion control mechanisms that interpret wireless losses as congestion signals \cite{casetti2002tcp, fu2003performance}. This misinterpretation leads to unnecessary throughput reduction and increased latency, particularly problematic for real-time applications \cite{mascolo1999linux}.
+
+Current solutions like TCP Westwood and TCP Veno attempt to distinguish wireless losses from congestion but remain inadequate for high-density deployments where the fundamental protocol assumptions break down. IRIS addresses these limitations by operating entirely over UDP with application-layer reliability mechanisms tailored for wireless environments.
+
+\section{Comparative Analysis of FEC Approaches}
+
+Forward Error Correction has evolved from simple block codes to sophisticated adaptive schemes tailored for streaming applications \cite{luby1997analysis, rizzo1997effective}. Reed-Solomon codes provide theoretical optimality for symbol erasure channels but suffer computational complexity that scales quadratically with block size \cite{plank1997practical}.
+
+Two-dimensional error correction schemes address the bursty nature of wireless packet loss by organizing data into matrices where both rows and columns receive independent protection \cite{blomer2000practical, nonnenmacher1998parity}. This approach enables recovery from burst losses up to the minimum redundancy dimension while maintaining high recovery probability for random losses \cite{albanese1996priority}.
+
+Adaptive FEC mechanisms adjust redundancy levels based on observed network conditions, balancing protection overhead against loss recovery capability \cite{byers1998distributed, nonnenmacher1998parity}. However, most existing schemes rely on simple heuristics rather than principled optimization approaches, limiting their effectiveness in dynamic environments \cite{luby2002lt}.
+
+Fountain codes represent a significant advancement in erasure correction, providing rateless properties that eliminate the need for feedback in many scenarios \cite{luby2002lt, shokrollahi2006raptor}. Despite theoretical advantages, practical implementations face challenges in real-time streaming due to encoding and decoding complexity \cite{mackay2005fountain}.
+
+Compared to these approaches, IRIS employs two-dimensional Reed-Solomon codes that balance computational efficiency with strong error recovery properties. While fountain codes offer theoretical optimality, the IRIS approach provides predictable performance characteristics essential for real-time applications, with recovery guarantees that can be computed in advance rather than requiring probabilistic analysis.
+
+\section{Machine Learning in Network Optimization: Current State}
+
+Machine learning approaches increasingly address network optimization problems, with reinforcement learning showing particular promise for adaptive protocol design \cite{mao2017neural, dong2019deep}. Q-learning algorithms have successfully optimized various network parameters including routing decisions, congestion control, and resource allocation \cite{boyan1994packet, chang1996q}.
+
+Recent applications of reinforcement learning to streaming systems demonstrate significant improvements over traditional approaches \cite{mao2017neural, yin2015control}. These systems model network adaptation as Markov Decision Processes where agents learn optimal policies through interaction with dynamic environments \cite{sutton2018reinforcement}.
+
+Multi-agent reinforcement learning addresses distributed optimization scenarios where multiple entities must coordinate their actions \cite{tampuu2017multiagent, tan1993multi}. This approach proves particularly relevant for streaming systems with multiple clients that must collectively optimize network utilization \cite{chen2019multi}.
+
+However, existing multi-agent approaches typically focus on cooperative scenarios and struggle with the adversarial nature of wireless network competition. IRIS differentiates itself by treating client coordination as an implicit optimization problem, where individual client reports contribute to global system adaptation without requiring explicit coordination protocols that introduce overhead and complexity.
+
+\section{Security Approaches in Existing Streaming Systems}
+
+Secure streaming systems must address unique challenges arising from the tension between security requirements and real-time performance constraints \cite{eskicioglu2003overview, peng2004survey}. Traditional security protocols like TLS provide strong protection but introduce latency and computational overhead that may be incompatible with real-time requirements \cite{apostolopoulos2001secure}.
+
+Content protection schemes range from simple encryption to sophisticated digital rights management systems \cite{liu2005secure, eskicioglu2003overview}. However, many existing approaches focus on content piracy prevention rather than addressing network-level security threats specific to streaming applications \cite{peng2004survey}.
+
+Authentication and key management in streaming systems present scalability challenges when serving large client populations \cite{harney1997group, steiner2000secure}. Group key management protocols enable efficient key distribution but often sacrifice individual client authentication for scalability \cite{rafaeli2003survey}.
+
+Recent work explores the application of Public Key Infrastructure to streaming systems, with certificate-based approaches providing strong authentication while maintaining scalability \cite{adams1999understanding, housley2002internet}. However, most existing schemes assume reliable network connectivity for certificate validation, which may not hold in wireless environments \cite{liu2005secure}.
+
+IRIS addresses this limitation through embedded Certificate Authority functionality that eliminates external dependencies while maintaining PKI benefits. This approach contrasts with cloud-based certificate services that require constant connectivity and introduces single points of failure inappropriate for edge deployments or high-security environments.
+
+\section{Edge Computing Solutions for Streaming}
+
+Fog computing paradigms position processing capabilities closer to end users, reducing latency and bandwidth requirements for streaming applications \cite{bonomi2012fog, yi2015survey}. This approach proves particularly beneficial for wireless environments where backbone connectivity may be limited or unreliable \cite{satyanarayanan2017emergence}.
+
+Edge caching strategies optimize content delivery by pre-positioning popular content at network edges \cite{wang2017cache, tran2017collaborative}. Adaptive caching algorithms use machine learning to predict content demand and optimize cache placement decisions \cite{bharath2016caching, sadeghi2019deep}.
+
+Collaborative edge systems enable multiple fog nodes to coordinate content delivery and processing tasks \cite{mukherjee2018survey, yousefpour2019all}. These systems face challenges in maintaining consistency and managing resource allocation across distributed nodes \cite{bonomi2012fog}.
+
+Security considerations in fog computing environments introduce additional complexity due to the distributed nature of processing and storage \cite{stojmenovic2014fog, roman2016mobile}. Trust establishment between fog nodes and clients requires lightweight protocols suitable for resource-constrained environments \cite{zhang2017security}.
+
+Current fog computing security models typically rely on cloud-based identity providers or complex trust establishment protocols that may not be suitable for wireless streaming environments. IRIS simplifies this through direct certificate-based authentication between clients and servers, avoiding the overhead and complexity of distributed trust management while maintaining security properties suitable for edge deployments.
+
+\section{Multimedia Streaming Protocols}
+
+HTTP Live Streaming (HLS) represents Apple's contribution to adaptive bitrate streaming, utilizing HTTP transport with segmented media files to enable dynamic quality adaptation \cite{pantos2017hls}. HLS operates by dividing content into small segments (typically 2-10 seconds) delivered over HTTP, with clients selecting appropriate bitrates based on network conditions \cite{bentaleb2019survey}. While this approach provides adaptive capabilities and leverages existing HTTP infrastructure, it introduces significant latency due to segment-based delivery and TCP's congestion control mechanisms \cite{akhshabi2011experimental}.
+
+The fundamental limitation of HLS in high-density wireless environments stems from its reliance on HTTP over TCP, which exhibits poor performance characteristics when wireless losses are misinterpreted as network congestion \cite{seufert2015survey}. Additionally, HLS's segment-based approach creates inherent latency that may be unacceptable for real-time applications, with end-to-end delays typically ranging from 15-45 seconds \cite{hooft2016http}.
+
+MPEG-DASH (Dynamic Adaptive Streaming over HTTP) represents the current standard for adaptive bitrate streaming, enabling clients to dynamically adjust quality based on network conditions \cite{stockhammer2011dynamic, mueller2011impact}. However, DASH's reliance on HTTP and TCP introduces overhead and latency that may be problematic for real-time applications \cite{lederer2012dynamic}. Both HLS and DASH suffer from the fundamental limitation of treating each client independently, lacking mechanisms for coordinated optimization in multi-client scenarios typical of high-density environments.
+
+WebRTC provides real-time communication capabilities through browser APIs, supporting both peer-to-peer and server-mediated streaming \cite{johnston2012webrtc, garcia2013kurento}. While WebRTC addresses real-time requirements through UDP transport and adaptive bitrate mechanisms, its security model and NAT traversal mechanisms may not be suitable for large-scale deployments \cite{rescorla2013security}. Furthermore, WebRTC's peer-to-peer architecture does not address the one-to-many distribution requirements typical of streaming scenarios.
+
+QUIC protocol attempts to address TCP limitations by providing reliable, low-latency transport over UDP \cite{langley2017quic, iyengar2021quic}. Early evaluations suggest QUIC may benefit streaming applications, though comprehensive studies in wireless environments remain limited \cite{palmer2018impact}. While QUIC reduces connection establishment overhead and improves loss recovery, it maintains connection-oriented semantics that may not optimize for multicast scenarios.
+
+Real-Time Streaming Protocol (RTSP) and Real-time Transport Protocol (RTP) provide established frameworks for multimedia streaming \cite{schulzrinne1998real, schulzrinne2003rtp}. However, these protocols predate modern wireless networking challenges and lack adaptive mechanisms for dynamic environments \cite{handley2006rtp}. RTP's design assumes relatively stable network conditions and does not incorporate modern error correction or machine learning-based adaptation techniques.
+
+The comparative analysis reveals fundamental limitations in existing protocols when applied to high-density wireless environments. HTTP-based protocols (HLS, DASH) prioritize compatibility and infrastructure reuse over real-time performance, resulting in latencies incompatible with live streaming requirements. Real-time protocols (WebRTC, RTP) provide lower latency but lack sophisticated error correction and adaptive mechanisms necessary for wireless environments. The IRIS system addresses these limitations by combining UDP transport efficiency with application-layer reliability mechanisms specifically designed for wireless multicast scenarios, as detailed in Chapter~\ref{DesignAndImplementation}.
+
+\section{Gap Analysis and Research Opportunities}
+
+Current streaming systems inadequately address the intersection of security, performance, and adaptability required for high-density wireless environments \cite{zhang2017security, dong2019deep}. Most existing approaches optimize individual aspects while neglecting the complex interactions between security mechanisms, error correction, and adaptive protocols \cite{eskicioglu2003overview}.
+
+The lack of integrated approaches that combine machine learning with security-aware protocol design represents a significant research gap \cite{mao2017neural, zhang2017security}. Existing reinforcement learning applications to networking typically ignore security considerations, while security-focused research rarely incorporates adaptive optimization \cite{sutton2018reinforcement, apostolopoulos2001secure}.
+
+Evaluation methodologies for secure streaming systems remain inadequate, with most studies focusing on either security properties or performance characteristics in isolation \cite{peng2004survey, luby2002lt}. Comprehensive evaluation frameworks that assess the interplay between security, reliability, and performance in realistic wireless environments are needed \cite{kumar2012interference}.
+
+The IRIS system addresses these gaps by integrating reinforcement learning-based adaptation with certificate-based security in a unified architecture optimized for wireless streaming environments, as detailed in Chapter~\ref{DesignAndImplementation}.
+

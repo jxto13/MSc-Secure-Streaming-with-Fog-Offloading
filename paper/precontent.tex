@@ -22,7 +22,13 @@
 \addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
 \begin{acknowledgements}
 
-Acknowledge ALL the people!
+The author expresses sincere gratitude to Professor Rolando Martins for his invaluable guidance, expertise, and support throughout this research endeavor. His insights into network systems and security protocols have been instrumental in shaping this work.
+
+Special appreciation extends to the Faculty of Sciences at the University of Porto for providing the research environment and resources necessary for this investigation. The technical infrastructure and laboratory facilities enabled the practical implementation and evaluation of the IRIS system.
+
+The author acknowledges the contributions of the open-source community, particularly the developers of the Rust programming language and associated libraries that formed the foundation of this implementation. Their commitment to memory safety and performance has been essential to achieving the security and efficiency goals of this research.
+
+Finally, gratitude is expressed to family and colleagues who provided encouragement and support during the completion of this thesis. Their patience and understanding during the research and writing process have been invaluable.
 
 \end{acknowledgements}
 \addtocontents{toc}{\protect\setcounter{tocdepth}{3}}
@@ -34,15 +40,19 @@ Acknowledge ALL the people!
 %-------------------------------------------------------------------------
 \addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
 \begin{abstract}[
-	thesistitle={Titulo da Tese em Portugês},
+	thesistitle={Transmissão Segura com Fog Offloading},
 	title={Resumo},
 	degree={Mestrado Integrado em Engenharia Física},
 	nameconnector={por},
         keywordsname={Palavras-chave},
-        keywords={física (keywords em português)}]
+        keywords={fog computing, otimização Wi-Fi, transmissão segura, sistema IRIS, segurança de redes}]
 \begin{otherlanguage}{portuguese}
 
-Este tese é sobre alguma coisa
+Ambientes Wi-Fi de alta densidade criam desafios significativos para aplicações de transmissão ao vivo, onde soluções tradicionais baseadas em redes celulares e computação na nuvem se mostram inadequadas devido a limitações de custo e escalabilidade. Esta tese apresenta o sistema IRIS (Intelligent Reliable Internet Streaming), uma estrutura abrangente que combina princípios de fog computing com otimização Wi-Fi para permitir transmissão ao vivo segura e eficiente em ambientes com restrições de largura de banda.
+
+A investigação desenvolve um modelo de segurança descentralizado que aproveita as capacidades computacionais dos nós fog, garantindo simultaneamente encriptação e autenticação de ponta a ponta. O sistema utiliza a linguagem de programação Rust para sua implementação, escolhida pelas suas garantias de segurança de memória e recursos de concorrência que reduzem vulnerabilidades de segurança comuns. A estrutura incorpora correção de erro progressiva usando códigos Reed-Solomon, encriptação AES-256 com chaves rotativas, assinaturas ECDSA p256 e offloading dinâmico através da tecnologia Wi-Fi Aware.
+
+A avaliação experimental demonstra que o sistema proposto alcança latência reduzida, escalabilidade melhorada e segurança aprimorada em comparação com soluções existentes. A implementação aborda com sucesso gargalos de largura de banda em áreas de alta concentração, mantendo protocolos de segurança robustos. Os resultados mostram melhorias significativas em throughput e confiabilidade, particularmente em cenários com alta densidade de utilizadores e recursos de rede limitados.
 
 
 
@@ -55,7 +65,13 @@ Este tese é sobre alguma coisa
 \addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
 \begin{abstract}
 
-This thesis is about something, I guess.
+High-density Wi-Fi environments create significant challenges for livestreaming applications, where traditional cellular and cloud-based solutions prove inadequate due to cost and scalability limitations. This thesis presents the IRIS (Intelligent Reliable Internet Streaming) system, a comprehensive framework that combines fog computing principles with Wi-Fi optimization to enable secure, efficient livestreaming in bandwidth-constrained environments.
+
+The research develops a decentralized security model that leverages fog node computational capabilities while ensuring end-to-end encryption and authentication. The system utilizes the Rust programming language for its implementation, chosen for its memory safety guarantees and concurrency features that reduce common security vulnerabilities. The framework incorporates forward error correction using Reed-Solomon codes, AES-256 encryption with rotating keys, ECDSA p256 signatures, and dynamic offloading through Wi-Fi Aware technology.
+
+Experimental evaluation demonstrates that the proposed system achieves reduced latency, improved scalability, and enhanced security compared to existing solutions. The implementation successfully addresses bandwidth bottlenecks in high-concentration areas while maintaining robust security protocols. Results show significant improvements in throughput and reliability, particularly in scenarios with high user density and limited network resources.
+
+The thesis contributes novel algorithms for secure fog offloading over Wi-Fi networks and provides a scalable framework that addresses current technology deficiencies in secure livestreaming applications. The work establishes a foundation for future advancements in fog-enabled streaming systems and demonstrates the viability of decentralized approaches to multimedia delivery in challenging network environments.
 
 \end{abstract}
 \addtocontents{toc}{\protect\setcounter{tocdepth}{3}}

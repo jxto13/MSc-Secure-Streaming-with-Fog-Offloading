@@ -1,0 +1,138 @@
+% Chapter Template
+
+% Main chapter title
+%\chapter[toc version]{doc version}
+\chapter{Background Work}
+
+% Short version of the title for the header
+%\chaptermark{version for header}
+
+% Chapter Label
+% For referencing this chapter elsewhere, use \ref{ChapterTemplate}
+\label{BackgroundWork}
+
+% Write text in here
+% Use \subsection and \subsubsection to organize text
+
+This chapter establishes the theoretical foundations underlying the IRIS system design, examining the mathematical principles and computational models that enable secure, adaptive livestreaming in high-density wireless environments. Rather than providing general overviews, this chapter focuses on the specific theoretical aspects that inform the novel contributions presented in subsequent chapters.
+
+\section{Error Correction Theory for Wireless Packet Loss}
+
+\subsection{Reed-Solomon Codes Over Finite Fields}
+
+The mathematical foundation of error correction in IRIS relies on Reed-Solomon codes operating over Galois Fields GF($2^8$), chosen for their optimal properties in erasure channels where entire symbols are either received correctly or lost completely \cite{reed1960polynomial}. This choice addresses the fundamental challenge in wireless streaming where packet loss patterns exhibit spatial and temporal correlation rather than the independent loss assumptions underlying simpler coding schemes.
+
+Reed-Solomon codes RS$(n,k)$ achieve the Singleton bound for maximum distance separable codes, providing theoretical optimality for symbol erasure recovery. The encoding process maps $k$ data symbols to $n$ codeword symbols through polynomial evaluation over GF($2^8$), where the minimum distance $d = n-k+1$ enables correction of up to $(n-k)$ erasures or $\lfloor(n-k)/2\rfloor$ arbitrary errors.
+
+For IRIS implementation, each symbol corresponds to one byte, aligning with network packet structures while maintaining computational tractability. The choice of GF($2^8$) provides 256 distinct field elements, sufficient for practical packet matrix dimensions while enabling efficient field arithmetic through lookup tables.
+
+\subsection{Matrix-Based Erasure Correction for Burst Loss Patterns}
+
+The theoretical framework for two-dimensional error correction addresses the inadequacy of traditional one-dimensional codes for wireless channel characteristics \cite{blomer2000practical}. Wireless channels exhibit burst loss patterns where consecutive packets fail due to channel fading, interference, or mobility, violating the independence assumptions of classical error correction theory.
+
+The matrix formulation organizes data packets into a rectangular array $M \in \text{GF}(2^8)^{r \times c}$ where each element $M_{i,j}$ represents a packet. Row-wise Reed-Solomon encoding applies RS$(r+p_r, r)$ to each row, while column-wise encoding applies RS$(c+p_c, c)$ to each column, creating a doubly-protected structure.
+
+The theoretical recovery capability follows from the intersection properties of the dual protection scheme. For a burst loss affecting consecutive elements, recovery succeeds when the burst length does not exceed $\min(p_r, p_c)$. For random losses, the recovery probability increases multiplicatively, as failures must occur in both row and column dimensions simultaneously to prevent reconstruction.
+
+The error correction bound for the two-dimensional scheme provides recovery guarantees:
+\begin{itemize}
+\item Burst losses: deterministic recovery for bursts up to $\min(p_r, p_c)$ packets
+\item Random losses: probabilistic recovery with success rate approaching 1 as redundancy increases
+\item Mixed patterns: graceful degradation based on the geometric intersection of damaged rows and columns
+\end{itemize}
+
+\section{Adaptive Control Theory Through Reinforcement Learning}
+
+\subsection{Markov Decision Process Formulation for Network Adaptation}
+
+The adaptive behavior of IRIS emerges from modeling network parameter optimization as a Markov Decision Process (MDP), providing a principled framework for decision-making under uncertainty \cite{sutton2018reinforcement}. The MDP formulation $(S, A, P, R, \gamma)$ captures the essential elements of network adaptation where optimal actions depend only on current state information.
+
+The state space $S$ encodes network conditions through a feature vector representing aggregated client statistics including loss rates $\ell \in [0,1]$, timing variations $\sigma_t$, and spatial distribution metrics $\rho$. State discretization employs histogram-based quantization to balance learning efficiency with parameter resolution, creating a finite state space suitable for tabular Q-learning methods.
+
+The action space $A$ encompasses FEC configuration parameters including row redundancy $p_r \in \{0, 1, \ldots, p_{r,\max}\}$, column redundancy $p_c \in \{0, 1, \ldots, p_{c,\max}\}$, and transmission rate parameters $\tau$. The discrete action space enables exhaustive exploration while maintaining practical constraints on system resources.
+
+\subsection{Q-Learning Convergence for Non-Stationary Networks}
+
+The theoretical foundation for adaptive parameter learning relies on Q-learning convergence properties, modified to address the non-stationary nature of wireless network environments \cite{watkins1992q}. Classical Q-learning convergence assumes stationary reward distributions, but wireless networks exhibit time-varying characteristics requiring specialized analysis.
+
+The Q-function $Q: S \times A \rightarrow \mathbb{R}$ estimates expected cumulative reward for state-action pairs. The update mechanism:
+$$Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma \max_{a'} Q(s',a') - Q(s,a)]$$
+incorporates the learning rate $\alpha \in (0,1]$ and discount factor $\gamma \in [0,1)$ to balance learning speed with stability.
+
+For non-stationary environments, convergence analysis requires modified assumptions. The learning rate schedule $\alpha_t$ must satisfy $\sum_{t=0}^{\infty} \alpha_t = \infty$ and $\sum_{t=0}^{\infty} \alpha_t^2 < \infty$ while adapting to environmental change rates. The IRIS implementation employs time-decay learning rates that maintain exploration capability while converging to quasi-optimal policies in slowly varying networks.
+
+In the IRIS system context, the state space $S$ encompasses network conditions derived from client reports, the action space $A$ includes FEC redundancy levels and transmission parameters, and rewards $R$ reflect quality metrics such as packet loss rates and client satisfaction. The Q-function $Q(s,a)$ estimates expected cumulative reward for taking action $a$ in state $s$, enabling the system to learn optimal FEC configurations for varying network conditions.
+
+\section{Cryptographic Primitives for Streaming Security}
+
+\subsection{Authenticated Encryption Theory}
+
+The security framework of IRIS builds upon authenticated encryption schemes that provide both confidentiality and integrity in a single primitive \cite{dworkin2007recommendation}. Traditional approaches require separate encryption and authentication steps, increasing computational overhead and introducing potential security vulnerabilities through composition.
+
+Galois/Counter Mode (GCM) achieves authenticated encryption through the combination of Counter Mode (CTR) encryption and Galois Mode authentication. The theoretical security relies on the pseudorandomness of the underlying block cipher and the universal hash properties of the Galois field multiplication.
+
+Counter Mode transforms the block cipher into a stream cipher by encrypting successive counter values and XORing with plaintext. The counter construction ensures that identical plaintext blocks produce different ciphertext when encrypted with different counter values, preventing pattern analysis attacks critical for streaming applications where content may exhibit temporal correlation.
+
+The authentication component employs polynomial evaluation over GF($2^{128}$) to generate authentication tags. The universal hash function property ensures that the probability of successful tag forgery remains negligible even for adaptive chosen-ciphertext attacks, providing integrity guarantees essential for streaming applications where packet injection represents a significant threat.
+
+\subsection{Elliptic Curve Cryptography for Resource-Constrained Authentication}
+
+The authentication infrastructure employs Elliptic Curve Digital Signature Algorithm (ECDSA) over the NIST P-256 curve, chosen for its optimal security-to-efficiency ratio in resource-constrained environments \cite{johnson2001elliptic}. The mathematical foundation relies on the elliptic curve discrete logarithm problem, which provides equivalent security to RSA with significantly smaller key sizes.
+
+The elliptic curve $E$ over finite field $\mathbb{F}_p$ follows the Weierstrass form $y^2 = x^3 + ax + b$, where the NIST P-256 parameters provide 128-bit security strength. The group operation on elliptic curve points enables efficient scalar multiplication while maintaining computational hardness for the inverse operation.
+
+ECDSA signature generation requires ephemeral key generation and point multiplication operations that scale sub-quadratically with key size, providing computational advantages for high-frequency authentication operations in streaming systems. The signature verification process requires only elliptic curve additions and a single scalar multiplication, enabling efficient batch verification for multiple clients.
+
+\section{Public Key Infrastructure for Decentralized Trust}
+
+\subsection{Certificate Chain Validation in Offline Environments}
+
+The PKI framework addresses the fundamental challenge of establishing trust in decentralized environments where constant connectivity to external certificate authorities cannot be guaranteed \cite{housley2002internet}. Traditional PKI systems assume reliable network access for certificate validation, revocation checking, and trust chain verification.
+
+The IRIS approach employs embedded Certificate Authority functionality that eliminates external dependencies while maintaining cryptographic security properties. The trust model relies on pre-distributed root certificates and local certificate generation, creating a closed trust environment suitable for isolated deployments or high-security scenarios.
+
+Certificate validation follows the standard X.509 chain verification process, but operates entirely within the local trust domain. The embedded CA maintains certificate revocation lists (CRLs) and handles certificate lifecycle management without requiring external network access. This approach trades some flexibility for improved reliability and reduced attack surface.
+
+\subsection{Lightweight Certificate Distribution Protocol}
+
+The certificate distribution mechanism optimizes for streaming application requirements where certificate overhead must be minimized while maintaining security guarantees. Traditional certificate exchange protocols incur significant overhead through multiple round-trips and verbose certificate formats unsuitable for real-time applications.
+
+The IRIS certificate protocol employs PKCS\#10 Certificate Signing Requests (CSR) that enable distributed key generation \cite{nystrom2000pkcs}. Clients generate ECDSA key pairs locally and submit only public key information for certification, minimizing trust requirements and reducing the attack surface associated with private key transmission.
+
+The certificate format optimization reduces overhead through domain-specific field selection and compact encoding. While maintaining X.509 compatibility for interoperability, the protocol eliminates optional fields and employs binary encoding to minimize certificate size for bandwidth-constrained wireless environments.
+
+\section{Protocol Architectures for Real-Time Communication}
+
+\subsection{Transport Protocol Selection for Streaming Applications}
+
+The selection of UDP as the primary transport protocol reflects the fundamental trade-offs in real-time streaming applications where latency constraints dominate reliability considerations \cite{ahlswede2000network}. TCP's congestion control mechanisms, while appropriate for bulk data transfer, introduce unacceptable delays for streaming applications through head-of-line blocking and retransmission delays.
+
+UDP provides a minimal transport abstraction that preserves application-level control over reliability mechanisms. This approach enables IRIS to implement Forward Error Correction strategies specifically optimized for wireless channel characteristics, rather than relying on generic TCP recovery mechanisms designed for wired networks.
+
+The multicast capability of UDP enables efficient one-to-many distribution that scales independently of client population size. Traditional unicast approaches require $O(n)$ bandwidth scaling with client count, while multicast maintains constant bandwidth requirements regardless of receiver population.
+
+\subsection{Session Layer Security Through gRPC}
+
+The control plane architecture employs gRPC over HTTP/2 to provide structured communication with built-in security, flow control, and multiplexing capabilities \cite{google2015grpc}. This approach separates security-critical operations from performance-critical data plane operations, enabling different optimization strategies for each domain.
+
+Protocol Buffer serialization provides type-safe, language-independent message encoding with forward and backward compatibility guarantees \cite{google2008protobuf}. The schema evolution capabilities enable protocol updates without breaking existing clients, essential for long-term system maintenance and feature addition.
+
+The HTTP/2 foundation provides multiplexing of multiple logical streams over a single TCP connection, reducing connection establishment overhead and enabling efficient resource utilization. The built-in flow control mechanisms prevent resource exhaustion while maintaining low latency for control operations.
+
+\section{Systems Programming Foundations}
+
+\subsection{Memory Safety in High-Performance Systems}
+
+The implementation of IRIS relies on Rust's ownership model to achieve memory safety without garbage collection overhead \cite{matsakis2014rust}. Traditional systems programming languages require manual memory management that introduces security vulnerabilities and correctness issues, while garbage-collected languages impose unpredictable latency spikes unacceptable for real-time streaming.
+
+Rust's type system enforces memory safety through compile-time analysis of ownership, borrowing, and lifetime relationships. This approach eliminates entire classes of security vulnerabilities including buffer overflows, use-after-free errors, and data races without runtime overhead.
+
+The zero-cost abstraction principle enables high-level programming constructs without performance penalties. Abstractions compile to the same assembly code as hand-optimized implementations, enabling maintainable code without sacrificing performance requirements critical for streaming applications.
+
+\subsection{Asynchronous I/O for Concurrent Network Operations}
+
+The networking architecture employs asynchronous I/O primitives to handle thousands of concurrent client connections without the overhead of thread-per-connection models \cite{tokio2023async}. Event-driven architectures scale more efficiently than blocking I/O approaches while maintaining deterministic latency characteristics.
+
+The async/await programming model provides composable concurrency primitives that simplify complex control flow while maintaining performance. Cooperative scheduling enables fine-grained control over task execution order and resource allocation, essential for maintaining quality-of-service guarantees.
+
+Runtime coordination handles task scheduling, I/O polling, and timer management through efficient event notification mechanisms. Platform-specific optimizations employ epoll (Linux), kqueue (BSD), and IOCP (Windows) for maximum I/O throughput while maintaining cross-platform compatibility.

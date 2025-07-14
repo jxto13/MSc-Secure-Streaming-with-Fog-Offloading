@@ -37,172 +37,402 @@
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
 \newlabel{Introduction}{{1}{1}{Introduction}{chapter.1}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {1.1}Motivation}{1}{section.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {1.2}Context}{1}{section.1.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {1.3}Problem}{2}{section.1.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {1.4}Strategy}{2}{section.1.4}\protected@file@percent }
+\citation{mpeg1996ts}
+\citation{ahlswede2000network}
+\citation{reed1960polynomial}
 \pp@pagectr{footnote}{2}{11}{3}
 \@writefile{toc}{\contentsline {chapter}{\numberline {2}Background Work}{3}{chapter.2}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
 \newlabel{BackgroundWork}{{2}{3}{Background Work}{chapter.2}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {2.1}Technologies}{3}{section.2.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.1}Secure Communication: gRPC, TLS, Self-Signed CA}{3}{subsection.2.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.2}MPEG-TS Streaming over UDP}{3}{subsection.2.1.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.3}Forward Error Correction: Reed-Solomon}{3}{subsection.2.1.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.4}Encryption: AES-256 with Rotating Keys}{3}{subsection.2.1.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.5}Signatures: ECDSA p256}{3}{subsection.2.1.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.6}Metrics: Prometheus and Grafana}{3}{subsection.2.1.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.7}Dynamic Offloading: Wi-Fi Aware}{3}{subsection.2.1.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.8}Serialization: Protobuf}{3}{subsection.2.1.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.9}Timers: Tokio Runtime}{3}{subsection.2.1.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.10}I/O: Mio}{3}{subsection.2.1.10}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.11}Communication: Blocking Channels}{3}{subsection.2.1.11}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.12}Memory Efficiency: Matrix Buffers}{3}{subsection.2.1.12}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.13}Testing: Linux Network Namespaces and Traffic Control}{3}{subsection.2.1.13}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2.2}Non-State-of-the-Art Systems}{3}{section.2.2}\protected@file@percent }
-\pp@pagectr{footnote}{3}{12}{4}
-\@writefile{toc}{\contentsline {chapter}{\numberline {3}State of the Art}{4}{chapter.3}\protected@file@percent }
-\@writefile{lof}{\addvspace {10\p@ }}
-\@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{State of the Art}{{3}{4}{State of the Art}{chapter.3}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {3.1}Existing Secure Streaming Protocols}{4}{section.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.2}Forward Error Correction}{4}{section.3.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.3}Encryption and Signatures}{4}{section.3.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.4}Dynamic Offloading}{4}{section.3.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.5}Bandwidth Management}{4}{section.3.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.6}Protobuf and Runtime Management}{4}{section.3.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.7}Testing and Development}{4}{section.3.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {3.8}Unique Contributions}{4}{section.3.8}\protected@file@percent }
-\citation{jung2017rust,matsakis2014rust}
-\citation{sharma2020comparison}
-\citation{akidau2015dataflow}
-\citation{mpeg1996ts,ffmpeg2023docs}
-\pp@pagectr{footnote}{4}{13}{5}
-\@writefile{toc}{\contentsline {chapter}{\numberline {4}Design and Implementation}{5}{chapter.4}\protected@file@percent }
-\@writefile{lof}{\addvspace {10\p@ }}
-\@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{DesignAndImplementation}{{4}{5}{Design and Implementation}{chapter.4}{}}
-\@writefile{brf}{\backcite{jung2017rust}{{5}{4}{chapter.4}}}
-\@writefile{brf}{\backcite{matsakis2014rust}{{5}{4}{chapter.4}}}
-\@writefile{brf}{\backcite{sharma2020comparison}{{5}{4}{chapter.4}}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.1}System Architecture}{5}{section.4.1}\protected@file@percent }
-\@writefile{brf}{\backcite{akidau2015dataflow}{{5}{4.1}{section.4.1}}}
-\citation{nist2013aes,johnson2001ecdsa}
+\@writefile{toc}{\contentsline {section}{\numberline {2.1}Streaming Technologies and Protocols}{3}{section.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.1}MPEG-TS Streaming over UDP}{3}{subsection.2.1.1}\protected@file@percent }
+\@writefile{brf}{\backcite{mpeg1996ts}{{3}{2.1.1}{subsection.2.1.1}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1.2}UDP Multicast and Unicast}{3}{subsection.2.1.2}\protected@file@percent }
+\@writefile{brf}{\backcite{ahlswede2000network}{{3}{2.1.2}{subsection.2.1.2}}}
+\citation{blomer2000practical}
+\citation{nist2013aes}
+\citation{dworkin2007recommendation}
+\citation{johnson2001elliptic}
+\@writefile{toc}{\contentsline {section}{\numberline {2.2}Error Correction Foundations}{4}{section.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.1}Reed-Solomon Codes}{4}{subsection.2.2.1}\protected@file@percent }
+\@writefile{brf}{\backcite{reed1960polynomial}{{4}{2.2.1}{subsection.2.2.1}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.2.2}Two-Dimensional Error Correction}{4}{subsection.2.2.2}\protected@file@percent }
+\@writefile{brf}{\backcite{blomer2000practical}{{4}{2.2.2}{subsection.2.2.2}}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.3}Cryptographic Foundations}{4}{section.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.1}AES-256 Galois/Counter Mode}{4}{subsection.2.3.1}\protected@file@percent }
+\@writefile{brf}{\backcite{nist2013aes}{{4}{2.3.1}{subsection.2.3.1}}}
+\@writefile{brf}{\backcite{dworkin2007recommendation}{{4}{2.3.1}{subsection.2.3.1}}}
+\citation{housley2002internet}
+\citation{nystrom2000pkcs}
 \citation{sutton2018reinforcement}
-\citation{schulzrinne2003rtp}
-\@writefile{brf}{\backcite{mpeg1996ts}{{6}{4.1}{section.4.1}}}
-\@writefile{brf}{\backcite{ffmpeg2023docs}{{6}{4.1}{section.4.1}}}
-\@writefile{brf}{\backcite{nist2013aes}{{6}{4.1}{section.4.1}}}
-\@writefile{brf}{\backcite{johnson2001ecdsa}{{6}{4.1}{section.4.1}}}
-\@writefile{brf}{\backcite{sutton2018reinforcement}{{6}{4.1}{section.4.1}}}
-\citation{reed1960polynomial}
-\@writefile{toc}{\contentsline {section}{\numberline {4.2}Protocol Design}{7}{section.4.2}\protected@file@percent }
-\@writefile{brf}{\backcite{schulzrinne2003rtp}{{7}{4.2}{section.4.2}}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Transmission Matrix and Adjustable Forward Error Correction}{7}{subsection.4.2.1}\protected@file@percent }
-\newlabel{sec:transmission-matrix}{{4.2.1}{7}{Transmission Matrix and Adjustable Forward Error Correction}{subsection.4.2.1}{}}
-\@writefile{brf}{\backcite{reed1960polynomial}{{8}{4.2.1}{subsection.4.2.1}}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}Space-Efficient Client Reports and Acknowledgment Mechanisms}{8}{subsection.4.2.2}\protected@file@percent }
-\newlabel{sec:space-efficient-reports}{{4.2.2}{8}{Space-Efficient Client Reports and Acknowledgment Mechanisms}{subsection.4.2.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}Multicast Network Coding and Source Coding}{9}{subsection.4.2.3}\protected@file@percent }
-\newlabel{sec:multicast-network-coding}{{4.2.3}{9}{Multicast Network Coding and Source Coding}{subsection.4.2.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.4}WiFi Multicast Retransmission Algorithms}{9}{subsection.4.2.4}\protected@file@percent }
-\newlabel{sec:multicast-retransmission}{{4.2.4}{9}{WiFi Multicast Retransmission Algorithms}{subsection.4.2.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.5}Unicast Retransmission and Client-Specific Recovery}{10}{subsection.4.2.5}\protected@file@percent }
-\newlabel{sec:unicast-retransmission}{{4.2.5}{10}{Unicast Retransmission and Client-Specific Recovery}{subsection.4.2.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.6}Network Scheduler Framework and Pipeline Architecture}{11}{subsection.4.2.6}\protected@file@percent }
-\newlabel{sec:network-scheduler}{{4.2.6}{11}{Network Scheduler Framework and Pipeline Architecture}{subsection.4.2.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.3}Advanced Protocol Implementation and Security Architecture}{11}{section.4.3}\protected@file@percent }
-\newlabel{sec:advanced-protocol-security}{{4.3}{11}{Advanced Protocol Implementation and Security Architecture}{section.4.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}Double Signature Schema and Stream Integrity}{11}{subsection.4.3.1}\protected@file@percent }
-\newlabel{sec:double-signature}{{4.3.1}{11}{Double Signature Schema and Stream Integrity}{subsection.4.3.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}Edge Cloud Security and Trust Management}{12}{subsection.4.3.2}\protected@file@percent }
-\newlabel{sec:edge-cloud-security}{{4.3.2}{12}{Edge Cloud Security and Trust Management}{subsection.4.3.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.3}Threat Model and Attack Mitigation}{13}{subsection.4.3.3}\protected@file@percent }
-\newlabel{sec:threat-model-mitigation}{{4.3.3}{13}{Threat Model and Attack Mitigation}{subsection.4.3.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.4}Mobility Support and Seamless Handoff}{13}{subsection.4.3.4}\protected@file@percent }
-\newlabel{sec:mobility-support}{{4.3.4}{13}{Mobility Support and Seamless Handoff}{subsection.4.3.4}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.5}Performance Optimization and Resource Management}{14}{subsection.4.3.5}\protected@file@percent }
-\newlabel{sec:performance-resource-optimization}{{4.3.5}{14}{Performance Optimization and Resource Management}{subsection.4.3.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {4.4}Implementation Summary and Integration}{15}{section.4.4}\protected@file@percent }
-\newlabel{sec:implementation-summary}{{4.4}{15}{Implementation Summary and Integration}{section.4.4}{}}
-\pp@pagectr{footnote}{5}{24}{16}
-\@writefile{toc}{\contentsline {chapter}{\numberline {5}Evaluation}{16}{chapter.5}\protected@file@percent }
+\citation{watkins1992q}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.2}Elliptic Curve Cryptography}{5}{subsection.2.3.2}\protected@file@percent }
+\@writefile{brf}{\backcite{johnson2001elliptic}{{5}{2.3.2}{subsection.2.3.2}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.3.3}Public Key Infrastructure}{5}{subsection.2.3.3}\protected@file@percent }
+\@writefile{brf}{\backcite{housley2002internet}{{5}{2.3.3}{subsection.2.3.3}}}
+\@writefile{brf}{\backcite{nystrom2000pkcs}{{5}{2.3.3}{subsection.2.3.3}}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.4}Machine Learning Foundations}{5}{section.2.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.4.1}Reinforcement Learning and Q-Learning}{5}{subsection.2.4.1}\protected@file@percent }
+\@writefile{brf}{\backcite{sutton2018reinforcement}{{5}{2.4.1}{subsection.2.4.1}}}
+\@writefile{brf}{\backcite{watkins1992q}{{5}{2.4.1}{subsection.2.4.1}}}
+\citation{google2015grpc}
+\citation{google2008protobuf}
+\citation{rescorla2018tls13}
+\citation{matsakis2014rust}
+\citation{tokio2023async}
+\@writefile{toc}{\contentsline {section}{\numberline {2.5}Communication Protocols}{6}{section.2.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.1}gRPC and Protocol Buffers}{6}{subsection.2.5.1}\protected@file@percent }
+\@writefile{brf}{\backcite{google2015grpc}{{6}{2.5.1}{subsection.2.5.1}}}
+\@writefile{brf}{\backcite{google2008protobuf}{{6}{2.5.1}{subsection.2.5.1}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.5.2}Transport Layer Security}{6}{subsection.2.5.2}\protected@file@percent }
+\@writefile{brf}{\backcite{rescorla2018tls13}{{6}{2.5.2}{subsection.2.5.2}}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.6}Implementation Technologies and Tools}{6}{section.2.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6.1}Rust Programming Language}{6}{subsection.2.6.1}\protected@file@percent }
+\@writefile{brf}{\backcite{matsakis2014rust}{{6}{2.6.1}{subsection.2.6.1}}}
+\citation{mio2023async}
+\citation{prometheus2023monitoring}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6.2}Asynchronous Runtime: Tokio}{7}{subsection.2.6.2}\protected@file@percent }
+\@writefile{brf}{\backcite{tokio2023async}{{7}{2.6.2}{subsection.2.6.2}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.6.3}Low-Level I/O: Mio}{7}{subsection.2.6.3}\protected@file@percent }
+\@writefile{brf}{\backcite{mio2023async}{{7}{2.6.3}{subsection.2.6.3}}}
+\@writefile{toc}{\contentsline {section}{\numberline {2.7}Testing and Development Tools}{7}{section.2.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.1}Linux Network Namespaces}{7}{subsection.2.7.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.7.2}Monitoring and Metrics}{7}{subsection.2.7.2}\protected@file@percent }
+\@writefile{brf}{\backcite{prometheus2023monitoring}{{7}{2.7.2}{subsection.2.7.2}}}
+\citation{bianchi2000performance,kumar2012interference}
+\citation{heusse2003performance}
+\citation{konrad2003survey,yajnik1999measurement}
+\citation{biersack2005performance}
+\citation{casetti2002tcp,fu2003performance}
+\citation{mascolo1999linux}
+\citation{luby1997analysis,rizzo1997effective}
+\citation{plank1997practical}
+\pp@pagectr{footnote}{3}{16}{8}
+\@writefile{toc}{\contentsline {chapter}{\numberline {3}State of the Art}{8}{chapter.3}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{Evaluation}{{5}{16}{Evaluation}{chapter.5}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {5.1}Performance Results}{16}{section.5.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.1}Latency, Throughput, and Reliability}{16}{subsection.5.1.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.2}Adaptive FEC and Retransmission Scheduling}{16}{subsection.5.1.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.3}Multicast Scalability}{16}{subsection.5.1.3}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.4}Wi-Fi Aware Offloading Efficiency}{16}{subsection.5.1.4}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.5}Authentication and Roaming}{16}{subsection.5.1.5}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.6}Tokio and Mio Runtime Efficiency}{16}{subsection.5.1.6}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.7}Bandwidth Management}{16}{subsection.5.1.7}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.8}Memory Optimization}{16}{subsection.5.1.8}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.9}Testing with Packet Loss (tc)}{16}{subsection.5.1.9}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {5.2}Comparison}{16}{section.5.2}\protected@file@percent }
-\pp@pagectr{footnote}{6}{25}{17}
-\@writefile{toc}{\contentsline {chapter}{\numberline {6}Conclusion}{17}{chapter.6}\protected@file@percent }
+\newlabel{State of the Art}{{3}{8}{State of the Art}{chapter.3}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.1}Wireless Streaming Systems and Their Limitations}{8}{section.3.1}\protected@file@percent }
+\@writefile{brf}{\backcite{bianchi2000performance}{{8}{3.1}{section.3.1}}}
+\@writefile{brf}{\backcite{kumar2012interference}{{8}{3.1}{section.3.1}}}
+\@writefile{brf}{\backcite{heusse2003performance}{{8}{3.1}{section.3.1}}}
+\@writefile{brf}{\backcite{konrad2003survey}{{8}{3.1}{section.3.1}}}
+\@writefile{brf}{\backcite{yajnik1999measurement}{{8}{3.1}{section.3.1}}}
+\@writefile{brf}{\backcite{biersack2005performance}{{8}{3.1}{section.3.1}}}
+\@writefile{brf}{\backcite{casetti2002tcp}{{8}{3.1}{section.3.1}}}
+\@writefile{brf}{\backcite{fu2003performance}{{8}{3.1}{section.3.1}}}
+\@writefile{brf}{\backcite{mascolo1999linux}{{8}{3.1}{section.3.1}}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.2}Comparative Analysis of FEC Approaches}{8}{section.3.2}\protected@file@percent }
+\@writefile{brf}{\backcite{luby1997analysis}{{8}{3.2}{section.3.2}}}
+\@writefile{brf}{\backcite{rizzo1997effective}{{8}{3.2}{section.3.2}}}
+\citation{blomer2000practical,nonnenmacher1998parity}
+\citation{albanese1996priority}
+\citation{byers1998distributed,nonnenmacher1998parity}
+\citation{luby2002lt}
+\citation{luby2002lt,shokrollahi2006raptor}
+\citation{mackay2005fountain}
+\citation{mao2017neural,dong2019deep}
+\citation{boyan1994packet,chang1996q}
+\citation{mao2017neural,yin2015control}
+\citation{sutton2018reinforcement}
+\citation{tampuu2017multiagent,tan1993multi}
+\citation{chen2019multi}
+\@writefile{brf}{\backcite{plank1997practical}{{9}{3.2}{section.3.2}}}
+\@writefile{brf}{\backcite{blomer2000practical}{{9}{3.2}{section.3.2}}}
+\@writefile{brf}{\backcite{nonnenmacher1998parity}{{9}{3.2}{section.3.2}}}
+\@writefile{brf}{\backcite{albanese1996priority}{{9}{3.2}{section.3.2}}}
+\@writefile{brf}{\backcite{nonnenmacher1998parity}{{9}{3.2}{section.3.2}}}
+\@writefile{brf}{\backcite{byers1998distributed}{{9}{3.2}{section.3.2}}}
+\@writefile{brf}{\backcite{luby2002lt}{{9}{3.2}{section.3.2}}}
+\@writefile{brf}{\backcite{luby2002lt}{{9}{3.2}{section.3.2}}}
+\@writefile{brf}{\backcite{shokrollahi2006raptor}{{9}{3.2}{section.3.2}}}
+\@writefile{brf}{\backcite{mackay2005fountain}{{9}{3.2}{section.3.2}}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.3}Machine Learning in Network Optimization: Current State}{9}{section.3.3}\protected@file@percent }
+\@writefile{brf}{\backcite{mao2017neural}{{9}{3.3}{section.3.3}}}
+\@writefile{brf}{\backcite{dong2019deep}{{9}{3.3}{section.3.3}}}
+\@writefile{brf}{\backcite{boyan1994packet}{{9}{3.3}{section.3.3}}}
+\@writefile{brf}{\backcite{chang1996q}{{9}{3.3}{section.3.3}}}
+\@writefile{brf}{\backcite{mao2017neural}{{9}{3.3}{section.3.3}}}
+\@writefile{brf}{\backcite{yin2015control}{{9}{3.3}{section.3.3}}}
+\@writefile{brf}{\backcite{sutton2018reinforcement}{{9}{3.3}{section.3.3}}}
+\@writefile{brf}{\backcite{tampuu2017multiagent}{{9}{3.3}{section.3.3}}}
+\@writefile{brf}{\backcite{tan1993multi}{{9}{3.3}{section.3.3}}}
+\@writefile{brf}{\backcite{chen2019multi}{{9}{3.3}{section.3.3}}}
+\citation{eskicioglu2003overview,peng2004survey}
+\citation{apostolopoulos2001secure}
+\citation{liu2005secure,eskicioglu2003overview}
+\citation{peng2004survey}
+\citation{harney1997group,steiner2000secure}
+\citation{rafaeli2003survey}
+\citation{adams1999understanding,housley2002internet}
+\citation{liu2005secure}
+\citation{bonomi2012fog,yi2015survey}
+\citation{satyanarayanan2017emergence}
+\@writefile{toc}{\contentsline {section}{\numberline {3.4}Security Approaches in Existing Streaming Systems}{10}{section.3.4}\protected@file@percent }
+\@writefile{brf}{\backcite{eskicioglu2003overview}{{10}{3.4}{section.3.4}}}
+\@writefile{brf}{\backcite{peng2004survey}{{10}{3.4}{section.3.4}}}
+\@writefile{brf}{\backcite{apostolopoulos2001secure}{{10}{3.4}{section.3.4}}}
+\@writefile{brf}{\backcite{eskicioglu2003overview}{{10}{3.4}{section.3.4}}}
+\@writefile{brf}{\backcite{liu2005secure}{{10}{3.4}{section.3.4}}}
+\@writefile{brf}{\backcite{peng2004survey}{{10}{3.4}{section.3.4}}}
+\@writefile{brf}{\backcite{harney1997group}{{10}{3.4}{section.3.4}}}
+\@writefile{brf}{\backcite{steiner2000secure}{{10}{3.4}{section.3.4}}}
+\@writefile{brf}{\backcite{rafaeli2003survey}{{10}{3.4}{section.3.4}}}
+\@writefile{brf}{\backcite{housley2002internet}{{10}{3.4}{section.3.4}}}
+\@writefile{brf}{\backcite{adams1999understanding}{{10}{3.4}{section.3.4}}}
+\@writefile{brf}{\backcite{liu2005secure}{{10}{3.4}{section.3.4}}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.5}Edge Computing Solutions for Streaming}{10}{section.3.5}\protected@file@percent }
+\@writefile{brf}{\backcite{bonomi2012fog}{{10}{3.5}{section.3.5}}}
+\@writefile{brf}{\backcite{yi2015survey}{{10}{3.5}{section.3.5}}}
+\citation{wang2017cache,tran2017collaborative}
+\citation{bharath2016caching,sadeghi2019deep}
+\citation{mukherjee2018survey,yousefpour2019all}
+\citation{bonomi2012fog}
+\citation{stojmenovic2014fog,roman2016mobile}
+\citation{zhang2017security}
+\citation{pantos2017hls}
+\citation{bentaleb2019survey}
+\citation{akhshabi2011experimental}
+\citation{seufert2015survey}
+\citation{hooft2016http}
+\citation{stockhammer2011dynamic,mueller2011impact}
+\citation{lederer2012dynamic}
+\@writefile{brf}{\backcite{satyanarayanan2017emergence}{{11}{3.5}{section.3.5}}}
+\@writefile{brf}{\backcite{wang2017cache}{{11}{3.5}{section.3.5}}}
+\@writefile{brf}{\backcite{tran2017collaborative}{{11}{3.5}{section.3.5}}}
+\@writefile{brf}{\backcite{bharath2016caching}{{11}{3.5}{section.3.5}}}
+\@writefile{brf}{\backcite{sadeghi2019deep}{{11}{3.5}{section.3.5}}}
+\@writefile{brf}{\backcite{mukherjee2018survey}{{11}{3.5}{section.3.5}}}
+\@writefile{brf}{\backcite{yousefpour2019all}{{11}{3.5}{section.3.5}}}
+\@writefile{brf}{\backcite{bonomi2012fog}{{11}{3.5}{section.3.5}}}
+\@writefile{brf}{\backcite{stojmenovic2014fog}{{11}{3.5}{section.3.5}}}
+\@writefile{brf}{\backcite{roman2016mobile}{{11}{3.5}{section.3.5}}}
+\@writefile{brf}{\backcite{zhang2017security}{{11}{3.5}{section.3.5}}}
+\@writefile{toc}{\contentsline {section}{\numberline {3.6}Multimedia Streaming Protocols}{11}{section.3.6}\protected@file@percent }
+\@writefile{brf}{\backcite{pantos2017hls}{{11}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{bentaleb2019survey}{{11}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{akhshabi2011experimental}{{11}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{seufert2015survey}{{11}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{hooft2016http}{{11}{3.6}{section.3.6}}}
+\citation{johnston2012webrtc,garcia2013kurento}
+\citation{rescorla2013security}
+\citation{langley2017quic,iyengar2021quic}
+\citation{palmer2018impact}
+\citation{schulzrinne1998real,schulzrinne2003rtp}
+\citation{handley2006rtp}
+\citation{zhang2017security,dong2019deep}
+\citation{eskicioglu2003overview}
+\@writefile{brf}{\backcite{stockhammer2011dynamic}{{12}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{mueller2011impact}{{12}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{lederer2012dynamic}{{12}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{johnston2012webrtc}{{12}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{garcia2013kurento}{{12}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{rescorla2013security}{{12}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{langley2017quic}{{12}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{iyengar2021quic}{{12}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{palmer2018impact}{{12}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{schulzrinne1998real}{{12}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{schulzrinne2003rtp}{{12}{3.6}{section.3.6}}}
+\@writefile{brf}{\backcite{handley2006rtp}{{12}{3.6}{section.3.6}}}
+\citation{mao2017neural,zhang2017security}
+\citation{sutton2018reinforcement,apostolopoulos2001secure}
+\citation{peng2004survey,luby2002lt}
+\citation{kumar2012interference}
+\@writefile{toc}{\contentsline {section}{\numberline {3.7}Gap Analysis and Research Opportunities}{13}{section.3.7}\protected@file@percent }
+\@writefile{brf}{\backcite{dong2019deep}{{13}{3.7}{section.3.7}}}
+\@writefile{brf}{\backcite{zhang2017security}{{13}{3.7}{section.3.7}}}
+\@writefile{brf}{\backcite{eskicioglu2003overview}{{13}{3.7}{section.3.7}}}
+\@writefile{brf}{\backcite{mao2017neural}{{13}{3.7}{section.3.7}}}
+\@writefile{brf}{\backcite{zhang2017security}{{13}{3.7}{section.3.7}}}
+\@writefile{brf}{\backcite{sutton2018reinforcement}{{13}{3.7}{section.3.7}}}
+\@writefile{brf}{\backcite{apostolopoulos2001secure}{{13}{3.7}{section.3.7}}}
+\@writefile{brf}{\backcite{luby2002lt}{{13}{3.7}{section.3.7}}}
+\@writefile{brf}{\backcite{peng2004survey}{{13}{3.7}{section.3.7}}}
+\@writefile{brf}{\backcite{kumar2012interference}{{13}{3.7}{section.3.7}}}
+\citation{franke2020network}
+\citation{dworkin2007recommendation}
+\pp@pagectr{footnote}{4}{22}{14}
+\@writefile{toc}{\contentsline {chapter}{\numberline {4}Design and Implementation}{14}{chapter.4}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{Conclusion}{{6}{17}{Conclusion}{chapter.6}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {6.1}Summary}{17}{section.6.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {6.2}Future Work}{17}{section.6.2}\protected@file@percent }
+\newlabel{DesignAndImplementation}{{4}{14}{Design and Implementation}{chapter.4}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.1}System Architecture}{14}{section.4.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.1}Server Architecture}{14}{subsection.4.1.1}\protected@file@percent }
+\@writefile{brf}{\backcite{franke2020network}{{14}{4.1.1}{subsection.4.1.1}}}
+\@writefile{brf}{\backcite{dworkin2007recommendation}{{14}{4.1.1}{subsection.4.1.1}}}
+\citation{mpeg1996ts}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.1}{\ignorespaces IRIS system architecture showing server-client interaction and network infrastructure.}}{15}{figure.caption.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.1.1}Source Handler and Pipeline Processing}{15}{subsubsection.4.1.1.1}\protected@file@percent }
+\@writefile{brf}{\backcite{mpeg1996ts}{{15}{4.1.1.1}{subsubsection.4.1.1.1}}}
+\citation{watkins1992q}
+\citation{matsakis2014rust}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.1.2}Adaptive Parameter Management}{16}{subsubsection.4.1.1.2}\protected@file@percent }
+\@writefile{brf}{\backcite{watkins1992q}{{16}{4.1.1.2}{subsubsection.4.1.1.2}}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.1.2}Client Architecture}{16}{subsection.4.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.2.1}Concurrent Processing Architecture}{17}{subsubsection.4.1.2.1}\protected@file@percent }
+\@writefile{brf}{\backcite{matsakis2014rust}{{17}{4.1.2.1}{subsubsection.4.1.2.1}}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.2.2}Forward Error Correction Decoding}{17}{subsubsection.4.1.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.1.2.3}Quality Monitoring and Reporting}{17}{subsubsection.4.1.2.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {4.2}Protocol Design}{18}{section.4.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.1}Control Plane Protocol}{18}{subsection.4.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.2}Data Plane Protocol}{19}{subsection.4.2.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2.3}Security Framework}{19}{subsection.4.2.3}\protected@file@percent }
+\newlabel{sec:security-framework}{{4.2.3}{19}{Security Framework}{subsection.4.2.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.2.3.1}Dual Cryptographic Certificate Architecture}{19}{subsubsection.4.2.3.1}\protected@file@percent }
+\citation{nist2013p256}
+\citation{johnson2001ecdsa}
+\@writefile{brf}{\backcite{nist2013p256}{{20}{4.2.3.1}{subsubsection.4.2.3.1}}}
+\@writefile{brf}{\backcite{johnson2001ecdsa}{{20}{4.2.3.1}{subsubsection.4.2.3.1}}}
+\pp@pagectr{footnote}{5}{29}{21}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Evaluation}{21}{chapter.5}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{Evaluation}{{5}{21}{Evaluation}{chapter.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5.1}Performance Results}{21}{section.5.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.1}Latency, Throughput, and Reliability}{21}{subsection.5.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.2}Adaptive FEC and Retransmission Scheduling}{21}{subsection.5.1.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.3}Multicast Scalability}{21}{subsection.5.1.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.4}Wi-Fi Aware Offloading Efficiency}{21}{subsection.5.1.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.5}Authentication and Roaming}{21}{subsection.5.1.5}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.6}Tokio and Mio Runtime Efficiency}{21}{subsection.5.1.6}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.7}Bandwidth Management}{21}{subsection.5.1.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.8}Memory Optimization}{21}{subsection.5.1.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {5.1.9}Testing with Packet Loss (tc)}{21}{subsection.5.1.9}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {5.2}Comparison}{21}{section.5.2}\protected@file@percent }
+\pp@pagectr{footnote}{6}{30}{22}
+\@writefile{toc}{\contentsline {chapter}{\numberline {6}Conclusion}{22}{chapter.6}\protected@file@percent }
+\@writefile{lof}{\addvspace {10\p@ }}
+\@writefile{lot}{\addvspace {10\p@ }}
+\newlabel{Conclusion}{{6}{22}{Conclusion}{chapter.6}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6.1}Summary}{22}{section.6.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {6.2}Future Work}{22}{section.6.2}\protected@file@percent }
 \citation{Fienup1982}
 \citation{Fienup1982}
-\pp@pagectr{footnote}{7}{26}{18}
-\@writefile{toc}{\contentsline {chapter}{\numberline {7}Chapter Title Here}{18}{chapter.7}\protected@file@percent }
+\pp@pagectr{footnote}{7}{31}{23}
+\@writefile{toc}{\contentsline {chapter}{\numberline {7}Chapter Title Here}{23}{chapter.7}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{ChapterTemplate}{{7}{18}{Chapter Title Here}{chapter.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7.1}Citations}{18}{section.7.1}\protected@file@percent }
-\@writefile{brf}{\backcite{Fienup1982}{{18}{7.1}{section.7.1}}}
-\@writefile{brf}{\backcite{Fienup1982}{{18}{7.1}{section.7.1}}}
-\@writefile{tdo}{\contentsline {todo}{\fcolorbox {red}{red!25}{\textcolor {red!25}{o}}\ You can make personal notes like this}{18}{section*.3}\protected@file@percent }
+\newlabel{ChapterTemplate}{{7}{23}{Chapter Title Here}{chapter.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.1}Citations}{23}{section.7.1}\protected@file@percent }
+\@writefile{brf}{\backcite{Fienup1982}{{23}{7.1}{section.7.1}}}
+\@writefile{brf}{\backcite{Fienup1982}{{23}{7.1}{section.7.1}}}
+\@writefile{tdo}{\contentsline {todo}{\fcolorbox {red}{red!25}{\textcolor {red!25}{o}}\ You can make personal notes like this}{23}{section*.4}\protected@file@percent }
 \pgfsyspdfmark {pgfid1}{16321883}{28712866}
 \pgfsyspdfmark {pgfid4}{35871284}{28574509}
 \pgfsyspdfmark {pgfid5}{37719579}{28433773}
-\@writefile{toc}{\contentsline {section}{\numberline {7.2}Figures}{18}{section.7.2}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {7.1}{\ignorespaces FCUP's fat cat.}}{18}{figure.caption.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.2}Figures}{23}{section.7.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7.1}{\ignorespaces FCUP's fat cat.}}{23}{figure.caption.5}\protected@file@percent }
 \providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
-\newlabel{fig:FCUPfatCat}{{7.1}{18}{FCUP's fat cat}{figure.caption.4}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7.2}{\ignorespaces FCUP's fat cat doing what cats do.}}{19}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:FCUPfatcatSide1}{{7.2}{19}{FCUP's fat cat doing what cats do}{figure.caption.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7.3}{\ignorespaces FCUP's fat cat.}}{19}{figure.caption.5}\protected@file@percent }
-\newlabel{fig:FCUPfatcatSide2}{{7.3}{19}{FCUP's fat cat}{figure.caption.5}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7.4}{\ignorespaces FCUP's fat cat.}}{19}{figure.caption.6}\protected@file@percent }
-\newlabel{fig:FCUPfatcatSide3}{{7.4}{19}{FCUP's fat cat}{figure.caption.6}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {7.5}{\ignorespaces FCUP's fat cat.}}{19}{figure.caption.7}\protected@file@percent }
-\newlabel{fig:FCUPfatcatSide4}{{7.5}{19}{FCUP's fat cat}{figure.caption.7}{}}
+\newlabel{fig:FCUPfatCat}{{7.1}{23}{FCUP's fat cat}{figure.caption.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.2}{\ignorespaces FCUP's fat cat doing what cats do.}}{24}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:FCUPfatcatSide1}{{7.2}{24}{FCUP's fat cat doing what cats do}{figure.caption.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.3}{\ignorespaces FCUP's fat cat.}}{24}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:FCUPfatcatSide2}{{7.3}{24}{FCUP's fat cat}{figure.caption.6}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.4}{\ignorespaces FCUP's fat cat.}}{24}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:FCUPfatcatSide3}{{7.4}{24}{FCUP's fat cat}{figure.caption.7}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {7.5}{\ignorespaces FCUP's fat cat.}}{24}{figure.caption.8}\protected@file@percent }
+\newlabel{fig:FCUPfatcatSide4}{{7.5}{24}{FCUP's fat cat}{figure.caption.8}{}}
 \transparent@use{.5}
-\@writefile{toc}{\contentsline {subsection}{\numberline {7.2.1}SVGs}{20}{subsection.7.2.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {7.6}{\ignorespaces The test SVG image, as it is seen in Inkscape}}{20}{figure.caption.8}\protected@file@percent }
-\newlabel{fig:normal}{{7.6}{20}{The test SVG image, as it is seen in Inkscape}{figure.caption.8}{}}
-\newlabel{eq:emc2}{{7.1}{20}{SVGs}{equation.7.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.2.1.1}Automatic export}{20}{subsubsection.7.2.1.1}\protected@file@percent }
-\@writefile{lof}{\contentsline {figure}{\numberline {7.7}{\ignorespaces The test image, exported to PDF \emph  {with} \LaTeX  \ option.}}{21}{figure.caption.9}\protected@file@percent }
-\newlabel{fig:pdflatex}{{7.7}{21}{The test image, exported to PDF \emph {with} \LaTeX \ option}{figure.caption.9}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {7.3}Math}{21}{section.7.3}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {7.2.1}SVGs}{25}{subsection.7.2.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7.6}{\ignorespaces The test SVG image, as it is seen in Inkscape}}{25}{figure.caption.9}\protected@file@percent }
+\newlabel{fig:normal}{{7.6}{25}{The test SVG image, as it is seen in Inkscape}{figure.caption.9}{}}
+\newlabel{eq:emc2}{{7.1}{25}{SVGs}{equation.7.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {7.2.1.1}Automatic export}{25}{subsubsection.7.2.1.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {7.7}{\ignorespaces The test image, exported to PDF \emph  {with} \LaTeX  \ option.}}{26}{figure.caption.10}\protected@file@percent }
+\newlabel{fig:pdflatex}{{7.7}{26}{The test image, exported to PDF \emph {with} \LaTeX \ option}{figure.caption.10}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {7.3}Math}{26}{section.7.3}\protected@file@percent }
 \bibdata{Bibliography}
-\@writefile{toc}{\contentsline {section}{\numberline {7.4}Abreviations}{22}{section.7.4}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {7.4}Abreviations}{27}{section.7.4}\protected@file@percent }
 \@writefile{toc}{\vspace  {0.5cm}}
-\@writefile{toc}{\contentsline {chapter}{Bibliography}{22}{dummy.6}\protected@file@percent }
-\bibcite{jung2017rust}{{1}{}{{}}{{}}}
-\bibcite{matsakis2014rust}{{2}{}{{}}{{}}}
-\bibcite{klabnik2018rust}{{3}{}{{}}{{}}}
-\bibcite{sharma2020comparison}{{4}{}{{}}{{}}}
-\bibcite{akidau2015dataflow}{{5}{}{{}}{{}}}
-\bibcite{mpeg1996ts}{{6}{}{{}}{{}}}
-\bibcite{ffmpeg2023docs}{{7}{}{{}}{{}}}
-\bibcite{nist2013aes}{{8}{}{{}}{{}}}
-\bibcite{johnson2001ecdsa}{{9}{}{{}}{{}}}
+\@writefile{toc}{\contentsline {chapter}{Bibliography}{27}{dummy.6}\protected@file@percent }
+\bibcite{mpeg1996ts}{{1}{}{{}}{{}}}
+\bibcite{ahlswede2000network}{{2}{}{{}}{{}}}
+\bibcite{reed1960polynomial}{{3}{}{{}}{{}}}
+\bibcite{blomer2000practical}{{4}{}{{}}{{}}}
+\bibcite{nist2013aes}{{5}{}{{}}{{}}}
+\bibcite{dworkin2007recommendation}{{6}{}{{}}{{}}}
+\bibcite{johnson2001elliptic}{{7}{}{{}}{{}}}
+\bibcite{housley2002internet}{{8}{}{{}}{{}}}
+\bibcite{nystrom2000pkcs}{{9}{}{{}}{{}}}
 \bibcite{sutton2018reinforcement}{{10}{}{{}}{{}}}
-\bibcite{schulzrinne2003rtp}{{11}{}{{}}{{}}}
-\bibcite{reed1960polynomial}{{12}{}{{}}{{}}}
-\bibcite{Fienup1982}{{13}{}{{}}{{}}}
-\newlabel{AppendixX}{{6}{25}{Appendix Title Here}{appendix*.11}{}}
+\bibcite{watkins1992q}{{11}{}{{}}{{}}}
+\bibcite{google2015grpc}{{12}{}{{}}{{}}}
+\bibcite{google2008protobuf}{{13}{}{{}}{{}}}
+\bibcite{rescorla2018tls13}{{14}{}{{}}{{}}}
+\bibcite{matsakis2014rust}{{15}{}{{}}{{}}}
+\bibcite{tokio2023async}{{16}{}{{}}{{}}}
+\bibcite{mio2023async}{{17}{}{{}}{{}}}
+\bibcite{prometheus2023monitoring}{{18}{}{{}}{{}}}
+\bibcite{bianchi2000performance}{{19}{}{{}}{{}}}
+\bibcite{kumar2012interference}{{20}{}{{}}{{}}}
+\bibcite{heusse2003performance}{{21}{}{{}}{{}}}
+\bibcite{konrad2003survey}{{22}{}{{}}{{}}}
+\bibcite{yajnik1999measurement}{{23}{}{{}}{{}}}
+\bibcite{biersack2005performance}{{24}{}{{}}{{}}}
+\bibcite{casetti2002tcp}{{25}{}{{}}{{}}}
+\bibcite{fu2003performance}{{26}{}{{}}{{}}}
+\bibcite{mascolo1999linux}{{27}{}{{}}{{}}}
+\bibcite{luby1997analysis}{{28}{}{{}}{{}}}
+\bibcite{rizzo1997effective}{{29}{}{{}}{{}}}
+\bibcite{plank1997practical}{{30}{}{{}}{{}}}
+\bibcite{nonnenmacher1998parity}{{31}{}{{}}{{}}}
+\bibcite{albanese1996priority}{{32}{}{{}}{{}}}
+\bibcite{byers1998distributed}{{33}{}{{}}{{}}}
+\bibcite{luby2002lt}{{34}{}{{}}{{}}}
+\bibcite{shokrollahi2006raptor}{{35}{}{{}}{{}}}
+\bibcite{mackay2005fountain}{{36}{}{{}}{{}}}
+\bibcite{mao2017neural}{{37}{}{{}}{{}}}
+\bibcite{dong2019deep}{{38}{}{{}}{{}}}
+\bibcite{boyan1994packet}{{39}{}{{}}{{}}}
+\bibcite{chang1996q}{{40}{}{{}}{{}}}
+\bibcite{yin2015control}{{41}{}{{}}{{}}}
+\bibcite{tampuu2017multiagent}{{42}{}{{}}{{}}}
+\bibcite{tan1993multi}{{43}{}{{}}{{}}}
+\bibcite{chen2019multi}{{44}{}{{}}{{}}}
+\bibcite{eskicioglu2003overview}{{45}{}{{}}{{}}}
+\bibcite{peng2004survey}{{46}{}{{}}{{}}}
+\bibcite{apostolopoulos2001secure}{{47}{}{{}}{{}}}
+\bibcite{liu2005secure}{{48}{}{{}}{{}}}
+\bibcite{harney1997group}{{49}{}{{}}{{}}}
+\bibcite{steiner2000secure}{{50}{}{{}}{{}}}
+\bibcite{rafaeli2003survey}{{51}{}{{}}{{}}}
+\bibcite{adams1999understanding}{{52}{}{{}}{{}}}
+\bibcite{bonomi2012fog}{{53}{}{{}}{{}}}
+\bibcite{yi2015survey}{{54}{}{{}}{{}}}
+\bibcite{satyanarayanan2017emergence}{{55}{}{{}}{{}}}
+\bibcite{wang2017cache}{{56}{}{{}}{{}}}
+\bibcite{tran2017collaborative}{{57}{}{{}}{{}}}
+\bibcite{bharath2016caching}{{58}{}{{}}{{}}}
+\bibcite{sadeghi2019deep}{{59}{}{{}}{{}}}
+\bibcite{mukherjee2018survey}{{60}{}{{}}{{}}}
+\bibcite{yousefpour2019all}{{61}{}{{}}{{}}}
+\bibcite{stojmenovic2014fog}{{62}{}{{}}{{}}}
+\bibcite{roman2016mobile}{{63}{}{{}}{{}}}
+\bibcite{zhang2017security}{{64}{}{{}}{{}}}
+\bibcite{pantos2017hls}{{65}{}{{}}{{}}}
+\bibcite{bentaleb2019survey}{{66}{}{{}}{{}}}
+\bibcite{akhshabi2011experimental}{{67}{}{{}}{{}}}
+\bibcite{seufert2015survey}{{68}{}{{}}{{}}}
+\bibcite{hooft2016http}{{69}{}{{}}{{}}}
+\bibcite{stockhammer2011dynamic}{{70}{}{{}}{{}}}
+\bibcite{mueller2011impact}{{71}{}{{}}{{}}}
+\bibcite{lederer2012dynamic}{{72}{}{{}}{{}}}
+\bibcite{johnston2012webrtc}{{73}{}{{}}{{}}}
+\bibcite{garcia2013kurento}{{74}{}{{}}{{}}}
+\bibcite{rescorla2013security}{{75}{}{{}}{{}}}
+\bibcite{langley2017quic}{{76}{}{{}}{{}}}
+\bibcite{iyengar2021quic}{{77}{}{{}}{{}}}
+\bibcite{palmer2018impact}{{78}{}{{}}{{}}}
+\bibcite{schulzrinne1998real}{{79}{}{{}}{{}}}
+\bibcite{schulzrinne2003rtp}{{80}{}{{}}{{}}}
+\bibcite{handley2006rtp}{{81}{}{{}}{{}}}
+\bibcite{franke2020network}{{82}{}{{}}{{}}}
+\bibcite{nist2013p256}{{83}{}{{}}{{}}}
+\bibcite{johnson2001ecdsa}{{84}{}{{}}{{}}}
+\bibcite{Fienup1982}{{85}{}{{}}{{}}}
+\newlabel{AppendixX}{{6}{37}{Appendix Title Here}{appendix*.12}{}}
 \providecommand\NAT@force@numbers{}\NAT@force@numbers
 \ttl@finishall
 \gdef\svg@ink@ver@settings{{\m@ne }{inkscape}{\m@ne }}
-\gdef \@abspage@last{33}
+\gdef \@abspage@last{45}

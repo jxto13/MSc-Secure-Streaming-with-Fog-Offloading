@@ -21,50 +21,27 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
-\bibitem{jung2017rust}
-\BIBentryALTinterwordspacing
-R.~Jung, G.~Manoharan, D.~Dreyer, D.~Naumann, D.~Swasey, and D.~Garg,
-  ``Rustbelt: Securing the foundations of the rust programming language,''
-  \emph{Proceedings of the ACM on Programming Languages}, vol.~1, no. POPL,
-  p.~66, 2017. [Online]. Available: \url{https://doi.org/10.1145/3009837}
-\BIBentrySTDinterwordspacing
-
-\bibitem{matsakis2014rust}
-N.~D. Matsakis and F.~S.~K. II, ``The rust language,'' \emph{ACM SIGAda Ada
-  Letters}, vol.~34, no.~3, pp. 103--104, 2014.
-
-\bibitem{klabnik2018rust}
-\BIBentryALTinterwordspacing
-S.~Klabnik and C.~Nichols, \emph{The Rust Programming Language}.\hskip 1em plus
-  0.5em minus 0.4em\relax No Starch Press, 2018. [Online]. Available:
-  \url{https://doc.rust-lang.org/book/}
-\BIBentrySTDinterwordspacing
-
-\bibitem{sharma2020comparison}
-\BIBentryALTinterwordspacing
-S.~Sharma, R.~Saini, and R.~Kumar, ``A comparison of rust and c++ for
-  safety-critical systems,'' in \emph{2020 International Conference on Emerging
-  Trends in Information Technology and Engineering (ic-ETITE)}, 2020, pp. 1--6.
-  [Online]. Available: \url{https://ieeexplore.ieee.org/document/9061342}
-\BIBentrySTDinterwordspacing
-
-\bibitem{akidau2015dataflow}
-T.~Akidau, R.~Bradshaw, C.~Chambers, S.~Chernyak, R.~J. Fernández-Moctezuma,
-  R.~Lax, S.~McVeety, D.~Mills, F.~Perry, E.~Schmidt, and S.~Whittle, ``The
-  dataflow model: a practical approach to balancing correctness, latency, and
-  cost in massive-scale, unbounded, out-of-order data processing,''
-  \emph{Proceedings of the VLDB Endowment}, vol.~8, no.~12, pp. 1792--1803,
-  2015.
-
 \bibitem{mpeg1996ts}
 \emph{Information technology -- Generic coding of moving pictures and
   associated audio information: Systems}, ISO/IEC Std. 13\,818-1, 1996, mPEG-2
   Transport Stream specification.
 
-\bibitem{ffmpeg2023docs}
+\bibitem{ahlswede2000network}
+R.~Ahlswede, N.~Cai, S.-Y.~R. Li, and R.~W. Yeung, ``Network information
+  flow,'' \emph{IEEE Transactions on information theory}, vol.~46, no.~4, pp.
+  1204--1216, 2000.
+
+\bibitem{reed1960polynomial}
+I.~S. Reed and G.~Solomon, ``Polynomial codes over certain finite fields,''
+  \emph{Journal of the society for industrial and applied mathematics}, vol.~8,
+  no.~2, pp. 300--304, 1960.
+
+\bibitem{blomer2000practical}
 \BIBentryALTinterwordspacing
-F.~Developers. (2023) Ffmpeg documentation. [Online]. Available:
-  \url{https://ffmpeg.org/documentation.html}
+J.~Bl{\"o}mer, M.~Kalfane, M.~Karpinski, R.~Karp, M.~Luby, and D.~Zuckerman,
+  ``An xor-based erasure-resilient coding scheme,'' \emph{Technical Report
+  TR-95-048, International Computer Science Institute}, 1995. [Online].
+  Available: \url{https://www.icsi.berkeley.edu/pubs/techreports/TR-95-048.pdf}
 \BIBentrySTDinterwordspacing
 
 \bibitem{nist2013aes}
@@ -74,17 +51,409 @@ F.~Developers. (2023) Ffmpeg documentation. [Online]. Available:
   \url{https://csrc.nist.gov/publications/detail/fips/197/final}
 \BIBentrySTDinterwordspacing
 
-\bibitem{johnson2001ecdsa}
+\bibitem{dworkin2007recommendation}
 \BIBentryALTinterwordspacing
-D.~Johnson, A.~Menezes, and S.~Vanstone, \emph{The Elliptic Curve Digital
-  Signature Algorithm (ECDSA)}, Certicom Research Std., 2001. [Online].
-  Available:
-  \url{https://www.certicom.com/content/certicom/en/21-the-elliptic-curve-digital-signature-algorithm-ecdsa.html}
+M.~Dworkin, \emph{Recommendation for Block Cipher Modes of Operation:
+  Galois/Counter Mode (GCM) and GMAC}, National Institute of Standards and
+  Technology Std. NIST Special Publication 800-38D, 2007. [Online]. Available:
+  \url{https://csrc.nist.gov/publications/detail/sp/800-38d/final}
+\BIBentrySTDinterwordspacing
+
+\bibitem{johnson2001elliptic}
+D.~Johnson, A.~Menezes, and S.~Vanstone, ``The elliptic curve digital signature
+  algorithm (ecdsa),'' \emph{International journal of information security},
+  vol.~1, no.~1, pp. 36--63, 2001.
+
+\bibitem{housley2002internet}
+\BIBentryALTinterwordspacing
+R.~Housley, W.~Ford, T.~Polk, and D.~Solo, \emph{Internet X.509 Public Key
+  Infrastructure Certificate and Certificate Revocation List (CRL) Profile},
+  Internet Engineering Task Force Std. RFC 3280, 2002. [Online]. Available:
+  \url{https://tools.ietf.org/html/rfc3280}
+\BIBentrySTDinterwordspacing
+
+\bibitem{nystrom2000pkcs}
+\BIBentryALTinterwordspacing
+M.~Nystrom and B.~Kaliski, \emph{PKCS \#10: Certification Request Syntax
+  Specification Version 1.7}, RSA Laboratories Std. RFC 2986, 2000. [Online].
+  Available: \url{https://tools.ietf.org/html/rfc2986}
 \BIBentrySTDinterwordspacing
 
 \bibitem{sutton2018reinforcement}
 R.~S. Sutton and A.~G. Barto, \emph{Reinforcement learning: An introduction},
   2nd~ed.\hskip 1em plus 0.5em minus 0.4em\relax MIT press, 2018.
+
+\bibitem{watkins1992q}
+C.~J. C.~H. Watkins and P.~Dayan, ``Q-learning,'' \emph{Machine Learning},
+  vol.~8, no. 3-4, pp. 279--292, 1992.
+
+\bibitem{google2015grpc}
+\BIBentryALTinterwordspacing
+Google. (2015) grpc - a high performance, open source universal rpc framework.
+  [Online]. Available: \url{https://grpc.io/}
+\BIBentrySTDinterwordspacing
+
+\bibitem{google2008protobuf}
+\BIBentryALTinterwordspacing
+------. (2008) Protocol buffers - google's data interchange format. [Online].
+  Available: \url{https://developers.google.com/protocol-buffers}
+\BIBentrySTDinterwordspacing
+
+\bibitem{rescorla2018tls13}
+\BIBentryALTinterwordspacing
+E.~Rescorla, \emph{The Transport Layer Security (TLS) Protocol Version 1.3},
+  Internet Engineering Task Force Std. RFC 8446, 2018. [Online]. Available:
+  \url{https://tools.ietf.org/html/rfc8446}
+\BIBentrySTDinterwordspacing
+
+\bibitem{matsakis2014rust}
+N.~D. Matsakis and F.~S.~K. II, ``The rust language,'' \emph{ACM SIGAda Ada
+  Letters}, vol.~34, no.~3, pp. 103--104, 2014.
+
+\bibitem{tokio2023async}
+\BIBentryALTinterwordspacing
+T.~Contributors. (2023) Tokio: An asynchronous rust runtime. [Online].
+  Available: \url{https://tokio.rs/}
+\BIBentrySTDinterwordspacing
+
+\bibitem{mio2023async}
+\BIBentryALTinterwordspacing
+C.~Lerche \emph{et~al.} (2023) Mio: Metal io library for rust. [Online].
+  Available: \url{https://github.com/tokio-rs/mio}
+\BIBentrySTDinterwordspacing
+
+\bibitem{prometheus2023monitoring}
+\BIBentryALTinterwordspacing
+P.~Authors. (2023) Prometheus monitoring system \& time series database.
+  [Online]. Available: \url{https://prometheus.io/}
+\BIBentrySTDinterwordspacing
+
+\bibitem{bianchi2000performance}
+G.~Bianchi, ``Performance analysis of the ieee 802.11 distributed coordination
+  function,'' \emph{IEEE Journal on selected areas in communications}, vol.~18,
+  no.~3, pp. 535--547, 2000.
+
+\bibitem{kumar2012interference}
+S.~Kumar, D.~Khurana, and S.~Mukhopadhyay, ``Interference mitigation in
+  wireless networks,'' \emph{IEEE Communications Magazine}, vol.~50, no.~6, pp.
+  74--81, 2012.
+
+\bibitem{heusse2003performance}
+M.~Heusse, F.~Rousseau, G.~Berger-Sabbatel, and A.~Duda, ``Performance anomaly
+  of 802.11b,'' \emph{IEEE INFOCOM 2003. Twenty-second Annual Joint Conference
+  of the IEEE Computer and Communications Societies}, vol.~2, pp. 836--843,
+  2003.
+
+\bibitem{konrad2003survey}
+A.~K{\"o}nrad, B.~Y. Zhao, A.~D. Joseph, and R.~Ludwig, ``A markov-based
+  channel model algorithm for wireless networks,'' \emph{Wireless Networks},
+  vol.~9, no.~3, pp. 189--199, 2003.
+
+\bibitem{yajnik1999measurement}
+M.~Yajnik, S.~Moon, J.~Kurose, and D.~Towsley, ``Measurement and modelling of
+  the temporal dependence in packet loss,'' \emph{IEEE INFOCOM '99. Conference
+  on Computer Communications}, vol.~1, pp. 345--352, 1999.
+
+\bibitem{biersack2005performance}
+E.~W. Biersack, F.~Campello, and J.-C. Bolot, ``Performance of fec-based error
+  control in packet video communications,'' \emph{IEEE/ACM Transactions on
+  Networking}, vol.~3, no.~5, pp. 506--515, 1995.
+
+\bibitem{casetti2002tcp}
+C.~Casetti, M.~Gerla, S.~Mascolo, M.~Y. Sanadidi, and R.~Wang, ``Tcp westwood:
+  bandwidth estimation for enhanced transport over wireless links,''
+  \emph{Proceedings of the 7th annual international conference on Mobile
+  computing and networking}, pp. 287--297, 2001.
+
+\bibitem{fu2003performance}
+C.~P. Fu and S.~C. Liew, ``Tcp veno: Tcp enhancement for transmission over
+  wireless access networks,'' \emph{IEEE Journal on selected areas in
+  communications}, vol.~21, no.~2, pp. 216--228, 2003.
+
+\bibitem{mascolo1999linux}
+S.~Mascolo, C.~Casetti, M.~Gerla, M.~Y. Sanadidi, and R.~Wang, ``Linux 2.4
+  tcp,'' \emph{Technical Report}, 1999.
+
+\bibitem{luby1997analysis}
+M.~Luby, M.~Mitzenmacher, M.~A. Shokrollahi, and D.~A. Spielman, ``Analysis of
+  random processes via and-or tree evaluation,'' \emph{Proceedings of the ninth
+  annual ACM-SIAM symposium on Discrete algorithms}, pp. 364--373, 1998.
+
+\bibitem{rizzo1997effective}
+L.~Rizzo, ``Effective erasure codes for reliable computer communication
+  protocols,'' \emph{ACM SIGCOMM Computer Communication Review}, vol.~27,
+  no.~2, pp. 24--36, 1997.
+
+\bibitem{plank1997practical}
+J.~S. Plank, ``A tutorial on reed-solomon coding for fault-tolerance in
+  raid-like systems,'' \emph{Software: Practice and Experience}, vol.~27,
+  no.~9, pp. 995--1012, 1997.
+
+\bibitem{nonnenmacher1998parity}
+J.~Nonnenmacher, E.~W. Biersack, and D.~Towsley, ``Parity-based loss recovery
+  for reliable multicast transmission,'' \emph{IEEE/ACM Transactions on
+  Networking}, vol.~6, no.~4, pp. 349--361, 1998.
+
+\bibitem{albanese1996priority}
+A.~Albanese, J.~Bl{\"o}mer, J.~Edmonds, M.~Luby, and M.~Sudan, ``Priority
+  encoding transmission,'' \emph{IEEE Transactions on Information Theory},
+  vol.~42, no.~6, pp. 1737--1744, 1996.
+
+\bibitem{byers1998distributed}
+J.~W. Byers, M.~Luby, M.~Mitzenmacher, and A.~Rege, ``A digital fountain
+  approach to reliable distribution of bulk data,'' \emph{ACM SIGCOMM Computer
+  Communication Review}, vol.~28, no.~4, pp. 56--67, 1998.
+
+\bibitem{luby2002lt}
+M.~Luby, ``Lt codes,'' \emph{The 43rd Annual IEEE Symposium on Foundations of
+  Computer Science}, pp. 271--280, 2002.
+
+\bibitem{shokrollahi2006raptor}
+A.~Shokrollahi, ``Raptor codes,'' \emph{IEEE Transactions on Information
+  Theory}, vol.~52, no.~6, pp. 2551--2567, 2006.
+
+\bibitem{mackay2005fountain}
+D.~J.~C. MacKay, ``Fountain codes,'' \emph{IEE Proceedings-Communications},
+  vol. 152, no.~6, pp. 1062--1068, 2005.
+
+\bibitem{mao2017neural}
+H.~Mao, R.~Netravali, and M.~Alizadeh, ``Neural adaptive video streaming with
+  pensieve,'' \emph{Proceedings of the Conference of the ACM Special Interest
+  Group on Data Communication}, pp. 197--210, 2017.
+
+\bibitem{dong2019deep}
+X.~Dong, M.~Pan, and Z.~Han, ``Deep reinforcement learning for energy-efficient
+  edge computing in wireless networks,'' \emph{IEEE Network}, vol.~33, no.~6,
+  pp. 12--18, 2019.
+
+\bibitem{boyan1994packet}
+J.~A. Boyan and M.~L. Littman, ``Packet routing in dynamically changing
+  networks: A reinforcement learning approach,'' \emph{Advances in neural
+  information processing systems}, vol.~6, pp. 671--678, 1994.
+
+\bibitem{chang1996q}
+H.~Chang and R.~Jain, ``Q-learning approach for adaptive bandwidth allocation
+  in multimedia networks,'' \emph{Computer Communications}, vol.~19, no.~14,
+  pp. 1138--1149, 1996.
+
+\bibitem{yin2015control}
+X.~Yin, A.~Jindal, V.~Sekar, and B.~Sinopoli, ``A control-theoretic approach
+  for dynamic adaptive video streaming over http,'' \emph{ACM SIGCOMM Computer
+  Communication Review}, vol.~45, no.~4, pp. 325--338, 2015.
+
+\bibitem{tampuu2017multiagent}
+\BIBentryALTinterwordspacing
+A.~Tampuu, T.~Matiisen, D.~Kodelja, I.~Kuzovkin, K.~Korjus, J.~Aru, J.~Vilo,
+  and R.~Vicente, ``Multiagent deep reinforcement learning with extremely
+  sparse rewards,'' \emph{arXiv preprint arXiv:1707.01495}, 2017. [Online].
+  Available: \url{https://arxiv.org/abs/1707.01495}
+\BIBentrySTDinterwordspacing
+
+\bibitem{tan1993multi}
+M.~Tan, ``Multi-agent reinforcement learning: Independent vs. cooperative
+  agents,'' \emph{Proceedings of the tenth international conference on machine
+  learning}, pp. 330--337, 1993.
+
+\bibitem{chen2019multi}
+M.~Chen, U.~Challita, W.~Saad, C.~Yin, and M.~Debbah, ``Artificial neural
+  networks-based machine learning for wireless networks: A tutorial,''
+  \emph{IEEE Communications Surveys \& Tutorials}, vol.~21, no.~4, pp.
+  3039--3071, 2019.
+
+\bibitem{eskicioglu2003overview}
+A.~M. Eskicioglu and E.~J. Delp, ``An overview of multimedia content protection
+  in consumer electronics devices,'' \emph{Signal Processing: Image
+  Communication}, vol.~16, no.~7, pp. 681--699, 2001.
+
+\bibitem{peng2004survey}
+\BIBentryALTinterwordspacing
+G.~Peng, ``Cdn: Content distribution network,'' \emph{arXiv preprint
+  cs/0411069}, 2004. [Online]. Available:
+  \url{https://arxiv.org/abs/cs/0411069}
+\BIBentrySTDinterwordspacing
+
+\bibitem{apostolopoulos2001secure}
+J.~G. Apostolopoulos, ``Secure media streaming and secure transcoding,''
+  \emph{2001 IEEE International Conference on Multimedia and Expo}, pp.
+  1493--1496, 2001.
+
+\bibitem{liu2005secure}
+D.~Liu, C.~Lin, and H.~Yin, ``A survey of digital watermarking technologies,''
+  \emph{IEEE Computer Graphics and Applications}, vol.~25, no.~2, pp. 15--21,
+  2005.
+
+\bibitem{harney1997group}
+\BIBentryALTinterwordspacing
+H.~Harney and C.~Muckenhirn, ``Group key management protocol (gkmp)
+  specification,'' \emph{RFC 2093}, 1997. [Online]. Available:
+  \url{https://tools.ietf.org/html/rfc2093}
+\BIBentrySTDinterwordspacing
+
+\bibitem{steiner2000secure}
+M.~Steiner, G.~Tsudik, and M.~Waidner, ``Key agreement in dynamic peer
+  groups,'' \emph{IEEE Transactions on Parallel and Distributed Systems},
+  vol.~11, no.~8, pp. 769--780, 2000.
+
+\bibitem{rafaeli2003survey}
+S.~Rafaeli and D.~Hutchison, ``A survey of key management for secure group
+  communication,'' \emph{ACM Computing Surveys}, vol.~35, no.~3, pp. 309--329,
+  2003.
+
+\bibitem{adams1999understanding}
+C.~Adams and S.~Lloyd, ``Understanding pki: concepts, standards, and deployment
+  considerations,'' \emph{Addison-Wesley Professional}, 2003.
+
+\bibitem{bonomi2012fog}
+F.~Bonomi, R.~Milito, J.~Zhu, and S.~Addepalli, ``Fog computing and its role in
+  the internet of things,'' \emph{Proceedings of the first edition of the MCC
+  workshop on Mobile cloud computing}, pp. 13--16, 2012.
+
+\bibitem{yi2015survey}
+S.~Yi, C.~Li, and Q.~Li, ``A survey of fog computing: concepts, applications
+  and issues,'' \emph{Proceedings of the 2015 workshop on mobile big data}, pp.
+  37--42, 2015.
+
+\bibitem{satyanarayanan2017emergence}
+M.~Satyanarayanan, ``The emergence of edge computing,'' \emph{Computer},
+  vol.~50, no.~1, pp. 30--39, 2017.
+
+\bibitem{wang2017cache}
+X.~Wang, M.~Chen, T.~Taleb, A.~Ksentini, and V.~Leung, ``Cache in the air:
+  exploiting content caching and delivery techniques for 5g systems,''
+  \emph{IEEE Communications Magazine}, vol.~52, no.~2, pp. 131--139, 2014.
+
+\bibitem{tran2017collaborative}
+T.~X. Tran, A.~Hajisami, P.~Pandey, and D.~Pompili, ``Collaborative mobile edge
+  computing in 5g networks: New paradigms, scenarios, and challenges,''
+  \emph{IEEE Communications Magazine}, vol.~55, no.~4, pp. 54--61, 2017.
+
+\bibitem{bharath2016caching}
+B.~N. Balasubramanian, A.~Eryilmaz, and E.~Ekici, ``Mobility and
+  popularity-aware coded small-cell caching,'' \emph{IEEE Communications
+  Letters}, vol.~20, no.~8, pp. 1624--1627, 2016.
+
+\bibitem{sadeghi2019deep}
+A.~Sadeghi, F.~Sheikholeslami, and G.~B. Giannakis, ``Optimal and scalable
+  caching for 5g using reinforcement learning of space-time popularities,''
+  \emph{IEEE Journal of Selected Topics in Signal Processing}, vol.~12, no.~1,
+  pp. 180--190, 2018.
+
+\bibitem{mukherjee2018survey}
+A.~Mukherjee, D.~De, and D.~Ghosh, ``Fog computing: a survey of trends and
+  applications,'' \emph{IEEE Internet of Things Journal}, vol.~5, no.~4, pp.
+  3123--3130, 2018.
+
+\bibitem{yousefpour2019all}
+A.~Yousefpour, C.~Fung, T.~Nguyen, K.~Kadiyala, F.~Jalali, A.~Niakanlahiji,
+  J.~Kong, and J.~P. Jue, ``All one needs to know about fog computing and
+  related edge computing paradigms: A complete survey,'' \emph{Journal of
+  Systems Architecture}, vol.~98, pp. 289--330, 2019.
+
+\bibitem{stojmenovic2014fog}
+I.~Stojmenovic and S.~Wen, ``The fog computing paradigm: Scenarios and security
+  issues,'' \emph{2014 federated conference on computer science and information
+  systems}, pp. 1--8, 2014.
+
+\bibitem{roman2016mobile}
+R.~Roman, J.~Lopez, and M.~Mambo, ``Mobile edge computing, fog et al.: A survey
+  and analysis of security threats and challenges,'' \emph{Future Generation
+  Computer Systems}, vol.~78, pp. 680--698, 2018.
+
+\bibitem{zhang2017security}
+J.~Zhang, B.~Chen, Y.~Zhao, X.~Cheng, and F.~Feng, ``Data security and
+  privacy-preserving in edge computing paradigm: Survey and open issues,''
+  \emph{IEEE Access}, vol.~6, pp. 18\,209--18\,237, 2018.
+
+\bibitem{pantos2017hls}
+\BIBentryALTinterwordspacing
+R.~Pantos and W.~May, ``Http live streaming,'' Apple Inc., Tech. Rep. RFC 8216,
+  2017. [Online]. Available: \url{https://tools.ietf.org/html/rfc8216}
+\BIBentrySTDinterwordspacing
+
+\bibitem{bentaleb2019survey}
+A.~Bentaleb, B.~Taani, A.~C. Begen, C.~Timmerer, and R.~Zimmermann, ``A survey
+  on bitrate adaptation schemes for streaming media over http,'' \emph{IEEE
+  Communications Surveys \& Tutorials}, vol.~21, no.~1, pp. 562--585, 2019.
+
+\bibitem{akhshabi2011experimental}
+S.~Akhshabi, A.~C. Begen, and C.~Dovrolis, ``An experimental evaluation of
+  rate-adaptation algorithms in adaptive streaming over http,'' in
+  \emph{Proceedings of the second annual ACM conference on Multimedia
+  systems}.\hskip 1em plus 0.5em minus 0.4em\relax ACM, 2011, pp. 157--168.
+
+\bibitem{seufert2015survey}
+M.~Seufert, S.~Egger, M.~Slanina, T.~Zinner, T.~Hoßfeld, and P.~Tran-Gia, ``A
+  survey on quality of experience of http adaptive streaming,'' \emph{IEEE
+  Communications Surveys \& Tutorials}, vol.~17, no.~1, pp. 469--492, 2015.
+
+\bibitem{hooft2016http}
+J.~van~der Hooft, S.~Petrangeli, T.~Wauters, and F.~D. Turck, ``Http/2-based
+  adaptive streaming of hevc video over 4g/lte networks,'' in \emph{IEEE
+  Network}, vol.~30, no.~1.\hskip 1em plus 0.5em minus 0.4em\relax IEEE, 2016,
+  pp. 30--36.
+
+\bibitem{stockhammer2011dynamic}
+T.~Stockhammer, ``Dynamic adaptive streaming over http: standards and design
+  principles,'' \emph{Proceedings of the second annual ACM conference on
+  Multimedia systems}, pp. 133--144, 2011.
+
+\bibitem{mueller2011impact}
+C.~Mueller, S.~Lederer, and C.~Timmerer, ``An evaluation of dynamic adaptive
+  streaming over http in vehicular environments,'' \emph{Proceedings of the 4th
+  workshop on mobile video}, pp. 37--42, 2012.
+
+\bibitem{lederer2012dynamic}
+S.~Lederer, C.~M{\"u}ller, B.~Rainer, C.~Timmerer, and H.~Hellwagner, ``An
+  experimental analysis of dynamic adaptive streaming over http in content
+  centric networks,'' \emph{2013 IEEE International Conference on Multimedia
+  and Expo (ICME)}, pp. 1--6, 2013.
+
+\bibitem{johnston2012webrtc}
+A.~B. Johnston and D.~C. Burnett, \emph{WebRTC: Real-time communication between
+  browsers}, Internet Engineering Task Force Std., 2012, w3C Working Draft.
+
+\bibitem{garcia2013kurento}
+B.~Garcia, L.~Lopez-Fernandez, D.~Gallego, M.~Gallego, T.~Cerqueira, F.~J.
+  Lopez, and F.~Rivero, ``Kurento: a media server technology for convergent
+  www/mobile real-time multimedia communications supporting webrtc,''
+  \emph{2013 IEEE 14th International Symposium on a World of Wireless, Mobile
+  and Multimedia Networks (WoWMoM)}, pp. 1--2, 2013.
+
+\bibitem{rescorla2013security}
+\BIBentryALTinterwordspacing
+E.~Rescorla, \emph{Security Considerations for WebRTC}, Internet Engineering
+  Task Force Std. draft-ietf-rtcweb-security, 2013. [Online]. Available:
+  \url{https://tools.ietf.org/html/draft-ietf-rtcweb-security}
+\BIBentrySTDinterwordspacing
+
+\bibitem{langley2017quic}
+\BIBentryALTinterwordspacing
+A.~Langley, A.~Riddoch, A.~Wilk, A.~Vicente, C.~Krasic, D.~Zhang, F.~Yang,
+  F.~Kouranov, I.~Swett, J.~Iyengar, J.~Bailey, J.~Dorfman, J.~Roskind,
+  J.~Kulik, P.~Westin, R.~Tenneti, R.~Shade, R.~Hamilton, V.~Vasiliev, W.-T.
+  Chang, and Z.~Shi, \emph{The QUIC Transport Protocol: Design and
+  Internet-Scale Deployment}, Internet Engineering Task Force Std. RFC 9000,
+  2021. [Online]. Available: \url{https://tools.ietf.org/html/rfc9000}
+\BIBentrySTDinterwordspacing
+
+\bibitem{iyengar2021quic}
+\BIBentryALTinterwordspacing
+J.~Iyengar and M.~Thomson, \emph{QUIC: A UDP-Based Multiplexed and Secure
+  Transport}, Internet Engineering Task Force Std. RFC 9000, 2021. [Online].
+  Available: \url{https://tools.ietf.org/html/rfc9000}
+\BIBentrySTDinterwordspacing
+
+\bibitem{palmer2018impact}
+M.~Palmer, T.~Kr{\"u}ger, B.~Chandrasekaran, and A.~Feldmann, ``The quic fix
+  for optimal video streaming,'' \emph{Proceedings of the Workshop on the
+  Evolution, Performance, and Interoperability of QUIC}, pp. 43--49, 2018.
+
+\bibitem{schulzrinne1998real}
+\BIBentryALTinterwordspacing
+H.~Schulzrinne, A.~Rao, and R.~Lanphier, \emph{Real Time Streaming Protocol
+  (RTSP)}, Internet Engineering Task Force Std. RFC 2326, 1998. [Online].
+  Available: \url{https://tools.ietf.org/html/rfc2326}
+\BIBentrySTDinterwordspacing
 
 \bibitem{schulzrinne2003rtp}
 \BIBentryALTinterwordspacing
@@ -94,10 +463,34 @@ H.~Schulzrinne, S.~Casner, R.~Frederick, and V.~Jacobson, \emph{RTP: A
   \url{https://tools.ietf.org/html/rfc3550}
 \BIBentrySTDinterwordspacing
 
-\bibitem{reed1960polynomial}
-I.~S. Reed and G.~Solomon, ``Polynomial codes over certain finite fields,''
-  \emph{Journal of the society for industrial and applied mathematics}, vol.~8,
-  no.~2, pp. 300--304, 1960.
+\bibitem{handley2006rtp}
+\BIBentryALTinterwordspacing
+M.~Handley, V.~Jacobson, and C.~Perkins, \emph{SDP: Session Description
+  Protocol}, Internet Engineering Task Force Std. RFC 4566, 2006. [Online].
+  Available: \url{https://tools.ietf.org/html/rfc4566}
+\BIBentrySTDinterwordspacing
+
+\bibitem{franke2020network}
+\BIBentryALTinterwordspacing
+D.~Sibold, S.~Roettger, and K.~Teichel, \emph{Network Time Security for the
+  Network Time Protocol}, Internet Engineering Task Force Std. RFC 8915, 2020.
+  [Online]. Available: \url{https://tools.ietf.org/html/rfc8915}
+\BIBentrySTDinterwordspacing
+
+\bibitem{nist2013p256}
+\BIBentryALTinterwordspacing
+{National Institute of Standards and Technology}, \emph{Digital Signature
+  Standard (DSS)}, NIST Std. FIPS PUB 186-4, 2013. [Online]. Available:
+  \url{https://csrc.nist.gov/publications/detail/fips/186/4/final}
+\BIBentrySTDinterwordspacing
+
+\bibitem{johnson2001ecdsa}
+\BIBentryALTinterwordspacing
+D.~Johnson, A.~Menezes, and S.~Vanstone, \emph{The Elliptic Curve Digital
+  Signature Algorithm (ECDSA)}, Certicom Research Std., 2001. [Online].
+  Available:
+  \url{https://www.certicom.com/content/certicom/en/21-the-elliptic-curve-digital-signature-algorithm-ecdsa.html}
+\BIBentrySTDinterwordspacing
 
 \bibitem{Fienup1982}
 \BIBentryALTinterwordspacing

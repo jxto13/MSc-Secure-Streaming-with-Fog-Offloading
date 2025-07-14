@@ -96,7 +96,7 @@ pub fn run_learning_loop(client_sessions: Arc<ClientSessions>) {
         std::thread::sleep(std::time::Duration::from_secs(2));
 
         let next_state = client_sessions.get_session_state();
-        agent.update(state, action.clone(), reward, next_state);
+        agent.update(state, action, reward, next_state);
 
         // Update local current state
         current_fec_row = new_fec_row;
