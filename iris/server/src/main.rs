@@ -268,12 +268,47 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }),
     ));
 
+    // Create a thread to handle stdin input (will be removed in production)
+    handlers.push((
+        "stdin_handler",
+        thread::spawn(|| {
+            use std::io::BufRead;
+            let stdin = std::io::stdin();
+
+            for line in stdin.lock().lines() {
+                match line {
+                    Ok(input) => {
+                        let mut dynamic_values = DYNAMIC_VALUES.get().unwrap().write().unwrap();
+
+                        let parts: Vec<&str> = input.trim().split_whitespace().collect();
+                        if parts.len() != 2 {
+                            eprintln!("Please enter exactly two numbers separated by a space.");
+                            continue;
+                        }
+
+                        let a = parts[0].parse::<i32>();
+                        let b = parts[1].parse::<i32>();
+
+                        match (a, b) {
+                            (Ok(x), Ok(y)) => {
+                                dynamic_values.fec_row_redundancy = x as usize;
+                                dynamic_values.fec_col_redundancy = y as usize;
+                            }
+                            _ => eprintln!("Invalid input. Make sure both entries are integers."),
+                        }
+                    }
+                    Err(e) => eprintln!("Error reading line: {}", e),
+                }
+            }
+        }),
+    ));
+
     handlers.push((
         "reinforcement_learning_handler",
         thread::spawn({
             let client_sessions = Arc::clone(&client_sessions);
             move || {
-                crate::reinforcement_learning::rl_loop::run_learning_loop(client_sessions);
+                // crate::reinforcement_learning::rl_loop::run_learning_loop(client_sessions);
             }
         }),
     ));

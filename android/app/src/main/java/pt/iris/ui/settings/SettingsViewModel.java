@@ -54,7 +54,7 @@ public class SettingsViewModel extends ViewModel {
             if (container.getNetworkInitializer() != null) {
                 nanStatus.setValue("NAN Hardware: Active");
                 // Get active data paths count
-                int activePathsCount = container.getNetworkInitializer().getActiveDataPaths().size();
+                int activePathsCount = container.getNetworkInitializer().getActiveDataPathCount();
                 nanActivePaths.setValue("Active NAN Paths: " + activePathsCount);
             } else {
                 nanStatus.setValue("NAN Hardware: " + (wifiAwareEnabled.getValue() ? "Available" : "Disabled"));

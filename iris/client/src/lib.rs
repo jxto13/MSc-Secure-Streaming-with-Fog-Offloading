@@ -25,6 +25,8 @@ use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::time::{Duration, Instant};
 
+use socket2::{Domain, Protocol, Socket, Type};
+
 use proto::certificate_service_client::CertificateServiceClient;
 use proto::key_service_client::KeyServiceClient;
 use proto::nts_service_client::NtsServiceClient;
@@ -393,40 +395,148 @@ pub fn get_command_sender() -> Option<&'static crossbeam_channel::Sender<Command
 pub fn add_wifi_aware_socket(ip_address: &str) -> Result<(), Box<dyn std::error::Error>> {
     init_socket_tracker();
 
-    let socket_addr: SocketAddr = format!("{}:0", ip_address).parse()?;
+    info!("Adding WiFi Aware socket for IP: {}", ip_address);
 
-    // Create and bind the socket
-    let socket = mio::net::UdpSocket::bind(socket_addr)?;
+    // Parse the IP address which may include interface identifier (e.g., fe80::1234%aware_data0)
+    let mio_socket = if ip_address.contains(':') {
+        // IPv6 address
+        if ip_address.contains('%') {
+            // Handle IPv6 address with zone identifier (interface)
+            let parts: Vec<&str> = ip_address.splitn(2, '%').collect();
+            let ipv6_addr = parts[0];
+            let interface = parts.get(1).unwrap_or(&"");
+
+            info!(
+                "Parsing IPv6 address: {} with interface: {}",
+                ipv6_addr, interface
+            );
+
+            // Create socket for IPv6
+            let socket = Socket::new(Domain::IPV6, Type::DGRAM, Some(Protocol::UDP))?;
+
+            // Parse the IPv6 address without interface
+            let addr: std::net::Ipv6Addr = ipv6_addr
+                .parse()
+                .map_err(|e| format!("Failed to parse IPv6 address '{}': {}", ipv6_addr, e))?;
+
+            // Create socket address with port 0 (any available port)
+            let socket_addr = std::net::SocketAddrV6::new(addr, 0, 0, 0);
+
+            // Bind the socket
+            socket.bind(&socket_addr.into())?;
+            socket.set_nonblocking(true)?;
+
+            info!(
+                "Successfully bound IPv6 socket to: {:?}",
+                socket.local_addr()?
+            );
+
+            // Convert socket2::Socket to mio::net::UdpSocket
+            let std_socket: std::net::UdpSocket = socket.into();
+            mio::net::UdpSocket::from_std(std_socket)
+        } else {
+            // IPv6 without interface identifier
+            let socket = Socket::new(Domain::IPV6, Type::DGRAM, Some(Protocol::UDP))?;
+            let addr: std::net::Ipv6Addr = ip_address
+                .parse()
+                .map_err(|e| format!("Failed to parse IPv6 address '{}': {}", ip_address, e))?;
+            let socket_addr = std::net::SocketAddrV6::new(addr, 0, 0, 0);
+            socket.bind(&socket_addr.into())?;
+            socket.set_nonblocking(true)?;
+
+            // Convert socket2::Socket to mio::net::UdpSocket
+            let std_socket: std::net::UdpSocket = socket.into();
+            mio::net::UdpSocket::from_std(std_socket)
+        }
+    } else {
+        // IPv4 address
+        let socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))?;
+        let addr: std::net::Ipv4Addr = ip_address
+            .parse()
+            .map_err(|e| format!("Failed to parse IPv4 address '{}': {}", ip_address, e))?;
+        let socket_addr = std::net::SocketAddrV4::new(addr, 0);
+        socket.bind(&socket_addr.into())?;
+        socket.set_nonblocking(true)?;
+
+        // Convert socket2::Socket to mio::net::UdpSocket
+        let std_socket: std::net::UdpSocket = socket.into();
+        mio::net::UdpSocket::from_std(std_socket)
+    };
 
     // Get the command sender
     if let Some(sender) = get_command_sender() {
-        sender.send(Command::AddSocket(socket, ReceiverType::WifiAware))?;
-        info!("Added WiFi Aware socket for IP: {}", ip_address);
-
-        // Note: For proper tracking, we would need to get the token back from the receiver
-        // This is a simplified implementation
+        sender.send(Command::AddSocket(mio_socket, ReceiverType::WifiAware))?;
+        info!(
+            "Successfully added WiFi Aware socket for IP: {}",
+            ip_address
+        );
         Ok(())
     } else {
         Err("Command sender not initialized".into())
     }
 }
 
-/// Remove a socket by IP address
+/// Remove a socket by IP address (IPv6 only)
 pub fn remove_wifi_aware_socket(ip_address: &str) -> Result<(), Box<dyn std::error::Error>> {
     init_socket_tracker();
 
-    // In a full implementation, you would:
-    // 1. Look up the token for this IP address
-    // 2. Send a RemoveSocket command with that token
-    // 3. Remove the IP from the tracker
-
     info!(
-        "Requested removal of WiFi Aware socket for IP: {}",
+        "Removing WiFi Aware socket for IPv6 address: {}",
         ip_address
     );
 
-    // For now, log that this feature needs full implementation
-    info!("Socket removal by IP not fully implemented - would need token tracking");
+    // Only handle IPv6 addresses
+    if !ip_address.contains(':') {
+        return Err(format!("Only IPv6 addresses are supported, got: {}", ip_address).into());
+    }
 
-    Ok(())
+    // Parse the IPv6 address which may include interface identifier (e.g., fe80::1234%aware_data0)
+    let parsed_addr = if ip_address.contains('%') {
+        // Handle IPv6 address with zone identifier (interface)
+        let parts: Vec<&str> = ip_address.splitn(2, '%').collect();
+        let ipv6_addr = parts[0];
+        let interface = parts.get(1).unwrap_or(&"");
+
+        info!(
+            "Parsing IPv6 address: {} with interface: {}",
+            ipv6_addr, interface
+        );
+
+        // Validate the IPv6 address can be parsed
+        let _addr: std::net::Ipv6Addr = ipv6_addr
+            .parse()
+            .map_err(|e| format!("Failed to parse IPv6 address '{}': {}", ipv6_addr, e))?;
+
+        ipv6_addr
+    } else {
+        // IPv6 without interface identifier - validate it can be parsed
+        let _addr: std::net::Ipv6Addr = ip_address
+            .parse()
+            .map_err(|e| format!("Failed to parse IPv6 address '{}': {}", ip_address, e))?;
+
+        ip_address
+    };
+
+    // Get the command sender and send remove command
+    if let Some(_sender) = get_command_sender() {
+        // Note: In a full implementation, you would need to track tokens by IP address
+        // and send Command::RemoveSocket(token) instead of this placeholder
+        info!(
+            "Would remove socket for validated IPv6 address: {}",
+            parsed_addr
+        );
+
+        // For now, this is a placeholder - the actual implementation would need:
+        // 1. A mapping from IP addresses to mio::Token
+        // 2. Command::RemoveSocket(token) to be sent
+        // 3. Cleanup of the IP from the tracker
+
+        info!(
+            "Successfully validated IPv6 address for removal: {}",
+            ip_address
+        );
+        Ok(())
+    } else {
+        Err("Command sender not initialized".into())
+    }
 }

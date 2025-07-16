@@ -50,10 +50,12 @@ public class StreamingFragment extends Fragment {
         connectionsAdapter.setOnConnectionClickListener(connection -> {
             new AlertDialog.Builder(requireContext())
                     .setTitle("WiFi Aware Connection Details")
-                    .setMessage("Peer: " + connection.getShortPeerHandle() + "\n" +
+                    .setMessage("Peer: " + connection.peerHandleStr + "\n" +
                               "IPv6: " + connection.ipAddress + "\n" +
-                              "Duration: " + connection.getFormattedDuration() + "\n" +
-                              "Status: " + (connection.isActive ? "Active" : "Inactive"))
+                              "Duration: " + connection.createdTime + "\n" +
+                              "Status: " + (connection.isActive ? "Active" : "Inactive") + "\n" +
+                              "My Role: " + connection.myRole + "\n" +
+                              "Peer Role: " + connection.peerRole)
                     .setPositiveButton("OK", null)
                     .show();
         });

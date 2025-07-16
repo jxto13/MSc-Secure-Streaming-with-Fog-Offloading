@@ -14,8 +14,8 @@ import androidx.media3.common.util.UnstableApi;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import pt.iris.services.RustService;
-import pt.iris.network.WifiAwareDataPathManager;
 import pt.iris.network.NetworkInitializer;
+import pt.iris.network.lib.WifiAwareModels;
 import pt.iris.utils.AppContainer;
 
 import java.io.IOException;
@@ -28,7 +28,7 @@ public class StreamingViewModel extends ViewModel {
 
 	private final MutableLiveData<String> mText;
 	private final MutableLiveData<List<WifiAwareClientInfo>> connectedClients;
-	private final MutableLiveData<List<WifiAwareDataPathManager.WifiAwareConnectionInfo>> wifiAwareConnections;
+	private final MutableLiveData<List<WifiAwareModels.ConnectionInfo>> wifiAwareConnections;
 	private final MutableLiveData<NetworkStats> networkStats;
 	private final MutableLiveData<Boolean> isPlayerReady;
 	private final MutableLiveData<Boolean> isStreamConnected;
@@ -171,7 +171,7 @@ public class StreamingViewModel extends ViewModel {
 		if (stats == null) stats = new NetworkStats();
 		
 		// Get real WiFi Aware connection count from NetworkInitializer
-		List<WifiAwareDataPathManager.WifiAwareConnectionInfo> wifiAwareConns = 
+		List<WifiAwareModels.ConnectionInfo> wifiAwareConns = 
 			wifiAwareConnections.getValue();
 		int wifiAwareCount = wifiAwareConns != null ? wifiAwareConns.size() : 0;
 		
@@ -197,7 +197,7 @@ public class StreamingViewModel extends ViewModel {
 	private void updateConnectedClients() {
 		// Update real WiFi Aware connections from the NetworkInitializer
 		if (networkInitializer != null) {
-			List<WifiAwareDataPathManager.WifiAwareConnectionInfo> connections = 
+			List<WifiAwareModels.ConnectionInfo> connections = 
 				networkInitializer.getActiveConnections();
 			wifiAwareConnections.postValue(connections);
 		}
@@ -210,7 +210,7 @@ public class StreamingViewModel extends ViewModel {
 	public void forceRefreshConnections() {
 		if (networkInitializer != null) {
 			networkInitializer.forceRefreshConnections();
-			List<WifiAwareDataPathManager.WifiAwareConnectionInfo> connections = 
+			List<WifiAwareModels.ConnectionInfo> connections = 
 				networkInitializer.getActiveConnections();
 			wifiAwareConnections.postValue(connections);
 		}
@@ -236,7 +236,7 @@ public class StreamingViewModel extends ViewModel {
 		return connectedClients;
 	}
 
-	public LiveData<List<WifiAwareDataPathManager.WifiAwareConnectionInfo>> getWifiAwareConnections() {
+	public LiveData<List<WifiAwareModels.ConnectionInfo>> getWifiAwareConnections() {
 		return wifiAwareConnections;
 	}
 
@@ -338,10 +338,10 @@ public class StreamingViewModel extends ViewModel {
 		
 		// Try to extract from the full URI string
 		String uriString = uri.toString();
-		if (uriString.startsWith("rtsp://")) {
+		if (uriString.startsWith("iris://")) {
 			// Extract host from RTSP URL
 			try {
-				String withoutProtocol = uriString.substring(7); // Remove "rtsp://"
+				String withoutProtocol = uriString.substring(7); // Remove "iris://"
 				int slashIndex = withoutProtocol.indexOf('/');
 				int colonIndex = withoutProtocol.indexOf(':');
 				
@@ -360,5 +360,12 @@ public class StreamingViewModel extends ViewModel {
 		
 		// Final fallback
 		return "stream1.iris.dcc.fc.up.pt";
+	}
+
+	public String getDeviceCapabilities() {
+		if (networkInitializer != null) {
+			return networkInitializer.getDeviceCapabilitiesSummary();
+		}
+		return "N/A";
 	}
 }
