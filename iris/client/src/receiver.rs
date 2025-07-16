@@ -50,6 +50,7 @@ create_enum_and_counters! {
     }
 }
 
+#[derive(Debug)]
 pub enum Command {
     AddSocket(UdpSocket, ReceiverType),
     RemoveSocket(Token),

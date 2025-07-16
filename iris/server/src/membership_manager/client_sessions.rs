@@ -38,6 +38,8 @@ pub struct ClientData {
     pub metrics: ReportMetrics, // Client metrics
     pub report_counter: u32,    // Counter for reports received from the client
     pub reports: Vec<MatrixReportBitmap>, // Matrix, Bitmap
+    pub latency_estimate: Duration, // Estimated one-way latency to this client
+    pub last_report_time: Option<Instant>, // Timestamp of last report for latency calculation
 }
 
 impl ClientData {
@@ -102,9 +104,52 @@ impl ClientSessions {
             // Get the client from the client_sessions
             match self.clients.get_mut(&report.client_id) {
                 Some(mut client_data) => {
-                    client_data.last_seen = Instant::now();
+                    let now = Instant::now();
+                    client_data.last_seen = now;
                     client_data.reports = report.reports;
                     client_data.metrics = report.metrics.unwrap();
+
+                    // Update latency estimate based on report timing patterns
+                    if let Some(last_report_time) = client_data.last_report_time {
+                        let config = CONFIG.get().unwrap();
+                        let expected_interval =
+                            Duration::from_millis(config.settings.client_reporting_interval as u64);
+                        let actual_interval = now.duration_since(last_report_time);
+
+                        // Estimate one-way latency as half the excess delay
+                        // This assumes symmetric network paths
+                        if actual_interval > expected_interval {
+                            let excess_delay = actual_interval - expected_interval;
+                            let measured_latency = excess_delay / 2; // Assume half is one-way latency
+
+                            // Use exponential moving average to smooth latency estimates
+                            // New latency = 0.2 * measured + 0.8 * old_estimate (faster adaptation than RTT)
+                            client_data.latency_estimate = Duration::from_millis(
+                                ((measured_latency.as_millis() as f64 * 0.2)
+                                    + (client_data.latency_estimate.as_millis() as f64 * 0.8))
+                                    as u64,
+                            );
+
+                            log::debug!(
+                                "Updated latency estimate for client {:?}: {}ms",
+                                hex::encode(&report.client_id[..4]), // First 4 bytes for readability
+                                client_data.latency_estimate.as_millis()
+                            );
+                        } else {
+                            // If reports arrive early or on time, gradually reduce latency estimate
+                            // This handles cases where network conditions improve
+                            let min_latency = Duration::from_millis(5); // Minimum realistic latency
+                            if client_data.latency_estimate > min_latency {
+                                client_data.latency_estimate = Duration::from_millis(
+                                    (client_data.latency_estimate.as_millis() as f64 * 0.95) as u64,
+                                )
+                                .max(min_latency);
+                            }
+                        }
+                    }
+
+                    // Update the last report time for next RTT calculation
+                    client_data.last_report_time = Some(now);
 
                     if client_data.ip != report_socket.ip() {
                         client_data.ip = report_socket.ip();
@@ -143,6 +188,8 @@ impl ClientSessions {
             metrics: ReportMetrics::default(),
             report_counter: 0,
             reports: Vec::new(),
+            latency_estimate: Duration::from_millis(25), // Initial one-way latency estimate for WiFi
+            last_report_time: None,
         };
 
         // Create a hex representation of the client ID for metrics

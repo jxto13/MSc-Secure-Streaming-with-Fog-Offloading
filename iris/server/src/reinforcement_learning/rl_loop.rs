@@ -43,7 +43,7 @@ pub fn run_learning_loop(client_sessions: Arc<ClientSessions>) {
 
     let learning_rate = config.reinforcement_learning.learning_rate;
     let discount_factor = config.reinforcement_learning.discount_factor;
-    let exploration_rate = config.reinforcement_learning.exploration_rate;
+    let mut exploration_rate = config.reinforcement_learning.exploration_rate;
     let agent_data_path = config.reinforcement_learning.agent_data_path.clone();
 
     std::fs::create_dir_all(&agent_data_path).ok();

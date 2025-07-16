@@ -8,49 +8,59 @@ Reallocated singl_function (elt_size=8) to 100 items from 50.
 Reallocated wiz_functions (elt_size=8) to 6000 items from 3000.
 Reallocated singl_function (elt_size=8) to 100 items from 50.
 Database file #1: Bibliography.bib
+Warning--I didn't find a database entry for "yu2015survey"
+Warning--I didn't find a database entry for "vaquero2014finding"
+Warning--I didn't find a database entry for "li2016survey"
+Warning--I didn't find a database entry for "zhang2017video"
+Warning--I didn't find a database entry for "wang2016survey"
+Warning--I didn't find a database entry for "zhu2013multimedia"
+Warning--I didn't find a database entry for "turnbull2018monitoring"
+Warning--I didn't find a database entry for "barrett2016monitoring"
 -- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
 -- http://www.michaelshell.org/tex/ieeetran/bibtex/
 -- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
+Warning--empty journal in fog_intro
 
 Done.
-You've used 85 entries,
+You've used 94 entries,
             4087 wiz_defined-function locations,
-            1298 strings with 22431 characters,
-and the built_in function-call counts, 67921 in all, are:
-= -- 5515
-> -- 1701
-< -- 734
-+ -- 903
-- -- 268
-* -- 3255
-:= -- 10254
-add.period$ -- 156
-call.type$ -- 85
-change.case$ -- 71
-chr.to.int$ -- 1803
-cite$ -- 85
-duplicate$ -- 4672
-empty$ -- 4844
-format.name$ -- 322
-if$ -- 15690
+            1349 strings with 24037 characters,
+and the built_in function-call counts, 76318 in all, are:
+= -- 6270
+> -- 1893
+< -- 818
++ -- 1013
+- -- 300
+* -- 3670
+:= -- 11475
+add.period$ -- 177
+call.type$ -- 94
+change.case$ -- 83
+chr.to.int$ -- 1965
+cite$ -- 95
+duplicate$ -- 5270
+empty$ -- 5434
+format.name$ -- 364
+if$ -- 17665
 int.to.chr$ -- 0
-int.to.str$ -- 85
-missing$ -- 801
-newline$ -- 328
-num.names$ -- 83
-pop$ -- 1779
+int.to.str$ -- 94
+missing$ -- 890
+newline$ -- 349
+num.names$ -- 92
+pop$ -- 1947
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 5116
+skip$ -- 5785
 stack$ -- 0
-substring$ -- 3626
-swap$ -- 4206
-text.length$ -- 133
+substring$ -- 4114
+swap$ -- 4729
+text.length$ -- 163
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 85
-warning$ -- 0
-while$ -- 322
-width$ -- 87
-write$ -- 904
+type$ -- 94
+warning$ -- 1
+while$ -- 374
+width$ -- 96
+write$ -- 996
+(There were 9 warnings)

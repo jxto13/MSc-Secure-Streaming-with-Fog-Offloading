@@ -21,13 +21,42 @@ use iris_shared::crypto_utils::decrypt;
 use crate::proto::packet_wrapper::PacketType;
 use crate::proto::retransmission_packet::RetransmissionType;
 use crate::proto::{
-    MatrixReportBitmap, PacketWrapper, ReportMetrics, SessionKey, TransmissionPacket, VideoData,
-    XorPacket,
+    MatrixReportBitmap, PacketWrapper, ReportMetrics, RequestKey, SessionKey, TransmissionPacket,
+    VideoData, XorPacket,
 };
 use crate::receiver::{ReceiverType, RetransmissionCounters};
+use crate::CHANNEL;
 use crate::SESSION;
 
-use super::proto::ClientReport;
+use super::proto::{key_service_client::KeyServiceClient, ClientReport};
+
+use tokio::runtime::Runtime;
+
+/// Update matrix trackers in the buffer with appropriate keys based on epoch logic
+fn update_buffer_matrices_with_keys(
+    buffer: &mut VecDeque<MatrixTracker>,
+    current_key: &SessionKey,
+    next_key: &Option<SessionKey>,
+) {
+    let session_config = SESSION.get().unwrap().read().unwrap();
+    let epoch = session_config.epoch;
+
+    for tracker in buffer.iter_mut() {
+        // Determine which key this matrix should use based on epoch logic
+        if tracker.matrix_index % epoch == 0 && next_key.is_some() {
+            // This matrix is at an epoch boundary, it should use the next key
+            tracker.session_key = next_key.clone();
+            info!(
+                "Updated matrix {} (epoch boundary) with next key",
+                tracker.matrix_index
+            );
+        } else {
+            // Regular matrix, uses current key
+            tracker.session_key = Some(current_key.clone());
+            info!("Updated matrix {} with current key", tracker.matrix_index);
+        }
+    }
+}
 
 #[derive(Debug)]
 pub enum TickType {
@@ -333,6 +362,86 @@ fn validate_xor_packet(xor_packet: &mut XorPacket, x509_public_key: &EcKey<Publi
     true
 }
 
+fn process_xor_packet(packet: &mut XorPacket, buffer: &mut VecDeque<MatrixTracker>) {
+    // Find the matrix tracker for this packet
+    for tracker in buffer.iter_mut() {
+        if packet.matrix == tracker.matrix_index {
+            // Get the indexes of the packet
+            if packet.indexes.len() != 2 {
+                error!(
+                    "XorPacket must have exactly two indexes, found: {}",
+                    packet.indexes.len()
+                );
+                continue;
+            }
+
+            let i = packet.indexes[0] as usize;
+            let j = packet.indexes[1] as usize;
+
+            // info!("Received XorPacket for matrix: {} indexes: ({}, {})", packet.matrix, i, j);
+
+            let (row_i, col_i) = (i / tracker.cols as usize, i % tracker.cols as usize);
+            let (row_j, col_j) = (j / tracker.cols as usize, j % tracker.cols as usize);
+
+            // Get the packets at the indexes
+            let mut original_shards = Vec::new();
+
+            // Get the first packet
+            if let Some(packet) = tracker.get_packet(row_i, col_i) {
+                original_shards.push((0, packet.encode_to_vec()));
+            };
+
+            // Get the second packet
+            if let Some(packet) = tracker.get_packet(row_j, col_j) {
+                original_shards.push((1, packet.encode_to_vec()));
+            };
+
+            if original_shards.len() != 1 {
+                error!(
+                    "XorPacket must have exactly one original shard, found: {}",
+                    original_shards.len()
+                );
+                continue;
+            }
+
+            let target_size =
+                iris_shared::next_multiple_of_64(original_shards[0].1.len() as u32) as usize;
+
+            // Pad the original shards to the target size
+            for (_pos, data) in original_shards.iter_mut() {
+                padding::pad(data, target_size);
+            }
+
+            // One of the packets is missing, so we can recover it
+            if original_shards.len() == 1 {
+                let recovery_shards = vec![(0, &packet.payload)];
+                if let Ok(recovered) = reed_solomon_16::decode(
+                    packet.indexes.len(), // total number of original shards
+                    1,                    // total number of recovery shards
+                    original_shards,
+                    recovery_shards,
+                ) {
+                    for (_pos, mut data) in recovered {
+                        iris_shared::padding::depad(&mut data).unwrap();
+
+                        // Create a new TransmissionPacket with the recovered data
+                        if let Ok(transmission) = TransmissionPacket::decode(&*data) {
+                            // No need to verify the signature again, as it was already done in validate_xor_packet
+
+                            // info!("Recovered packet: {:?}", transmission.index);
+                            // Process the packet if valid
+                            tracker.add_packet(&transmission);
+                        }
+                    }
+                }
+            } else {
+                error!("XorPacket must have exactly one original shard");
+                continue;
+            }
+        }
+    }
+}
+
 /// Process a packet and check if it belongs to a new matrix or an old matrix in the buffer.
 fn process_packet(
     buffer: &mut VecDeque<MatrixTracker>,
@@ -587,6 +696,7 @@ pub fn start(
                             // Drain all elements except the last one
                             let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
 
+                            let mut any_keys_updated = false;
                             for mut item in drained {
 
                                 // Reconstruct the matrix
@@ -595,7 +705,34 @@ pub fn start(
                                 log::debug!("Missing packets: {:?} - {:?}", item.matrix_index, item.missing_indexes());
 
                                 // Decode the matrix to the application layer
-                                decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key).unwrap();
+                                match decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key) {
+                                    Ok(keys_were_updated) => {
+                                        if keys_were_updated {
+                                            any_keys_updated = true;
+                                        }
+                                    },
+                                    Err(e) => {
+                                        error!("Failed to decode matrix {}: {}", item.matrix_index, e);
+                                    }
+                                }
+                            }
+
+                            // If any keys were updated during decoding, update the remaining buffer and session keys
+                            if any_keys_updated {
+                                info!("Keys were updated during decoding, updating remaining matrices in buffer and session keys");
+
+                                // Get the latest keys from the global session (they were updated in request_updated_keys_sync)
+                                let session_config = SESSION.get().unwrap().read().unwrap();
+                                let updated_current_key = session_config.current_key.clone();
+                                let updated_next_key = session_config.next_key.clone();
+                                drop(session_config); // Release the lock
+
+                                // Update the decoder loop session keys
+                                current_key_session = updated_current_key.clone();
+                                next_key_session = Some(updated_next_key.clone());
+
+                                // Update all remaining matrices in the buffer with appropriate keys based on epoch
+                                update_buffer_matrices_with_keys(&mut buffer, &updated_current_key, &Some(updated_next_key));
                             }
 
                         }
@@ -616,16 +753,16 @@ pub fn start(
                     }
                 };
 
-                // This if for tracking if i increamented the multicast retransmissions counter
+                // This is for tracking if we incremented the multicast retransmissions counter
                 let mut is_multicast = false;
 
                 let wrapper: Vec<u8> = match source {
                     // This can be helpful to track metrics
-                    ReceiverType::Multicast=>{
+                    ReceiverType::Multicast => {
                         is_multicast = true;
                         data
                     },
-                    ReceiverType::Unicast=>{
+                    ReceiverType::Unicast => {
                         // Increment the unicast retransmissions counter
                         counters.increment(ReceiverType::Unicast);
                         data
@@ -666,85 +803,8 @@ pub fn start(
                                 // Validate the packet signature, if invalid, skip the packet
                                 if validate_xor_packet(&mut packet, &x509_public_key) {
 
-                                    // Find the matrix tracker for this packet
-                                    for tracker in buffer.iter_mut(){
-                                        if packet.matrix == tracker.matrix_index {
-
-                                            // Get the indexes of the packet
-                                            if packet.indexes.len() != 2 {
-                                                error!("XorPacket must have exactly two indexes, found: {}", packet.indexes.len());
-                                                continue;
-                                            }
-
-                                            let i = packet.indexes[0] as usize;
-                                            let j = packet.indexes[1] as usize;
-
-                                            // info!("Received XorPacket for matrix: {} indexes: ({}, {})", packet.matrix, i, j);
-
-                                            let (row_i, col_i) = (i / tracker.cols as usize, i % tracker.cols as usize);
-                                            let (row_j, col_j) = (j / tracker.cols as usize, j % tracker.cols as usize);
-
-
-                                            // Get the packets at the indexes
-                                            let mut original_shards = Vec::new();
-
-                                            // Get the first packet
-                                            if let Some(packet) = tracker.get_packet(row_i, col_i) {
-                                                original_shards.push((0,packet.encode_to_vec()));
-                                            };
-
-                                            // Get the second packet
-                                            if let Some(packet) = tracker.get_packet(row_j, col_j) {
-                                                original_shards.push((1,packet.encode_to_vec()  ));
-                                            };
-
-                                            if original_shards.len() != 1 {
-                                                error!("XorPacket must have exactly one original shard, found: {}", original_shards.len());
-                                                continue;
-                                            }
-
-                                            let target_size = iris_shared::next_multiple_of_64(original_shards[0].1.len() as u32) as usize;
-
-                                            // Pad the original shards to the target size
-                                            for (_pos, data) in original_shards.iter_mut() {
-                                                padding::pad(data, target_size);
-                                            }
-
-                                            // One of the packets is missing, so we can recover it
-                                            if original_shards.len() == 1 {
-
-                                                let recovery_shards = vec![(0, &packet.payload)];
-                                                if let Ok(recovered) = reed_solomon_16::decode(
-                                                    packet.indexes.len(), // total number of original shards
-                                                    1,                   // total number of recovery shards
-                                                    original_shards,
-                                                    recovery_shards,
-                                                ) {
-                                                    for (_pos, mut data) in recovered {
-
-                                                        iris_shared::padding::depad(&mut data).unwrap();
-
-                                                        // Create a new TransmissionPacket with the recovered data
-                                                        if let Ok(transmission) = TransmissionPacket::decode(&*data) {
-                                                            // No need to verify the signature again, as it was already done in validate_xor_packet
-
-                                                            // info!("Recovered packet: {:?}", transmission.index);
-                                                            // Process the packet if valid
-                                                            tracker.add_packet(&transmission);
-                                                        }
-
-                                                    }
-                                                }
-
-                                            } else {
-                                                error!("XorPacket must have exactly one original shard");
-                                                continue;
-                                            }
-
-
-                                        }
-                                    }
-
+                                    // Process the XOR packet
+                                    process_xor_packet(&mut packet, &mut buffer);
 
                                 } else {
                                     // Invalid packet, skip
@@ -756,13 +816,6 @@ pub fn start(
                                 // info!("Received retransmission packet for matrix: {} packet {}", packet.matrix, packet.index);
                                 // Validate the packet signature, if invalid, skip the packet
                                 if validate_packet(&mut packet, &x509_public_key) {
-
-                                    // Check if the packet is multicast retransmission
-                                    if is_multicast {
-                                        // Increment the multicast retransmissions counter
-                                        counters.increment(ReceiverType::Multicast);
-                                    }
-
                                     // debug!("Received retransmission packet for matrix: {} packet {}", packet.matrix, packet.index);
                                     // Process the packet if valid
                                     process_retransmission_packet(&mut buffer, packet);
@@ -776,7 +829,7 @@ pub fn start(
                             }
                         }
 
-                        // Check if the packet is multicast retransmission
+                        // Check if the packet is a multicast retransmission and increment counter
                         if is_multicast {
                             // Increment the multicast retransmissions counter
                             counters.increment(ReceiverType::Multicast);
@@ -785,6 +838,8 @@ pub fn start(
                     }
                     None => {
                         // no packet set — error or ignore
+                        error!("PacketWrapper contained no packet type.");
+                        continue;
                     }
                 }
 
@@ -798,7 +853,8 @@ fn decode_to_app_layer(
     tracker: &mut MatrixTracker,
     decode_data_sender: &Sender<Vec<u8>>,
     x509_public_key: &EcKeyRef<Public>,
-) -> Result<(), Box<dyn Error>> {
+) -> Result<bool, Box<dyn Error>> {
+    // Returns true if keys were updated
     // Logic to remove FEC rows and columns
     for _ in 0..tracker.rows_fec {
         tracker.matrix_packets.pop_col();
@@ -809,8 +865,9 @@ fn decode_to_app_layer(
     }
 
     // Ensure the session key is set
-    let session_key = match tracker.session_key {
-        Some(ref key) => key,
+    let mut keys_were_updated = false;
+    let decryption_key = match tracker.session_key {
+        Some(ref key) => key.clone(),
         None => {
             error!("Session key is not set for matrix {}", tracker.matrix_index);
             return Err("Session key is not set".into());
@@ -823,19 +880,55 @@ fn decode_to_app_layer(
             // remove padding from payload
             let deppaded_payload = padding::depad(&value.payload).unwrap();
 
-            // Decrypt the payload
+            // Try decryption with current key first, then request new keys if it fails
+            let decrypted_plaintext = match decrypt(
+                &deppaded_payload,
+                &decryption_key.key,
+                &decryption_key.iv,
+            ) {
+                Ok(plaintext) => plaintext,
+                Err(err) => {
+                    error!(
+                        "Decryption failed: {} \n Requesting current session key from server",
+                        err
+                    );
 
-            let decrypted_plaintext =
-                match decrypt(&deppaded_payload, &session_key.key, &session_key.iv) {
-                    Ok(plaintext) => plaintext,
-                    Err(err) => {
-                        error!(
-                            "Decryption failed: {} \n Need to request current session key",
-                            err
-                        );
-                        continue;
+                    // Try to request updated keys from the server
+                    match request_updated_keys_sync() {
+                        Ok((new_current_key, _new_next_key)) => {
+                            info!("Successfully received updated keys from server, retrying decryption");
+
+                            // Try decryption again with the new key
+                            match decrypt(
+                                &deppaded_payload,
+                                &new_current_key.key,
+                                &new_current_key.iv,
+                            ) {
+                                Ok(plaintext) => {
+                                    info!("Decryption successful with updated key");
+
+                                    // Mark that we need to update the tracker's session key
+                                    tracker.session_key = Some(new_current_key);
+                                    keys_were_updated = true;
+
+                                    plaintext
+                                }
+                                Err(retry_err) => {
+                                    error!(
+                                        "Decryption failed even with updated key: {}",
+                                        retry_err
+                                    );
+                                    continue;
+                                }
+                            }
+                        }
+                        Err(key_err) => {
+                            error!("Failed to request updated keys from server: {}", key_err);
+                            continue;
+                        }
                     }
-                };
+                }
+            };
 
             // Check if the decrypted payload is empty
             if decrypted_plaintext.is_empty() {
@@ -867,5 +960,43 @@ fn decode_to_app_layer(
         }
     }
 
-    Ok(())
+    Ok(keys_were_updated)
+}
+
+/// Request updated keys from the server synchronously
+fn request_updated_keys_sync() -> Result<(SessionKey, SessionKey), Box<dyn Error>> {
+    // Get the gRPC channel
+    let channel = CHANNEL.get().ok_or("gRPC channel not initialized")?.clone();
+
+    // Create a runtime for this synchronous context
+    let rt = Runtime::new()?;
+
+    rt.block_on(async {
+        let mut client = KeyServiceClient::new((*channel).clone());
+
+        // Request current keys
+        let response = client
+            .request_current_key(RequestKey {})
+            .await
+            .map_err(|e| format!("gRPC request failed: {}", e))?;
+
+        let key_response = response.into_inner();
+
+        let current_key = key_response
+            .current_key
+            .ok_or("Server did not provide current key")?;
+        let next_key = key_response
+            .next_key
+            .ok_or("Server did not provide next key")?;
+
+        // Update the global session with the new keys
+        if let Some(session) = SESSION.get() {
+            let mut session_guard = session.write().unwrap();
+            session_guard.current_key = current_key.clone();
+            session_guard.next_key = next_key.clone();
+            info!("Updated global session with new keys from server");
+        }
+
+        Ok((current_key, next_key))
+    })
 }

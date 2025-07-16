@@ -50,40 +50,31 @@
 \contentsline {section}{\numberline {3.7}Gap Analysis and Research Opportunities}{13}{section.3.7}%
 \contentsline {chapter}{\numberline {4}Design and Implementation}{14}{chapter.4}%
 \contentsline {section}{\numberline {4.1}System Architecture}{14}{section.4.1}%
-\contentsline {subsection}{\numberline {4.1.1}Server Architecture}{14}{subsection.4.1.1}%
-\contentsline {subsubsection}{\numberline {4.1.1.1}Source Handler and Pipeline Processing}{15}{subsubsection.4.1.1.1}%
-\contentsline {subsubsection}{\numberline {4.1.1.2}Adaptive Parameter Management}{16}{subsubsection.4.1.1.2}%
-\contentsline {subsection}{\numberline {4.1.2}Client Architecture}{16}{subsection.4.1.2}%
-\contentsline {subsubsection}{\numberline {4.1.2.1}Concurrent Processing Architecture}{17}{subsubsection.4.1.2.1}%
-\contentsline {subsubsection}{\numberline {4.1.2.2}Forward Error Correction Decoding}{17}{subsubsection.4.1.2.2}%
-\contentsline {subsubsection}{\numberline {4.1.2.3}Quality Monitoring and Reporting}{17}{subsubsection.4.1.2.3}%
-\contentsline {section}{\numberline {4.2}Protocol Design}{18}{section.4.2}%
-\contentsline {subsection}{\numberline {4.2.1}Control Plane Protocol}{18}{subsection.4.2.1}%
-\contentsline {subsection}{\numberline {4.2.2}Data Plane Protocol}{19}{subsection.4.2.2}%
-\contentsline {subsection}{\numberline {4.2.3}Security Framework}{19}{subsection.4.2.3}%
-\contentsline {subsubsection}{\numberline {4.2.3.1}Dual Cryptographic Certificate Architecture}{19}{subsubsection.4.2.3.1}%
-\contentsline {chapter}{\numberline {5}Evaluation}{21}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Performance Results}{21}{section.5.1}%
-\contentsline {subsection}{\numberline {5.1.1}Latency, Throughput, and Reliability}{21}{subsection.5.1.1}%
-\contentsline {subsection}{\numberline {5.1.2}Adaptive FEC and Retransmission Scheduling}{21}{subsection.5.1.2}%
-\contentsline {subsection}{\numberline {5.1.3}Multicast Scalability}{21}{subsection.5.1.3}%
-\contentsline {subsection}{\numberline {5.1.4}Wi-Fi Aware Offloading Efficiency}{21}{subsection.5.1.4}%
-\contentsline {subsection}{\numberline {5.1.5}Authentication and Roaming}{21}{subsection.5.1.5}%
-\contentsline {subsection}{\numberline {5.1.6}Tokio and Mio Runtime Efficiency}{21}{subsection.5.1.6}%
-\contentsline {subsection}{\numberline {5.1.7}Bandwidth Management}{21}{subsection.5.1.7}%
-\contentsline {subsection}{\numberline {5.1.8}Memory Optimization}{21}{subsection.5.1.8}%
-\contentsline {subsection}{\numberline {5.1.9}Testing with Packet Loss (tc)}{21}{subsection.5.1.9}%
-\contentsline {section}{\numberline {5.2}Comparison}{21}{section.5.2}%
-\contentsline {chapter}{\numberline {6}Conclusion}{22}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Summary}{22}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Future Work}{22}{section.6.2}%
-\contentsline {chapter}{\numberline {7}Chapter Title Here}{23}{chapter.7}%
-\contentsline {section}{\numberline {7.1}Citations}{23}{section.7.1}%
-\contentsline {section}{\numberline {7.2}Figures}{23}{section.7.2}%
-\contentsline {subsection}{\numberline {7.2.1}SVGs}{25}{subsection.7.2.1}%
-\contentsline {subsubsection}{\numberline {7.2.1.1}Automatic export}{25}{subsubsection.7.2.1.1}%
-\contentsline {section}{\numberline {7.3}Math}{26}{section.7.3}%
-\contentsline {section}{\numberline {7.4}Abreviations}{27}{section.7.4}%
+\contentsline {subsection}{\numberline {4.1.1}Streaming Server}{15}{subsection.4.1.1}%
+\contentsline {section}{\numberline {4.2}Protocol Design}{16}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Threat Model and Attack Mitigation}{16}{subsection.4.2.1}%
+\contentsline {chapter}{\numberline {5}Evaluation}{18}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Performance Results}{18}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}Latency, Throughput, and Reliability}{18}{subsection.5.1.1}%
+\contentsline {subsection}{\numberline {5.1.2}Adaptive FEC and Retransmission Scheduling}{18}{subsection.5.1.2}%
+\contentsline {subsection}{\numberline {5.1.3}Multicast Scalability}{18}{subsection.5.1.3}%
+\contentsline {subsection}{\numberline {5.1.4}Wi-Fi Aware Offloading Efficiency}{18}{subsection.5.1.4}%
+\contentsline {subsection}{\numberline {5.1.5}Authentication and Roaming}{18}{subsection.5.1.5}%
+\contentsline {subsection}{\numberline {5.1.6}Tokio and Mio Runtime Efficiency}{18}{subsection.5.1.6}%
+\contentsline {subsection}{\numberline {5.1.7}Bandwidth Management}{18}{subsection.5.1.7}%
+\contentsline {subsection}{\numberline {5.1.8}Memory Optimization}{18}{subsection.5.1.8}%
+\contentsline {subsection}{\numberline {5.1.9}Testing with Packet Loss (tc)}{18}{subsection.5.1.9}%
+\contentsline {section}{\numberline {5.2}Comparison}{18}{section.5.2}%
+\contentsline {chapter}{\numberline {6}Conclusion}{19}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Summary}{19}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Future Work}{19}{section.6.2}%
+\contentsline {chapter}{\numberline {7}Chapter Title Here}{20}{chapter.7}%
+\contentsline {section}{\numberline {7.1}Citations}{20}{section.7.1}%
+\contentsline {section}{\numberline {7.2}Figures}{20}{section.7.2}%
+\contentsline {subsection}{\numberline {7.2.1}SVGs}{22}{subsection.7.2.1}%
+\contentsline {subsubsection}{\numberline {7.2.1.1}Automatic export}{22}{subsubsection.7.2.1.1}%
+\contentsline {section}{\numberline {7.3}Math}{23}{section.7.3}%
+\contentsline {section}{\numberline {7.4}Abreviations}{24}{section.7.4}%
 \vspace {0.5cm}
-\contentsline {chapter}{Bibliography}{27}{dummy.6}%
+\contentsline {chapter}{Bibliography}{24}{dummy.6}%
 \contentsfinish 

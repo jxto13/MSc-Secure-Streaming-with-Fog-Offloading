@@ -5,15 +5,15 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces IRIS system architecture showing server-client interaction and network infrastructure.}}{15}{figure.caption.3}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Global architecture of the system, illustrating the main components and their interactions.}}{16}{figure.caption.3}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {7.1}{\ignorespaces FCUP's fat cat.}}{23}{figure.caption.5}%
-\contentsline {figure}{\numberline {7.2}{\ignorespaces FCUP's fat cat doing what cats do.}}{24}{figure.caption.6}%
-\contentsline {figure}{\numberline {7.3}{\ignorespaces FCUP's fat cat.}}{24}{figure.caption.6}%
-\contentsline {figure}{\numberline {7.4}{\ignorespaces FCUP's fat cat.}}{24}{figure.caption.7}%
-\contentsline {figure}{\numberline {7.5}{\ignorespaces FCUP's fat cat.}}{24}{figure.caption.8}%
-\contentsline {figure}{\numberline {7.6}{\ignorespaces The test SVG image, as it is seen in Inkscape}}{25}{figure.caption.9}%
-\contentsline {figure}{\numberline {7.7}{\ignorespaces The test image, exported to PDF \emph {with} \LaTeX \ option.}}{26}{figure.caption.10}%
+\contentsline {figure}{\numberline {7.1}{\ignorespaces FCUP's fat cat.}}{20}{figure.caption.5}%
+\contentsline {figure}{\numberline {7.2}{\ignorespaces FCUP's fat cat doing what cats do.}}{21}{figure.caption.6}%
+\contentsline {figure}{\numberline {7.3}{\ignorespaces FCUP's fat cat.}}{21}{figure.caption.6}%
+\contentsline {figure}{\numberline {7.4}{\ignorespaces FCUP's fat cat.}}{21}{figure.caption.7}%
+\contentsline {figure}{\numberline {7.5}{\ignorespaces FCUP's fat cat.}}{21}{figure.caption.8}%
+\contentsline {figure}{\numberline {7.6}{\ignorespaces The test SVG image, as it is seen in Inkscape}}{22}{figure.caption.9}%
+\contentsline {figure}{\numberline {7.7}{\ignorespaces The test image, exported to PDF \emph {with} \LaTeX \ option.}}{23}{figure.caption.10}%
 \contentsfinish 

@@ -21,6 +21,49 @@
 \providecommand{\BIBdecl}{\relax}
 \BIBdecl
 
+\bibitem{livestreaming_use_cases}
+S.~Wang, S.~Yu, and M.~Guo, ``A survey on real-time video streaming over the
+  internet,'' \emph{Multimedia Tools and Applications}, vol.~79, no. 1-2, pp.
+  233--265, 2020.
+
+\bibitem{urban_bandwidth_bottleneck}
+J.~Li, Y.~Liu, and K.~Zhang, ``Traffic-aware dynamic bandwidth allocation for
+  high-density wireless networks,'' \emph{IEEE Transactions on Network and
+  Service Management}, vol.~17, no.~1, pp. 567--580, 2020.
+
+\bibitem{cloud_scalability_limitations}
+Q.~Zhang, L.~Cheng, and R.~Boutaba, ``Cloud computing: state-of-the-art and
+  research challenges,'' \emph{Journal of Internet Services and Applications},
+  vol.~1, no.~1, pp. 7--18, 2010.
+
+\bibitem{wifi_limits_security_bandwidth}
+M.~Raza, D.~Wall, and B.~O'Flynn, ``A review of wireless technologies for
+  iot-based smart homes: challenges and opportunities,'' \emph{Internet of
+  Things}, vol.~20, p. 100616, 2022.
+
+\bibitem{edge_vs_cloud_latency}
+W.~Shi, J.~Cao, Q.~Zhang, Y.~Li, and L.~Xu, ``Edge computing: Vision and
+  challenges,'' \emph{IEEE Internet of Things Journal}, vol.~3, no.~5, pp.
+  637--646, 2016.
+
+\bibitem{fog_intro}
+F.~Bonomi, R.~Milito, J.~Zhu, and S.~Addepalli, ``Fog computing and its role in
+  the internet of things,'' pp. 13--16, 2012.
+
+\bibitem{fog_livestreaming_benefits}
+A.~V. Dastjerdi and R.~Buyya, ``Fog computing: Helping the internet of things
+  realize its potential,'' \emph{Computer}, vol.~49, no.~8, pp. 112--116, 2016.
+
+\bibitem{livestreaming_threats}
+M.~Abdullahi, A.~Arabo, and R.~Abdullah, ``Cyber security threats in iot
+  networks,'' \emph{2015 International Conference on Cyber Security of Smart
+  Cities, Industrial Control System and Communications (SSIC)}, pp. 1--6, 2015.
+
+\bibitem{security_critical_apps}
+R.~Roman, J.~Lopez, and M.~Mambo, ``Mobile edge computing, fog et al.: A survey
+  and analysis of security threats and challenges,'' \emph{Future Generation
+  Computer Systems}, vol.~78, pp. 680--698, 2018.
+
 \bibitem{mpeg1996ts}
 \emph{Information technology -- Generic coding of moving pictures and
   associated audio information: Systems}, ISO/IEC Std. 13\,818-1, 1996, mPEG-2
@@ -470,27 +513,20 @@ M.~Handley, V.~Jacobson, and C.~Perkins, \emph{SDP: Session Description
   Available: \url{https://tools.ietf.org/html/rfc4566}
 \BIBentrySTDinterwordspacing
 
-\bibitem{franke2020network}
-\BIBentryALTinterwordspacing
-D.~Sibold, S.~Roettger, and K.~Teichel, \emph{Network Time Security for the
-  Network Time Protocol}, Internet Engineering Task Force Std. RFC 8915, 2020.
-  [Online]. Available: \url{https://tools.ietf.org/html/rfc8915}
-\BIBentrySTDinterwordspacing
+\bibitem{jung2017rust}
+R.~Jung, J.-H. Jourdan, R.~Krebbers, and D.~Dreyer, ``Rustbelt: securing the
+  foundations of the rust programming language,'' \emph{Proceedings of the ACM
+  on Programming Languages}, vol.~2, no. POPL, pp. 1--34, 2018.
 
-\bibitem{nist2013p256}
-\BIBentryALTinterwordspacing
-{National Institute of Standards and Technology}, \emph{Digital Signature
-  Standard (DSS)}, NIST Std. FIPS PUB 186-4, 2013. [Online]. Available:
-  \url{https://csrc.nist.gov/publications/detail/fips/186/4/final}
-\BIBentrySTDinterwordspacing
+\bibitem{sharma2020comparison}
+A.~Sharma, F.~Klock, A.~Crichton, and B.~Anderson, ``Memory safety in systems
+  programming: A comparative analysis,'' \emph{IEEE Software}, vol.~37, no.~4,
+  pp. 72--79, 2020.
 
-\bibitem{johnson2001ecdsa}
-\BIBentryALTinterwordspacing
-D.~Johnson, A.~Menezes, and S.~Vanstone, \emph{The Elliptic Curve Digital
-  Signature Algorithm (ECDSA)}, Certicom Research Std., 2001. [Online].
-  Available:
-  \url{https://www.certicom.com/content/certicom/en/21-the-elliptic-curve-digital-signature-algorithm-ecdsa.html}
-\BIBentrySTDinterwordspacing
+\bibitem{mach2017mobile}
+P.~Mach and Z.~Becvar, ``Mobile edge computing: A survey on architecture and
+  computation offloading,'' \emph{IEEE Communications Surveys \& Tutorials},
+  vol.~19, no.~3, pp. 1628--1656, 2017.
 
 \bibitem{Fienup1982}
 \BIBentryALTinterwordspacing

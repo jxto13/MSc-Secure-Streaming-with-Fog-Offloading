@@ -4,7 +4,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 
-import java.nio.ByteBuffer;
 import android.net.wifi.WifiManager;
 import android.content.Context;
 
@@ -16,9 +15,16 @@ public class RustService extends Service {
         System.loadLibrary("irislinker");
     }
 
-    private static native void startService();
-    private static native void stopService();
-    public static native void startClient(int fd);
+    public static native void startClient(int fd, String streamUrl);
+    public static native void addSocket(String ipAddress);
+    public static native void removeSocket(String ipAddress);
+    public static native void cleanupAllSockets(); // Add cleanup method
+    
+    // Network statistics methods
+    public static native double getPacketLossPercentage();
+    public static native double getCurrentBitrateMbps();
+    public static native long getTotalDataTransferredMB();
+    public static native int getActiveConnectionCount();
 
     @Override
     public void onCreate() {
@@ -34,7 +40,7 @@ public class RustService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
-        startService();
+        // Service startup logic can be added here if needed
         return START_STICKY; // consider using STICKY for resilience
     }
 
@@ -42,8 +48,12 @@ public class RustService extends Service {
     public void onDestroy() {
         super.onDestroy();
 
-        // Stop native service
-        stopService();
+        // Cleanup all active connections
+        try {
+            cleanupAllSockets();
+        } catch (UnsatisfiedLinkError e) {
+            // Native library might not be loaded, ignore
+        }
 
         // Release multicast lock
         if (multicastLock != null && multicastLock.isHeld()) {

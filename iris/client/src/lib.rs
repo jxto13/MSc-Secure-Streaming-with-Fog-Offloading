@@ -1,5 +1,5 @@
 mod decoder;
-mod receiver;
+pub mod receiver;
 mod session;
 mod utils;
 
@@ -12,12 +12,16 @@ use prost::Message;
 use crate::receiver::{Command, DynamicReceiver, ReceiverType};
 use crate::session::ClientSession;
 
+// Global command sender for socket management
+static COMMAND_SENDER: OnceCell<crossbeam_channel::Sender<Command>> = OnceCell::new();
+
 use openssl::ec::{EcGroup, EcKey};
 use openssl::nid::Nid;
 use openssl::pkey::PKey;
 
+use std::collections::HashMap;
 use std::net::{Ipv4Addr, SocketAddr};
-use std::sync::{Arc, RwLock};
+use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::time::{Duration, Instant};
 
@@ -45,8 +49,16 @@ pub mod proto {
 
 const CA_PUBLIC_CERTIFICATE: &[u8] = include_bytes!("../../server/certs/ca_certificate.pem");
 
-pub static CHANNEL: OnceCell<Arc<Channel>> = OnceCell::new();
-pub static SESSION: OnceCell<Arc<RwLock<ClientSession>>> = OnceCell::new();
+static CHANNEL: OnceCell<Arc<Channel>> = OnceCell::new();
+static SESSION: OnceCell<Arc<RwLock<ClientSession>>> = OnceCell::new();
+
+// Global socket tracking for management
+static SOCKET_TRACKER: OnceCell<Arc<Mutex<HashMap<String, mio::Token>>>> = OnceCell::new();
+
+/// Initialize the socket tracker
+fn init_socket_tracker() {
+    SOCKET_TRACKER.get_or_init(|| Arc::new(Mutex::new(HashMap::new())));
+}
 
 // Function to create a gRPC channel with TLS configuration
 async fn create_channel(ip: &String) -> Result<Channel, Box<dyn std::error::Error>> {
@@ -255,6 +267,12 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
     let (client_report_sender, client_report_receiver) = unbounded();
     let (command_sender, command_receiver) = unbounded();
 
+    // Set the command sender for socket management
+    set_command_sender(command_sender.clone());
+
+    // Set the command sender for socket management
+    set_command_sender(command_sender.clone());
+
     // Create the Client Session using the runtime that was init in the start
     // let mut client_session = session::ClientSession::new(Arc::clone(&rt));
 
@@ -357,4 +375,58 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
     });
 
     Ok(decoded_data_receiver)
+}
+
+/// Set the command sender for socket management
+pub fn set_command_sender(sender: crossbeam_channel::Sender<Command>) {
+    COMMAND_SENDER.set(sender).unwrap_or_else(|_| {
+        error!("Command sender already set");
+    });
+}
+
+/// Get the command sender for socket management
+pub fn get_command_sender() -> Option<&'static crossbeam_channel::Sender<Command>> {
+    COMMAND_SENDER.get()
+}
+
+/// Add a socket by IP address for WiFi Aware communication
+pub fn add_wifi_aware_socket(ip_address: &str) -> Result<(), Box<dyn std::error::Error>> {
+    init_socket_tracker();
+
+    let socket_addr: SocketAddr = format!("{}:0", ip_address).parse()?;
+
+    // Create and bind the socket
+    let socket = mio::net::UdpSocket::bind(socket_addr)?;
+
+    // Get the command sender
+    if let Some(sender) = get_command_sender() {
+        sender.send(Command::AddSocket(socket, ReceiverType::WifiAware))?;
+        info!("Added WiFi Aware socket for IP: {}", ip_address);
+
+        // Note: For proper tracking, we would need to get the token back from the receiver
+        // This is a simplified implementation
+        Ok(())
+    } else {
+        Err("Command sender not initialized".into())
+    }
+}
+
+/// Remove a socket by IP address
+pub fn remove_wifi_aware_socket(ip_address: &str) -> Result<(), Box<dyn std::error::Error>> {
+    init_socket_tracker();
+
+    // In a full implementation, you would:
+    // 1. Look up the token for this IP address
+    // 2. Send a RemoveSocket command with that token
+    // 3. Remove the IP from the tracker
+
+    info!(
+        "Requested removal of WiFi Aware socket for IP: {}",
+        ip_address
+    );
+
+    // For now, log that this feature needs full implementation
+    info!("Socket removal by IP not fully implemented - would need token tracking");
+
+    Ok(())
 }
