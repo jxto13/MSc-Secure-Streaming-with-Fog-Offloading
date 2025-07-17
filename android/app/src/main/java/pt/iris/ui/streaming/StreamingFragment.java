@@ -18,7 +18,6 @@ public class StreamingFragment extends Fragment {
 
     private FragmentStreamingBinding binding;
     private StreamingViewModel streamingViewModel;
-    private WifiAwareConnectionsAdapter connectionsAdapter;
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -42,23 +41,8 @@ public class StreamingFragment extends Fragment {
     }
 
     private void setupWifiAwareConnectionsRecyclerView() {
-        connectionsAdapter = new WifiAwareConnectionsAdapter();
         binding.clientsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-        binding.clientsRecyclerView.setAdapter(connectionsAdapter);
 
-        // Set up item click listener for connection details
-        connectionsAdapter.setOnConnectionClickListener(connection -> {
-            new AlertDialog.Builder(requireContext())
-                    .setTitle("WiFi Aware Connection Details")
-                    .setMessage("Peer: " + connection.peerHandleStr + "\n" +
-                              "IPv6: " + connection.ipAddress + "\n" +
-                              "Duration: " + connection.createdTime + "\n" +
-                              "Status: " + (connection.isActive ? "Active" : "Inactive") + "\n" +
-                              "My Role: " + connection.myRole + "\n" +
-                              "Peer Role: " + connection.peerRole)
-                    .setPositiveButton("OK", null)
-                    .show();
-        });
     }
 
     private void setupUI() {
@@ -103,11 +87,6 @@ public class StreamingFragment extends Fragment {
     }
 
     private void observeViewModel() {
-        // Observe real WiFi Aware connections from NetworkInitializer
-        streamingViewModel.getWifiAwareConnections().observe(getViewLifecycleOwner(), connections -> {
-            connectionsAdapter.updateConnections(connections);
-            binding.clientCountText.setText(String.format("WiFi Aware Connections: %d", connections.size()));
-        });
 
         // Observe network stats
         streamingViewModel.getNetworkStats().observe(getViewLifecycleOwner(), stats -> {
@@ -149,8 +128,7 @@ public class StreamingFragment extends Fragment {
         if (streamingViewModel.getPlayer() != null) {
             streamingViewModel.getPlayer().play();
         }
-        // Refresh connections when fragment becomes visible
-        streamingViewModel.forceRefreshConnections();
+
     }
 
     @Override

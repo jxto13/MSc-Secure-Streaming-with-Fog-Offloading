@@ -688,10 +688,27 @@ pub fn start(
                         }
 
                         // Sign the report
-                        report.signature = EcdsaSig::sign(&sha256(&report.encode_to_vec()), &client_ec_key).unwrap().to_der().unwrap();
+                        match EcdsaSig::sign(&sha256(&report.encode_to_vec()), &client_ec_key) {
+                            Ok(sig) => {
+                                match sig.to_der() {
+                                    Ok(der) => report.signature = der,
+                                    Err(e) => {
+                                        error!("Failed to convert signature to DER: {}. Skipping report.", e);
+                                        continue;
+                                    }
+                                }
+                            },
+                            Err(e) => {
+                                error!("Failed to sign report: {}. Skipping report.", e);
+                                continue;
+                            }
+                        }
 
                         // Send the report
-                        client_report_sender.send(report).unwrap();
+                        if let Err(e) = client_report_sender.send(report) {
+                            error!("Failed to send client report: {}. Decoder shutting down.", e);
+                            break;
+                        }
 
                         // Increment the report counter
                         report_counter += 1;
@@ -966,7 +983,10 @@ fn decode_to_app_layer(
                 continue;
             } else {
                 // Send the decoded data to the application layer
-                decode_data_sender.send(decoded.data).unwrap();
+                if let Err(e) = decode_data_sender.send(decoded.data) {
+                    error!("Failed to send decoded data: {}. Decoder shutting down.", e);
+                    break;
+                }
             }
         }
     }
@@ -977,13 +997,18 @@ fn decode_to_app_layer(
 /// Request updated keys from the server synchronously
 fn request_updated_keys_sync() -> Result<(SessionKey, SessionKey), Box<dyn Error>> {
     // Get the gRPC channel
-    let channel = CHANNEL.get().ok_or("gRPC channel not initialized")?.clone();
+    let channel_lock = CHANNEL.get().ok_or("gRPC channel not initialized")?;
+    let channel_guard = channel_lock.read().unwrap();
+    let channel = channel_guard
+        .as_ref()
+        .ok_or("gRPC channel not connected")?
+        .clone();
 
     // Create a runtime for this synchronous context
     let rt = Runtime::new()?;
 
     rt.block_on(async {
-        let mut client = KeyServiceClient::new((*channel).clone());
+        let mut client = KeyServiceClient::new(channel);
 
         // Request current keys
         let response = client

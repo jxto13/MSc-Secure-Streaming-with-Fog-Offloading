@@ -54,14 +54,26 @@ pub mod proto {
 
 const CA_PUBLIC_CERTIFICATE: &[u8] = include_bytes!("../../server/certs/ca_certificate.pem");
 
-static CHANNEL: OnceCell<Arc<Channel>> = OnceCell::new();
+static CHANNEL: OnceCell<Arc<RwLock<Option<Channel>>>> = OnceCell::new();
 static SESSION: OnceCell<Arc<RwLock<ClientSession>>> = OnceCell::new();
 
 /// Shutdown all client threads gracefully
 pub fn shutdown_client() {
+    // Send shutdown flag
     if let Some(shutdown_flag) = SHUTDOWN_FLAG.get() {
         shutdown_flag.store(true, Ordering::Relaxed);
-        info!("Shutdown signal sent to all client threads");
+    }
+
+    // Clear the channel
+    if let Some(channel_lock) = CHANNEL.get() {
+        let mut channel_guard = channel_lock.write().unwrap();
+        *channel_guard = None;
+        info!("Client channel reset for reconnection");
+    }
+
+    // Reset shutdown flag
+    if let Some(shutdown_flag) = SHUTDOWN_FLAG.get() {
+        shutdown_flag.store(false, Ordering::Relaxed);
     }
 }
 
@@ -247,7 +259,11 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
                 }
 
                 // Save the client for use after the loop
-                CHANNEL.set(Arc::new(channel)).unwrap();
+                CHANNEL.get_or_init(|| Arc::new(RwLock::new(None)));
+                if let Some(channel_lock) = CHANNEL.get() {
+                    let mut channel_guard = channel_lock.write().unwrap();
+                    *channel_guard = Some(channel);
+                }
             }
             Err(e) => {
                 error!("Failed to connect: {}. Retrying in 5 seconds...", e);
@@ -256,7 +272,13 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
     });
 
     // Check if the channel was created successfully
-    if CHANNEL.get().is_none() {
+    let channel_created = if let Some(channel_lock) = CHANNEL.get() {
+        channel_lock.read().unwrap().is_some()
+    } else {
+        false
+    };
+
+    if !channel_created {
         // If the channel was not created, log an error and return
         error!("Failed to create gRPC channel, cannot start client");
         return Err("Failed to create gRPC channel".into());
@@ -278,7 +300,7 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
 
     // Spawn Receiver Thread
     let shutdown_flag_receiver = Arc::clone(SHUTDOWN_FLAG.get().unwrap());
-    let receiver_handler = thread::spawn(move || {
+    let _receiver_handler = thread::spawn(move || {
         let server = DynamicReceiver::new(
             data_receiver_sender,
             command_receiver,
@@ -293,50 +315,94 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
             }
         };
         // Run the server event loop
-        server.run().unwrap();
+        if let Err(e) = server.run() {
+            error!("Receiver server error: {}", e);
+        }
     });
 
     // REMEMBER TO GET THE IP FROM THE CONFIGURATION FILE OF GRPC SERVER
-    let multicast_ip = SESSION
-        .get()
-        .unwrap()
-        .read()
-        .unwrap()
-        .multicast_address
-        .clone();
-    let multicast_port = SESSION.get().unwrap().read().unwrap().multicast_port;
+    let session_guard = SESSION.get().ok_or("Session not initialized")?;
+    let session_config = session_guard.read().unwrap();
+    let multicast_ip = session_config.multicast_address.clone();
+    let multicast_port = session_config.multicast_port;
+    let unicast_port = session_config.unicast_port;
+    drop(session_config); // Release the lock
 
     // Setup multicast socket
     {
-        let multicast_addr = SocketAddr::new(multicast_ip.parse().unwrap(), multicast_port as u16);
-        let multicast_socket = mio::net::UdpSocket::bind(multicast_addr).unwrap();
-        multicast_socket
-            .join_multicast_v4(&multicast_ip.parse().unwrap(), &Ipv4Addr::UNSPECIFIED)
-            .unwrap();
-        command_sender
-            .send(Command::AddSocket(
-                multicast_socket,
-                ReceiverType::Multicast,
-            ))
-            .unwrap();
+        let multicast_addr =
+            match format!("{}:{}", multicast_ip, multicast_port).parse::<SocketAddr>() {
+                Ok(addr) => addr,
+                Err(e) => {
+                    error!("Failed to parse multicast address: {}", e);
+                    return Err(format!("Invalid multicast address: {}", e).into());
+                }
+            };
+
+        let multicast_socket = match mio::net::UdpSocket::bind(multicast_addr) {
+            Ok(socket) => socket,
+            Err(e) => {
+                error!("Failed to bind multicast socket: {}", e);
+                return Err(format!("Failed to bind multicast socket: {}", e).into());
+            }
+        };
+
+        let multicast_ip_parsed = match multicast_ip.parse::<Ipv4Addr>() {
+            Ok(ip) => ip,
+            Err(e) => {
+                error!("Failed to parse multicast IP: {}", e);
+                return Err(format!("Invalid multicast IP: {}", e).into());
+            }
+        };
+
+        if let Err(e) =
+            multicast_socket.join_multicast_v4(&multicast_ip_parsed, &Ipv4Addr::UNSPECIFIED)
+        {
+            error!("Failed to join multicast group: {}", e);
+            return Err(format!("Failed to join multicast group: {}", e).into());
+        }
+
+        if let Err(e) = command_sender.send(Command::AddSocket(
+            multicast_socket,
+            ReceiverType::Multicast,
+        )) {
+            error!("Failed to add multicast socket: {}", e);
+            return Err(format!("Failed to add multicast socket: {}", e).into());
+        }
     }
 
     // Setup unicast socket
     {
-        // Use the unicast port from the session configuration
-        let unicast_port = SESSION.get().unwrap().read().unwrap().unicast_port;
         // Bind to the unicast address and port
-        let unicast_addr = format!("0.0.0.0:{}", unicast_port).parse().unwrap();
+        let unicast_addr = match format!("0.0.0.0:{}", unicast_port).parse::<SocketAddr>() {
+            Ok(addr) => addr,
+            Err(e) => {
+                error!("Failed to parse unicast address: {}", e);
+                return Err(format!("Invalid unicast address: {}", e).into());
+            }
+        };
+
         info!("Unicast socket bound to: {}", unicast_addr);
-        let unicast_socket = mio::net::UdpSocket::bind(unicast_addr).unwrap();
-        command_sender
-            .send(Command::AddSocket(unicast_socket, ReceiverType::Unicast))
-            .unwrap();
+
+        let unicast_socket = match mio::net::UdpSocket::bind(unicast_addr) {
+            Ok(socket) => socket,
+            Err(e) => {
+                error!("Failed to bind unicast socket: {}", e);
+                return Err(format!("Failed to bind unicast socket: {}", e).into());
+            }
+        };
+
+        if let Err(e) =
+            command_sender.send(Command::AddSocket(unicast_socket, ReceiverType::Unicast))
+        {
+            error!("Failed to add unicast socket: {}", e);
+            return Err(format!("Failed to add unicast socket: {}", e).into());
+        }
     }
 
     // Dont need handler because when the listener goes out of scope the threads continue execution (infinite loops inside), i want the decoder to also go out of scope
     let shutdown_flag_decoder = Arc::clone(SHUTDOWN_FLAG.get().unwrap());
-    let decoder_handler = thread::spawn(move || {
+    let _decoder_handler = thread::spawn(move || {
         decoder::start(
             data_receiver_receiver,
             decoded_data_sender,
@@ -347,22 +413,50 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
 
     // Spawn Client Report Thread
     let shutdown_flag_report = Arc::clone(SHUTDOWN_FLAG.get().unwrap());
-    let report_handler = thread::spawn(move || {
-        // Get the multicast port from the configuration.
-        let server_ip = SESSION.get().unwrap().read().unwrap().server_ip.clone();
-        let retransmission_port = SESSION.get().unwrap().read().unwrap().retransmission_port;
+    let _report_handler = thread::spawn(move || {
+        // Get the server configuration safely
+        let (server_ip, retransmission_port) = {
+            match SESSION.get() {
+                Some(session_guard) => match session_guard.read() {
+                    Ok(session_config) => (
+                        session_config.server_ip.clone(),
+                        session_config.retransmission_port,
+                    ),
+                    Err(e) => {
+                        error!("Failed to read session config in report thread: {}", e);
+                        return;
+                    }
+                },
+                None => {
+                    error!("Session not initialized in report thread");
+                    return;
+                }
+            }
+        };
 
         // Create the destination address for the report sink
-        let report_sink_dst = format!("{}:{}", server_ip, retransmission_port)
-            .parse::<SocketAddr>()
-            .unwrap();
+        let report_sink_dst =
+            match format!("{}:{}", server_ip, retransmission_port).parse::<SocketAddr>() {
+                Ok(addr) => addr,
+                Err(e) => {
+                    error!("Failed to parse report sink address: {}", e);
+                    return;
+                }
+            };
 
         // Bind to any available port
-        let socket = std::net::UdpSocket::bind("0.0.0.0:0").expect("Couldn't bind to address");
-        info!(
-            "Client report socket bound to: {}",
-            socket.local_addr().unwrap()
-        );
+        let socket = match std::net::UdpSocket::bind("0.0.0.0:0") {
+            Ok(socket) => socket,
+            Err(e) => {
+                error!("Couldn't bind to address for client reports: {}", e);
+                return;
+            }
+        };
+
+        match socket.local_addr() {
+            Ok(addr) => info!("Client report socket bound to: {}", addr),
+            Err(e) => error!("Failed to get local address: {}", e),
+        }
 
         for report in client_report_receiver.iter() {
             // Check for shutdown signal
@@ -374,9 +468,10 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
             let compressed = compress_data(&report.encode_to_vec());
 
             // Use a reference to avoid moving report_sink_dst
-            socket
-                .send_to(&compressed, &report_sink_dst)
-                .expect("Failed to send UDP message");
+            if let Err(e) = socket.send_to(&compressed, &report_sink_dst) {
+                error!("Failed to send UDP message: {}", e);
+                // Continue with next report instead of panicking
+            }
         }
     });
 

@@ -90,16 +90,16 @@ public class WifiAwareModels {
      * Connection status information
      */
     public static class ConnectionInfo {
-        public final String peerHandleStr;
+        public final String deviceId;
         public final String ipAddress;
         public final long createdTime;
         public final boolean isActive;
         public final String myRole;
         public final String peerRole;
 
-        public ConnectionInfo(String peerHandleStr, String ipAddress, long createdTime,
+        public ConnectionInfo(String deviceId, String ipAddress, long createdTime,
                             boolean isActive, String myRole, String peerRole) {
-            this.peerHandleStr = peerHandleStr;
+            this.deviceId = deviceId;
             this.ipAddress = ipAddress;
             this.createdTime = createdTime;
             this.isActive = isActive;

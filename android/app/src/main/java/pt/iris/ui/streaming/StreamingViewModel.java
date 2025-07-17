@@ -15,7 +15,6 @@ import androidx.media3.exoplayer.ExoPlayer;
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory;
 import pt.iris.services.RustService;
 import pt.iris.network.NetworkInitializer;
-import pt.iris.network.lib.WifiAwareModels;
 import pt.iris.utils.AppContainer;
 
 import java.io.IOException;
@@ -27,7 +26,6 @@ import java.util.TimerTask;
 public class StreamingViewModel extends ViewModel {
 
 	private final MutableLiveData<String> mText;
-	private final MutableLiveData<List<WifiAwareModels.ConnectionInfo>> wifiAwareConnections;
 	private final MutableLiveData<NetworkStats> networkStats;
 	private final MutableLiveData<Boolean> isPlayerReady;
 	private final MutableLiveData<Boolean> isStreamConnected;
@@ -61,9 +59,6 @@ public class StreamingViewModel extends ViewModel {
 	public StreamingViewModel() {
 		mText = new MutableLiveData<>();
 		mText.setValue("WiFi Aware Video Streaming");
-		
-		wifiAwareConnections = new MutableLiveData<>();
-		wifiAwareConnections.setValue(new ArrayList<>());
 		
 		networkStats = new MutableLiveData<>();
 		networkStats.setValue(new NetworkStats());
@@ -150,7 +145,7 @@ public class StreamingViewModel extends ViewModel {
 		}
 		
 		statsTimer = new Timer();
-		statsTimer.scheduleAtFixedRate(new TimerTask() {
+		statsTimer.schedule(new TimerTask() {
 			@Override
 			public void run() {
 				updateNetworkStats();
@@ -162,51 +157,13 @@ public class StreamingViewModel extends ViewModel {
 		NetworkStats stats = networkStats.getValue();
 		if (stats == null) stats = new NetworkStats();
 		
-		// Get real WiFi Aware connection count from NetworkInitializer
-		List<WifiAwareModels.ConnectionInfo> wifiAwareConns = 
-			wifiAwareConnections.getValue();
-		int wifiAwareCount = wifiAwareConns != null ? wifiAwareConns.size() : 0;
-		
-		// Use primarily real WiFi Aware connections for stats
-		stats.totalConnectedClients = wifiAwareCount;
-		
-		// Get real stats from NetworkInitializer if available
-		if (networkInitializer != null) {
-			stats.wifiAwareDataPaths = networkInitializer.getDataPathStatistics();
-		}
-		
-		// Simulate network traffic stats (these would come from Rust layer in real implementation)
-		stats.totalBytesReceived += (long)(Math.random() * 1024 * 100); // Random bytes
-		stats.currentBitrate = 800000 + (Math.random() * 200000); // 800-1000 kbps
-		stats.packetsLost += (int)(Math.random() * 5);
-		stats.packetLossRate = (double)stats.packetsLost / (stats.packetsLost + 1000) * 100;
-		
-		stats.uptime = System.currentTimeMillis() - (System.currentTimeMillis() % 86400000); // Mock uptime
-		
-		networkStats.postValue(stats);
-	}
 
-	/**
-	 * Force refresh of WiFi Aware connections from NetworkInitializer
-	 */
-	public void forceRefreshConnections() {
-		if (networkInitializer != null) {
-			networkInitializer.forceRefreshConnections();
-			List<WifiAwareModels.ConnectionInfo> connections = 
-				networkInitializer.getActiveConnections();
-			wifiAwareConnections.postValue(connections);
-		}
-		// Also trigger a stats update
-		updateNetworkStats();
+		networkStats.postValue(stats);
 	}
 
 	// Getters for LiveData
 	public LiveData<String> getText() {
 		return mText;
-	}
-
-	public LiveData<List<WifiAwareModels.ConnectionInfo>> getWifiAwareConnections() {
-		return wifiAwareConnections;
 	}
 
 	public LiveData<NetworkStats> getNetworkStats() {

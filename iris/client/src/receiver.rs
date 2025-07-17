@@ -168,9 +168,22 @@ impl DynamicReceiver {
                 let token = event.token();
 
                 if let Some(socket) = self.sockets.get(&token) {
-                    let receiver_type = *self.receiver_types.get(&token).unwrap();
+                    let receiver_type = match self.receiver_types.get(&token) {
+                        Some(rt) => *rt,
+                        None => {
+                            error!("No receiver type found for token {:?}", token);
+                            continue;
+                        }
+                    };
+
                     let (ref mut last_sec_bytes, ref mut total_bytes, ref mut last_reset) =
-                        self.counters.get_mut(&token).unwrap();
+                        match self.counters.get_mut(&token) {
+                            Some(counters) => counters,
+                            None => {
+                                error!("No counters found for token {:?}", token);
+                                continue;
+                            }
+                        };
 
                     loop {
                         match socket.recv_from(&mut buf) {
@@ -181,9 +194,16 @@ impl DynamicReceiver {
                                 }
 
                                 // Send data through the channel
-                                self.data_receiver_sender
+                                if let Err(e) = self
+                                    .data_receiver_sender
                                     .send((receiver_type, buf[..size].to_vec()))
-                                    .unwrap();
+                                {
+                                    error!("Failed to send data through channel: {}. Receiver shutting down.", e);
+                                    return Err(Box::new(std::io::Error::new(
+                                        std::io::ErrorKind::BrokenPipe,
+                                        "Data channel closed",
+                                    )));
+                                }
 
                                 // Update counters
                                 *last_sec_bytes += size as u64;

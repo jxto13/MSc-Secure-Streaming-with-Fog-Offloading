@@ -178,9 +178,7 @@ public class MainActivity extends AppCompatActivity {
             
             // Store in AppContainer for access by other components
             AppContainer.getInstance().setNetworkInitializer(wifiAwareNetwork);
-            
-            wifiAwareNetwork.start();
-            
+
             Toast.makeText(this, "WiFi Aware initialized after server connection", Toast.LENGTH_SHORT).show();
         } else if (!wifiAwareEnabled) {
             Toast.makeText(this, "WiFi Aware is disabled in settings", Toast.LENGTH_LONG).show();
@@ -228,7 +226,6 @@ public class MainActivity extends AppCompatActivity {
         
         // Clean up WiFi Aware
         if (wifiAwareNetwork != null) {
-            wifiAwareNetwork.closeSessions();
         }
         
         // Stop Rust service
