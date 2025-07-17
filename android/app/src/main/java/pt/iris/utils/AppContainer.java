@@ -13,6 +13,7 @@ public class AppContainer {
 	private static AppContainer instance;
 	private UUID myUUID;
 	private NetworkInitializer networkInitializer;
+	private Runnable networkInitializationCallback;
 
 	private AppContainer() {
 		// Initialize components
@@ -51,6 +52,16 @@ public class AppContainer {
 	
 	public void setNetworkInitializer(NetworkInitializer networkInitializer) {
 		this.networkInitializer = networkInitializer;
+	}
+	
+	public void setNetworkInitializationCallback(Runnable callback) {
+		this.networkInitializationCallback = callback;
+	}
+	
+	public void triggerNetworkInitialization() {
+		if (networkInitializationCallback != null) {
+			networkInitializationCallback.run();
+		}
 	}
 }
 

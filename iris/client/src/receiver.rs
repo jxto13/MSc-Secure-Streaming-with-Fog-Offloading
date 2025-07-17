@@ -1,5 +1,9 @@
 use std::collections::HashMap;
 use std::io;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 use std::time::{Duration, Instant};
 
 use crossbeam_channel::{Receiver, Sender};
@@ -56,20 +60,24 @@ pub enum Command {
     RemoveSocket(Token),
 }
 
+#[derive(Debug)]
 pub struct DynamicReceiver {
     poll: Poll,
     sockets: HashMap<Token, UdpSocket>,
     receiver_types: HashMap<Token, ReceiverType>,
     next_token_id: usize,
     counters: HashMap<Token, (u64, u64, Instant)>, // (packet_bytes_in_last_second, total_bytes, last_reset)
+    last_received: HashMap<Token, Instant>,        // Track last received time for cleanup
     data_receiver_sender: Sender<(ReceiverType, Vec<u8>)>,
     command_receiver: Receiver<Command>,
+    shutdown_flag: Arc<AtomicBool>,
 }
 
 impl DynamicReceiver {
     pub fn new(
         data_receiver_sender: Sender<(ReceiverType, Vec<u8>)>,
         command_receiver: crossbeam_channel::Receiver<Command>,
+        shutdown_flag: Arc<AtomicBool>,
     ) -> io::Result<Self> {
         Ok(Self {
             poll: Poll::new()?,
@@ -77,8 +85,10 @@ impl DynamicReceiver {
             receiver_types: HashMap::new(),
             next_token_id: 0,
             counters: HashMap::new(),
+            last_received: HashMap::new(),
             data_receiver_sender,
             command_receiver,
+            shutdown_flag,
         })
     }
 
@@ -88,6 +98,12 @@ impl DynamicReceiver {
         let mut buf = [0u8; 65535];
 
         loop {
+            // Check for shutdown signal
+            if self.shutdown_flag.load(Ordering::Relaxed) {
+                info!("DynamicReceiver shutting down gracefully");
+                return Ok(());
+            }
+
             // Process commands first
             while let Ok(cmd) = self.command_receiver.try_recv() {
                 match cmd {
@@ -101,6 +117,7 @@ impl DynamicReceiver {
                         self.sockets.insert(token, socket);
                         self.receiver_types.insert(token, receiver_type);
                         self.counters.insert(token, (0, 0, Instant::now()));
+                        self.last_received.insert(token, Instant::now());
 
                         info!("Added {:?} socket with token {:?}", receiver_type, token);
                     }
@@ -109,11 +126,37 @@ impl DynamicReceiver {
                             self.poll.registry().deregister(&mut socket)?;
                             self.receiver_types.remove(&token);
                             self.counters.remove(&token);
+                            self.last_received.remove(&token);
                             info!("Removed socket with token {:?}", token);
                         } else {
                             error!("Attempted to remove unknown socket with token {:?}", token);
                         }
                     }
+                }
+            }
+
+            // Check for WifiAware socket cleanup (remove if no data received for 5 seconds)
+            let mut tokens_to_remove = Vec::new();
+            let now = Instant::now();
+
+            for (&token, &receiver_type) in &self.receiver_types {
+                if receiver_type == ReceiverType::WifiAware {
+                    if let Some(&last_received_time) = self.last_received.get(&token) {
+                        if now.duration_since(last_received_time) >= Duration::from_secs(5) {
+                            tokens_to_remove.push(token);
+                        }
+                    }
+                }
+            }
+
+            // Remove inactive WifiAware sockets
+            for token in tokens_to_remove {
+                if let Some(mut socket) = self.sockets.remove(&token) {
+                    self.poll.registry().deregister(&mut socket)?;
+                    self.receiver_types.remove(&token);
+                    self.counters.remove(&token);
+                    self.last_received.remove(&token);
+                    info!("Cleaned up inactive WifiAware socket with token {:?} (no data for 5 seconds)", token);
                 }
             }
 
@@ -132,6 +175,11 @@ impl DynamicReceiver {
                     loop {
                         match socket.recv_from(&mut buf) {
                             Ok((size, _src)) => {
+                                // Update last received time
+                                if let Some(last_time) = self.last_received.get_mut(&token) {
+                                    *last_time = Instant::now();
+                                }
+
                                 // Send data through the channel
                                 self.data_receiver_sender
                                     .send((receiver_type, buf[..size].to_vec()))

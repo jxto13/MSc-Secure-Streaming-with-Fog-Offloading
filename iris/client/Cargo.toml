@@ -32,6 +32,7 @@ socket2 = "0.5.8"
 # This compiles openssl for android using NDK
 [target.'cfg(target_os = "android")'.dependencies]
 openssl = { version = "0.10.72", features = ["vendored"] }
+android_logger = "0.15.0"
 
 [build-dependencies]
 tonic-build = "0.13.1"

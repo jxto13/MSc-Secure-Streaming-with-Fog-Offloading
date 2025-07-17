@@ -48,7 +48,6 @@ public class WifiAwareDataPathManager {
         void onDataPathLost(Network network, PeerHandle peerHandle);
         void onDataPathFailed(PeerHandle peerHandle, String reason);
         void addSocketToRust(String ipAddress);
-        void removeSocketFromRust(String ipAddress);
     }
 
     public WifiAwareDataPathManager(Context context, 
@@ -318,7 +317,6 @@ public class WifiAwareDataPathManager {
                 
                 // Notify callbacks
                 callback.onDataPathLost(network, peerHandle);
-                callback.removeSocketFromRust(dataPathInfo.socketAddress); // Use socket address for cleanup
             }
         } else {
             Log.w(TAG, "Unknown network lost: " + network);

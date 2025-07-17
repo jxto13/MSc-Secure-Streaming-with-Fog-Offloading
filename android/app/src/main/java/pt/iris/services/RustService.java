@@ -15,11 +15,10 @@ public class RustService extends Service {
         System.loadLibrary("irislinker");
     }
 
-    public static native void startClient(int fd, String streamUrl);
+    public static native boolean startClient(int fd, String streamUrl);
+    public static native boolean stopClient();
     public static native void addSocket(String ipAddress);
-    public static native void removeSocket(String ipAddress);
-    public static native void cleanupAllSockets(); // Add cleanup method
-    
+
     // Network statistics methods
     public static native double getPacketLossPercentage();
     public static native double getCurrentBitrateMbps();
@@ -47,13 +46,6 @@ public class RustService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
-
-        // Cleanup all active connections
-        try {
-            cleanupAllSockets();
-        } catch (UnsatisfiedLinkError e) {
-            // Native library might not be loaded, ignore
-        }
 
         // Release multicast lock
         if (multicastLock != null && multicastLock.isHeld()) {

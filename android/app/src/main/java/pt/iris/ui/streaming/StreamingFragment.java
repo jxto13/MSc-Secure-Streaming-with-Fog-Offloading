@@ -77,7 +77,7 @@ public class StreamingFragment extends Fragment {
                 updateStreamButtons(true);
                 Toast.makeText(getContext(), "Connecting to stream...", Toast.LENGTH_SHORT).show();
             } catch (Exception e) {
-                Toast.makeText(getContext(), "Invalid URI format", Toast.LENGTH_SHORT).show();
+                Toast.makeText(getContext(), "Failed to connect to stream", Toast.LENGTH_SHORT).show();
             }
         });
 
@@ -85,9 +85,7 @@ public class StreamingFragment extends Fragment {
             streamingViewModel.disconnectStream();
             binding.playerView.setPlayer(null); // Remove player from view
             updateStreamButtons(false);
-            
-            // Force cleanup of WiFi Aware clients list
-            streamingViewModel.forceRefreshClients();
+
             
             Toast.makeText(getContext(), "Stream disconnected and cleaned up", Toast.LENGTH_SHORT).show();
         });

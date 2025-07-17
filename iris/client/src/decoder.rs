@@ -10,6 +10,10 @@ use prost::Message;
 use std::collections::VecDeque;
 use std::error::Error;
 use std::io::Cursor;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 use std::time::Duration;
 
 use grid::Grid as Matrix;
@@ -598,6 +602,7 @@ pub fn start(
     data_receiver: Receiver<(ReceiverType, Vec<u8>)>,
     decode_data_sender: Sender<Vec<u8>>,
     client_report_sender: Sender<ClientReport>,
+    shutdown_flag: Arc<AtomicBool>,
 ) {
     let mut buffer: VecDeque<MatrixTracker> = VecDeque::new();
 
@@ -634,6 +639,12 @@ pub fn start(
     let mut counters = RetransmissionCounters::default();
 
     loop {
+        // Check for shutdown signal first
+        if shutdown_flag.load(Ordering::Relaxed) {
+            info!("Decoder shutting down gracefully");
+            break;
+        }
+
         crossbeam_channel::select_biased! {
             recv(retry_tick) -> _ => {
 

@@ -15,17 +15,20 @@ use crate::session::ClientSession;
 // Global command sender for socket management
 static COMMAND_SENDER: OnceCell<crossbeam_channel::Sender<Command>> = OnceCell::new();
 
+// Global shutdown flag for coordinating thread termination
+static SHUTDOWN_FLAG: OnceCell<Arc<AtomicBool>> = OnceCell::new();
+
 use openssl::ec::{EcGroup, EcKey};
 use openssl::nid::Nid;
 use openssl::pkey::PKey;
 
-use std::collections::HashMap;
-use std::net::{Ipv4Addr, SocketAddr};
-use std::sync::{Arc, Mutex, RwLock};
+use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV6};
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc, RwLock,
+};
 use std::thread;
 use std::time::{Duration, Instant};
-
-use socket2::{Domain, Protocol, Socket, Type};
 
 use proto::certificate_service_client::CertificateServiceClient;
 use proto::key_service_client::KeyServiceClient;
@@ -54,12 +57,12 @@ const CA_PUBLIC_CERTIFICATE: &[u8] = include_bytes!("../../server/certs/ca_certi
 static CHANNEL: OnceCell<Arc<Channel>> = OnceCell::new();
 static SESSION: OnceCell<Arc<RwLock<ClientSession>>> = OnceCell::new();
 
-// Global socket tracking for management
-static SOCKET_TRACKER: OnceCell<Arc<Mutex<HashMap<String, mio::Token>>>> = OnceCell::new();
-
-/// Initialize the socket tracker
-fn init_socket_tracker() {
-    SOCKET_TRACKER.get_or_init(|| Arc::new(Mutex::new(HashMap::new())));
+/// Shutdown all client threads gracefully
+pub fn shutdown_client() {
+    if let Some(shutdown_flag) = SHUTDOWN_FLAG.get() {
+        shutdown_flag.store(true, Ordering::Relaxed);
+        info!("Shutdown signal sent to all client threads");
+    }
 }
 
 // Function to create a gRPC channel with TLS configuration
@@ -121,9 +124,8 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
     let rt = Arc::new(Runtime::new().unwrap());
 
     // Create a session config to store the certificates and keys
-    SESSION
-        .set(Arc::new(RwLock::new(ClientSession::default())))
-        .unwrap();
+    // Use get_or_init to avoid panic on subsequent calls
+    SESSION.get_or_init(|| Arc::new(RwLock::new(ClientSession::default())));
 
     // Create EC Certificates
     let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
@@ -132,134 +134,136 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
     // Run async code using the Tokio runtime, this will block until the connection is established
     rt.block_on(async {
         let arc_session_config = Arc::clone(&SESSION.get().unwrap());
-        let mut interval = tokio::time::interval(Duration::from_secs(5));
 
-        loop {
-            match create_channel(ip).await {
-                Ok(channel) => {
-                    // If we reach here, we have a valid channel to the server
+        // Attempt to create a gRPC channel with the provided IP address
+        match create_channel(ip).await {
+            Ok(channel) => {
+                // If we reach here, we have a valid channel to the server
 
-                    // Resolve the IPv4 address
-                    let ipv4 = resolve_ipv4_std(ip)
-                        .map_err(|e| format!("Failed to resolve IPv4 address: {}", e));
+                // Resolve the IPv4 address
+                let ipv4 = resolve_ipv4_std(ip)
+                    .map_err(|e| format!("Failed to resolve IPv4 address: {}", e));
 
-                    match ipv4 {
-                        Ok(addr) => {
-                            info!("Resolved IPv4 address: {}", addr);
-                            // Store the resolved IPv4 address in a static variable
-                            let mut mutex_session_config = arc_session_config.write().unwrap();
-                            mutex_session_config.server_ip = addr.to_string();
-                        }
-                        Err(e) => {
-                            error!("Error resolving IPv4 address: {}", e);
-                            continue; // Skip this iteration and retry
-                        }
-                    }
-
-                    info!("Successfully connected to the gRPC server at {}", ip);
-
-                    // Create connection to retrieve client certificate from CA
-                    {
-                        let mut connection = CertificateServiceClient::new(channel.clone());
-
-                        // Extract key-pair to struct
-                        let pkey = PKey::from_ec_key(ec_key.clone()).unwrap();
-
-                        // Make a X509 request with the given private key
-                        let request = utils::mk_request(&pkey).unwrap();
-
-                        // Serialize the request CSR
-                        let csr_vec = request.to_pem().unwrap();
-
-                        // Make a CertificateRequest with the CSR
-                        let csr_request = CertificateRequest { csr: csr_vec };
-
-                        // Send the CSR to the server to get it signed
-                        let response = connection.sign_certificate(csr_request).await.unwrap();
-                        let signed_cert = response.into_inner().signed_cert;
-
+                match ipv4 {
+                    Ok(addr) => {
+                        info!("Resolved IPv4 address: {}", addr);
+                        // Store the resolved IPv4 address in a static variable
                         let mut mutex_session_config = arc_session_config.write().unwrap();
-
-                        mutex_session_config.client_ec_certificate = signed_cert;
-                        mutex_session_config.client_ec_key = Some(ec_key);
+                        mutex_session_config.server_ip = addr.to_string();
                     }
-
-                    // Create connection to retrive current Session encryption key and certificate to verify packets is comming from the server
-                    {
-                        let mut connection = KeyServiceClient::new(channel.clone());
-
-                        let key_response =
-                            connection.request_current_key(RequestKey {}).await.unwrap();
-
-                        let reponse = key_response.into_inner();
-
-                        let mut mutex_session_config = arc_session_config.write().unwrap();
-
-                        mutex_session_config.current_key = reponse.current_key.unwrap();
-                        mutex_session_config.next_key = reponse.next_key.unwrap();
-                        mutex_session_config.ec_server_certificate = reponse.certificate;
-
-                        // If the server provided biggy back data, update the session config
-                        let biggy_back_data = reponse.biggy_back_data.unwrap();
-
-                        mutex_session_config.epoch = biggy_back_data.epoch;
-                        mutex_session_config.client_reporting_interval =
-                            biggy_back_data.client_reporting_interval;
-                        mutex_session_config.client_sliding_window =
-                            biggy_back_data.client_sliding_window;
-                        mutex_session_config.retransmission_port =
-                            biggy_back_data.retransmission_port;
-                        mutex_session_config.unicast_port = biggy_back_data.unicast_port;
-                        mutex_session_config.multicast_address = biggy_back_data.multicast_address;
-                        mutex_session_config.multicast_port = biggy_back_data.multicast_port;
-
-                        info!("Current key: {:?}", mutex_session_config.current_key);
-                        info!("Next key: {:?}", mutex_session_config.next_key);
+                    Err(e) => {
+                        error!("Error resolving IPv4 address: {}", e);
                     }
-
-                    // Create connection to retrieve current timestamp to base our client report intervals
-                    {
-                        let mut connection = NtsServiceClient::new(channel.clone());
-
-                        // Measure the time before the request
-                        let start_time = Instant::now();
-
-                        let stamp_response = connection
-                            .get_current_timestamp(TimestampRequest {})
-                            .await
-                            .unwrap();
-
-                        // Measure the time after the request
-                        let end_time = Instant::now();
-
-                        // Calculate the RTT
-                        let rtt = end_time.duration_since(start_time);
-
-                        // Get the server timestamp
-                        let timestamp_str = stamp_response.into_inner().timestamp;
-                        let mut server_time = DateTime::parse_from_rfc3339(&timestamp_str).unwrap();
-
-                        // Substract half of the RTT to the server timestamp to compensate for the delay
-                        server_time = server_time - chrono::Duration::from_std(rtt / 2).unwrap();
-
-                        let mut mutex_session_config = arc_session_config.write().unwrap();
-                        mutex_session_config.server_time = server_time;
-
-                        info!("Server time: {}", server_time);
-                    }
-
-                    // Save the client for use after the loop
-                    CHANNEL.set(Arc::new(channel)).unwrap();
-
-                    break; // Exit the loop once connected
                 }
-                Err(e) => {
-                    error!("Failed to connect: {}. Retrying in 5 seconds...", e);
-                    interval.tick().await; // Wait for the next interval before retrying
+
+                info!("Successfully connected to the gRPC server at {}", ip);
+
+                // Create connection to retrieve client certificate from CA
+                {
+                    let mut connection = CertificateServiceClient::new(channel.clone());
+
+                    // Extract key-pair to struct
+                    let pkey = PKey::from_ec_key(ec_key.clone()).unwrap();
+
+                    // Make a X509 request with the given private key
+                    let request = utils::mk_request(&pkey).unwrap();
+
+                    // Serialize the request CSR
+                    let csr_vec = request.to_pem().unwrap();
+
+                    // Make a CertificateRequest with the CSR
+                    let csr_request = CertificateRequest { csr: csr_vec };
+
+                    // Send the CSR to the server to get it signed
+                    let response = connection.sign_certificate(csr_request).await.unwrap();
+                    let signed_cert = response.into_inner().signed_cert;
+
+                    let mut mutex_session_config = arc_session_config.write().unwrap();
+
+                    mutex_session_config.client_ec_certificate = signed_cert;
+                    mutex_session_config.client_ec_key = Some(ec_key);
                 }
+
+                // Create connection to retrive current Session encryption key and certificate to verify packets is comming from the server
+                {
+                    let mut connection = KeyServiceClient::new(channel.clone());
+
+                    let key_response = connection.request_current_key(RequestKey {}).await.unwrap();
+
+                    let reponse = key_response.into_inner();
+
+                    let mut mutex_session_config = arc_session_config.write().unwrap();
+
+                    mutex_session_config.current_key = reponse.current_key.unwrap();
+                    mutex_session_config.next_key = reponse.next_key.unwrap();
+                    mutex_session_config.ec_server_certificate = reponse.certificate;
+
+                    // If the server provided biggy back data, update the session config
+                    let biggy_back_data = reponse.biggy_back_data.unwrap();
+
+                    mutex_session_config.epoch = biggy_back_data.epoch;
+                    mutex_session_config.client_reporting_interval =
+                        biggy_back_data.client_reporting_interval;
+                    mutex_session_config.client_sliding_window =
+                        biggy_back_data.client_sliding_window;
+                    mutex_session_config.retransmission_port = biggy_back_data.retransmission_port;
+                    mutex_session_config.unicast_port = biggy_back_data.unicast_port;
+                    mutex_session_config.multicast_address = biggy_back_data.multicast_address;
+                    mutex_session_config.multicast_port = biggy_back_data.multicast_port;
+
+                    info!("Current key: {:?}", mutex_session_config.current_key);
+                    info!("Next key: {:?}", mutex_session_config.next_key);
+                }
+
+                // Create connection to retrieve current timestamp to base our client report intervals
+                {
+                    let mut connection = NtsServiceClient::new(channel.clone());
+
+                    // Measure the time before the request
+                    let start_time = Instant::now();
+
+                    let stamp_response = connection
+                        .get_current_timestamp(TimestampRequest {})
+                        .await
+                        .unwrap();
+
+                    // Measure the time after the request
+                    let end_time = Instant::now();
+
+                    // Calculate the RTT
+                    let rtt = end_time.duration_since(start_time);
+
+                    // Get the server timestamp
+                    let timestamp_str = stamp_response.into_inner().timestamp;
+                    let mut server_time = DateTime::parse_from_rfc3339(&timestamp_str).unwrap();
+
+                    // Substract half of the RTT to the server timestamp to compensate for the delay
+                    server_time = server_time - chrono::Duration::from_std(rtt / 2).unwrap();
+
+                    let mut mutex_session_config = arc_session_config.write().unwrap();
+                    mutex_session_config.server_time = server_time;
+
+                    info!("Server time: {}", server_time);
+                }
+
+                // Save the client for use after the loop
+                CHANNEL.set(Arc::new(channel)).unwrap();
+            }
+            Err(e) => {
+                error!("Failed to connect: {}. Retrying in 5 seconds...", e);
             }
         }
     });
+
+    // Check if the channel was created successfully
+    if CHANNEL.get().is_none() {
+        // If the channel was not created, log an error and return
+        error!("Failed to create gRPC channel, cannot start client");
+        return Err("Failed to create gRPC channel".into());
+    }
+
+    // Initialize shutdown flag
+    SHUTDOWN_FLAG.get_or_init(|| Arc::new(AtomicBool::new(false)));
 
     // If we arrive here we have certificates signed from PKI, Session Key and Current Timestamp
 
@@ -270,17 +274,16 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
     let (command_sender, command_receiver) = unbounded();
 
     // Set the command sender for socket management
-    set_command_sender(command_sender.clone());
-
-    // Set the command sender for socket management
-    set_command_sender(command_sender.clone());
-
-    // Create the Client Session using the runtime that was init in the start
-    // let mut client_session = session::ClientSession::new(Arc::clone(&rt));
+    COMMAND_SENDER.get_or_init(|| command_sender.clone());
 
     // Spawn Receiver Thread
+    let shutdown_flag_receiver = Arc::clone(SHUTDOWN_FLAG.get().unwrap());
     let receiver_handler = thread::spawn(move || {
-        let server = DynamicReceiver::new(data_receiver_sender, command_receiver);
+        let server = DynamicReceiver::new(
+            data_receiver_sender,
+            command_receiver,
+            shutdown_flag_receiver,
+        );
 
         // Handle any error that might occur during server initialization
         let mut server = match server {
@@ -332,15 +335,18 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
     }
 
     // Dont need handler because when the listener goes out of scope the threads continue execution (infinite loops inside), i want the decoder to also go out of scope
+    let shutdown_flag_decoder = Arc::clone(SHUTDOWN_FLAG.get().unwrap());
     let decoder_handler = thread::spawn(move || {
         decoder::start(
             data_receiver_receiver,
             decoded_data_sender,
             client_report_sender,
+            shutdown_flag_decoder,
         );
     });
 
     // Spawn Client Report Thread
+    let shutdown_flag_report = Arc::clone(SHUTDOWN_FLAG.get().unwrap());
     let report_handler = thread::spawn(move || {
         // Get the multicast port from the configuration.
         let server_ip = SESSION.get().unwrap().read().unwrap().server_ip.clone();
@@ -359,6 +365,12 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
         );
 
         for report in client_report_receiver.iter() {
+            // Check for shutdown signal
+            if shutdown_flag_report.load(Ordering::Relaxed) {
+                info!("Client report thread shutting down gracefully");
+                break;
+            }
+
             let compressed = compress_data(&report.encode_to_vec());
 
             // Use a reference to avoid moving report_sink_dst
@@ -369,174 +381,100 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
     });
 
     // Spawn a separate thread for joining and returning the sender
-    thread::spawn(move || {
-        // Join all the threads to ensure they complete before returning
-        receiver_handler.join().expect("receiver_handler panicked");
-        decoder_handler.join().expect("decoder_handler panicked");
-        report_handler.join().expect("client_session panicked");
-    });
+    // let shutdown_flag_coordinator = Arc::clone(SHUTDOWN_FLAG.get().unwrap());
+    // thread::spawn(move || {
+    //     // Periodically check if shutdown was requested
+    //     loop {
+    //         if shutdown_flag_coordinator.load(Ordering::Relaxed) {
+    //             info!("Coordinator thread detected shutdown signal, waiting for threads to finish");
+    //             break;
+    //         }
+    //         thread::sleep(Duration::from_millis(100));
+    //     }
+
+    //     // Join all the threads to ensure they complete before returning
+    //     receiver_handler.join().expect("receiver_handler panicked");
+    //     decoder_handler.join().expect("decoder_handler panicked");
+    //     report_handler.join().expect("client_session panicked");
+
+    //     info!("All client threads have been shut down successfully");
+    // });
 
     Ok(decoded_data_receiver)
 }
 
-/// Set the command sender for socket management
-pub fn set_command_sender(sender: crossbeam_channel::Sender<Command>) {
-    COMMAND_SENDER.set(sender).unwrap_or_else(|_| {
-        error!("Command sender already set");
-    });
-}
+/// Add an IPv6 link-local socket from an interface string
+/// The `ipv6_interface` parameter should be in the format "ipv6-address%interface"
+/// For example: "fe80::1%eth0" or "fe80::1234:5678:9abc:def0%wlan0"
+pub fn add_socket(ipv6_interface: &str) -> Result<(), Box<dyn std::error::Error>> {
+    // Parse the IPv6 address and interface
+    let parts: Vec<&str> = ipv6_interface.split('%').collect();
+    if parts.len() != 2 {
+        let error_msg = "Invalid IPv6 link-local format. Expected 'ipv6-address%interface'";
+        log::error!("{}", error_msg);
+        return Err(error_msg.into());
+    }
 
-/// Get the command sender for socket management
-pub fn get_command_sender() -> Option<&'static crossbeam_channel::Sender<Command>> {
-    COMMAND_SENDER.get()
-}
+    let ipv6_addr = parts[0].parse::<Ipv6Addr>().map_err(|e| {
+        let error_msg = format!("Invalid IPv6 address '{}': {}", parts[0], e);
+        log::error!("{}", error_msg);
+        error_msg
+    })?;
+    let _interface = parts[1]; // Keep for potential future use
 
-/// Add a socket by IP address for WiFi Aware communication
-pub fn add_wifi_aware_socket(ip_address: &str) -> Result<(), Box<dyn std::error::Error>> {
-    init_socket_tracker();
+    // Verify it's a link-local address
+    if !ipv6_addr.is_unicast_link_local() {
+        let error_msg = "Address is not a link-local IPv6 address";
+        log::error!("{}", error_msg);
+        return Err(error_msg.into());
+    }
 
-    info!("Adding WiFi Aware socket for IP: {}", ip_address);
+    let session_config = SESSION.get().ok_or_else(|| {
+        let error_msg = "Session configuration not initialized. Call start_client first.";
+        log::error!("{}", error_msg);
+        error_msg
+    })?;
 
-    // Parse the IP address which may include interface identifier (e.g., fe80::1234%aware_data0)
-    let mio_socket = if ip_address.contains(':') {
-        // IPv6 address
-        if ip_address.contains('%') {
-            // Handle IPv6 address with zone identifier (interface)
-            let parts: Vec<&str> = ip_address.splitn(2, '%').collect();
-            let ipv6_addr = parts[0];
-            let interface = parts.get(1).unwrap_or(&"");
+    let port = session_config
+        .read()
+        .unwrap()
+        .retransmission_port
+        .try_into()
+        .map_err(|_| {
+            let error_msg = "Invalid port number for IPv6 socket";
+            log::error!("{}", error_msg);
+            error_msg
+        })?;
 
-            info!(
-                "Parsing IPv6 address: {} with interface: {}",
-                ipv6_addr, interface
-            );
+    // Create the socket address
+    let socket_addr = SocketAddrV6::new(ipv6_addr, port, 0, 0);
 
-            // Create socket for IPv6
-            let socket = Socket::new(Domain::IPV6, Type::DGRAM, Some(Protocol::UDP))?;
-
-            // Parse the IPv6 address without interface
-            let addr: std::net::Ipv6Addr = ipv6_addr
-                .parse()
-                .map_err(|e| format!("Failed to parse IPv6 address '{}': {}", ipv6_addr, e))?;
-
-            // Create socket address with port 0 (any available port)
-            let socket_addr = std::net::SocketAddrV6::new(addr, 0, 0, 0);
-
-            // Bind the socket
-            socket.bind(&socket_addr.into())?;
-            socket.set_nonblocking(true)?;
-
-            info!(
-                "Successfully bound IPv6 socket to: {:?}",
-                socket.local_addr()?
-            );
-
-            // Convert socket2::Socket to mio::net::UdpSocket
-            let std_socket: std::net::UdpSocket = socket.into();
-            mio::net::UdpSocket::from_std(std_socket)
-        } else {
-            // IPv6 without interface identifier
-            let socket = Socket::new(Domain::IPV6, Type::DGRAM, Some(Protocol::UDP))?;
-            let addr: std::net::Ipv6Addr = ip_address
-                .parse()
-                .map_err(|e| format!("Failed to parse IPv6 address '{}': {}", ip_address, e))?;
-            let socket_addr = std::net::SocketAddrV6::new(addr, 0, 0, 0);
-            socket.bind(&socket_addr.into())?;
-            socket.set_nonblocking(true)?;
-
-            // Convert socket2::Socket to mio::net::UdpSocket
-            let std_socket: std::net::UdpSocket = socket.into();
-            mio::net::UdpSocket::from_std(std_socket)
-        }
-    } else {
-        // IPv4 address
-        let socket = Socket::new(Domain::IPV4, Type::DGRAM, Some(Protocol::UDP))?;
-        let addr: std::net::Ipv4Addr = ip_address
-            .parse()
-            .map_err(|e| format!("Failed to parse IPv4 address '{}': {}", ip_address, e))?;
-        let socket_addr = std::net::SocketAddrV4::new(addr, 0);
-        socket.bind(&socket_addr.into())?;
-        socket.set_nonblocking(true)?;
-
-        // Convert socket2::Socket to mio::net::UdpSocket
-        let std_socket: std::net::UdpSocket = socket.into();
-        mio::net::UdpSocket::from_std(std_socket)
-    };
+    // Create and bind the MIO UDP socket
+    let socket = mio::net::UdpSocket::bind(SocketAddr::V6(socket_addr)).map_err(|e| {
+        let error_msg = format!("Failed to bind IPv6 socket to {}: {}", socket_addr, e);
+        log::error!("{}", error_msg);
+        error_msg
+    })?;
 
     // Get the command sender
-    if let Some(sender) = get_command_sender() {
-        sender.send(Command::AddSocket(mio_socket, ReceiverType::WifiAware))?;
-        info!(
-            "Successfully added WiFi Aware socket for IP: {}",
-            ip_address
-        );
-        Ok(())
-    } else {
-        Err("Command sender not initialized".into())
-    }
-}
+    let command_sender = COMMAND_SENDER.get().ok_or_else(|| {
+        let error_msg = "Command sender not initialized. Call start_client first.";
+        log::error!("{}", error_msg);
+        error_msg
+    })?;
 
-/// Remove a socket by IP address (IPv6 only)
-pub fn remove_wifi_aware_socket(ip_address: &str) -> Result<(), Box<dyn std::error::Error>> {
-    init_socket_tracker();
+    // Send the add socket command with key for tracking
+    command_sender
+        .send(Command::AddSocket(socket, ReceiverType::WifiAware))
+        .map_err(|e| {
+            let error_msg = format!("Failed to send add socket command: {}", e);
+            log::error!("{}", error_msg);
+            error_msg
+        })?;
 
     info!(
-        "Removing WiFi Aware socket for IPv6 address: {}",
-        ip_address
+        "Added IPv6 link-local socket for {} on port {}",
+        ipv6_interface, port
     );
-
-    // Only handle IPv6 addresses
-    if !ip_address.contains(':') {
-        return Err(format!("Only IPv6 addresses are supported, got: {}", ip_address).into());
-    }
-
-    // Parse the IPv6 address which may include interface identifier (e.g., fe80::1234%aware_data0)
-    let parsed_addr = if ip_address.contains('%') {
-        // Handle IPv6 address with zone identifier (interface)
-        let parts: Vec<&str> = ip_address.splitn(2, '%').collect();
-        let ipv6_addr = parts[0];
-        let interface = parts.get(1).unwrap_or(&"");
-
-        info!(
-            "Parsing IPv6 address: {} with interface: {}",
-            ipv6_addr, interface
-        );
-
-        // Validate the IPv6 address can be parsed
-        let _addr: std::net::Ipv6Addr = ipv6_addr
-            .parse()
-            .map_err(|e| format!("Failed to parse IPv6 address '{}': {}", ipv6_addr, e))?;
-
-        ipv6_addr
-    } else {
-        // IPv6 without interface identifier - validate it can be parsed
-        let _addr: std::net::Ipv6Addr = ip_address
-            .parse()
-            .map_err(|e| format!("Failed to parse IPv6 address '{}': {}", ip_address, e))?;
-
-        ip_address
-    };
-
-    // Get the command sender and send remove command
-    if let Some(_sender) = get_command_sender() {
-        // Note: In a full implementation, you would need to track tokens by IP address
-        // and send Command::RemoveSocket(token) instead of this placeholder
-        info!(
-            "Would remove socket for validated IPv6 address: {}",
-            parsed_addr
-        );
-
-        // For now, this is a placeholder - the actual implementation would need:
-        // 1. A mapping from IP addresses to mio::Token
-        // 2. Command::RemoveSocket(token) to be sent
-        // 3. Cleanup of the IP from the tracker
-
-        info!(
-            "Successfully validated IPv6 address for removal: {}",
-            ip_address
-        );
-        Ok(())
-    } else {
-        Err("Command sender not initialized".into())
-    }
+    Ok(())
 }

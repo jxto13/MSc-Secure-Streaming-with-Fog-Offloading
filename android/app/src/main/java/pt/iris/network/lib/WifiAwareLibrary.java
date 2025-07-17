@@ -77,7 +77,6 @@ public class WifiAwareLibrary implements
         void onDataPathLost(PeerHandle peerHandle);
         void onDataPathFailed(PeerHandle peerHandle, String reason);
         void addSocketToRust(String ipAddress);
-        void removeSocketFromRust(String ipAddress);
     }
 
     public WifiAwareLibrary(Context context, String serviceName, UUID deviceUUID, WifiAwareLibraryCallback callback) {
@@ -280,7 +279,6 @@ public class WifiAwareLibrary implements
             WifiAwareModels.DataPathInfo dataPathInfo = activeDataPaths.remove(peerHandle);
             if (dataPathInfo != null) {
                 networkToPeerMap.remove(dataPathInfo.network);
-                removeSocketFromRust(dataPathInfo.socketAddress); // Use socket address for cleanup
                 cleanupPeerRole(peerHandle);
                 callback.onDataPathLost(peerHandle);
                 Log.d(TAG, "Cleaned up data path for lost service: " + peerHandle);
@@ -315,10 +313,6 @@ public class WifiAwareLibrary implements
         callback.addSocketToRust(ipAddress);
     }
 
-    @Override
-    public void removeSocketFromRust(String ipAddress) {
-        callback.removeSocketFromRust(ipAddress);
-    }
 
     // ========== Public API Methods ==========
 
@@ -348,7 +342,6 @@ public class WifiAwareLibrary implements
         // Remove all sockets from Rust layer first
         for (WifiAwareModels.DataPathInfo dataPathInfo : activeDataPaths.values()) {
             if (dataPathInfo.isActive) {
-                removeSocketFromRust(dataPathInfo.socketAddress); // Use socket address for cleanup
                 dataPathInfo.isActive = false;
             }
         }

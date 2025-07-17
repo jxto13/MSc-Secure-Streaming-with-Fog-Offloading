@@ -38,7 +38,6 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareLibraryCall
 	/**
 	 * Entrypoint for the NetworkInitializer
 	 */
-	@RequiresApi(api = Build.VERSION_CODES.O)
 	public void start() {
 		this.myUUID = AppContainer.getInstance().getMyUUID();
 		
@@ -87,12 +86,6 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareLibraryCall
 		Log.d(TAG, "Added socket to Rust layer: " + ipAddress);
 	}
 
-	@Override
-	public void removeSocketFromRust(String ipAddress) {
-		// Remove this socket from the Rust layer
-		RustService.removeSocket(ipAddress);
-		Log.d(TAG, "Removed socket from Rust layer: " + ipAddress);
-	}
 
 	// ========== Public API Methods (delegated to library) ==========
 
@@ -106,53 +99,12 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareLibraryCall
 		return "WiFi Aware Library not initialized";
 	}
 
-	/**
-	 * Get detailed statistics for monitoring
-	 */
-	public String getDetailedStatistics() {
-		if (wifiAwareLibrary == null) {
-			return "WiFi Aware Library: Not Initialized";
-		}
-
-		StringBuilder stats = new StringBuilder();
-		stats.append("=== WiFi Aware Status ===\n");
-		stats.append("Library Active: ").append(wifiAwareLibrary.isWifiAwareActive()).append("\n");
-		stats.append("\n=== Data Paths ===\n");
-		stats.append(wifiAwareLibrary.getDataPathStatistics()).append("\n");
-		
-		List<WifiAwareModels.ConnectionInfo> connections = wifiAwareLibrary.getActiveConnections();
-		if (!connections.isEmpty()) {
-			stats.append("\n=== Active Connections ===\n");
-			for (WifiAwareModels.ConnectionInfo connection : connections) {
-				long ageSeconds = (System.currentTimeMillis() - connection.createdTime) / 1000;
-				stats.append("Peer: ").append(connection.peerHandleStr.substring(0, Math.min(8, connection.peerHandleStr.length())))
-					.append("... -> ").append(connection.ipAddress)
-					.append(" (").append(ageSeconds).append("s)\n");
-			}
-		}
-		
-		return stats.toString();
-	}
-
-	/**
-	 * Check if we can create more data paths
-	 */
-	public boolean canCreateMoreDataPaths() {
-		return wifiAwareLibrary != null && wifiAwareLibrary.canCreateMoreDataPaths();
-	}
 
 	/**
 	 * Get the number of active data paths
 	 */
 	public int getActiveDataPathCount() {
 		return wifiAwareLibrary != null ? wifiAwareLibrary.getActiveDataPathCount() : 0;
-	}
-
-	/**
-	 * Check if WiFi Aware is available and active
-	 */
-	public boolean isWifiAwareActive() {
-		return wifiAwareLibrary != null && wifiAwareLibrary.isWifiAwareActive();
 	}
 
 	/**
@@ -195,33 +147,4 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareLibraryCall
 		}
 	}
 
-	// ========== Legacy compatibility methods ==========
-
-	/**
-	 * Force cleanup of a specific data path (for error recovery)
-	 * @deprecated This functionality is now handled internally by the library
-	 */
-	@Deprecated
-	public boolean forceCleanupDataPath(String peerHandleStr) {
-		Log.w(TAG, "forceCleanupDataPath is deprecated - cleanup is now handled automatically");
-		return false;
-	}
-
-	/**
-	 * Clean up inactive data paths
-	 * @deprecated This functionality is now handled internally by the library
-	 */
-	@Deprecated
-	public void cleanupInactiveDataPaths() {
-		Log.w(TAG, "cleanupInactiveDataPaths is deprecated - cleanup is now handled automatically");
-	}
-
-	/**
-	 * Get device capabilities summary for UI
-	 * @deprecated This functionality is now handled internally by the library
-	 */
-	@Deprecated
-	public String getDeviceCapabilitiesSummary() {
-		return "Device capabilities are managed internally by the WiFi Aware library";
-	}
 }

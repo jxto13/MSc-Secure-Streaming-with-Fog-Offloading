@@ -27,7 +27,6 @@ import java.util.TimerTask;
 public class StreamingViewModel extends ViewModel {
 
 	private final MutableLiveData<String> mText;
-	private final MutableLiveData<List<WifiAwareClientInfo>> connectedClients;
 	private final MutableLiveData<List<WifiAwareModels.ConnectionInfo>> wifiAwareConnections;
 	private final MutableLiveData<NetworkStats> networkStats;
 	private final MutableLiveData<Boolean> isPlayerReady;
@@ -38,22 +37,6 @@ public class StreamingViewModel extends ViewModel {
 	private Timer statsTimer;
 	private NetworkInitializer networkInitializer;
 	private Uri currentStreamUri;
-
-	public static class WifiAwareClientInfo {
-		public String ipAddress;
-		public String macAddress;
-		public long lastSeen;
-		public long bytesReceived;
-		public String connectionStatus;
-
-		public WifiAwareClientInfo(String ipAddress, String macAddress) {
-			this.ipAddress = ipAddress;
-			this.macAddress = macAddress;
-			this.lastSeen = System.currentTimeMillis();
-			this.bytesReceived = 0;
-			this.connectionStatus = "Connected";
-		}
-	}
 
 	public static class NetworkStats {
 		public int totalConnectedClients;
@@ -78,9 +61,6 @@ public class StreamingViewModel extends ViewModel {
 	public StreamingViewModel() {
 		mText = new MutableLiveData<>();
 		mText.setValue("WiFi Aware Video Streaming");
-		
-		connectedClients = new MutableLiveData<>();
-		connectedClients.setValue(new ArrayList<>());
 		
 		wifiAwareConnections = new MutableLiveData<>();
 		wifiAwareConnections.setValue(new ArrayList<>());
@@ -121,8 +101,21 @@ public class StreamingViewModel extends ViewModel {
 			// Extract stream URL from URI for Rust client
 			String streamUrl = extractStreamUrlFromUri(streamUri);
 			
-			// Start native client with the stream URL
-			RustService.startClient(writePfd.getFd(), streamUrl);
+			// Start native client with the stream URL and check if connection succeeded
+			boolean connectionSuccessful = RustService.startClient(writePfd.getFd(), streamUrl);
+			
+			// If connection was successful, trigger network initializer via AppContainer
+			if (connectionSuccessful) {
+				android.util.Log.i("StreamingViewModel", "Client connected successfully, triggering WiFi Aware initialization");
+				try {
+					pt.iris.utils.AppContainer.getInstance().triggerNetworkInitialization();
+				} catch (Exception e) {
+					android.util.Log.w("StreamingViewModel", "Failed to trigger network initialization: " + e.getMessage());
+				}
+			} else {
+				android.util.Log.e("StreamingViewModel", "Failed to connect to server");
+				throw new RuntimeException("Failed to connect to server");
+			}
 
 			// Create ExoPlayer with custom data source
 			player = new ExoPlayer.Builder(context)
@@ -161,7 +154,6 @@ public class StreamingViewModel extends ViewModel {
 			@Override
 			public void run() {
 				updateNetworkStats();
-				updateConnectedClients();
 			}
 		}, 0, 1000); // Update every 1 second (auto-refresh)
 	}
@@ -194,16 +186,6 @@ public class StreamingViewModel extends ViewModel {
 		networkStats.postValue(stats);
 	}
 
-	private void updateConnectedClients() {
-		// Update real WiFi Aware connections from the NetworkInitializer
-		if (networkInitializer != null) {
-			List<WifiAwareModels.ConnectionInfo> connections = 
-				networkInitializer.getActiveConnections();
-			wifiAwareConnections.postValue(connections);
-		}
-	}
-
-
 	/**
 	 * Force refresh of WiFi Aware connections from NetworkInitializer
 	 */
@@ -218,22 +200,9 @@ public class StreamingViewModel extends ViewModel {
 		updateNetworkStats();
 	}
 
-	/**
-	 * Force refresh of clients list
-	 */
-	public void forceRefreshClients() {
-		// Clear current clients list and force refresh
-		connectedClients.setValue(new ArrayList<>());
-
-	}
-
 	// Getters for LiveData
 	public LiveData<String> getText() {
 		return mText;
-	}
-
-	public LiveData<List<WifiAwareClientInfo>> getConnectedClients() {
-		return connectedClients;
 	}
 
 	public LiveData<List<WifiAwareModels.ConnectionInfo>> getWifiAwareConnections() {
@@ -270,31 +239,11 @@ public class StreamingViewModel extends ViewModel {
 		if (player != null) {
 			player.stop();
 			player.clearMediaItems();
-			
-			// Properly cleanup Rust service connections
-			cleanupRustConnections();
-			
+
 			releasePlayer();
 			currentStreamUri = null;
 			isStreamConnected.setValue(false);
 			isPlayerReady.setValue(false);
-		}
-	}
-
-	private void cleanupRustConnections() {
-		try {
-			// Call native cleanup method to remove all active sockets
-			RustService.cleanupAllSockets();
-			
-			// Clean up NAN data paths if WiFi Aware is active
-			AppContainer container = AppContainer.getInstance();
-			if (container.getNetworkInitializer() != null) {
-				// Force cleanup of inactive data paths
-				container.getNetworkInitializer().cleanupInactiveDataPaths();
-			}
-		} catch (Exception e) {
-			// Log error but continue with cleanup
-			android.util.Log.e("StreamingViewModel", "Error during Rust service cleanup", e);
 		}
 	}
 
@@ -362,10 +311,4 @@ public class StreamingViewModel extends ViewModel {
 		return "stream1.iris.dcc.fc.up.pt";
 	}
 
-	public String getDeviceCapabilities() {
-		if (networkInitializer != null) {
-			return networkInitializer.getDeviceCapabilitiesSummary();
-		}
-		return "N/A";
-	}
 }
