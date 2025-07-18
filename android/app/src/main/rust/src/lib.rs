@@ -13,7 +13,11 @@ pub mod android {
     use std::sync::Once;
 
     // Static variable to hold the iris client instance
-    static CLIENT: OnceCell<iris_client::Client> = OnceCell::new();
+    static CLIENT: OnceCell<Arc<RwLock<Option<iris_client::Client>>>> = OnceCell::new();
+
+    // Thread handle to keep track of the spawned thread
+    static THREAD_HANDLE: OnceCell<Arc<RwLock<Option<std::thread::JoinHandle<()>>>>> =
+        OnceCell::new();
 
     /// Initializes the logging system for Android.
     static INIT: Once = Once::new();
@@ -86,10 +90,25 @@ pub mod android {
         let mut client = iris_client::Client::new();
 
         match client.start(&url_str) {
-            Ok(client) => {
+            Ok(data_receiver) => {
                 info!("Successfully connected to server");
 
-                thread::spawn(move || {
+                // Initialize CLIENT static if not already done
+                if CLIENT.get().is_none() {
+                    let _ = CLIENT.set(Arc::new(RwLock::new(None)));
+                }
+                if THREAD_HANDLE.get().is_none() {
+                    let _ = THREAD_HANDLE.set(Arc::new(RwLock::new(None)));
+                }
+
+                // Store the client
+                if let Some(client_holder) = CLIENT.get() {
+                    if let Ok(mut guard) = client_holder.write() {
+                        *guard = Some(client);
+                    }
+                }
+
+                let handle = thread::spawn(move || {
                     // SAFETY: fd must be valid and owned by Java
                     let file = unsafe { std::fs::File::from_raw_fd(fd) };
 
@@ -105,7 +124,7 @@ pub mod android {
                     std::mem::forget(file); // avoid closing fd
 
                     // Loop over incoming data
-                    for item in client {
+                    for item in data_receiver {
                         if let Err(e) = writer.write_all(&item) {
                             eprintln!("Write error: {:?}", e);
                             break;
@@ -113,23 +132,21 @@ pub mod android {
                     }
                     log::error!("Client stream ended for URL: {}", url_str);
                 });
+
+                // Store the thread handle
+                if let Some(handle_holder) = THREAD_HANDLE.get() {
+                    if let Ok(mut guard) = handle_holder.write() {
+                        *guard = Some(handle);
+                    }
+                }
+
+                jni::sys::JNI_TRUE
             }
             Err(e) => {
                 log::error!("Failed to start iris client with URL {}: {:?}", url_str, e);
-                return jni::sys::JNI_FALSE;
+                jni::sys::JNI_FALSE
             }
         }
-
-        // SAFETY: CLIENT is a static variable, so we can safely set it
-        match CLIENT.set(client) {
-            Ok(_) => jni::sys::JNI_TRUE,
-            Err(_) => {
-                log::error!("Failed to set iris client in static variable");
-                return jni::sys::JNI_FALSE;
-            }
-        };
-
-        jni::sys::JNI_TRUE
     }
 
     #[no_mangle]
@@ -138,16 +155,30 @@ pub mod android {
         _class: JClass,
     ) {
         log::info!("Stopping iris client...");
-        // SAFETY: CLIENT is a static variable, so we can safely access it
-        if let Some(client) = CLIENT.get() {
-            // Call your internal shutdown method if needed
-            client.shutdown(); // or any other method you provide
-            log::info!("Iris client shutdown requested");
-        } else {
-            log::info!("No active client to stop");
+
+        // Shutdown the client first
+        if let Some(client_holder) = CLIENT.get() {
+            if let Ok(mut guard) = client_holder.write() {
+                if let Some(client) = guard.take() {
+                    client.shutdown();
+                    log::info!("Iris client shutdown requested");
+                }
+            }
         }
 
-        log::info!("Iris client shutdown requested");
+        // Wait for the thread to finish
+        if let Some(handle_holder) = THREAD_HANDLE.get() {
+            if let Ok(mut guard) = handle_holder.write() {
+                if let Some(handle) = guard.take() {
+                    match handle.join() {
+                        Ok(_) => log::info!("Thread joined successfully"),
+                        Err(e) => log::error!("Error joining thread: {:?}", e),
+                    }
+                }
+            }
+        }
+
+        log::info!("Iris client shutdown complete");
     }
 
     #[no_mangle]
@@ -168,17 +199,21 @@ pub mod android {
         log::info!("Adding socket for IP: {}", ip_str);
 
         // SAFETY: CLIENT is a static variable, so we can safely access it
-        let client = match CLIENT.get() {
-            Some(client) => client,
-            None => {
-                log::error!("Iris client is not initialized");
-                return;
+        if let Some(client_holder) = CLIENT.get() {
+            if let Ok(guard) = client_holder.read() {
+                if let Some(client) = guard.as_ref() {
+                    match client.add_interface(&ip_str) {
+                        Ok(_) => log::info!("Successfully added socket for IP: {}", ip_str),
+                        Err(e) => log::error!("Failed to add socket for IP {}: {:?}", ip_str, e),
+                    }
+                } else {
+                    log::error!("Iris client is not initialized");
+                }
+            } else {
+                log::error!("Failed to acquire read lock on client");
             }
-        };
-
-        match client.add_interface(&ip_str) {
-            Ok(_) => log::info!("Successfully added socket for IP: {}", ip_str),
-            Err(e) => log::error!("Failed to add socket for IP {}: {:?}", ip_str, e),
+        } else {
+            log::error!("Iris client holder is not initialized");
         }
     }
 
@@ -232,23 +267,6 @@ pub mod android {
             .as_secs();
         let result = (now / 10) as i64; // Increases by 1 MB every 10 seconds
         log::trace!("Returning total data transferred: {} MB", result);
-        result
-    }
-
-    #[no_mangle]
-    pub extern "system" fn Java_pt_iris_services_RustService_getActiveConnectionCount(
-        _env: JNIEnv,
-        _class: JClass,
-    ) -> i32 {
-        // TODO: Implement actual connection count from iris_client
-        // For now, return a mock value based on time
-        use std::time::{SystemTime, UNIX_EPOCH};
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-        let result = ((now % 5) + 1) as i32; // 1 to 5 connections
-        log::trace!("Returning active connection count: {}", result);
         result
     }
 }

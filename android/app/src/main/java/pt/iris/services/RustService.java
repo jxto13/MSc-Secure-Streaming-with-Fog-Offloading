@@ -23,7 +23,6 @@ public class RustService extends Service {
     public static native double getPacketLossPercentage();
     public static native double getCurrentBitrateMbps();
     public static native long getTotalDataTransferredMB();
-    public static native int getActiveConnectionCount();
 
     @Override
     public void onCreate() {
@@ -46,6 +45,9 @@ public class RustService extends Service {
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        // Stop the Rust client first
+        stopClient();
 
         // Release multicast lock
         if (multicastLock != null && multicastLock.isHeld()) {

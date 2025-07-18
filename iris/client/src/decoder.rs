@@ -36,33 +36,6 @@ use super::proto::{key_service_client::KeyServiceClient, ClientReport};
 
 use tokio::runtime::Runtime;
 
-/// Update matrix trackers in the buffer with appropriate keys based on epoch logic
-fn update_buffer_matrices_with_keys(
-    buffer: &mut VecDeque<MatrixTracker>,
-    current_key: &SessionKey,
-    next_key: &Option<SessionKey>,
-    session: &Arc<RwLock<ClientSession>>,
-) {
-    let session_config = session.read().unwrap();
-    let epoch = session_config.epoch;
-
-    for tracker in buffer.iter_mut() {
-        // Determine which key this matrix should use based on epoch logic
-        if tracker.matrix_index % epoch == 0 && next_key.is_some() {
-            // This matrix is at an epoch boundary, it should use the next key
-            tracker.session_key = next_key.clone();
-            info!(
-                "Updated matrix {} (epoch boundary) with next key",
-                tracker.matrix_index
-            );
-        } else {
-            // Regular matrix, uses current key
-            tracker.session_key = Some(current_key.clone());
-            info!("Updated matrix {} with current key", tracker.matrix_index);
-        }
-    }
-}
-
 #[derive(Debug)]
 pub enum TickType {
     Report,
@@ -750,24 +723,6 @@ pub fn start(
                                 }
                             }
 
-                            // If any keys were updated during decoding, update the remaining buffer and session keys
-                            if any_keys_updated {
-                                info!("Keys were updated during decoding, updating remaining matrices in buffer and session keys");
-
-                                // Get the latest keys from the global session (they were updated in request_updated_keys_sync)
-                                let session_config = session.read().unwrap();
-                                let updated_current_key = session_config.current_key.clone();
-                                let updated_next_key = session_config.next_key.clone();
-                                drop(session_config); // Release the lock
-
-                                // Update the decoder loop session keys
-                                current_key_session = updated_current_key.clone();
-                                next_key_session = Some(updated_next_key.clone());
-
-                                // Update all remaining matrices in the buffer with appropriate keys based on epoch
-                                update_buffer_matrices_with_keys(&mut buffer, &updated_current_key, &Some(updated_next_key), &session);
-                            }
-
                         }
 
                     }
@@ -899,10 +854,9 @@ fn decode_to_app_layer(
         tracker.matrix_packets.pop_row();
     }
 
-    // Ensure the session key is set
-    let mut keys_were_updated = false;
-    let decryption_key = match tracker.session_key {
-        Some(ref key) => key.clone(),
+    // Use the tracker session key for decryption unless a key update is triggered
+    let decryption_key = match &tracker.session_key {
+        Some(ref key) => key,
         None => {
             error!("Session key is not set for matrix {}", tracker.matrix_index);
             return Err("Session key is not set".into());
@@ -910,81 +864,151 @@ fn decode_to_app_layer(
     };
 
     // Decrypt and decode video data
+    let mut used_new_keys = false;
+    let mut new_current_key: Option<SessionKey> = None;
+    let mut new_next_key: Option<SessionKey> = None;
+
+    let epoch = {
+        let session_guard = session.read().unwrap();
+        session_guard.epoch
+    };
+
     for item in tracker.matrix_packets.iter() {
         if let Some(value) = item {
             // remove padding from payload
-            let deppaded_payload = padding::depad(&value.payload).unwrap();
+            let deppaded_payload = match padding::depad(&value.payload) {
+                Ok(p) => p,
+                Err(_) => {
+                    error!("Depadding failed for matrix: {}", tracker.matrix_index);
+                    continue;
+                }
+            };
 
-            // Try decryption with current key first, then request new keys if it fails
-            let decrypted_plaintext = match decrypt(
-                &deppaded_payload,
-                &decryption_key.key,
-                &decryption_key.iv,
-            ) {
-                Ok(plaintext) => plaintext,
-                Err(err) => {
-                    error!(
-                        "Decryption failed: {} \n Requesting current session key from server",
-                        err
-                    );
-
-                    // Try to request updated keys from the server
-                    match request_updated_keys_sync(&channel, &session) {
-                        Ok((new_current_key, _new_next_key)) => {
-                            info!("Successfully received updated keys from server, retrying decryption");
-
-                            // Try decryption again with the new key
-                            match decrypt(
-                                &deppaded_payload,
-                                &new_current_key.key,
-                                &new_current_key.iv,
-                            ) {
-                                Ok(plaintext) => {
-                                    info!("Decryption successful with updated key");
-
-                                    // Mark that we need to update the tracker's session key
-                                    tracker.session_key = Some(new_current_key);
-                                    keys_were_updated = true;
-
-                                    plaintext
-                                }
-                                Err(retry_err) => {
-                                    error!(
-                                        "Decryption failed even with updated key: {}",
-                                        retry_err
-                                    );
-                                    continue;
-                                }
-                            }
+            // Select which key to use
+            let (key, iv) = if used_new_keys {
+                if tracker.matrix_index % epoch == 0 {
+                    match &new_next_key {
+                        Some(k) => (&k.key, &k.iv),
+                        None => {
+                            error!(
+                                "No next key available after key update for matrix: {}",
+                                tracker.matrix_index
+                            );
+                            continue;
                         }
-                        Err(key_err) => {
-                            error!("Failed to request updated keys from server: {}", key_err);
+                    }
+                } else {
+                    match &new_current_key {
+                        Some(k) => (&k.key, &k.iv),
+                        None => {
+                            error!(
+                                "No current key available after key update for matrix: {}",
+                                tracker.matrix_index
+                            );
                             continue;
                         }
                     }
                 }
+            } else {
+                (&decryption_key.key, &decryption_key.iv)
             };
 
-            // Check if the decrypted payload is empty
+            let mut decrypted_plaintext = decrypt(&deppaded_payload, key, iv);
+
+            // If decryption fails and we haven't tried new keys yet, request new keys and try again
+            if decrypted_plaintext.is_err() && !used_new_keys {
+                error!(
+                    "Decryption failed: {}. Requesting new session keys.",
+                    decrypted_plaintext.as_ref().err().unwrap()
+                );
+                match request_updated_keys_sync(&channel, &session) {
+                    Ok((curr, next)) => {
+                        let mut session_guard = session.write().unwrap();
+                        session_guard.current_key = curr.clone();
+                        session_guard.next_key = next.clone();
+                        new_current_key = Some(curr);
+                        new_next_key = Some(next);
+                        used_new_keys = true;
+
+                        // Retry decryption with the new key
+                        let epoch = session_guard.epoch;
+                        let (key, iv) = if tracker.matrix_index % epoch == 0 {
+                            match &new_next_key {
+                                Some(k) => (&k.key, &k.iv),
+                                None => {
+                                    error!(
+                                        "No next key available after key update for matrix: {}",
+                                        tracker.matrix_index
+                                    );
+                                    continue;
+                                }
+                            }
+                        } else {
+                            match &new_current_key {
+                                Some(k) => (&k.key, &k.iv),
+                                None => {
+                                    error!(
+                                        "No current key available after key update for matrix: {}",
+                                        tracker.matrix_index
+                                    );
+                                    continue;
+                                }
+                            }
+                        };
+                        decrypted_plaintext = decrypt(&deppaded_payload, key, iv);
+                    }
+                    Err(key_err) => {
+                        error!("Failed to request updated keys from server: {}", key_err);
+                        continue;
+                    }
+                }
+            }
+
+            let decrypted_plaintext = match decrypted_plaintext {
+                Ok(plaintext) => plaintext,
+                Err(err) => {
+                    error!("Decryption failed after key update: {}", err);
+                    continue;
+                }
+            };
+
             if decrypted_plaintext.is_empty() {
                 error!("Decryption failed or empty payload.");
                 continue;
             }
 
             // Decode the decrypted payload as VideoData
-            let mut decoded = VideoData::decode(&mut Cursor::new(decrypted_plaintext)).unwrap();
+            let mut decoded = match VideoData::decode(&mut Cursor::new(decrypted_plaintext)) {
+                Ok(d) => d,
+                Err(e) => {
+                    error!("Failed to decode VideoData: {}", e);
+                    continue;
+                }
+            };
 
-            // Retrive the signature from the packet and put the packet_signature field with 0's to calculate local hash computation
-            let signature = EcdsaSig::from_der(&decoded.signature)?;
+            // Retrieve the signature from the packet and put the packet_signature field with 0's to calculate local hash computation
+            let signature = match EcdsaSig::from_der(&decoded.signature) {
+                Ok(sig) => sig,
+                Err(e) => {
+                    error!("Failed to parse signature: {}", e);
+                    continue;
+                }
+            };
+
             decoded.signature = vec![0, 255];
 
             // Calculate the local hash of the decoded data
             let message_hash = sha256(&decoded.encode_to_vec());
 
             // Verify the signature of the data
-            let is_valid = signature.verify(&message_hash, x509_public_key).unwrap();
+            let is_valid = match signature.verify(&message_hash, x509_public_key) {
+                Ok(valid) => valid,
+                Err(e) => {
+                    error!("Signature verification error: {}", e);
+                    continue;
+                }
+            };
 
-            // If Data signature is not valid, drop and continue
             if !is_valid {
                 error!("Invalid signature for matrix: {}", tracker.matrix_index);
                 continue;
@@ -998,7 +1022,7 @@ fn decode_to_app_layer(
         }
     }
 
-    Ok(keys_were_updated)
+    Ok(true)
 }
 
 /// Request updated keys from the server synchronously

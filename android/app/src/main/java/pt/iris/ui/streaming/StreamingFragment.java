@@ -241,7 +241,25 @@ public class StreamingFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+        
+        // Make sure the ViewModel releases resources
+        if (streamingViewModel != null) {
+            streamingViewModel.stopStreaming();
+        }
+        
         binding = null;
+    }
+    
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        
+        // Final cleanup to ensure Rust client is stopped
+        try {
+            pt.iris.services.RustService.stopClient();
+        } catch (Exception e) {
+            Log.w("StreamingFragment", "Error stopping Rust client in onDestroy", e);
+        }
     }
 
     private void showConnectionDetails(DataPathInfo connection) {

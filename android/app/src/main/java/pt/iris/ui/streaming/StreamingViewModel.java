@@ -162,9 +162,11 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 	private void startStatsCollection() {
 		if (statsTimer != null) {
 			statsTimer.cancel();
+			statsTimer = null;
 		}
 		
-		statsTimer = new Timer();
+		// Use daemon timer so it doesn't prevent JVM shutdown
+		statsTimer = new Timer("StreamingViewModel-StatsTimer", true);
 		statsTimer.schedule(new TimerTask() {
 			@Override
 			public void run() {
@@ -335,21 +337,26 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 	}
 
 	private void releasePlayer() {
-		if (player != null) {
-			player.release();
-			player = null;
-		}
-		if (pipe != null) {
-			try {
-				pipe[0].close();
-				pipe[1].close();
-			} catch (IOException ignored) {}
-			pipe = null;
-		}
+		// Stop and cancel timer first
 		if (statsTimer != null) {
 			statsTimer.cancel();
 			statsTimer = null;
 		}
+		
+		// Stop Rust client
+		try {
+			RustService.stopClient();
+		} catch (Exception e) {
+			android.util.Log.w("StreamingViewModel", "Error stopping Rust client", e);
+		}
+		
+		// Release ExoPlayer
+		if (player != null) {
+			player.release();
+			player = null;
+		}
+
+
 	}
 
 	@Override
@@ -360,7 +367,7 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 		if (networkInitializer != null) {
 			networkInitializer.removeListener(this);
 		}
-		
+
 		releasePlayer();
 	}
 
@@ -419,6 +426,13 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 			SessionInfo sessionInfo = networkInitializer.getWifiAwareLibrary().getSessionInfo();
 			wifiAwareSessionInfo.postValue(sessionInfo);
 		}
+	}
+
+	/**
+	 * Stop streaming and release all resources
+	 */
+	public void stopStreaming() {
+		releasePlayer();
 	}
 
 }

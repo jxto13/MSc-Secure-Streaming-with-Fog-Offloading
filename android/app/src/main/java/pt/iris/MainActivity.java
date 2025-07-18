@@ -228,6 +228,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
         
+        android.util.Log.d("MainActivity", "MainActivity onDestroy called");
+        
+        // Stop Rust client first - most important for thread cleanup
+        stopRustClient();
+        
         // Clean up WiFi Aware
         if (wifiAwareNetwork != null) {
             wifiAwareNetwork.destroy();
@@ -237,10 +242,37 @@ public class MainActivity extends AppCompatActivity {
         // Stop Rust service
         if (serviceIntent != null) {
             this.stopService(serviceIntent);
+            serviceIntent = null;
         }
         
         // Clean up binding
         binding = null;
+        
+        android.util.Log.d("MainActivity", "MainActivity onDestroy completed");
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        // Optionally stop client when app goes to background to save resources
+        // Uncomment if you want to stop streaming when app is backgrounded
+        // stopRustClient();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        // Stop client when activity is not visible
+        stopRustClient();
+    }
+
+    private void stopRustClient() {
+        try {
+            RustService.stopClient();
+            android.util.Log.d("MainActivity", "Rust client stopped");
+        } catch (Exception e) {
+            android.util.Log.w("MainActivity", "Error stopping Rust client", e);
+        }
     }
 
     /**
@@ -248,5 +280,16 @@ public class MainActivity extends AppCompatActivity {
      */
     public AppContainer getAppContainer() {
         return appContainer;
+    }
+
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            // Last resort cleanup in case onDestroy wasn't called
+            android.util.Log.d("MainActivity", "MainActivity finalize called - last resort cleanup");
+            stopRustClient();
+        } finally {
+            super.finalize();
+        }
     }
 }
