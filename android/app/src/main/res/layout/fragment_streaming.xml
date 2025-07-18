@@ -259,6 +259,14 @@
 
         </androidx.cardview.widget.CardView>
 
+        <!-- WiFi Aware Connection Logs -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:cardCornerRadius="8dp"
+            app:cardElevation="2dp"
+            android:layout_marginBottom="16dp"/>
+
     </LinearLayout>
 
 </androidx.core.widget.NestedScrollView>

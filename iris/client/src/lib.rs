@@ -4,30 +4,22 @@ mod session;
 mod utils;
 
 use crossbeam_channel::{unbounded, Receiver};
-
 use iris_shared::compression::compress_data;
-use once_cell::sync::OnceCell;
 use prost::Message;
 
 use crate::receiver::{Command, DynamicReceiver, ReceiverType};
 use crate::session::ClientSession;
 
-// Global command sender for socket management
-static COMMAND_SENDER: OnceCell<crossbeam_channel::Sender<Command>> = OnceCell::new();
-
-// Global shutdown flag for coordinating thread termination
-static SHUTDOWN_FLAG: OnceCell<Arc<AtomicBool>> = OnceCell::new();
-
 use openssl::ec::{EcGroup, EcKey};
 use openssl::nid::Nid;
-use openssl::pkey::PKey;
+use openssl::pkey::{PKey, Private};
 
-use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV6};
+use std::net::{Ipv4Addr, Ipv6Addr, SocketAddr, SocketAddrV6, ToSocketAddrs};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc, RwLock,
 };
-use std::thread;
+use std::thread::{self, JoinHandle};
 use std::time::{Duration, Instant};
 
 use proto::certificate_service_client::CertificateServiceClient;
@@ -35,17 +27,11 @@ use proto::key_service_client::KeyServiceClient;
 use proto::nts_service_client::NtsServiceClient;
 use proto::TimestampRequest;
 use proto::{CertificateRequest, RequestKey};
-use std::net::ToSocketAddrs;
-
-use tokio::{self};
-
-use tokio::runtime::Runtime;
-
-use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
 use chrono::DateTime;
-
 use log::{error, info};
+use tokio::runtime::Runtime;
+use tonic::transport::{Certificate, Channel, ClientTlsConfig};
 
 pub mod proto {
     include!("../proto/generated/streaming_server.rs");
@@ -54,370 +40,369 @@ pub mod proto {
 
 const CA_PUBLIC_CERTIFICATE: &[u8] = include_bytes!("../../server/certs/ca_certificate.pem");
 
-static CHANNEL: OnceCell<Arc<RwLock<Option<Channel>>>> = OnceCell::new();
-static SESSION: OnceCell<Arc<RwLock<ClientSession>>> = OnceCell::new();
-
-/// Shutdown all client threads gracefully
-pub fn shutdown_client() {
-    // Send shutdown flag
-    if let Some(shutdown_flag) = SHUTDOWN_FLAG.get() {
-        shutdown_flag.store(true, Ordering::Relaxed);
-    }
-
-    // Clear the channel
-    if let Some(channel_lock) = CHANNEL.get() {
-        let mut channel_guard = channel_lock.write().unwrap();
-        *channel_guard = None;
-        info!("Client channel reset for reconnection");
-    }
-
-    // Reset shutdown flag
-    if let Some(shutdown_flag) = SHUTDOWN_FLAG.get() {
-        shutdown_flag.store(false, Ordering::Relaxed);
-    }
+/// Main client for managing streaming connections and data reception
+pub struct Client {
+    session: Arc<RwLock<ClientSession>>,
+    channel: Option<Channel>,
+    runtime: Arc<Runtime>,
+    shutdown_flag: Arc<AtomicBool>,
+    command_sender: Option<crossbeam_channel::Sender<Command>>,
+    thread_handles: RwLock<Vec<JoinHandle<()>>>,
 }
 
-// Function to create a gRPC channel with TLS configuration
-async fn create_channel(ip: &String) -> Result<Channel, Box<dyn std::error::Error>> {
-    // Configure the TLS settings for the channel
-    let tls_config = ClientTlsConfig::new()
-        .ca_certificate(Certificate::from_pem(&CA_PUBLIC_CERTIFICATE))
-        .domain_name(ip);
-
-    // Create the channel with the TLS configuration using the provided IP address
-    let channel_url = format!("https://{}:50051", ip);
-
-    // Use Channel::builder instead of Channel::from_static
-    let channel = Channel::builder(channel_url.parse()?) // Convert String to Uri
-        .tls_config(tls_config)? // Apply the TLS configuration
-        .keep_alive_timeout(Duration::from_secs(10))
-        .keep_alive_while_idle(true)
-        .http2_keep_alive_interval(Duration::from_secs(10))
-        .keep_alive_timeout(Duration::from_secs(10))
-        .connect()
-        .await?;
-
-    info!("Connected to GRPC Server at {}", ip);
-
-    // If we reach here, connection was successful
-    Ok(channel)
-}
-
-fn resolve_ipv4_std(hostname: &str) -> Result<Ipv4Addr, Box<dyn std::error::Error>> {
-    if hostname.trim().is_empty() {
-        return Err("Hostname cannot be empty".into());
-    }
-
-    // Use dummy port 0 just for resolution
-    let port = 0;
-    let addrs = (hostname, port).to_socket_addrs();
-
-    let addr_iter = match addrs {
-        Ok(iter) => iter,
-        Err(e) => {
-            return Err(format!("Failed to resolve hostname '{}': {}", hostname, e).into());
-        }
-    };
-
-    // Look for the first IPv4 address
-    for addr in addr_iter {
-        match addr.ip() {
-            std::net::IpAddr::V4(ipv4) => return Ok(ipv4),
-            std::net::IpAddr::V6(_) => continue, // Skip IPv6
+impl Client {
+    /// Create a new client instance
+    pub fn new() -> Self {
+        Self {
+            session: Arc::new(RwLock::new(ClientSession::default())),
+            channel: None,
+            runtime: Arc::new(Runtime::new().expect("Failed to create Tokio runtime")),
+            shutdown_flag: Arc::new(AtomicBool::new(false)),
+            command_sender: None,
+            thread_handles: RwLock::new(Vec::new()),
         }
     }
 
-    Err(format!("No IPv4 address found for hostname '{}'", hostname).into())
-}
+    /// Start the client and establish connections (blocking)
+    /// Returns a receiver for decoded data
+    pub fn start(&mut self, ip: &str) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
+        // Reset shutdown flag
+        self.shutdown_flag.store(false, Ordering::Relaxed);
 
-// Function to start the library and establish connections
-pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error::Error>> {
-    // Set up a Tokio runtime
-    let rt = Arc::new(Runtime::new().unwrap());
+        // Create EC Certificates
+        let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
+        let ec_key = EcKey::generate(&group).unwrap();
 
-    // Create a session config to store the certificates and keys
-    // Use get_or_init to avoid panic on subsequent calls
-    SESSION.get_or_init(|| Arc::new(RwLock::new(ClientSession::default())));
+        // Establish gRPC connection and setup session (blocking)
+        let runtime = Arc::clone(&self.runtime);
+        self.channel =
+            Some(runtime.block_on(async { self.setup_grpc_connection(ip, ec_key).await })?);
 
-    // Create EC Certificates
-    let group = EcGroup::from_curve_name(Nid::X9_62_PRIME256V1).unwrap();
-    let ec_key = EcKey::generate(&group).unwrap();
+        // Setup communication channels
+        let (data_receiver_sender, data_receiver_receiver): (
+            crossbeam_channel::Sender<(ReceiverType, Vec<u8>)>,
+            crossbeam_channel::Receiver<(ReceiverType, Vec<u8>)>,
+        ) = unbounded();
+        let (decoded_data_sender, decoded_data_receiver) = unbounded();
+        let (client_report_sender, client_report_receiver) = unbounded();
+        let (command_sender, command_receiver) = unbounded();
 
-    // Run async code using the Tokio runtime, this will block until the connection is established
-    rt.block_on(async {
-        let arc_session_config = Arc::clone(&SESSION.get().unwrap());
+        // Store command sender for socket management
+        self.command_sender = Some(command_sender.clone());
 
-        // Attempt to create a gRPC channel with the provided IP address
-        match create_channel(ip).await {
-            Ok(channel) => {
-                // If we reach here, we have a valid channel to the server
-
-                // Resolve the IPv4 address
-                let ipv4 = resolve_ipv4_std(ip)
-                    .map_err(|e| format!("Failed to resolve IPv4 address: {}", e));
-
-                match ipv4 {
-                    Ok(addr) => {
-                        info!("Resolved IPv4 address: {}", addr);
-                        // Store the resolved IPv4 address in a static variable
-                        let mut mutex_session_config = arc_session_config.write().unwrap();
-                        mutex_session_config.server_ip = addr.to_string();
-                    }
-                    Err(e) => {
-                        error!("Error resolving IPv4 address: {}", e);
-                    }
-                }
-
-                info!("Successfully connected to the gRPC server at {}", ip);
-
-                // Create connection to retrieve client certificate from CA
-                {
-                    let mut connection = CertificateServiceClient::new(channel.clone());
-
-                    // Extract key-pair to struct
-                    let pkey = PKey::from_ec_key(ec_key.clone()).unwrap();
-
-                    // Make a X509 request with the given private key
-                    let request = utils::mk_request(&pkey).unwrap();
-
-                    // Serialize the request CSR
-                    let csr_vec = request.to_pem().unwrap();
-
-                    // Make a CertificateRequest with the CSR
-                    let csr_request = CertificateRequest { csr: csr_vec };
-
-                    // Send the CSR to the server to get it signed
-                    let response = connection.sign_certificate(csr_request).await.unwrap();
-                    let signed_cert = response.into_inner().signed_cert;
-
-                    let mut mutex_session_config = arc_session_config.write().unwrap();
-
-                    mutex_session_config.client_ec_certificate = signed_cert;
-                    mutex_session_config.client_ec_key = Some(ec_key);
-                }
-
-                // Create connection to retrive current Session encryption key and certificate to verify packets is comming from the server
-                {
-                    let mut connection = KeyServiceClient::new(channel.clone());
-
-                    let key_response = connection.request_current_key(RequestKey {}).await.unwrap();
-
-                    let reponse = key_response.into_inner();
-
-                    let mut mutex_session_config = arc_session_config.write().unwrap();
-
-                    mutex_session_config.current_key = reponse.current_key.unwrap();
-                    mutex_session_config.next_key = reponse.next_key.unwrap();
-                    mutex_session_config.ec_server_certificate = reponse.certificate;
-
-                    // If the server provided biggy back data, update the session config
-                    let biggy_back_data = reponse.biggy_back_data.unwrap();
-
-                    mutex_session_config.epoch = biggy_back_data.epoch;
-                    mutex_session_config.client_reporting_interval =
-                        biggy_back_data.client_reporting_interval;
-                    mutex_session_config.client_sliding_window =
-                        biggy_back_data.client_sliding_window;
-                    mutex_session_config.retransmission_port = biggy_back_data.retransmission_port;
-                    mutex_session_config.unicast_port = biggy_back_data.unicast_port;
-                    mutex_session_config.multicast_address = biggy_back_data.multicast_address;
-                    mutex_session_config.multicast_port = biggy_back_data.multicast_port;
-
-                    info!("Current key: {:?}", mutex_session_config.current_key);
-                    info!("Next key: {:?}", mutex_session_config.next_key);
-                }
-
-                // Create connection to retrieve current timestamp to base our client report intervals
-                {
-                    let mut connection = NtsServiceClient::new(channel.clone());
-
-                    // Measure the time before the request
-                    let start_time = Instant::now();
-
-                    let stamp_response = connection
-                        .get_current_timestamp(TimestampRequest {})
-                        .await
-                        .unwrap();
-
-                    // Measure the time after the request
-                    let end_time = Instant::now();
-
-                    // Calculate the RTT
-                    let rtt = end_time.duration_since(start_time);
-
-                    // Get the server timestamp
-                    let timestamp_str = stamp_response.into_inner().timestamp;
-                    let mut server_time = DateTime::parse_from_rfc3339(&timestamp_str).unwrap();
-
-                    // Substract half of the RTT to the server timestamp to compensate for the delay
-                    server_time = server_time - chrono::Duration::from_std(rtt / 2).unwrap();
-
-                    let mut mutex_session_config = arc_session_config.write().unwrap();
-                    mutex_session_config.server_time = server_time;
-
-                    info!("Server time: {}", server_time);
-                }
-
-                // Save the client for use after the loop
-                CHANNEL.get_or_init(|| Arc::new(RwLock::new(None)));
-                if let Some(channel_lock) = CHANNEL.get() {
-                    let mut channel_guard = channel_lock.write().unwrap();
-                    *channel_guard = Some(channel);
-                }
-            }
-            Err(e) => {
-                error!("Failed to connect: {}. Retrying in 5 seconds...", e);
-            }
-        }
-    });
-
-    // Check if the channel was created successfully
-    let channel_created = if let Some(channel_lock) = CHANNEL.get() {
-        channel_lock.read().unwrap().is_some()
-    } else {
-        false
-    };
-
-    if !channel_created {
-        // If the channel was not created, log an error and return
-        error!("Failed to create gRPC channel, cannot start client");
-        return Err("Failed to create gRPC channel".into());
-    }
-
-    // Initialize shutdown flag
-    SHUTDOWN_FLAG.get_or_init(|| Arc::new(AtomicBool::new(false)));
-
-    // If we arrive here we have certificates signed from PKI, Session Key and Current Timestamp
-
-    // Create channels for thread comunication
-    let (data_receiver_sender, data_receiver_receiver) = unbounded();
-    let (decoded_data_sender, decoded_data_receiver) = unbounded();
-    let (client_report_sender, client_report_receiver) = unbounded();
-    let (command_sender, command_receiver) = unbounded();
-
-    // Set the command sender for socket management
-    COMMAND_SENDER.get_or_init(|| command_sender.clone());
-
-    // Spawn Receiver Thread
-    let shutdown_flag_receiver = Arc::clone(SHUTDOWN_FLAG.get().unwrap());
-    let _receiver_handler = thread::spawn(move || {
-        let server = DynamicReceiver::new(
-            data_receiver_sender,
-            command_receiver,
-            shutdown_flag_receiver,
-        );
-
-        // Handle any error that might occur during server initialization
-        let mut server = match server {
-            Ok(s) => s,
-            Err(e) => {
-                panic!("Failed to create DynamicReceiver: {}", e);
-            }
-        };
-        // Run the server event loop
-        if let Err(e) = server.run() {
-            error!("Receiver server error: {}", e);
-        }
-    });
-
-    // REMEMBER TO GET THE IP FROM THE CONFIGURATION FILE OF GRPC SERVER
-    let session_guard = SESSION.get().ok_or("Session not initialized")?;
-    let session_config = session_guard.read().unwrap();
-    let multicast_ip = session_config.multicast_address.clone();
-    let multicast_port = session_config.multicast_port;
-    let unicast_port = session_config.unicast_port;
-    drop(session_config); // Release the lock
-
-    // Setup multicast socket
-    {
-        let multicast_addr =
-            match format!("{}:{}", multicast_ip, multicast_port).parse::<SocketAddr>() {
-                Ok(addr) => addr,
-                Err(e) => {
-                    error!("Failed to parse multicast address: {}", e);
-                    return Err(format!("Invalid multicast address: {}", e).into());
-                }
-            };
-
-        let multicast_socket = match mio::net::UdpSocket::bind(multicast_addr) {
-            Ok(socket) => socket,
-            Err(e) => {
-                error!("Failed to bind multicast socket: {}", e);
-                return Err(format!("Failed to bind multicast socket: {}", e).into());
-            }
-        };
-
-        let multicast_ip_parsed = match multicast_ip.parse::<Ipv4Addr>() {
-            Ok(ip) => ip,
-            Err(e) => {
-                error!("Failed to parse multicast IP: {}", e);
-                return Err(format!("Invalid multicast IP: {}", e).into());
-            }
-        };
-
-        if let Err(e) =
-            multicast_socket.join_multicast_v4(&multicast_ip_parsed, &Ipv4Addr::UNSPECIFIED)
-        {
-            error!("Failed to join multicast group: {}", e);
-            return Err(format!("Failed to join multicast group: {}", e).into());
-        }
-
-        if let Err(e) = command_sender.send(Command::AddSocket(
-            multicast_socket,
-            ReceiverType::Multicast,
-        )) {
-            error!("Failed to add multicast socket: {}", e);
-            return Err(format!("Failed to add multicast socket: {}", e).into());
-        }
-    }
-
-    // Setup unicast socket
-    {
-        // Bind to the unicast address and port
-        let unicast_addr = match format!("0.0.0.0:{}", unicast_port).parse::<SocketAddr>() {
-            Ok(addr) => addr,
-            Err(e) => {
-                error!("Failed to parse unicast address: {}", e);
-                return Err(format!("Invalid unicast address: {}", e).into());
-            }
-        };
-
-        info!("Unicast socket bound to: {}", unicast_addr);
-
-        let unicast_socket = match mio::net::UdpSocket::bind(unicast_addr) {
-            Ok(socket) => socket,
-            Err(e) => {
-                error!("Failed to bind unicast socket: {}", e);
-                return Err(format!("Failed to bind unicast socket: {}", e).into());
-            }
-        };
-
-        if let Err(e) =
-            command_sender.send(Command::AddSocket(unicast_socket, ReceiverType::Unicast))
-        {
-            error!("Failed to add unicast socket: {}", e);
-            return Err(format!("Failed to add unicast socket: {}", e).into());
-        }
-    }
-
-    // Dont need handler because when the listener goes out of scope the threads continue execution (infinite loops inside), i want the decoder to also go out of scope
-    let shutdown_flag_decoder = Arc::clone(SHUTDOWN_FLAG.get().unwrap());
-    let _decoder_handler = thread::spawn(move || {
-        decoder::start(
+        // Start worker threads
+        self.start_receiver_thread(data_receiver_sender, command_receiver)?;
+        self.start_decoder_thread(
             data_receiver_receiver,
             decoded_data_sender,
             client_report_sender,
-            shutdown_flag_decoder,
-        );
-    });
+        )?;
+        self.start_report_thread(client_report_receiver)?;
 
-    // Spawn Client Report Thread
-    let shutdown_flag_report = Arc::clone(SHUTDOWN_FLAG.get().unwrap());
-    let _report_handler = thread::spawn(move || {
-        // Get the server configuration safely
-        let (server_ip, retransmission_port) = {
-            match SESSION.get() {
-                Some(session_guard) => match session_guard.read() {
+        // Setup initial sockets
+        self.setup_multicast_socket(&command_sender)?;
+        self.setup_unicast_socket(&command_sender)?;
+
+        info!("Client started successfully");
+        Ok(decoded_data_receiver)
+    }
+
+    /// Shutdown the client gracefully
+    pub fn shutdown(&self) {
+        info!("Shutting down client...");
+
+        // Signal shutdown to all threads
+        self.shutdown_flag.store(true, Ordering::Relaxed);
+
+        // Join all threads
+        let mut handles = self.thread_handles.write().unwrap();
+
+        for handle in handles.drain(..) {
+            if let Err(e) = handle.join() {
+                error!("Error joining thread: {:?}", e);
+            }
+        }
+
+        info!("Client shutdown complete");
+    }
+
+    /// Add an IPv6 link-local interface socket
+    pub fn add_interface(&self, ipv6_interface: &str) -> Result<(), Box<dyn std::error::Error>> {
+        // Parse the IPv6 address and interface
+        let parts: Vec<&str> = ipv6_interface.split('%').collect();
+        if parts.len() != 2 {
+            let error_msg = "Invalid IPv6 link-local format. Expected 'ipv6-address%interface'";
+            log::error!("{}", error_msg);
+            return Err(error_msg.into());
+        }
+
+        let ipv6_addr = parts[0].parse::<Ipv6Addr>().map_err(|e| {
+            let error_msg = format!("Invalid IPv6 address '{}': {}", parts[0], e);
+            log::error!("{}", error_msg);
+            error_msg
+        })?;
+
+        let interface_name = parts[1];
+
+        // Use pnet to get interface index
+        let interfaces = pnet_datalink::interfaces();
+        let interface = interfaces
+            .into_iter()
+            .find(|iface| iface.name == interface_name)
+            .ok_or_else(|| format!("Interface '{}' not found", interface_name))?;
+
+        let scope_id = interface.index;
+
+        // Verify it's a link-local address
+        if !ipv6_addr.is_unicast_link_local() {
+            let error_msg = "Address is not a link-local IPv6 address";
+            log::error!("{}", error_msg);
+            return Err(error_msg.into());
+        }
+
+        let port = self
+            .session
+            .read()
+            .unwrap()
+            .retransmission_port
+            .try_into()
+            .map_err(|_| {
+                let error_msg = "Invalid port number for IPv6 socket";
+                log::error!("{}", error_msg);
+                error_msg
+            })?;
+
+        // Create the socket address
+        let socket_addr = SocketAddrV6::new(ipv6_addr, port, 0, scope_id);
+
+        // Create and bind the MIO UDP socket
+        let socket = mio::net::UdpSocket::bind(SocketAddr::V6(socket_addr)).map_err(|e| {
+            let error_msg = format!("Failed to bind IPv6 socket to {}: {}", socket_addr, e);
+            log::error!("{}", error_msg);
+            error_msg
+        })?;
+
+        // Get the command sender
+        let command_sender = self.command_sender.as_ref().ok_or_else(|| {
+            let error_msg = "Command sender not initialized. Call start first.";
+            log::error!("{}", error_msg);
+            error_msg
+        })?;
+
+        // Send the add socket command
+        command_sender
+            .send(Command::AddSocket(socket, ReceiverType::WifiAware))
+            .map_err(|e| {
+                let error_msg = format!("Failed to send add socket command: {}", e);
+                log::error!("{}", error_msg);
+                error_msg
+            })?;
+
+        info!(
+            "Added IPv6 link-local socket for {} on port {}",
+            ipv6_interface, port
+        );
+        Ok(())
+    }
+
+    /// Setup gRPC connection and session keys
+    async fn setup_grpc_connection(
+        &self,
+        ip: &str,
+        ec_key: EcKey<Private>,
+    ) -> Result<Channel, Box<dyn std::error::Error>> {
+        // Create channel
+        let channel = self.create_channel(ip).await?;
+
+        // Resolve IPv4 address
+        if let Ok(addr) = self.resolve_ipv4_std(ip) {
+            info!("Resolved IPv4 address: {}", addr);
+            self.session.write().unwrap().server_ip = addr.to_string();
+        }
+
+        // Get client certificate
+        self.setup_client_certificate(&channel, ec_key).await?;
+
+        // Get session keys
+        self.setup_session_keys(&channel).await?;
+
+        // Get current timestamp
+        self.setup_timestamp(&channel).await?;
+
+        Ok(channel)
+    }
+
+    /// Create a gRPC channel to the server
+    async fn create_channel(&self, ip: &str) -> Result<Channel, Box<dyn std::error::Error>> {
+        let tls_config = ClientTlsConfig::new()
+            .ca_certificate(Certificate::from_pem(&CA_PUBLIC_CERTIFICATE))
+            .domain_name(ip);
+
+        let channel_url = format!("https://{}:50051", ip);
+
+        let channel = Channel::builder(channel_url.parse()?)
+            .tls_config(tls_config)?
+            .keep_alive_timeout(Duration::from_secs(10))
+            .keep_alive_while_idle(true)
+            .http2_keep_alive_interval(Duration::from_secs(10))
+            .keep_alive_timeout(Duration::from_secs(10))
+            .connect()
+            .await?;
+
+        info!("Connected to GRPC Server at {}", ip);
+        Ok(channel)
+    }
+
+    fn resolve_ipv4_std(&self, hostname: &str) -> Result<Ipv4Addr, Box<dyn std::error::Error>> {
+        if hostname.trim().is_empty() {
+            return Err("Hostname cannot be empty".into());
+        }
+
+        let port = 0;
+        let addr_iter = (hostname, port).to_socket_addrs()?;
+
+        for addr in addr_iter {
+            if let std::net::IpAddr::V4(ipv4) = addr.ip() {
+                return Ok(ipv4);
+            }
+        }
+
+        Err(format!("No IPv4 address found for hostname '{}'", hostname).into())
+    }
+
+    async fn setup_client_certificate(
+        &self,
+        channel: &Channel,
+        ec_key: EcKey<Private>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut connection = CertificateServiceClient::new(channel.clone());
+
+        let pkey = PKey::from_ec_key(ec_key.clone()).unwrap();
+        let request = utils::mk_request(&pkey).unwrap();
+        let csr_vec = request.to_pem().unwrap();
+        let csr_request = CertificateRequest { csr: csr_vec };
+
+        let response = connection.sign_certificate(csr_request).await.unwrap();
+        let signed_cert = response.into_inner().signed_cert;
+
+        let mut session = self.session.write().unwrap();
+        session.client_ec_certificate = signed_cert;
+        session.client_ec_key = Some(ec_key);
+
+        Ok(())
+    }
+
+    async fn setup_session_keys(
+        &self,
+        channel: &Channel,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let mut connection = KeyServiceClient::new(channel.clone());
+        let key_response = connection.request_current_key(RequestKey {}).await.unwrap();
+        let response = key_response.into_inner();
+
+        let mut session = self.session.write().unwrap();
+        session.current_key = response.current_key.unwrap();
+        session.next_key = response.next_key.unwrap();
+        session.ec_server_certificate = response.certificate;
+
+        let biggy_back_data = response.biggy_back_data.unwrap();
+        session.epoch = biggy_back_data.epoch;
+        session.client_reporting_interval = biggy_back_data.client_reporting_interval;
+        session.client_sliding_window = biggy_back_data.client_sliding_window;
+        session.retransmission_port = biggy_back_data.retransmission_port;
+        session.unicast_port = biggy_back_data.unicast_port;
+        session.multicast_address = biggy_back_data.multicast_address;
+        session.multicast_port = biggy_back_data.multicast_port;
+
+        info!("Session keys configured successfully");
+        Ok(())
+    }
+
+    async fn setup_timestamp(&self, channel: &Channel) -> Result<(), Box<dyn std::error::Error>> {
+        let mut connection = NtsServiceClient::new(channel.clone());
+        let start_time = Instant::now();
+        let stamp_response = connection
+            .get_current_timestamp(TimestampRequest {})
+            .await
+            .unwrap();
+        let end_time = Instant::now();
+
+        let rtt = end_time.duration_since(start_time);
+        let timestamp_str = stamp_response.into_inner().timestamp;
+        let mut server_time = DateTime::parse_from_rfc3339(&timestamp_str).unwrap();
+        server_time = server_time - chrono::Duration::from_std(rtt / 2).unwrap();
+
+        self.session.write().unwrap().server_time = server_time;
+        info!("Server time synchronized: {}", server_time);
+        Ok(())
+    }
+
+    fn start_receiver_thread(
+        &mut self,
+        data_receiver_sender: crossbeam_channel::Sender<(ReceiverType, Vec<u8>)>,
+        command_receiver: crossbeam_channel::Receiver<Command>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let shutdown_flag = Arc::clone(&self.shutdown_flag);
+
+        let handle = thread::spawn(move || {
+            let server =
+                DynamicReceiver::new(data_receiver_sender, command_receiver, shutdown_flag);
+
+            let mut server = match server {
+                Ok(s) => s,
+                Err(e) => {
+                    error!("Failed to create DynamicReceiver: {}", e);
+                    return;
+                }
+            };
+
+            if let Err(e) = server.run() {
+                error!("Receiver server error: {}", e);
+            }
+            info!("Receiver thread shutting down");
+        });
+
+        self.thread_handles.write().unwrap().push(handle);
+        Ok(())
+    }
+
+    fn start_decoder_thread(
+        &mut self,
+        data_receiver_receiver: crossbeam_channel::Receiver<(ReceiverType, Vec<u8>)>,
+        decoded_data_sender: crossbeam_channel::Sender<Vec<u8>>,
+        client_report_sender: crossbeam_channel::Sender<proto::ClientReport>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let shutdown_flag = Arc::clone(&self.shutdown_flag);
+        let session = Arc::clone(&self.session);
+        let channel = self.channel.as_ref().unwrap().clone();
+
+        let handle = thread::spawn(move || {
+            decoder::start(
+                data_receiver_receiver,
+                decoded_data_sender,
+                client_report_sender,
+                shutdown_flag,
+                session,
+                channel,
+            );
+            info!("Decoder thread shutting down");
+        });
+
+        self.thread_handles.write().unwrap().push(handle);
+        Ok(())
+    }
+
+    fn start_report_thread(
+        &mut self,
+        client_report_receiver: crossbeam_channel::Receiver<proto::ClientReport>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let shutdown_flag = Arc::clone(&self.shutdown_flag);
+        let session = Arc::clone(&self.session);
+
+        let handle = thread::spawn(move || {
+            // Get server configuration
+            let (server_ip, retransmission_port) = {
+                match session.read() {
                     Ok(session_config) => (
                         session_config.server_ip.clone(),
                         session_config.retransmission_port,
@@ -426,150 +411,82 @@ pub fn start_client(ip: &String) -> Result<Receiver<Vec<u8>>, Box<dyn std::error
                         error!("Failed to read session config in report thread: {}", e);
                         return;
                     }
-                },
-                None => {
-                    error!("Session not initialized in report thread");
-                    return;
                 }
-            }
-        };
+            };
 
-        // Create the destination address for the report sink
-        let report_sink_dst =
-            match format!("{}:{}", server_ip, retransmission_port).parse::<SocketAddr>() {
-                Ok(addr) => addr,
+            let report_sink_dst =
+                match format!("{}:{}", server_ip, retransmission_port).parse::<SocketAddr>() {
+                    Ok(addr) => addr,
+                    Err(e) => {
+                        error!("Failed to parse report sink address: {}", e);
+                        return;
+                    }
+                };
+
+            let socket = match std::net::UdpSocket::bind("0.0.0.0:0") {
+                Ok(socket) => socket,
                 Err(e) => {
-                    error!("Failed to parse report sink address: {}", e);
+                    error!("Couldn't bind to address for client reports: {}", e);
                     return;
                 }
             };
 
-        // Bind to any available port
-        let socket = match std::net::UdpSocket::bind("0.0.0.0:0") {
-            Ok(socket) => socket,
-            Err(e) => {
-                error!("Couldn't bind to address for client reports: {}", e);
-                return;
-            }
-        };
-
-        match socket.local_addr() {
-            Ok(addr) => info!("Client report socket bound to: {}", addr),
-            Err(e) => error!("Failed to get local address: {}", e),
-        }
-
-        for report in client_report_receiver.iter() {
-            // Check for shutdown signal
-            if shutdown_flag_report.load(Ordering::Relaxed) {
-                info!("Client report thread shutting down gracefully");
-                break;
+            if let Ok(addr) = socket.local_addr() {
+                info!("Client report socket bound to: {}", addr);
             }
 
-            let compressed = compress_data(&report.encode_to_vec());
+            for report in client_report_receiver.iter() {
+                if shutdown_flag.load(Ordering::Relaxed) {
+                    info!("Client report thread shutting down gracefully");
+                    break;
+                }
 
-            // Use a reference to avoid moving report_sink_dst
-            if let Err(e) = socket.send_to(&compressed, &report_sink_dst) {
-                error!("Failed to send UDP message: {}", e);
-                // Continue with next report instead of panicking
+                let compressed = compress_data(&report.encode_to_vec());
+                if let Err(e) = socket.send_to(&compressed, &report_sink_dst) {
+                    error!("Failed to send UDP message: {}", e);
+                }
             }
-        }
-    });
+            info!("Report thread shutting down");
+        });
 
-    // Spawn a separate thread for joining and returning the sender
-    // let shutdown_flag_coordinator = Arc::clone(SHUTDOWN_FLAG.get().unwrap());
-    // thread::spawn(move || {
-    //     // Periodically check if shutdown was requested
-    //     loop {
-    //         if shutdown_flag_coordinator.load(Ordering::Relaxed) {
-    //             info!("Coordinator thread detected shutdown signal, waiting for threads to finish");
-    //             break;
-    //         }
-    //         thread::sleep(Duration::from_millis(100));
-    //     }
-
-    //     // Join all the threads to ensure they complete before returning
-    //     receiver_handler.join().expect("receiver_handler panicked");
-    //     decoder_handler.join().expect("decoder_handler panicked");
-    //     report_handler.join().expect("client_session panicked");
-
-    //     info!("All client threads have been shut down successfully");
-    // });
-
-    Ok(decoded_data_receiver)
-}
-
-/// Add an IPv6 link-local socket from an interface string
-/// The `ipv6_interface` parameter should be in the format "ipv6-address%interface"
-/// For example: "fe80::1%eth0" or "fe80::1234:5678:9abc:def0%wlan0"
-pub fn add_socket(ipv6_interface: &str) -> Result<(), Box<dyn std::error::Error>> {
-    // Parse the IPv6 address and interface
-    let parts: Vec<&str> = ipv6_interface.split('%').collect();
-    if parts.len() != 2 {
-        let error_msg = "Invalid IPv6 link-local format. Expected 'ipv6-address%interface'";
-        log::error!("{}", error_msg);
-        return Err(error_msg.into());
+        self.thread_handles.write().unwrap().push(handle);
+        Ok(())
     }
 
-    let ipv6_addr = parts[0].parse::<Ipv6Addr>().map_err(|e| {
-        let error_msg = format!("Invalid IPv6 address '{}': {}", parts[0], e);
-        log::error!("{}", error_msg);
-        error_msg
-    })?;
-    let _interface = parts[1]; // Keep for potential future use
+    fn setup_multicast_socket(
+        &self,
+        command_sender: &crossbeam_channel::Sender<Command>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let session = self.session.read().unwrap();
+        let multicast_ip = session.multicast_address.clone();
+        let multicast_port = session.multicast_port;
+        drop(session);
 
-    // Verify it's a link-local address
-    if !ipv6_addr.is_unicast_link_local() {
-        let error_msg = "Address is not a link-local IPv6 address";
-        log::error!("{}", error_msg);
-        return Err(error_msg.into());
+        let multicast_addr =
+            format!("{}:{}", multicast_ip, multicast_port).parse::<SocketAddr>()?;
+        let multicast_socket = mio::net::UdpSocket::bind(multicast_addr)?;
+        let multicast_ip_parsed = multicast_ip.parse::<Ipv4Addr>()?;
+
+        multicast_socket.join_multicast_v4(&multicast_ip_parsed, &Ipv4Addr::UNSPECIFIED)?;
+        command_sender.send(Command::AddSocket(
+            multicast_socket,
+            ReceiverType::Multicast,
+        ))?;
+
+        info!("Multicast socket setup complete");
+        Ok(())
     }
 
-    let session_config = SESSION.get().ok_or_else(|| {
-        let error_msg = "Session configuration not initialized. Call start_client first.";
-        log::error!("{}", error_msg);
-        error_msg
-    })?;
+    fn setup_unicast_socket(
+        &self,
+        command_sender: &crossbeam_channel::Sender<Command>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        let unicast_port = self.session.read().unwrap().unicast_port;
+        let unicast_addr = format!("0.0.0.0:{}", unicast_port).parse::<SocketAddr>()?;
+        let unicast_socket = mio::net::UdpSocket::bind(unicast_addr)?;
 
-    let port = session_config
-        .read()
-        .unwrap()
-        .retransmission_port
-        .try_into()
-        .map_err(|_| {
-            let error_msg = "Invalid port number for IPv6 socket";
-            log::error!("{}", error_msg);
-            error_msg
-        })?;
-
-    // Create the socket address
-    let socket_addr = SocketAddrV6::new(ipv6_addr, port, 0, 0);
-
-    // Create and bind the MIO UDP socket
-    let socket = mio::net::UdpSocket::bind(SocketAddr::V6(socket_addr)).map_err(|e| {
-        let error_msg = format!("Failed to bind IPv6 socket to {}: {}", socket_addr, e);
-        log::error!("{}", error_msg);
-        error_msg
-    })?;
-
-    // Get the command sender
-    let command_sender = COMMAND_SENDER.get().ok_or_else(|| {
-        let error_msg = "Command sender not initialized. Call start_client first.";
-        log::error!("{}", error_msg);
-        error_msg
-    })?;
-
-    // Send the add socket command with key for tracking
-    command_sender
-        .send(Command::AddSocket(socket, ReceiverType::WifiAware))
-        .map_err(|e| {
-            let error_msg = format!("Failed to send add socket command: {}", e);
-            log::error!("{}", error_msg);
-            error_msg
-        })?;
-
-    info!(
-        "Added IPv6 link-local socket for {} on port {}",
-        ipv6_interface, port
-    );
-    Ok(())
+        command_sender.send(Command::AddSocket(unicast_socket, ReceiverType::Unicast))?;
+        info!("Unicast socket bound to: {}", unicast_addr);
+        Ok(())
+    }
 }

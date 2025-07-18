@@ -158,12 +158,15 @@ public class MainActivity extends AppCompatActivity {
         android.content.SharedPreferences prefs = getSharedPreferences("wifi_aware_settings", Context.MODE_PRIVATE);
         boolean wifiAwareEnabled = prefs.getBoolean("wifi_aware_enabled", true);
         
-        // Set up network initialization callback via AppContainer
+        // Initialize WiFi Aware immediately after permissions are granted
+        initializeWifiAwareNetwork(wifiAwareEnabled);
+        
+        // Set up network initialization callback via AppContainer for server-dependent features
         AppContainer.getInstance().setNetworkInitializationCallback(() -> {
             // This will be called when the Rust client successfully connects to server
             runOnUiThread(() -> {
-                Toast.makeText(MainActivity.this, "Server connected! Initializing WiFi Aware...", Toast.LENGTH_SHORT).show();
-                initializeWifiAwareNetwork(wifiAwareEnabled);
+                Toast.makeText(MainActivity.this, "Server connected! Ready for streaming...", Toast.LENGTH_SHORT).show();
+                // Any server-dependent initialization can go here
             });
         });
 
@@ -172,16 +175,17 @@ public class MainActivity extends AppCompatActivity {
     }
     
     private void initializeWifiAwareNetwork(boolean wifiAwareEnabled) {
-        // Start WiFi Aware with NetworkInitializer only if enabled and permissions granted
-        if (wifiAwareEnabled && PermissionHandler.areAllPermissionsGranted(this)) {
+        // Always start WiFi Aware if permissions are granted (ignoring the setting)
+        if (PermissionHandler.areAllPermissionsGranted(this)) {
             wifiAwareNetwork = new NetworkInitializer(getApplicationContext());
+            
+            // Initialize the Wi-Fi Aware functionality
+            wifiAwareNetwork.initialize();
             
             // Store in AppContainer for access by other components
             AppContainer.getInstance().setNetworkInitializer(wifiAwareNetwork);
 
-            Toast.makeText(this, "WiFi Aware initialized after server connection", Toast.LENGTH_SHORT).show();
-        } else if (!wifiAwareEnabled) {
-            Toast.makeText(this, "WiFi Aware is disabled in settings", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "WiFi Aware initialized at startup", Toast.LENGTH_SHORT).show();
         } else {
             Toast.makeText(this, "WiFi Aware requires all permissions to function", Toast.LENGTH_LONG).show();
         }
@@ -226,6 +230,8 @@ public class MainActivity extends AppCompatActivity {
         
         // Clean up WiFi Aware
         if (wifiAwareNetwork != null) {
+            wifiAwareNetwork.destroy();
+            wifiAwareNetwork = null;
         }
         
         // Stop Rust service

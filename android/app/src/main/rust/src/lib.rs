@@ -9,11 +9,16 @@ pub mod android {
     use jni::sys::jint;
     use jni::JNIEnv;
     use log::info;
+    use once_cell::sync::OnceCell;
+    use std::sync::Once;
+
+    // Static variable to hold the iris client instance
+    static CLIENT: OnceCell<iris_client::Client> = OnceCell::new();
+
+    /// Initializes the logging system for Android.
+    static INIT: Once = Once::new();
 
     fn init_logging() {
-        use std::sync::Once;
-        static INIT: Once = Once::new();
-
         INIT.call_once(|| {
             // Initialize Android logger
             android_logger::init_once(
@@ -50,9 +55,9 @@ pub mod android {
             }));
 
             log::info!("IrisClient logging and panic handling initialized for Android");
-        }
-    );
+        });
     }
+
     #[no_mangle]
     pub extern "system" fn Java_pt_iris_services_RustService_startClient(
         mut env: JNIEnv,
@@ -78,9 +83,9 @@ pub mod android {
         info!("Starting client with URL: {}", url_str);
 
         // Try to start the client and send result
-        let client_result = iris_client::start_client(&url_str);
+        let mut client = iris_client::Client::new();
 
-        match client_result {
+        match client.start(&url_str) {
             Ok(client) => {
                 info!("Successfully connected to server");
 
@@ -115,6 +120,15 @@ pub mod android {
             }
         }
 
+        // SAFETY: CLIENT is a static variable, so we can safely set it
+        match CLIENT.set(client) {
+            Ok(_) => jni::sys::JNI_TRUE,
+            Err(_) => {
+                log::error!("Failed to set iris client in static variable");
+                return jni::sys::JNI_FALSE;
+            }
+        };
+
         jni::sys::JNI_TRUE
     }
 
@@ -124,7 +138,15 @@ pub mod android {
         _class: JClass,
     ) {
         log::info!("Stopping iris client...");
-        iris_client::shutdown_client();
+        // SAFETY: CLIENT is a static variable, so we can safely access it
+        if let Some(client) = CLIENT.get() {
+            // Call your internal shutdown method if needed
+            client.shutdown(); // or any other method you provide
+            log::info!("Iris client shutdown requested");
+        } else {
+            log::info!("No active client to stop");
+        }
+
         log::info!("Iris client shutdown requested");
     }
 
@@ -145,7 +167,16 @@ pub mod android {
 
         log::info!("Adding socket for IP: {}", ip_str);
 
-        match iris_client::add_socket(&ip_str) {
+        // SAFETY: CLIENT is a static variable, so we can safely access it
+        let client = match CLIENT.get() {
+            Some(client) => client,
+            None => {
+                log::error!("Iris client is not initialized");
+                return;
+            }
+        };
+
+        match client.add_interface(&ip_str) {
             Ok(_) => log::info!("Successfully added socket for IP: {}", ip_str),
             Err(e) => log::error!("Failed to add socket for IP {}: {:?}", ip_str, e),
         }

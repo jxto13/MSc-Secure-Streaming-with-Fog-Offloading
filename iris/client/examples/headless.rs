@@ -1,28 +1,26 @@
 use clap::{arg, Command};
 use log::{error, info};
 use std::error::Error;
-use std::io;
+use std::io::{self, Read};
 use std::net::IpAddr;
 use std::net::ToSocketAddrs;
 use std::path::PathBuf;
+use std::sync::mpsc;
+use std::thread;
 use tracing_subscriber::fmt;
 
 fn main() -> Result<(), Box<dyn Error>> {
-    // Initialize the logger
-    // env_logger::builder()
-    //     .filter_level(log::LevelFilter::Debug)
-    //     .format_target(true)
-    //     .format_timestamp_millis()
+    // tracing_subscriber::fmt()
+    //     .with_max_level(tracing::Level::TRACE)
     //     .init();
 
-    tracing_subscriber::fmt()
-        // all spans/events with a level higher than TRACE (e.g, info, warn, etc.)
-        // will be written to stdout.
-        .with_max_level(tracing::Level::TRACE)
-        // sets this to be the default, global collector for this application.
+    // Init the logger
+    env_logger::builder()
+        .filter_level(log::LevelFilter::Debug)
+        .format_target(true)
+        .format_timestamp_millis()
         .init();
 
-    // Define the command structure
     let cmd = Command::new("streaming_server")
         .version("0.1.0")
         .author("Joaquim Oliveira <up201908075@up.pt>")
@@ -34,16 +32,38 @@ fn main() -> Result<(), Box<dyn Error>> {
                 .help("Path to the configuration file"),
         );
 
-    // Parse command-line arguments
     let matches = cmd.get_matches();
     let ip_path = matches.get_one::<PathBuf>("ip").expect("required argument");
 
-    // Convert &PathBuf to &String
     let ip_str: &str = ip_path.to_str().expect("Invalid UTF-8 in path");
     let ip_string: String = ip_str.to_string();
 
-    // Attempt to start the receiver
-    let receiver = match iris_client::start_client(&ip_string) {
+    // Channel for ESC signal
+    let (stop_tx, stop_rx) = mpsc::channel::<()>();
+
+    // Spawn thread to listen for ESC key
+    thread::spawn(move || {
+        let stdin = io::stdin();
+        let mut handle = stdin.lock();
+        let mut buffer = [0; 1];
+
+        loop {
+            if let Ok(_) = handle.read_exact(&mut buffer) {
+                if buffer[0] == 27 {
+                    // ESC key
+                    info!("ESC pressed. Sending stop signal.");
+                    let _ = stop_tx.send(()); // Ignore send error
+                    break;
+                }
+            }
+        }
+    });
+
+    // Start client
+
+    let mut client = iris_client::Client::new();
+
+    let receiver = match client.start(&ip_string) {
         Ok(receiver) => receiver,
         Err(e) => {
             error!("Failed to start receiver: {}", e);
@@ -51,7 +71,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     };
 
-    for _item in receiver {}
+    for item in receiver {
+        if stop_rx.try_recv().is_ok() {
+            info!("Stop signal received. Shutting down receiver...");
+            client.shutdown();
+            break;
+        }
+
+        // Process item if needed
+    }
 
     Ok(())
 }

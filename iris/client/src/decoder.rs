@@ -12,7 +12,7 @@ use std::error::Error;
 use std::io::Cursor;
 use std::sync::{
     atomic::{AtomicBool, Ordering},
-    Arc,
+    Arc, RwLock,
 };
 use std::time::Duration;
 
@@ -29,8 +29,8 @@ use crate::proto::{
     VideoData, XorPacket,
 };
 use crate::receiver::{ReceiverType, RetransmissionCounters};
-use crate::CHANNEL;
-use crate::SESSION;
+use crate::session::ClientSession;
+use tonic::transport::Channel;
 
 use super::proto::{key_service_client::KeyServiceClient, ClientReport};
 
@@ -41,8 +41,9 @@ fn update_buffer_matrices_with_keys(
     buffer: &mut VecDeque<MatrixTracker>,
     current_key: &SessionKey,
     next_key: &Option<SessionKey>,
+    session: &Arc<RwLock<ClientSession>>,
 ) {
-    let session_config = SESSION.get().unwrap().read().unwrap();
+    let session_config = session.read().unwrap();
     let epoch = session_config.epoch;
 
     for tracker in buffer.iter_mut() {
@@ -452,15 +453,16 @@ fn process_packet(
     packet: TransmissionPacket,
     current_key: &mut SessionKey,
     next_key: &mut Option<SessionKey>,
+    session: &Arc<RwLock<ClientSession>>,
 ) {
-    let session_config = SESSION.get().unwrap().read().unwrap();
+    let session_config = session.read().unwrap();
 
     // Check if the buffer is empty
     if buffer.is_empty() {
         // Create a new tracker for the packet
         let mut matrix = MatrixTracker::new(&packet);
         // Check if the matrix index is a multiple of the epoch and rotate the key if necessary
-        check_key_rotation(&mut matrix, &packet, current_key, next_key);
+        check_key_rotation(&mut matrix, &packet, current_key, next_key, session);
         // Set the session key to the matrix
         matrix.session_key = Some(current_key.clone());
         // Add the matrix to the buffer
@@ -490,7 +492,7 @@ fn process_packet(
                 let mut matrix = MatrixTracker::new(&packet);
 
                 // Check if the matrix index is a multiple of the epoch and rotate the key if necessary
-                check_key_rotation(&mut matrix, &packet, current_key, next_key);
+                check_key_rotation(&mut matrix, &packet, current_key, next_key, session);
 
                 // Set the session key to the matrix
                 matrix.session_key = Some(current_key.clone());
@@ -532,9 +534,10 @@ fn check_key_rotation(
     packet: &TransmissionPacket,
     current_key: &mut SessionKey,
     next_key: &mut Option<SessionKey>,
+    session: &Arc<RwLock<ClientSession>>,
 ) {
     // Get the session config
-    let session_config = SESSION.get().unwrap().read().unwrap();
+    let session_config = session.read().unwrap();
 
     // Check if the matrix index is a multiple of the epoch
     if matrix.matrix_index % session_config.epoch == 0 {
@@ -603,10 +606,12 @@ pub fn start(
     decode_data_sender: Sender<Vec<u8>>,
     client_report_sender: Sender<ClientReport>,
     shutdown_flag: Arc<AtomicBool>,
+    session: Arc<RwLock<ClientSession>>,
+    channel: Channel,
 ) {
     let mut buffer: VecDeque<MatrixTracker> = VecDeque::new();
 
-    let session_config = SESSION.get().unwrap().read().unwrap();
+    let session_config = session.read().unwrap();
 
     // Public Key from Server to verify packets signature
     let x509_public_key = X509::from_pem(&session_config.ec_server_certificate)
@@ -733,7 +738,7 @@ pub fn start(
                                 log::debug!("Missing packets: {:?} - {:?}", item.matrix_index, item.missing_indexes());
 
                                 // Decode the matrix to the application layer
-                                match decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key) {
+                                match decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key, &session, &channel) {
                                     Ok(keys_were_updated) => {
                                         if keys_were_updated {
                                             any_keys_updated = true;
@@ -750,7 +755,7 @@ pub fn start(
                                 info!("Keys were updated during decoding, updating remaining matrices in buffer and session keys");
 
                                 // Get the latest keys from the global session (they were updated in request_updated_keys_sync)
-                                let session_config = SESSION.get().unwrap().read().unwrap();
+                                let session_config = session.read().unwrap();
                                 let updated_current_key = session_config.current_key.clone();
                                 let updated_next_key = session_config.next_key.clone();
                                 drop(session_config); // Release the lock
@@ -760,7 +765,7 @@ pub fn start(
                                 next_key_session = Some(updated_next_key.clone());
 
                                 // Update all remaining matrices in the buffer with appropriate keys based on epoch
-                                update_buffer_matrices_with_keys(&mut buffer, &updated_current_key, &Some(updated_next_key));
+                                update_buffer_matrices_with_keys(&mut buffer, &updated_current_key, &Some(updated_next_key), &session);
                             }
 
                         }
@@ -816,7 +821,7 @@ pub fn start(
                         // Validate the packet signature, if invalid, skip the packet
                         if validate_packet(&mut transmission, &x509_public_key) {
                             // Process the packet if valid
-                            process_packet(&mut buffer, transmission, &mut current_key_session, &mut next_key_session);
+                            process_packet(&mut buffer, transmission, &mut current_key_session, &mut next_key_session, &session);
                         } else {
                             // Invalid packet, skip
                             continue;
@@ -881,6 +886,8 @@ fn decode_to_app_layer(
     tracker: &mut MatrixTracker,
     decode_data_sender: &Sender<Vec<u8>>,
     x509_public_key: &EcKeyRef<Public>,
+    session: &Arc<RwLock<ClientSession>>,
+    channel: &Channel,
 ) -> Result<bool, Box<dyn Error>> {
     // Returns true if keys were updated
     // Logic to remove FEC rows and columns
@@ -922,7 +929,7 @@ fn decode_to_app_layer(
                     );
 
                     // Try to request updated keys from the server
-                    match request_updated_keys_sync() {
+                    match request_updated_keys_sync(&channel, &session) {
                         Ok((new_current_key, _new_next_key)) => {
                             info!("Successfully received updated keys from server, retrying decryption");
 
@@ -995,20 +1002,18 @@ fn decode_to_app_layer(
 }
 
 /// Request updated keys from the server synchronously
-fn request_updated_keys_sync() -> Result<(SessionKey, SessionKey), Box<dyn Error>> {
-    // Get the gRPC channel
-    let channel_lock = CHANNEL.get().ok_or("gRPC channel not initialized")?;
-    let channel_guard = channel_lock.read().unwrap();
-    let channel = channel_guard
-        .as_ref()
-        .ok_or("gRPC channel not connected")?
-        .clone();
+fn request_updated_keys_sync(
+    channel: &Channel,
+    session: &Arc<RwLock<ClientSession>>,
+) -> Result<(SessionKey, SessionKey), Box<dyn Error>> {
+    // Use the provided channel directly
+    let channel_clone = channel.clone();
 
     // Create a runtime for this synchronous context
     let rt = Runtime::new()?;
 
     rt.block_on(async {
-        let mut client = KeyServiceClient::new(channel);
+        let mut client = KeyServiceClient::new(channel_clone);
 
         // Request current keys
         let response = client
@@ -1026,12 +1031,10 @@ fn request_updated_keys_sync() -> Result<(SessionKey, SessionKey), Box<dyn Error
             .ok_or("Server did not provide next key")?;
 
         // Update the global session with the new keys
-        if let Some(session) = SESSION.get() {
-            let mut session_guard = session.write().unwrap();
-            session_guard.current_key = current_key.clone();
-            session_guard.next_key = next_key.clone();
-            info!("Updated global session with new keys from server");
-        }
+        let mut session_guard = session.write().unwrap();
+        session_guard.current_key = current_key.clone();
+        session_guard.next_key = next_key.clone();
+        info!("Updated global session with new keys from server");
 
         Ok((current_key, next_key))
     })

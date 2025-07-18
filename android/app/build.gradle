@@ -63,22 +63,6 @@ android {
             }
         }
     }
-
-    // Define the source and destination paths
-    def srcPath = '../../iris/certs/ca_certificate.pem'
-    def destPath = 'src/main/assets' // This is an example path inside the APK
-
-    // Task to copy the certificate file
-    task copyCertificate(type: Copy) {
-        from srcPath
-        into destPath // Destination directory in your APK structure
-        rename { String fileName ->
-            "ca_certificate.pem" // Rename if necessary
-        }
-    }
-
-    // Ensure the copy task runs before assembling the APK
-    preBuild.dependsOn(copyCertificate)
 }
 
 
