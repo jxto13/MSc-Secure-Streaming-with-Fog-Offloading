@@ -1,4 +1,5 @@
 
+
 package pt.iris.ui.streaming;
 
 import android.content.Context;
@@ -284,7 +285,7 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 		Map<PeerHandle, DataPathInfo> current = wifiAwareConnections.getValue();
 		if (current != null) {
 			current.put(peerHandle, peerInfo);
-			wifiAwareConnections.postValue(new ConcurrentHashMap<>(current));
+			wifiAwareConnections.postValue(new java.util.concurrent.ConcurrentHashMap<>(current));
 		}
 	}
 
@@ -298,6 +299,18 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 		}
 	}
 
+	/**
+	 * Connect to a discovered peer by PeerHandle (manual connect from UI)
+	 */
+	public void connectToPeer(PeerHandle peerHandle) {
+		if (networkInitializer != null) {
+			// Always try as master initiator for simplicity (or add role logic if needed)
+			networkInitializer.getWifiAwareLibrary().establishDataPath(peerHandle, true);
+			Log.d("StreamingViewModel", "Requested connection to peer: " + peerHandle);
+		} else {
+			Log.w("StreamingViewModel", "NetworkInitializer is null, cannot connect to peer");
+		}
+	}
 
 	// Add this method to expose peer roles to the UI and force UI update when changed
 	public Map<PeerHandle, WifiAwareModels.DeviceRole> getPeerRoles() {

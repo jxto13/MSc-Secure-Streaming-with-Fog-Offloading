@@ -268,43 +268,7 @@ public class WifiAwareLibrary {
 
                 // Notify callbacks about peer discovery
                 wifiAwareCallback.onPeerDiscovered(peerHandle);
-
-                // Extract peer UUID from serviceSpecificInfo and determine role
-                try {
-                    if (serviceSpecificInfo == null || serviceSpecificInfo.length != 16) {
-                        throw new IllegalArgumentException("serviceSpecificInfo is not a valid UUID byte array");
-                    }
-                    long msb = 0;
-                    long lsb = 0;
-                    for (int i = 0; i < 8; i++) msb = (msb << 8) | (serviceSpecificInfo[i] & 0xff);
-                    for (int i = 8; i < 16; i++) lsb = (lsb << 8) | (serviceSpecificInfo[i] & 0xff);
-                    UUID peerUuid = new UUID(msb, lsb);
-                    Log.d(TAG, "Discovered peer UUID: " + peerUuid + ", my UUID: " + deviceUUID);
-                    DeviceRole role = determineRole(deviceUUID, peerUuid);
-                    peerRoles.put(peerHandle, role);
-                    peerUuids.put(peerHandle, peerUuid);
-                    Log.d(TAG, "Determined role for peer " + peerHandle + ": " + role + ". (my UUID: " + deviceUUID + ", peer UUID: " + peerUuid + ")");
-                    wifiAwareCallback.onRoleChanged(role);
-                    // If SLAVE, send a message to the peer to trigger connection from MASTER
-                    if (role == DeviceRole.SLAVE) {
-                        try {
-                            byte[] msg = "ready".getBytes();
-                            if (subscribeSession != null) {
-                                subscribeSession.sendMessage(peerHandle, 0, msg);
-                                Log.d(TAG, "SLAVE sent 'ready' message to peer " + peerHandle + " via subscribeSession");
-                            } else if (publishSession != null) {
-                                publishSession.sendMessage(peerHandle, 0, msg);
-                                Log.d(TAG, "SLAVE sent 'ready' message to peer " + peerHandle + " via publishSession");
-                            } else {
-                                Log.w(TAG, "No active session to send 'ready' message as SLAVE to peer: " + peerHandle);
-                            }
-                        } catch (Exception ex) {
-                            Log.e(TAG, "SLAVE failed to send 'ready' message to peer: " + peerHandle + ", error: " + ex.getMessage(), ex);
-                        }
-                    }
-                } catch (Exception e) {
-                    Log.w(TAG, "Failed to parse peer UUID from serviceSpecificInfo for peer " + peerHandle + ": " + e.getMessage(), e);
-                }
+                // No automatic role assignment or connection. Let user trigger connect.
 
             }
 
@@ -332,53 +296,9 @@ public class WifiAwareLibrary {
     // Helper to send a message to a peer
 
 
-    /**
-     * Attempt to connect to a peer as master, with retry logic.
-     * @param peerHandle The peer to connect to
-     * @param attempt The current attempt number (0-based)
-     */
-    private void tryConnectToPeerWithRetry(PeerHandle peerHandle, int attempt) {
-        int currentAttempt = connectionRetryCounts.getOrDefault(peerHandle, 0);
-        if (activeConnections.containsKey(peerHandle)) {
-            Log.d(TAG, "[AWARE] Already connected to peer: " + peerHandle + ", skipping connection attempt.");
-            connectionRetryCounts.remove(peerHandle);
-            return;
-        }
-        if (currentAttempt >= MAX_RETRIES) {
-            Log.w(TAG, "[AWARE] Max connection retries reached for peer: " + peerHandle);
-            notifyError("Max connection retries reached for peer: " + peerHandle);
-            connectionRetryCounts.remove(peerHandle);
-            return;
-        }
-        Log.d(TAG, "[AWARE] tryConnectToPeerWithRetry: Attempt " + (currentAttempt + 1) + " to connect to peer: " + peerHandle);
-        connectionRetryCounts.put(peerHandle, currentAttempt + 1);
-        // Use the PeerHandle from discovery directly
-        establishDataPath(peerHandle, true);
-        // Schedule retry if not connected after delay
-        handler.postDelayed(() -> {
-            if (!activeConnections.containsKey(peerHandle)) {
-                Log.d(TAG, "[AWARE] Retry connection to peer: " + peerHandle + ", attempt: " + (connectionRetryCounts.getOrDefault(peerHandle, 0) + 1));
-                tryConnectToPeerWithRetry(peerHandle, connectionRetryCounts.getOrDefault(peerHandle, 0));
-            } else {
-                connectionRetryCounts.remove(peerHandle);
-            }
-        }, RETRY_DELAY_MS);
-    }
-
     private void handleMessageReceived(PeerHandle peerHandle, byte[] message) {
-        // Always determine role using cached UUID mapping, since PeerHandle equality is reference-based
-        Log.d(TAG, "Received message from " + peerHandle + ". Checking/caching UUID and role for connection attempt.");
-        UUID peerUuid = peerUuids.get(peerHandle);
-        if (peerUuid == null) {
-            Log.w(TAG, "No UUID cached for this PeerHandle. Cannot determine role. Aborting connection attempt.");
-            return;
-        }
-        DeviceRole role = determineRole(deviceUUID, peerUuid);
-        Log.d(TAG, "Role for peer " + peerHandle + " is " + role + ".");
-        if (role == DeviceRole.MASTER) {
-            Log.d(TAG, "I am MASTER for peer " + peerHandle + " (from message exchange), initiating tryConnectToPeerWithRetry...");
-            tryConnectToPeerWithRetry(peerHandle, 0);
-        }
+        // No automatic connection on message received. Let user trigger connect.
+        Log.d(TAG, "Received message from " + peerHandle + ". No auto-connect. Waiting for user action.");
     }
 
 
@@ -586,15 +506,6 @@ public class WifiAwareLibrary {
         Log.e(TAG, error);
         wifiAwareCallback.onError(error);
 
-        // Retry connection only for peers where this device is master
-        for (PeerHandle peer : discoveredPeers.keySet()) {
-            if (peerRoles.getOrDefault(peer, DeviceRole.UNKNOWN) == DeviceRole.MASTER) {
-                int attempt = connectionRetryCounts.getOrDefault(peer, 0) + 1;
-                if (attempt <= MAX_RETRIES) {
-                    handler.postDelayed(() -> tryConnectToPeerWithRetry(peer, attempt), RETRY_DELAY_MS);
-                }
-            }
-        }
     }
 
 

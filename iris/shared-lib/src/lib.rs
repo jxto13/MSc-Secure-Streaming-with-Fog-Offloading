@@ -448,6 +448,13 @@ pub mod bandwidth_utils {
             }
         }
 
+        /// Call this periodically (e.g., once per second) to reset timers and update rates.
+        pub fn tick(&self) {
+            for mut entry in self.clients.iter_mut() {
+                entry.value_mut().reset_if_needed();
+            }
+        }
+
         /// Checks if a packet can be sent for the client without sending it.
         pub fn can_send(&self, client_id: &[u8], packet_size: usize) -> bool {
             let mut entry = self

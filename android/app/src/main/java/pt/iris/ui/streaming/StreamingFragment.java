@@ -61,21 +61,27 @@ public class StreamingFragment extends Fragment {
                 showConnectionDetails(connection);
             }
 
-            
             @Override
             public void onConnectPeer(DataPathInfo peer) {
+                // Only allow connect if peer is publisher-discovered (not subscriber)
+                // If DataPathInfo or peer has a flag/role, check it here. Otherwise, always allow (UI will only show publisher peers)
                 Log.d("StreamingFragment", "onConnectPeer called for peer: " + peer.peerHandle);
-                
-                // Only allow connections if stream is connected
-                // No action needed; manual connect is disabled and handled automatically by master.
+                if (getContext() == null || !isAdded()) return;
+                new AlertDialog.Builder(getContext())
+                        .setTitle("Connect to Peer")
+                        .setMessage("Do you want to connect to this peer?\n" + peer.peerHandle)
+                        .setPositiveButton("Connect", (dialog, which) -> {
+                            streamingViewModel.connectToPeer(peer.peerHandle);
+                            Toast.makeText(getContext(), "Connecting to peer...", Toast.LENGTH_SHORT).show();
+                        })
+                        .setNegativeButton("Cancel", null)
+                        .show();
             }
         });
         
         // Update adapter when network connections change
         streamingViewModel.getWifiAwareConnections().observe(getViewLifecycleOwner(), connections -> {
-            // Also get peer roles from the viewmodel
-            java.util.Map<android.net.wifi.aware.PeerHandle, pt.iris.network.lib.WifiAwareModels.DeviceRole> peerRoles = streamingViewModel.getPeerRoles();
-            adapter.updateConnections(connections, peerRoles);
+            adapter.updateConnections(connections);
         });
         
         // Update adapter when session info changes
@@ -90,47 +96,7 @@ public class StreamingFragment extends Fragment {
         });
     }
 
-    private boolean isWifiAwareRelatedLog(String log) {
-        // Filter logs to show only WiFi Aware and related logs
-        String logLower = log.toLowerCase();
-        return logLower.contains("wifiaware") || 
-               logLower.contains("wifi aware") ||
-               logLower.contains("wifiawarelibrary") ||
-               logLower.contains("wifiawaredatapathstmgr") ||
-               logLower.contains("wifiawaredatapathstatemanager") ||
-               logLower.contains("wifiawarediscoverysession") ||
-               logLower.contains("wifiaware:") ||
-               logLower.contains("nan") ||
-               logLower.contains("networkspecifier") ||
-               logLower.contains("data path") ||
-               logLower.contains("peer") ||
-               logLower.contains("discovery session") ||
-               logLower.contains("publishing") ||
-               logLower.contains("subscribing") ||
-               logLower.contains("connection") ||
-               logLower.contains("cluster") ||
-               logLower.contains("attach") ||
-               logLower.contains("session terminated") ||
-               logLower.contains("service discovered") ||
-               logLower.contains("service lost") ||
-               logLower.contains("role changed") ||
-               logLower.contains("error");
-    }
-    
-    private void updateLogsDisplay(TextView logsTextView) {
-        List<String> logs = streamingViewModel.getConnectionLogs().getValue();
-        if (logs != null && !logs.isEmpty()) {
-            StringBuilder logsText = new StringBuilder();
-            for (String log : logs) {
-                if (isWifiAwareRelatedLog(log)) {
-                    logsText.append(log).append("\n");
-                }
-            }
-            logsTextView.setText(logsText.toString());
-        } else {
-            logsTextView.setText("Connecting to peer...\n");
-        }
-    }
+
     
     private void setupUI() {
         // Stream URI connection controls
@@ -270,7 +236,5 @@ public class StreamingFragment extends Fragment {
         Log.d("StreamingFragment", "Peer stats: " + details);
     }
     
-    // Removed showConnectDialog (manual connect is not needed)
-    
-    // Removed showDisconnectDialog (disconnect not implemented)
+
 }

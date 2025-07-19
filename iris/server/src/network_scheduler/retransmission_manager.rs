@@ -64,7 +64,7 @@ struct RetransmissionKey {
 }
 
 /// Manages retransmission strategy across multiple phases and matrices
-/// 
+///
 /// The RetransmissionManager coordinates between multicast and unicast phases,
 /// tracks what has been sent to avoid duplicates, and uses network coding
 /// to efficiently recover missing packets.
@@ -81,10 +81,10 @@ pub struct RetransmissionManager {
 
 impl RetransmissionManager {
     /// Creates a new RetransmissionManager with the given phase configuration
-    /// 
+    ///
     /// # Arguments
     /// * `phases` - Vector of phase configurations. Must not be empty.
-    /// 
+    ///
     /// # Panics
     /// Panics if phases vector is empty
     pub fn new(phases: Vec<PhaseConfig>) -> Self {
@@ -98,7 +98,7 @@ impl RetransmissionManager {
     }
 
     /// Advances to the next enabled phase, skipping disabled ones
-    /// 
+    ///
     /// Cycles through all phases and increments the round counter
     /// when returning to phase 0. Only stops at enabled phases.
     fn advance_phase(&mut self) {
@@ -118,15 +118,15 @@ impl RetransmissionManager {
     }
 
     /// Determines if a packet can be retransmitted based on when it was last sent
-    /// 
+    ///
     /// Prevents sending the same packet multiple times in the same phase/round
     /// to avoid wasting bandwidth.
-    /// 
+    ///
     /// # Arguments
     /// * `last_sent` - Information about when this packet was last sent
     /// * `current_phase_index` - Current phase index
     /// * `current_round` - Current round number
-    /// 
+    ///
     /// # Returns
     /// `true` if the packet can be retransmitted, `false` otherwise
     fn can_retransmit(
@@ -140,13 +140,13 @@ impl RetransmissionManager {
     }
 
     /// Creates a PacketWrapper for a regular transmission packet
-    /// 
+    ///
     /// Wraps a transmission packet in the retransmission packet structure
     /// for sending over the network.
-    /// 
+    ///
     /// # Arguments
     /// * `packet` - The transmission packet to wrap
-    /// 
+    ///
     /// # Returns
     /// A PacketWrapper ready for network transmission
     fn create_transmission_packet(
@@ -161,18 +161,18 @@ impl RetransmissionManager {
     }
 
     /// Creates a signed XOR packet for network coding retransmission
-    /// 
+    ///
     /// Combines two packet indices into an XOR packet that allows clients
     /// with exactly one of the two packets to recover the missing one.
     /// The packet is cryptographically signed for authenticity.
-    /// 
+    ///
     /// # Arguments
     /// * `matrix_id` - ID of the matrix these packets belong to
     /// * `i` - Index of the first packet
     /// * `j` - Index of the second packet  
     /// * `recovery_shard` - The Reed-Solomon encoded XOR data
     /// * `ec_key` - Private key for signing the packet
-    /// 
+    ///
     /// # Returns
     /// Result containing the PacketWrapper or an error message
     fn create_xor_packet(
@@ -209,15 +209,15 @@ impl RetransmissionManager {
     }
 
     /// Encodes two packet shards using Reed-Solomon for XOR recovery
-    /// 
+    ///
     /// Takes two packet payloads, pads them to the same size, and creates
     /// a Reed-Solomon recovery shard that can reconstruct either packet
     /// if the other is known.
-    /// 
+    ///
     /// # Arguments
     /// * `shard_i` - First packet payload
     /// * `shard_j` - Second packet payload
-    /// 
+    ///
     /// # Returns
     /// Result containing the recovery shard or an error message
     fn encode_xor_shards(&self, shard_i: Vec<u8>, shard_j: Vec<u8>) -> Result<Vec<u8>, String> {
@@ -258,11 +258,11 @@ impl RetransmissionManager {
     }
 
     /// Handles the multicast phase of retransmissions
-    /// 
+    ///
     /// In the multicast phase, we send retransmissions to all clients simultaneously.
     /// This is efficient when multiple clients are missing the same packets.
     /// Uses network coding (XOR packets) when beneficial.
-    /// 
+    ///
     /// # Arguments
     /// * `client_sessions` - Session manager containing client state
     /// * `multicast_tx` - Channel for sending multicast packets
@@ -475,10 +475,10 @@ impl RetransmissionManager {
                 let missing_indices = client_sessions::find_zero_indices(&row_vector);
 
                 if missing_indices.is_empty() {
-                    debug!(
-                        "No missing indices for client {} in matrix {}, skipping.",
-                        client_index, matrix_id
-                    );
+                    // debug!(
+                    //     "No missing indices for client {} in matrix {}, skipping.",
+                    //     client_index, matrix_id
+                    // );
                     continue;
                 }
 
@@ -576,12 +576,12 @@ impl RetransmissionManager {
     }
 
     /// Main entry point for handling retransmissions across all phases
-    /// 
+    ///
     /// This method runs continuously, cycling through enabled phases and
     /// sending retransmissions based on client feedback. It coordinates
     /// between multicast and unicast phases according to the configured
     /// phase schedule.
-    /// 
+    ///
     /// # Arguments
     /// * `client_sessions` - Session manager containing client state and feedback
     /// * `multicast_tx` - Channel for sending multicast retransmissions
@@ -609,7 +609,7 @@ impl RetransmissionManager {
         // Main retransmission loop
         for _ in interval_ticker {
             let phase_config = self.phases[self.phase_index];
-            
+
             // Skip disabled phases
             if !phase_config.enabled {
                 self.advance_phase();
@@ -638,23 +638,23 @@ impl RetransmissionManager {
 }
 
 /// Computes optimal retransmission actions based on client feedback
-/// 
+///
 /// This function analyzes the network coding matrix (which shows what packets
 /// each client has received) and determines the most efficient retransmission
 /// strategy. It considers both individual packet retransmissions and network
 /// coding (XOR) opportunities.
-/// 
+///
 /// Key improvements over previous version:
 /// - Does not modify the input matrix (preserves real client state)
 /// - Properly calculates XOR benefit (only helps clients with exactly one packet)
 /// - Uses bandwidth efficiently by comparing strategies
 /// - Respects already_sent to avoid duplicates
-/// 
+///
 /// # Arguments
 /// * `network_coding_matrix` - Matrix showing packet reception status per client
 ///   (1 = received, 0 = missing)
 /// * `already_sent` - Set of actions already taken in this phase/round
-/// 
+///
 /// # Returns
 /// Vector of recommended SendActions for this retransmission round
 pub fn compute_retransmissions(
@@ -664,7 +664,6 @@ pub fn compute_retransmissions(
     let num_clients = network_coding_matrix.rows();
     let num_packets = network_coding_matrix.cols();
     let mut sent_packets = Vec::new();
-
     let sent_set = already_sent.clone();
 
     // Count missing packets per column (how many clients are missing each packet)
@@ -677,88 +676,73 @@ pub fn compute_retransmissions(
         }
     }
 
+    // Only consider packets that are missing for at least one client
+    let mut needed_packets: Vec<usize> = (0..num_packets)
+        .filter(|&idx| missing_count[idx] > 0 && !sent_set.contains(&SendAction::Packet(idx)))
+        .collect();
+
     // If all packets are received by all clients, nothing to do
-    if missing_count.iter().all(|&x| x == 0) {
+    if needed_packets.is_empty() {
         return sent_packets;
     }
 
-    // Strategy 1: Find the most-needed individual packet
-    // This is the packet missing by the most clients
-    let mut max_idx = None;
-    let mut max_val = 0;
-    for (idx, &val) in missing_count.iter().enumerate() {
-        if val > max_val && !sent_set.contains(&SendAction::Packet(idx)) {
-            max_val = val;
-            max_idx = Some(idx);
-        }
-    }
-
-    // Strategy 2: Look for beneficial XOR opportunities
-    // An XOR(i,j) helps clients that have exactly one of {i,j} but not both
-    // This is more efficient than sending both packets individually
+    // Strategy: Send up to 5 most-needed packets in multicast, plus best XOR if it helps more clients
+    // 1. Find the best XOR opportunity
     let mut best_xor = None;
     let mut best_xor_benefit = 0;
-    
     for i in 0..num_packets {
+        if missing_count[i] == 0 {
+            continue;
+        }
         for j in (i + 1)..num_packets {
-            // Skip if we've already sent this XOR combination
+            if missing_count[j] == 0 {
+                continue;
+            }
             if sent_set.contains(&SendAction::Xor(i, j)) {
                 continue;
             }
-            
-            // Count how many clients would benefit from XOR(i,j)
             let mut xor_benefit = 0;
             for row in 0..num_clients {
                 let has_i = network_coding_matrix[(row, i)] == 1;
                 let has_j = network_coding_matrix[(row, j)] == 1;
-                
-                // Client benefits if they have exactly one of the two packets
-                // They can use XOR to recover the missing one
                 if (has_i && !has_j) || (!has_i && has_j) {
                     xor_benefit += 1;
                 }
             }
-            
-            // Track the best XOR opportunity
-            if xor_benefit > best_xor_benefit {
+            if xor_benefit > 0 && xor_benefit > best_xor_benefit {
                 best_xor_benefit = xor_benefit;
                 best_xor = Some((i, j));
             }
         }
     }
 
-    // Strategy 3: Make the optimal decision based on effectiveness
-    // Compare XOR benefit vs individual packet benefit and choose the best
-    if let Some((i, j)) = best_xor {
-        // Send XOR if it helps more clients than the best individual packet
-        if best_xor_benefit > max_val {
-            sent_packets.push(SendAction::Xor(i, j));
-        } else if let Some(idx) = max_idx {
-            sent_packets.push(SendAction::Packet(idx));
+    // 2. Sort needed packets by how many clients are missing them (descending)
+    let mut needed_sorted: Vec<_> = needed_packets
+        .iter()
+        .map(|&idx| (idx, missing_count[idx]))
+        .collect();
+    needed_sorted.sort_by(|a, b| b.1.cmp(&a.1));
+
+    // 3. Add up to 5 most-needed packets (not already sent in this batch)
+    let max_multicast_packets = 5;
+    for (idx, _val) in needed_sorted.iter().take(max_multicast_packets) {
+        if !sent_packets.contains(&SendAction::Packet(*idx)) {
+            sent_packets.push(SendAction::Packet(*idx));
         }
-    } else if let Some(idx) = max_idx {
-        // No beneficial XOR found, send the most-needed individual packet
-        sent_packets.push(SendAction::Packet(idx));
     }
 
-    // Strategy 4: Use remaining bandwidth for additional packets
-    // If we have capacity and there are more packets that would help,
-    // add the second most needed packet to maximize efficiency
-    if sent_packets.len() < 2 {
-        let mut second_max_idx = None;
-        let mut second_max_val = 0;
-        for (idx, &val) in missing_count.iter().enumerate() {
-            if val > second_max_val 
-                && val < max_val  // Must be less than the first choice
-                && !sent_set.contains(&SendAction::Packet(idx))  // Not already sent
-                && !sent_packets.contains(&SendAction::Packet(idx))  // Not in current batch
+    // 4. If best XOR helps more clients than the most-needed packet, replace the first packet with XOR
+    if let Some((i, j)) = best_xor {
+        let top_packet_benefit = needed_sorted.first().map(|x| x.1).unwrap_or(0);
+        if best_xor_benefit > top_packet_benefit {
+            // Remove the first packet if present
+            if let Some(first_idx) = sent_packets
+                .iter()
+                .position(|a| matches!(a, SendAction::Packet(_)))
             {
-                second_max_val = val;
-                second_max_idx = Some(idx);
+                sent_packets.remove(first_idx);
             }
-        }
-        if let Some(idx) = second_max_idx {
-            sent_packets.push(SendAction::Packet(idx));
+            sent_packets.insert(0, SendAction::Xor(i, j));
         }
     }
 

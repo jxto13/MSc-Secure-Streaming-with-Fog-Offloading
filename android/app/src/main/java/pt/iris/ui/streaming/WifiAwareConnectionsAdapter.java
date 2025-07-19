@@ -39,10 +39,9 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
         this.listener = listener;
     }
     
-    public void updateConnections(Map<PeerHandle, DataPathInfo> connectionsMap, Map<PeerHandle, pt.iris.network.lib.WifiAwareModels.DeviceRole> peerRolesRaw) {
+    public void updateConnections(Map<PeerHandle, DataPathInfo> connectionsMap) {
         connections.clear();
         connections.addAll(connectionsMap.values());
-        // ...existing code...
         notifyDataSetChanged(); // Force UI refresh
     }
 

@@ -130,11 +130,11 @@ impl ClientSessions {
                                     as u64,
                             );
 
-                            log::debug!(
-                                "Updated latency estimate for client {:?}: {}ms",
-                                hex::encode(&report.client_id[..4]), // First 4 bytes for readability
-                                client_data.latency_estimate.as_millis()
-                            );
+                            // log::debug!(
+                            //     "Updated latency estimate for client {:?}: {}ms",
+                            //     hex::encode(&report.client_id[..4]), // First 4 bytes for readability
+                            //     client_data.latency_estimate.as_millis()
+                            // );
                         } else {
                             // If reports arrive early or on time, gradually reduce latency estimate
                             // This handles cases where network conditions improve
@@ -319,6 +319,12 @@ impl ClientSessions {
                 .with_label_values(&[&client_id_hex])
                 .set(self.get_client_packet_loss(&client));
 
+            // Set latency estimate for client
+            metrics
+                .client_metric(ClientMetric::LatencyEstimate)
+                .with_label_values(&[&client_id_hex])
+                .set(client.value().latency_estimate.as_millis() as f64);
+
             // Set counter for reports received from the client
             metrics
                 .client_metric(ClientMetric::MulticastRetransmissions)
@@ -334,6 +340,9 @@ impl ClientSessions {
                 .client_metric(ClientMetric::WifiAwareRetransmissions)
                 .with_label_values(&[&client_id_hex])
                 .set(client.value().metrics.wifi_aware_retransmissions as f64);
+
+            // Update the tick bandwidth manager for the client
+            self.client_bandwidth_manager.tick();
         }
     }
 
