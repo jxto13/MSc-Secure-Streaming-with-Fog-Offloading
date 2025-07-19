@@ -8,8 +8,7 @@ import android.net.wifi.aware.SubscribeDiscoverySession;
 import android.net.wifi.aware.WifiAwareSession;
 import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -22,23 +21,20 @@ import pt.iris.network.lib.WifiAwareModels.DeviceRole;
 @SuppressLint("MissingPermission")
 public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	private static final String TAG = "NetworkInitializer";
-	public static final String SERVICE_NAME = "Iris_Streaming_Service";
 
 	private final Context context;
 	private final WifiAwareLibrary wifiAwareLibrary;
 	private final CopyOnWriteArrayList<NetworkConnectionListener> listeners = new CopyOnWriteArrayList<>();
 	private UUID myUUID;
-	
-	// State tracking
+
 	private boolean isInitialized = false;
-	private boolean isPublishing = false;
-	private boolean isSubscribing = false;
+	private SubscribeDiscoverySession subscribeSession = null;
+	private PublishDiscoverySession publishSession = null;
 
 	public interface NetworkConnectionListener {
 		void onConnectionEstablished(String ipAddress, PeerHandle peerHandle);
 		void onConnectionLost(String ipAddress, PeerHandle peerHandle);
 		void onWifiAwareStateChanged(boolean available);
-		void onConnectionAttempt(String logMessage);
 		void onError(String error);
 		void onPeerDiscovered(PeerHandle peerHandle, DataPathInfo peerInfo);
 		void onPeerLost(PeerHandle peerHandle);
@@ -50,10 +46,7 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 		this.context = context;
 		this.wifiAwareLibrary = new WifiAwareLibrary(context);
 		this.myUUID = UUID.randomUUID();
-		
-		// Register this class as a callback for Wi-Fi Aware events
 		wifiAwareLibrary.addCallback(this);
-		
 		Log.d(TAG, "NetworkInitializer created with UUID: " + myUUID);
 	}
 
@@ -70,21 +63,18 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 			Log.d(TAG, "Already initialized");
 			return;
 		}
-
 		if (!wifiAwareLibrary.isWifiAwareSupported()) {
 			String error = "Wi-Fi Aware not supported on this device";
 			Log.e(TAG, error);
 			notifyError(error);
 			return;
 		}
-
 		if (!wifiAwareLibrary.isWifiAwareAvailable()) {
 			String error = "Wi-Fi Aware not currently available";
 			Log.w(TAG, error);
 			notifyError(error);
 			return;
 		}
-
 		Log.d(TAG, "Initializing Wi-Fi Aware...");
 		wifiAwareLibrary.initialize();
 	}
@@ -94,7 +84,10 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 			Log.w(TAG, "Not initialized, cannot start publishing");
 			return;
 		}
+		if (publishSession != null) {
+			Log.d(TAG, "Already publishing, skipping duplicate publisher.");
 
+		}
 		Log.d(TAG, "Starting Wi-Fi Aware publishing...");
 		wifiAwareLibrary.startPublishing();
 	}
@@ -104,7 +97,10 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 			Log.w(TAG, "Not initialized, cannot start subscribing");
 			return;
 		}
-
+		if (subscribeSession != null) {
+			Log.d(TAG, "Already subscribing, skipping duplicate subscribe.");
+			return;
+		}
 		Log.d(TAG, "Starting Wi-Fi Aware subscribing...");
 		wifiAwareLibrary.startSubscribing();
 	}
@@ -117,11 +113,11 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	public Map<PeerHandle, DataPathInfo> getActiveConnections() {
 		return wifiAwareLibrary.getActiveConnections();
 	}
-	
+
 	public Map<PeerHandle, DataPathInfo> getAllPeers() {
 		return wifiAwareLibrary.getAllPeers();
 	}
-	
+
 	public WifiAwareLibrary getWifiAwareLibrary() {
 		return wifiAwareLibrary;
 	}
@@ -130,40 +126,16 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 		return wifiAwareLibrary.getWifiAwareStats();
 	}
 
-	public boolean isWifiAwareAvailable() {
-		return wifiAwareLibrary.isWifiAwareAvailable();
-	}
 
-	public boolean isInitialized() {
-		return isInitialized;
-	}
 
-	public boolean isPublishing() {
-		return isPublishing;
-	}
-
-	public boolean isSubscribing() {
-		return isSubscribing;
-	}
-
-	public UUID getDeviceUUID() {
-		return myUUID;
-	}
-
-	// WifiAwareLibrary.WifiAwareCallback implementation
 	@Override
 	public void onWifiAwareAvailable(boolean available) {
 		Log.d(TAG, "Wi-Fi Aware availability changed: " + available);
-		
 		for (NetworkConnectionListener listener : listeners) {
 			listener.onWifiAwareStateChanged(available);
 		}
-		
 		if (!available && isInitialized) {
-			// Clean up when Wi-Fi Aware becomes unavailable
 			isInitialized = false;
-			isPublishing = false;
-			isSubscribing = false;
 		}
 	}
 
@@ -171,37 +143,27 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	public void onSessionAttached(WifiAwareSession session) {
 		Log.d(TAG, "Wi-Fi Aware session attached successfully");
 		isInitialized = true;
-		
-		// Automatically start both publishing and subscribing
 		startBoth();
-		
-		// Notify session info change
 		notifySessionInfoChanged();
 	}
 
 	@Override
 	public void onPublishStarted(PublishDiscoverySession session) {
 		Log.d(TAG, "Wi-Fi Aware publishing started");
-		isPublishing = true;
 		notifySessionInfoChanged();
 	}
 
 	@Override
 	public void onSubscribeStarted(SubscribeDiscoverySession session) {
 		Log.d(TAG, "Wi-Fi Aware subscribing started");
-		isSubscribing = true;
 		notifySessionInfoChanged();
 	}
 
 	@Override
 	public void onServiceDiscovered(PeerHandle peerHandle, byte[] serviceSpecificInfo) {
 		Log.d(TAG, "Wi-Fi Aware service discovered: " + peerHandle);
-		
-		// Parse service specific info if needed
-		String info = new String(serviceSpecificInfo);
+		String info = new String(serviceSpecificInfo, StandardCharsets.UTF_8);
 		Log.d(TAG, "Service info: " + info);
-		
-		// Notify listeners about peer discovery
 		DataPathInfo peerInfo = new DataPathInfo(peerHandle);
 		for (NetworkConnectionListener listener : listeners) {
 			listener.onPeerDiscovered(peerHandle, peerInfo);
@@ -210,14 +172,14 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 
 	@Override
 	public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
-		String messageStr = new String(message);
+		String messageStr = new String(message, StandardCharsets.UTF_8);
 		Log.d(TAG, "Message received from " + peerHandle + ": " + messageStr);
+		// Placeholder for parsing structured messages in future
 	}
 
 	@Override
 	public void onConnectionEstablished(PeerHandle peerHandle, DataPathInfo dataPath) {
 		Log.d(TAG, "Wi-Fi Aware connection established: " + peerHandle + " -> " + dataPath.ipAddress);
-		
 		for (NetworkConnectionListener listener : listeners) {
 			listener.onConnectionEstablished(dataPath.ipAddress, peerHandle);
 		}
@@ -226,17 +188,17 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	@Override
 	public void onConnectionLost(PeerHandle peerHandle) {
 		Log.d(TAG, "Wi-Fi Aware connection lost: " + peerHandle);
-		
+		String ip = "";
+		DataPathInfo info = wifiAwareLibrary.getActiveConnections().get(peerHandle);
+		if (info != null) ip = info.ipAddress;
 		for (NetworkConnectionListener listener : listeners) {
-			listener.onConnectionLost("", peerHandle);
+			listener.onConnectionLost(ip, peerHandle);
 		}
 	}
 
 	@Override
 	public void onPeerDiscovered(PeerHandle peerHandle) {
 		Log.d(TAG, "Peer discovered: " + peerHandle);
-		
-		// Create peer info and notify listeners
 		DataPathInfo peerInfo = new DataPathInfo(peerHandle);
 		for (NetworkConnectionListener listener : listeners) {
 			listener.onPeerDiscovered(peerHandle, peerInfo);
@@ -246,8 +208,6 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	@Override
 	public void onPeerLost(PeerHandle peerHandle) {
 		Log.d(TAG, "Peer lost: " + peerHandle);
-		
-		// Notify listeners about peer loss
 		for (NetworkConnectionListener listener : listeners) {
 			listener.onPeerLost(peerHandle);
 		}
@@ -256,22 +216,11 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	@Override
 	public void onRoleChanged(DeviceRole newRole) {
 		Log.d(TAG, "Device role changed to: " + newRole);
-		
-		// Notify listeners about role change
 		for (NetworkConnectionListener listener : listeners) {
 			listener.onRoleChanged(newRole);
 		}
-		
-		// Also notify about session info change
-		if (wifiAwareLibrary != null) {
-			WifiAwareModels.SessionInfo sessionInfo = wifiAwareLibrary.getSessionInfo();
-			for (NetworkConnectionListener listener : listeners) {
-				listener.onSessionInfoChanged(sessionInfo);
-			}
-		}
+		notifySessionInfoChanged();
 	}
-
-	
 
 	@Override
 	public void onError(String error) {
@@ -284,7 +233,7 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 			listener.onError(error);
 		}
 	}
-	
+
 	private void notifySessionInfoChanged() {
 		if (wifiAwareLibrary != null) {
 			WifiAwareModels.SessionInfo sessionInfo = wifiAwareLibrary.getSessionInfo();
@@ -293,37 +242,18 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 			}
 		}
 	}
-	
-	public void clearConnectionLogs() {
-		if (wifiAwareLibrary != null) {
-			wifiAwareLibrary.clearConnectionLogs();
-		}
-	}
-	
-	public List<String> getConnectionLogs() {
-		if (wifiAwareLibrary != null) {
-			return wifiAwareLibrary.getConnectionLogs();
-		}
-		return new ArrayList<>();
-	}
 
 	public void cleanup() {
 		Log.d(TAG, "Cleaning up NetworkInitializer");
-		
 		isInitialized = false;
-		isPublishing = false;
-		isSubscribing = false;
-		
 		if (wifiAwareLibrary != null) {
 			wifiAwareLibrary.cleanup();
 		}
-		
 		listeners.clear();
 	}
 
 	public void destroy() {
 		cleanup();
-		
 		if (wifiAwareLibrary != null) {
 			wifiAwareLibrary.destroy();
 		}

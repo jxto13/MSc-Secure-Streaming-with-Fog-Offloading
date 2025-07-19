@@ -9,15 +9,14 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.core.content.ContextCompat;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.lang.reflect.Field;
 
 import pt.iris.R;
-import pt.iris.network.lib.WifiAwareModels;
 import pt.iris.network.lib.WifiAwareModels.DataPathInfo;
 import pt.iris.network.lib.WifiAwareModels.SessionInfo;
 
@@ -25,15 +24,14 @@ import pt.iris.network.lib.WifiAwareModels.SessionInfo;
  * RecyclerView adapter for displaying Wi-Fi Aware connections and discovered peers
  */
 public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareConnectionsAdapter.ConnectionViewHolder> {
-    
     private List<DataPathInfo> connections = new ArrayList<>();
     private OnConnectionClickListener listener;
     private SessionInfo sessionInfo;
     private boolean connectionsEnabled = false;
+    // ...existing code...
     
     public interface OnConnectionClickListener {
         void onConnectionClick(DataPathInfo connection);
-        void onConnectionLongClick(DataPathInfo connection);
         void onConnectPeer(DataPathInfo peer);
     }
     
@@ -41,12 +39,13 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
         this.listener = listener;
     }
     
-    public void updateConnections(Map<PeerHandle, DataPathInfo> connectionsMap) {
+    public void updateConnections(Map<PeerHandle, DataPathInfo> connectionsMap, Map<PeerHandle, pt.iris.network.lib.WifiAwareModels.DeviceRole> peerRolesRaw) {
         connections.clear();
         connections.addAll(connectionsMap.values());
-        notifyDataSetChanged();
+        // ...existing code...
+        notifyDataSetChanged(); // Force UI refresh
     }
-    
+
     public void updateSessionInfo(SessionInfo sessionInfo) {
         this.sessionInfo = sessionInfo;
         notifyDataSetChanged();
@@ -99,7 +98,7 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
     @Override
     public void onBindViewHolder(@NonNull ConnectionViewHolder holder, int position) {
         DataPathInfo connection = connections.get(position);
-        holder.bind(connection, sessionInfo);
+        holder.bind(connection, sessionInfo, null);
     }
 
     
@@ -108,6 +107,19 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
         return connections.size();
     }
     
+    // Helper to extract mPeerId from PeerHandle via reflection
+    private Integer getPeerId(PeerHandle peerHandle) {
+        if (peerHandle == null) return null;
+        try {
+            Field field = PeerHandle.class.getDeclaredField("mPeerId");
+            field.setAccessible(true);
+            return field.getInt(peerHandle);
+        } catch (Exception e) {
+            Log.w("WifiAwareAdapter", "Failed to get peerId from PeerHandle: " + e);
+            return null;
+        }
+    }
+
     class ConnectionViewHolder extends RecyclerView.ViewHolder {
         private final TextView peerHandleText;
         private final TextView statusText;
@@ -140,50 +152,45 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
                 }
             });
             
-            itemView.setOnLongClickListener(v -> {
-                if (listener != null && getAdapterPosition() != RecyclerView.NO_POSITION) {
-                    listener.onConnectionLongClick(connections.get(getAdapterPosition()));
-                    return true;
-                }
-                return false;
-            });
+
         }
+
         
-        public void bind(DataPathInfo connection, SessionInfo sessionInfo) {
-            // Display truncated peer handle with status
-            String peerHandleStr = connection.peerHandle.toString();
-            if (peerHandleStr.length() > 10) {
-                peerHandleStr = "Peer: " + peerHandleStr.substring(peerHandleStr.length() - 6);
+        public void bind(DataPathInfo connection, SessionInfo sessionInfo, pt.iris.network.lib.WifiAwareModels.DeviceRole unusedRole) {
+            // Display peer UUID if available, otherwise fallback to peerHandle
+            String displayStr;
+            if (connection.peerUuid != null) {
+                String uuidStr = connection.peerUuid.toString();
+                displayStr = "UUID: " + uuidStr.substring(0, 8) + "...";
             } else {
-                peerHandleStr = "Peer: " + peerHandleStr;
+                String peerHandleStr = connection.peerHandle.toString();
+                if (peerHandleStr.length() > 10) {
+                    peerHandleStr = "Peer: " + peerHandleStr.substring(peerHandleStr.length() - 6);
+                } else {
+                    peerHandleStr = "Peer: " + peerHandleStr;
+                }
+                displayStr = peerHandleStr;
             }
-            peerHandleText.setText(peerHandleStr);
-            
+            peerHandleText.setText(displayStr);
+
             // Connection Status
             String connectionStatus = connection.getConnectionStatus();
             statusText.setText(connectionStatus);
             statusText.setTextColor(itemView.getContext().getColor(
                     connection.isConnected() ? android.R.color.holo_green_light : android.R.color.holo_orange_light));
-            
+
             // IP Address and role info
             String addressInfo = connection.getDisplayAddress();
-            if (sessionInfo != null) {
-                addressInfo += " | Role: " + sessionInfo.getRoleDisplayString();
-            }
             ipAddressText.setText(addressInfo);
-            
-            // Duration or session info
+            // ...existing code...
+
+            // Only display duration after connection
             if (connection.isConnected()) {
                 durationText.setText("Duration: " + connection.getDurationString());
-            } else if (!connectionsEnabled) {
-                durationText.setText("Connect to stream first to enable peer connections");
-            } else if (sessionInfo != null) {
-                durationText.setText("Publishing: " + (sessionInfo.isPublishing ? "Yes" : "No") + 
-                                   " | Subscribing: " + (sessionInfo.isSubscribing ? "Yes" : "No"));
             } else {
-                durationText.setText("Discovered - Not Connected");
+                durationText.setText("");
             }
-            
+
             // Update card background color based on status
             if (connection.isConnected()) {
                 itemView.setBackgroundColor(itemView.getContext().getColor(android.R.color.holo_green_light));

@@ -1,7 +1,7 @@
+
 package pt.iris.ui.streaming;
 
 import android.content.Context;
-import android.content.Intent;
 import android.net.Uri;
 import android.net.wifi.aware.PeerHandle;
 import android.os.ParcelFileDescriptor;
@@ -38,7 +38,9 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 	private final MutableLiveData<Map<PeerHandle, DataPathInfo>> wifiAwareConnections;
 	private final MutableLiveData<SessionInfo> wifiAwareSessionInfo;
 	private final MutableLiveData<List<String>> connectionLogs;
-	
+	// Add this field to track peer roles
+	private Map<PeerHandle, WifiAwareModels.DeviceRole> peerRoles = new ConcurrentHashMap<>();
+
 	private ExoPlayer player;
 	private ParcelFileDescriptor[] pipe;
 	private Timer statsTimer;
@@ -52,7 +54,7 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 		public double currentBitrate;
 		public int packetsLost;
 		public double packetLossRate;
-		public String wifiAwareDataPaths; // New field for WiFi Aware specific stats
+		public String wifiAwareDataPaths;
 
 		public NetworkStats() {
 			this.totalConnectedClients = 0;
@@ -184,7 +186,7 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 			stats.wifiAwareDataPaths = networkInitializer.getWifiAwareStats();
 			
 			// Update connected clients count based on Wi-Fi Aware connections
-			Map<PeerHandle, DataPathInfo> activeConnections = networkInitializer.getActiveConnections();
+			/*Map<PeerHandle, DataPathInfo> activeConnections = networkInitializer.getActiveConnections();
 			if (activeConnections != null) {
 				stats.totalConnectedClients = activeConnections.size();
 			}
@@ -193,7 +195,7 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 			Map<PeerHandle, DataPathInfo> allPeers = networkInitializer.getAllPeers();
 			if (allPeers != null) {
 				wifiAwareConnections.postValue(allPeers);
-			}
+			}*/
 			
 			// Update session info
 			updateSessionInfo();
@@ -230,27 +232,35 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 	public LiveData<List<String>> getConnectionLogs() {
 		return connectionLogs;
 	}
-	
-	public void clearConnectionLogs() {
-		connectionLogs.postValue(new ArrayList<>());
 
-	}
 
 	public ExoPlayer getPlayer() {
 		return player;
 	}
 
 	// NetworkConnectionListener implementation
+
 	@Override
 	public void onConnectionEstablished(String ipAddress, PeerHandle peerHandle) {
 		Log.d("StreamingViewModel", "Wi-Fi Aware connection established: " + ipAddress);
-		// Update will be handled by updateNetworkStats() through the timer
+		Map<PeerHandle, DataPathInfo> current = wifiAwareConnections.getValue();
+		if (current != null) {
+			DataPathInfo info = networkInitializer.getActiveConnections().get(peerHandle);
+			if (info != null) {
+				current.put(peerHandle, info);
+				wifiAwareConnections.postValue(new ConcurrentHashMap<>(current));
+			}
+		}
 	}
 
 	@Override
 	public void onConnectionLost(String ipAddress, PeerHandle peerHandle) {
 		Log.d("StreamingViewModel", "Wi-Fi Aware connection lost: " + ipAddress);
-		// Update will be handled by updateNetworkStats() through the timer
+		Map<PeerHandle, DataPathInfo> current = wifiAwareConnections.getValue();
+		if (current != null) {
+			current.remove(peerHandle);
+			wifiAwareConnections.postValue(new ConcurrentHashMap<>(current));
+		}
 	}
 
 	@Override
@@ -262,26 +272,6 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 		}
 	}
 
-	@Override
-	public void onConnectionAttempt(String logMessage) {
-		Log.d("StreamingViewModel", "Connection attempt: " + logMessage);
-		
-		// Add log to the list
-		List<String> logs = connectionLogs.getValue();
-		if (logs == null) {
-			logs = new ArrayList<>();
-		} else {
-			logs = new ArrayList<>(logs); // Create a new list to trigger observer
-		}
-		logs.add(logMessage);
-		
-		// Keep only the last 50 logs to prevent memory issues
-		if (logs.size() > 50) {
-			logs = logs.subList(logs.size() - 50, logs.size());
-		}
-		
-		connectionLogs.postValue(logs);
-	}
 
 	@Override
 	public void onError(String error) {
@@ -291,19 +281,52 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 	@Override
 	public void onPeerDiscovered(PeerHandle peerHandle, DataPathInfo peerInfo) {
 		Log.d("StreamingViewModel", "Peer discovered: " + peerHandle);
-		// Update will be handled by updateNetworkStats() through the timer
+		Map<PeerHandle, DataPathInfo> current = wifiAwareConnections.getValue();
+		if (current != null) {
+			current.put(peerHandle, peerInfo);
+			wifiAwareConnections.postValue(new ConcurrentHashMap<>(current));
+		}
 	}
 
 	@Override
 	public void onPeerLost(PeerHandle peerHandle) {
 		Log.d("StreamingViewModel", "Peer lost: " + peerHandle);
-		// Update will be handled by updateNetworkStats() through the timer
+		Map<PeerHandle, DataPathInfo> current = wifiAwareConnections.getValue();
+		if (current != null) {
+			current.remove(peerHandle);
+			wifiAwareConnections.postValue(new ConcurrentHashMap<>(current));
+		}
+	}
+
+
+	// Add this method to expose peer roles to the UI and force UI update when changed
+	public Map<PeerHandle, WifiAwareModels.DeviceRole> getPeerRoles() {
+		if (networkInitializer != null && networkInitializer.getWifiAwareLibrary() != null) {
+			// Get the up-to-date peerRoles map from the library
+			try {
+				java.lang.reflect.Field field = networkInitializer.getWifiAwareLibrary().getClass().getDeclaredField("peerRoles");
+				field.setAccessible(true);
+				Object value = field.get(networkInitializer.getWifiAwareLibrary());
+				if (value instanceof Map) {
+					//noinspection unchecked
+					peerRoles = new ConcurrentHashMap<>((Map<PeerHandle, WifiAwareModels.DeviceRole>) value);
+				}
+			} catch (Exception e) {
+				// fallback: keep previous peerRoles
+			}
+		}
+		// Do NOT force UI update here to avoid infinite loop
+		return peerRoles;
 	}
 
 	@Override
 	public void onRoleChanged(WifiAwareModels.DeviceRole newRole) {
 		Log.d("StreamingViewModel", "Role changed to: " + newRole);
 		updateSessionInfo();
+		// Force UI update for peer role change
+		if (wifiAwareConnections != null && wifiAwareConnections.getValue() != null) {
+			wifiAwareConnections.postValue(new ConcurrentHashMap<>(wifiAwareConnections.getValue()));
+		}
 	}
 
 	@Override
@@ -311,8 +334,6 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 		Log.d("StreamingViewModel", "Session info changed");
 		wifiAwareSessionInfo.postValue(sessionInfo);
 	}
-
-
 
 	public void connectToStream(Context context, Uri streamUri) {
 		// Initialize and configure the player with the provided URI
@@ -411,15 +432,6 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 		return "stream1.iris.dcc.fc.up.pt";
 	}
 	
-	/**
-	 * Connect to a discovered Wi-Fi Aware peer
-	 */
-	public void connectToPeer(PeerHandle peerHandle) {
-		if (networkInitializer != null && networkInitializer.getWifiAwareLibrary() != null) {
-			// Establish data path with the discovered peer
-			networkInitializer.getWifiAwareLibrary().establishDataPath(peerHandle, false);
-		}
-	}
 	
 	private void updateSessionInfo() {
 		if (networkInitializer != null && networkInitializer.getWifiAwareLibrary() != null) {

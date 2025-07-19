@@ -1,3 +1,4 @@
+
 package pt.iris.network.lib;
 
 import android.net.Network;
@@ -22,6 +23,7 @@ public class WifiAwareModels {
         public final long createdTime;
         public boolean isActive;
         public boolean isConnected;
+        public UUID peerUuid; // Add peer UUID for display
 
         public DataPathInfo(PeerHandle peerHandle, Network network, String ipAddress) {
             this.peerHandle = peerHandle;
@@ -30,6 +32,8 @@ public class WifiAwareModels {
             this.createdTime = System.currentTimeMillis();
             this.isActive = true;
             this.isConnected = true;
+            this.peerUuid = null;
+
         }
 
         // Constructor for discovered but not connected peers
@@ -40,6 +44,7 @@ public class WifiAwareModels {
             this.createdTime = System.currentTimeMillis();
             this.isActive = false;
             this.isConnected = false;
+            this.peerUuid = null;
         }
         
         public String getDisplayAddress() {
@@ -52,7 +57,7 @@ public class WifiAwareModels {
             }
             return ipAddress;
         }
-        
+
         public String getConnectionStatus() {
             if (!isConnected) {
                 return "Discovered";
@@ -86,20 +91,18 @@ public class WifiAwareModels {
      * Device capabilities for role negotiation
      */
     public static class DeviceCapabilities {
-        public final int availableInterfaces;
         public final int availableDataPaths;
-        public final UUID deviceUUID;
+        public UUID deviceUUID;
         public final long timestamp;
 
-        public DeviceCapabilities(int availableInterfaces, int availableDataPaths, UUID deviceUUID) {
-            this.availableInterfaces = availableInterfaces;
+        public DeviceCapabilities(int availableDataPaths, UUID deviceUUID) {
             this.availableDataPaths = availableDataPaths;
             this.deviceUUID = deviceUUID;
             this.timestamp = System.currentTimeMillis();
         }
 
         public boolean canBeMaster() {
-            return availableInterfaces > 0 && availableDataPaths > 0;
+            return availableDataPaths > 0;
         }
 
         public boolean canCreateConnection() {
@@ -108,8 +111,7 @@ public class WifiAwareModels {
 
         // Serialize capabilities to byte array for transmission
         public byte[] toBytes() {
-            ByteBuffer buffer = ByteBuffer.allocate(4 + 4 + 16 + 8); // int + int + UUID + long
-            buffer.putInt(availableInterfaces);
+            ByteBuffer buffer = ByteBuffer.allocate( 4 + 16 + 8); // int + int + UUID + long
             buffer.putInt(availableDataPaths);
             buffer.putLong(deviceUUID.getMostSignificantBits());
             buffer.putLong(deviceUUID.getLeastSignificantBits());
@@ -123,12 +125,11 @@ public class WifiAwareModels {
 
             ByteBuffer buffer = ByteBuffer.wrap(data);
             int interfaces = buffer.getInt();
-            int dataPaths = buffer.getInt();
             long uuidMost = buffer.getLong();
             long uuidLeast = buffer.getLong();
             UUID uuid = new UUID(uuidMost, uuidLeast);
 
-            return new DeviceCapabilities(interfaces, dataPaths, uuid);
+            return new DeviceCapabilities(interfaces, uuid);
         }
     }
 
@@ -206,51 +207,19 @@ public class WifiAwareModels {
      * Wi-Fi Aware session information including role and status
      */
     public static class SessionInfo {
-        public final DeviceRole myRole;
         public final SessionState sessionState;
-        public final boolean isPublishing;
-        public final boolean isSubscribing;
         public final int discoveredPeers;
         public final int connectedPeers;
         public final long sessionStartTime;
 
-        public SessionInfo(DeviceRole myRole, SessionState sessionState, 
-                          boolean isPublishing, boolean isSubscribing,
+        public SessionInfo(SessionState sessionState,
                           int discoveredPeers, int connectedPeers) {
-            this.myRole = myRole;
             this.sessionState = sessionState;
-            this.isPublishing = isPublishing;
-            this.isSubscribing = isSubscribing;
             this.discoveredPeers = discoveredPeers;
             this.connectedPeers = connectedPeers;
             this.sessionStartTime = System.currentTimeMillis();
         }
 
-        public String getRoleDisplayString() {
-            switch (myRole) {
-                case MASTER:
-                    return "Master";
-                case SLAVE:
-                    return "Slave";
-                default:
-                    return "Unknown";
-            }
-        }
-
-        public String getStatusDisplayString() {
-            StringBuilder status = new StringBuilder();
-            status.append(getRoleDisplayString());
-            
-            if (isPublishing && isSubscribing) {
-                status.append(" (Pub+Sub)");
-            } else if (isPublishing) {
-                status.append(" (Publisher)");
-            } else if (isSubscribing) {
-                status.append(" (Subscriber)");
-            }
-            
-            return status.toString();
-        }
     }
 
     /**

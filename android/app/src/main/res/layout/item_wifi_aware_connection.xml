@@ -24,7 +24,7 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text=""
+                android:text="Peer: ABCD"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:textColor="@android:color/white" />
@@ -33,39 +33,32 @@
                 android:id="@+id/statusText"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text=""
+                android:text="Status: UNKNOWN "
                 android:textSize="12sp"
                 android:textStyle="bold" />
 
         </LinearLayout>
 
+
         <TextView
             android:id="@+id/ipAddressText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text=""
+            android:text="IP: 127.0.0.1"
             android:textSize="12sp"
             android:textColor="@android:color/white"
             android:layout_marginTop="4dp"
             android:fontFamily="monospace" />
 
+
         <TextView
             android:id="@+id/durationText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text=""
+            android:text="Duration: 0s"
             android:textSize="11sp"
             android:textColor="@android:color/white"
             android:layout_marginTop="4dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="WiFi Aware Data Path"
-            android:textSize="10sp"
-            android:textColor="@android:color/white"
-            android:textStyle="italic"
-            android:layout_marginTop="2dp" />
 
     </LinearLayout>
 

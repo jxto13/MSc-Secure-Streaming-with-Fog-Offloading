@@ -52,7 +52,7 @@ public class StreamingFragment extends Fragment {
         WifiAwareConnectionsAdapter adapter = new WifiAwareConnectionsAdapter();
         binding.clientsRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.clientsRecyclerView.setAdapter(adapter);
-        
+
         // Set up click listeners for connections
         adapter.setOnConnectionClickListener(new WifiAwareConnectionsAdapter.OnConnectionClickListener() {
             @Override
@@ -60,34 +60,22 @@ public class StreamingFragment extends Fragment {
                 // Handle connection click (e.g., show details)
                 showConnectionDetails(connection);
             }
-            
-            @Override
-            public void onConnectionLongClick(DataPathInfo connection) {
-                // Handle long click (e.g., disconnect)
-                showDisconnectDialog(connection);
-            }
+
             
             @Override
             public void onConnectPeer(DataPathInfo peer) {
                 Log.d("StreamingFragment", "onConnectPeer called for peer: " + peer.peerHandle);
                 
                 // Only allow connections if stream is connected
-                Boolean isStreamConnected = streamingViewModel.getIsStreamConnected().getValue();
-                Log.d("StreamingFragment", "Stream connected status: " + isStreamConnected);
-                
-                if (isStreamConnected != null && isStreamConnected) {
-                    Log.d("StreamingFragment", "Showing connect dialog");
-                    showConnectDialog(peer);
-                } else {
-                    Log.d("StreamingFragment", "Stream not connected, showing toast");
-                    Toast.makeText(getContext(), "Please connect to a stream first before establishing peer connections", Toast.LENGTH_LONG).show();
-                }
+                // No action needed; manual connect is disabled and handled automatically by master.
             }
         });
         
         // Update adapter when network connections change
         streamingViewModel.getWifiAwareConnections().observe(getViewLifecycleOwner(), connections -> {
-            adapter.updateConnections(connections);
+            // Also get peer roles from the viewmodel
+            java.util.Map<android.net.wifi.aware.PeerHandle, pt.iris.network.lib.WifiAwareModels.DeviceRole> peerRoles = streamingViewModel.getPeerRoles();
+            adapter.updateConnections(connections, peerRoles);
         });
         
         // Update adapter when session info changes
@@ -264,69 +252,25 @@ public class StreamingFragment extends Fragment {
 
     private void showConnectionDetails(DataPathInfo connection) {
         if (getContext() == null || !isAdded()) {
-            Log.w("StreamingFragment", "Cannot show dialog - context is null or fragment not added");
+            Log.w("StreamingFragment", "Cannot show details - context is null or fragment not added");
             return;
         }
-        
         String connectionStatus = connection.getConnectionStatus();
         String details = "Peer: " + connection.peerHandle.toString() + "\n" +
                         "Status: " + connectionStatus + "\n" +
                         "Address: " + connection.getDisplayAddress();
-        
         if (connection.isConnected()) {
             details += "\nDuration: " + connection.getDurationString() + "\n" +
                       "Created: " + new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date(connection.createdTime));
         } else {
             details += "\nDiscovered but not connected";
         }
-        
-        Log.d("StreamingFragment", "Showing connection details dialog");
-        new AlertDialog.Builder(getContext())
-                .setTitle("Wi-Fi Aware Peer Details")
-                .setMessage(details)
-                .setPositiveButton("OK", null)
-                .show();
+        // Show stats in a Toast and log
+        Toast.makeText(getContext(), details, Toast.LENGTH_LONG).show();
+        Log.d("StreamingFragment", "Peer stats: " + details);
     }
     
-    private void showConnectDialog(DataPathInfo peer) {
-        if (getContext() == null || !isAdded()) {
-            Log.w("StreamingFragment", "Cannot show dialog - context is null or fragment not added");
-            return;
-        }
-        
-        Log.d("StreamingFragment", "Creating and showing connect dialog");
-        new AlertDialog.Builder(getContext())
-                .setTitle("Connect to Wi-Fi Aware Peer")
-                .setMessage("Would you like to establish a connection to this discovered peer?")
-                .setPositiveButton("Connect", (dialog, which) -> {
-                    Log.d("StreamingFragment", "User confirmed connection to peer");
-                    streamingViewModel.connectToPeer(peer.peerHandle);
-                    Toast.makeText(getContext(), "Attempting to connect to peer...", Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton("Cancel", (dialog, which) -> {
-                    Log.d("StreamingFragment", "User cancelled connection");
-                })
-                .show();
-    }
+    // Removed showConnectDialog (manual connect is not needed)
     
-    private void showDisconnectDialog(DataPathInfo connection) {
-        if (getContext() == null || !isAdded()) {
-            Log.w("StreamingFragment", "Cannot show dialog - context is null or fragment not added");
-            return;
-        }
-        
-        Log.d("StreamingFragment", "Creating and showing disconnect dialog");
-        new AlertDialog.Builder(getContext())
-                .setTitle("Disconnect Wi-Fi Aware Connection")
-                .setMessage("Are you sure you want to disconnect from this peer?")
-                .setPositiveButton("Disconnect", (dialog, which) -> {
-                    Log.d("StreamingFragment", "User confirmed disconnection");
-                    // TODO: Implement disconnect functionality
-                    Toast.makeText(getContext(), "Disconnect functionality not yet implemented", Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton("Cancel", (dialog, which) -> {
-                    Log.d("StreamingFragment", "User cancelled disconnection");
-                })
-                .show();
-    }
+    // Removed showDisconnectDialog (disconnect not implemented)
 }

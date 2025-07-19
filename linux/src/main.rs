@@ -12,8 +12,10 @@ fn main() -> Result<(), Box<dyn Error>> {
         .format_timestamp_millis()
         .init();
 
+    let mut client = iris_client::Client::new();
+
     // Attempt to start the receiver
-    let receiver = match iris_client::start_client(&"stream1.iris.dcc.fc.up.pt".to_string()) {
+    let receiver = match client.start(&"stream1.iris.dcc.fc.up.pt".to_string()) {
         Ok(receiver) => receiver,
         Err(e) => {
             error!("Failed to start receiver: {}", e);

@@ -697,12 +697,11 @@ pub fn start(
                         // Check if the buffer has more than one item
                         if buffer.len() > 1 {
 
-                            info!("Decoding to application layer...");
+                            // info!("Decoding to application layer...");
 
                             // Drain all elements except the last one
                             let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
 
-                            let mut any_keys_updated = false;
                             for mut item in drained {
 
                                 // Reconstruct the matrix
@@ -712,10 +711,8 @@ pub fn start(
 
                                 // Decode the matrix to the application layer
                                 match decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key, &session, &channel) {
-                                    Ok(keys_were_updated) => {
-                                        if keys_were_updated {
-                                            any_keys_updated = true;
-                                        }
+                                    Ok(_) => {
+                                        // If decoding was successful, we can consider the keys updated
                                     },
                                     Err(e) => {
                                         error!("Failed to decode matrix {}: {}", item.matrix_index, e);
@@ -843,7 +840,7 @@ fn decode_to_app_layer(
     x509_public_key: &EcKeyRef<Public>,
     session: &Arc<RwLock<ClientSession>>,
     channel: &Channel,
-) -> Result<bool, Box<dyn Error>> {
+) -> Result<(), Box<dyn Error>> {
     // Returns true if keys were updated
     // Logic to remove FEC rows and columns
     for _ in 0..tracker.rows_fec {
@@ -1022,7 +1019,7 @@ fn decode_to_app_layer(
         }
     }
 
-    Ok(true)
+    Ok(())
 }
 
 /// Request updated keys from the server synchronously
