@@ -17,4 +17,18 @@ public class Utils {
 		return bb.array();
 	}
 
+	public static boolean isMyUuidLower(UUID myUuid, UUID otherUuid) {
+		int compareMost = Long.compare(myUuid.getMostSignificantBits(), otherUuid.getMostSignificantBits());
+		if (compareMost < 0) {
+			return true;
+		} else if (compareMost > 0) {
+			return false;
+		} else {
+			// Most significant bits are equal, compare least significant
+			return Long.compare(myUuid.getLeastSignificantBits(), otherUuid.getLeastSignificantBits()) < 0;
+		}
+	}
+
+
+
 }

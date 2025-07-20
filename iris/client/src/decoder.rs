@@ -1033,15 +1033,18 @@ fn request_updated_keys_sync(
     // Create a runtime for this synchronous context
     let rt = Runtime::new()?;
 
+    info!("Requesting updated keys from server...");
     rt.block_on(async {
         let mut client = KeyServiceClient::new(channel_clone);
+        info!("Successfully created KeyServiceClient");
 
+        info!("Sending request for current keys...");
         // Request current keys
         let response = client
             .request_current_key(RequestKey {})
             .await
             .map_err(|e| format!("gRPC request failed: {}", e))?;
-
+        info!("Received response for current keys from server");
         let key_response = response.into_inner();
 
         let current_key = key_response
@@ -1051,6 +1054,10 @@ fn request_updated_keys_sync(
             .next_key
             .ok_or("Server did not provide next key")?;
 
+        info!(
+            "Keys: current_key={:?}, next_key={:?}",
+            current_key, next_key
+        );
         // Update the global session with the new keys
         let mut session_guard = session.write().unwrap();
         session_guard.current_key = current_key.clone();

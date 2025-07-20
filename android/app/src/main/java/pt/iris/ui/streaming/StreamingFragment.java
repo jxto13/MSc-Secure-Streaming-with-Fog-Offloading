@@ -21,6 +21,7 @@ import pt.iris.databinding.FragmentStreamingBinding;
 import pt.iris.network.lib.WifiAwareModels.DataPathInfo;
 
 import java.util.List;
+import java.util.Map;
 
 public class StreamingFragment extends Fragment {
 
@@ -29,16 +30,31 @@ public class StreamingFragment extends Fragment {
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        streamingViewModel = new ViewModelProvider(this).get(StreamingViewModel.class);
+        // Use Activity scope to ensure the same ViewModel instance is shared
+        streamingViewModel = new ViewModelProvider(requireActivity()).get(StreamingViewModel.class);
 
         binding = FragmentStreamingBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
         setupWifiAwareConnectionsRecyclerView();
         setupUI();
+        setupPeerToggle();
         observeViewModel();
 
         return root;
+    }
+    /**
+     * Set up the toggle switch for showing discovered peers or only connected peers.
+     */
+    private void setupPeerToggle() {
+        if (binding.switchShowDiscovered != null) {
+            binding.switchShowDiscovered.setOnCheckedChangeListener((buttonView, isChecked) -> {
+                // Set the toggle in NetworkInitializer via ViewModel
+                streamingViewModel.setShowDiscoveredPeers(isChecked);
+                // Force update of the peer list
+                streamingViewModel.refreshWifiAwareConnections();
+            });
+        }
     }
 
     private void setupPlayerView() {
@@ -81,6 +97,13 @@ public class StreamingFragment extends Fragment {
         
         // Update adapter when network connections change
         streamingViewModel.getWifiAwareConnections().observe(getViewLifecycleOwner(), connections -> {
+            int size = (connections != null) ? connections.size() : 0;
+            Log.d("mine", "[StreamingFragment] LiveData observer triggered. Map size: " + size);
+            if (connections != null) {
+                for (Map.Entry<?, ?> entry : connections.entrySet()) {
+                    Log.d("mine", "[StreamingFragment] LiveData entry: " + entry.getKey() + " -> " + entry.getValue());
+                }
+            }
             adapter.updateConnections(connections);
         });
         

@@ -40,8 +40,15 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
     }
     
     public void updateConnections(Map<PeerHandle, DataPathInfo> connectionsMap) {
+        Log.d("mine", "[WifiAwareConnectionsAdapter] updateConnections called. Map size: " + (connectionsMap != null ? connectionsMap.size() : 0));
         connections.clear();
-        connections.addAll(connectionsMap.values());
+        if (connectionsMap != null) {
+            for (DataPathInfo info : connectionsMap.values()) {
+                Log.d("mine", "[WifiAwareConnectionsAdapter] Adding connection: peerHandle=" + info.peerHandle + ", ipAddress=" + info.ipAddress + ", isActive=" + info.isActive + ", isConnected=" + info.isConnected);
+                connections.add(info);
+            }
+        }
+        Log.d("mine", "[WifiAwareConnectionsAdapter] Adapter connections list size: " + connections.size());
         notifyDataSetChanged(); // Force UI refresh
     }
 
@@ -97,6 +104,7 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
     @Override
     public void onBindViewHolder(@NonNull ConnectionViewHolder holder, int position) {
         DataPathInfo connection = connections.get(position);
+        Log.d("WifiAwareAdapter", "onBindViewHolder: position=" + position + ", peerHandle=" + connection.peerHandle + ", ipAddress=" + connection.ipAddress + ", isActive=" + connection.isActive);
         holder.bind(connection, sessionInfo, null);
     }
 

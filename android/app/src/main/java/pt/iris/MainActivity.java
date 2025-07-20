@@ -157,16 +157,14 @@ public class MainActivity extends AppCompatActivity {
         // Check WiFi Aware setting before starting
         android.content.SharedPreferences prefs = getSharedPreferences("wifi_aware_settings", Context.MODE_PRIVATE);
         boolean wifiAwareEnabled = prefs.getBoolean("wifi_aware_enabled", true);
-        
-        // Initialize WiFi Aware immediately after permissions are granted
+
         initializeWifiAwareNetwork(wifiAwareEnabled);
-        
+
         // Set up network initialization callback via AppContainer for server-dependent features
         AppContainer.getInstance().setNetworkInitializationCallback(() -> {
             // This will be called when the Rust client successfully connects to server
             runOnUiThread(() -> {
                 Toast.makeText(MainActivity.this, "Server connected! Ready for streaming...", Toast.LENGTH_SHORT).show();
-                // Any server-dependent initialization can go here
             });
         });
 
