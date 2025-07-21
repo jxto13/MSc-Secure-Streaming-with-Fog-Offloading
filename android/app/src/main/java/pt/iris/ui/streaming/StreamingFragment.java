@@ -20,6 +20,11 @@ import pt.iris.R;
 import pt.iris.databinding.FragmentStreamingBinding;
 import pt.iris.network.lib.WifiAwareModels.DataPathInfo;
 
+import java.net.Inet6Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 
@@ -38,24 +43,11 @@ public class StreamingFragment extends Fragment {
 
         setupWifiAwareConnectionsRecyclerView();
         setupUI();
-        setupPeerToggle();
         observeViewModel();
 
         return root;
     }
-    /**
-     * Set up the toggle switch for showing discovered peers or only connected peers.
-     */
-    private void setupPeerToggle() {
-        if (binding.switchShowDiscovered != null) {
-            binding.switchShowDiscovered.setOnCheckedChangeListener((buttonView, isChecked) -> {
-                // Set the toggle in NetworkInitializer via ViewModel
-                streamingViewModel.setShowDiscoveredPeers(isChecked);
-                // Force update of the peer list
-                streamingViewModel.refreshWifiAwareConnections();
-            });
-        }
-    }
+
 
     private void setupPlayerView() {
         // Set player to the view only if it exists
@@ -244,20 +236,66 @@ public class StreamingFragment extends Fragment {
             Log.w("StreamingFragment", "Cannot show details - context is null or fragment not added");
             return;
         }
-        String connectionStatus = connection.getConnectionStatus();
-        String details = "Peer: " + connection.peerHandle.toString() + "\n" +
-                        "Status: " + connectionStatus + "\n" +
-                        "Address: " + connection.getDisplayAddress();
-        if (connection.isConnected()) {
-            details += "\nDuration: " + connection.getDurationString() + "\n" +
-                      "Created: " + new java.text.SimpleDateFormat("HH:mm:ss").format(new java.util.Date(connection.createdTime));
-        } else {
-            details += "\nDiscovered but not connected";
-        }
-        // Show stats in a Toast and log
-        Toast.makeText(getContext(), details, Toast.LENGTH_LONG).show();
-        Log.d("StreamingFragment", "Peer stats: " + details);
+
+        showIPv6InterfaceInfoDialog(connection.getInterfaceString());
     }
-    
+
+    private void showIPv6InterfaceInfoDialog(String interfaceName) {
+        if (getContext() == null || !isAdded()) {
+            Log.w("StreamingFragment", "Cannot show details - context is null or fragment not added");
+            return;
+        }
+
+        StringBuilder details = new StringBuilder();
+
+        try {
+            NetworkInterface networkInterface = NetworkInterface.getByName(interfaceName);
+            if (networkInterface == null) {
+                details.append("Interface ").append(interfaceName).append(" not found.");
+            } else {
+                details.append("Interface Name: ").append(networkInterface.getName()).append("\n")
+                        .append("Is Loopback: ").append(networkInterface.isLoopback()).append("\n")
+                        .append("Supports Multicast: ").append(networkInterface.supportsMulticast()).append("\n")
+                        .append("MTU: ").append(networkInterface.getMTU()).append("\n")
+                        .append("Is Up: ").append(networkInterface.isUp()).append("\n");
+
+
+                byte[] mac = networkInterface.getHardwareAddress();
+                if (mac != null) {
+                    details.append("MAC Address: ");
+                    for (int i = 0; i < mac.length; i++) {
+                        details.append(String.format("%02X%s", mac[i], (i < mac.length - 1) ? ":" : ""));
+                    }
+                    details.append("\n");
+                } else {
+                    details.append("MAC Address: Not available\n");
+                }
+
+                details.append("IPv6 Addresses:\n");
+                Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+                boolean hasIPv6 = false;
+                while (addresses.hasMoreElements()) {
+                    InetAddress addr = addresses.nextElement();
+                    if (addr instanceof Inet6Address) {
+                        details.append("  - ").append(addr.getHostAddress()).append("\n");
+                        hasIPv6 = true;
+                    }
+                }
+                if (!hasIPv6) {
+                    details.append("  No IPv6 addresses assigned.\n");
+                }
+            }
+        } catch (SocketException e) {
+            details.append("Error retrieving interface info: ").append(e.getMessage());
+            Log.e("StreamingFragment", "SocketException", e);
+        }
+
+		// Show info in AlertDialog
+        new AlertDialog.Builder(getContext())
+                .setMessage(details.toString())
+                .setPositiveButton("OK", null)
+                .show();
+    }
+
 
 }

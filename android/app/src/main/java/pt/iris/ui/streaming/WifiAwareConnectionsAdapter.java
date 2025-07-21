@@ -28,8 +28,7 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
     private OnConnectionClickListener listener;
     private SessionInfo sessionInfo;
     private boolean connectionsEnabled = false;
-    // ...existing code...
-    
+
     public interface OnConnectionClickListener {
         void onConnectionClick(DataPathInfo connection);
         void onConnectPeer(DataPathInfo peer);
@@ -114,29 +113,16 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
         return connections.size();
     }
     
-    // Helper to extract mPeerId from PeerHandle via reflection
-    private Integer getPeerId(PeerHandle peerHandle) {
-        if (peerHandle == null) return null;
-        try {
-            Field field = PeerHandle.class.getDeclaredField("mPeerId");
-            field.setAccessible(true);
-            return field.getInt(peerHandle);
-        } catch (Exception e) {
-            Log.w("WifiAwareAdapter", "Failed to get peerId from PeerHandle: " + e);
-            return null;
-        }
-    }
+
 
     class ConnectionViewHolder extends RecyclerView.ViewHolder {
         private final TextView peerHandleText;
-        private final TextView statusText;
         private final TextView ipAddressText;
         private final TextView durationText;
         
         public ConnectionViewHolder(@NonNull View itemView) {
             super(itemView);
             peerHandleText = itemView.findViewById(R.id.peerHandleText);
-            statusText = itemView.findViewById(R.id.statusText);
             ipAddressText = itemView.findViewById(R.id.ipAddressText);
             durationText = itemView.findViewById(R.id.durationText);
             
@@ -180,11 +166,6 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
             }
             peerHandleText.setText(displayStr);
 
-            // Connection Status
-            String connectionStatus = connection.getConnectionStatus();
-            statusText.setText(connectionStatus);
-            statusText.setTextColor(itemView.getContext().getColor(
-                    connection.isConnected() ? android.R.color.holo_green_light : android.R.color.holo_orange_light));
 
             // IP Address and role info
             String addressInfo = connection.getDisplayAddress();

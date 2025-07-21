@@ -51,11 +51,17 @@ public class WifiAwareModels {
             if (!isConnected) {
                 return "Not Connected";
             }
-            if (ipAddress != null && ipAddress.startsWith("fe80::")) {
-                // Truncate IPv6 link-local address for display
-                return ipAddress.substring(0, Math.min(ipAddress.length(), 20)) + "...";
-            }
             return ipAddress;
+        }
+
+        public String getInterfaceString() {
+
+            String[] parts = ipAddress.split("%");
+            if (parts.length == 2) {
+                return parts[1];
+            } else {
+                return "aware_data0";
+            }
         }
 
         public String getConnectionStatus() {

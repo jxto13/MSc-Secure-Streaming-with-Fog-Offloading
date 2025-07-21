@@ -49,6 +49,7 @@ import pt.iris.network.lib.WifiAwareModels.DataPathInfo;
 import pt.iris.network.lib.WifiAwareModels.SessionInfo;
 import pt.iris.network.lib.WifiAwareModels.SessionState;
 import pt.iris.network.utils.Utils;
+import pt.iris.services.RustService;
 import pt.iris.utils.AppContainer;
 
 /**
@@ -375,6 +376,8 @@ public class WifiAwareLibrary {
                         int peerPort = peerAwareInfo.getPort();
 
                         Log.d(TAG, "Peer connection info - IP: " + peerIpv6 + ", Port: " + peerPort);
+
+                        RustService.addSocket(peerIpv6.getHostAddress());
 
                         DataPathInfo dataPath = new DataPathInfo(
                                 peerHandle, network, peerIpv6.getHostAddress());

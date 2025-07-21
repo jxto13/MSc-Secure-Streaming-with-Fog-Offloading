@@ -158,7 +158,6 @@ public class MainActivity extends AppCompatActivity {
         android.content.SharedPreferences prefs = getSharedPreferences("wifi_aware_settings", Context.MODE_PRIVATE);
         boolean wifiAwareEnabled = prefs.getBoolean("wifi_aware_enabled", true);
 
-        initializeWifiAwareNetwork(wifiAwareEnabled);
 
         // Set up network initialization callback via AppContainer for server-dependent features
         AppContainer.getInstance().setNetworkInitializationCallback(() -> {
@@ -170,15 +169,20 @@ public class MainActivity extends AppCompatActivity {
 
         // Prepare Rust service (start when needed)
         serviceIntent = new Intent(this, RustService.class);
+
+        initializeWifiAwareNetwork(wifiAwareEnabled);
     }
     
     private void initializeWifiAwareNetwork(boolean wifiAwareEnabled) {
         // Always start WiFi Aware if permissions are granted (ignoring the setting)
-        if (PermissionHandler.areAllPermissionsGranted(this)) {
+        if (PermissionHandler.areAllPermissionsGranted(this) && wifiAwareEnabled) {
             wifiAwareNetwork = new NetworkInitializer(getApplicationContext());
             
             // Initialize the Wi-Fi Aware functionality
             wifiAwareNetwork.initialize();
+
+            // Start mesh network socket and logging
+            RustService.startService();
             
             // Store in AppContainer for access by other components
             AppContainer.getInstance().setNetworkInitializer(wifiAwareNetwork);

@@ -29,14 +29,6 @@
                 android:textStyle="bold"
                 android:textColor="@android:color/white" />
 
-            <TextView
-                android:id="@+id/statusText"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Status: UNKNOWN "
-                android:textSize="12sp"
-                android:textStyle="bold" />
-
         </LinearLayout>
 
 
@@ -45,7 +37,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="IP: 127.0.0.1"
-            android:textSize="12sp"
             android:textColor="@android:color/white"
             android:layout_marginTop="4dp"
             android:fontFamily="monospace" />

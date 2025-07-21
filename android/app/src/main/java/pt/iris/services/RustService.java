@@ -15,9 +15,11 @@ public class RustService extends Service {
         System.loadLibrary("irislinker");
     }
 
+    public static native void startService();
     public static native boolean startClient(int fd, String streamUrl);
     public static native boolean stopClient();
     public static native void addSocket(String ipAddress);
+    public static native void removeSocket(String ipAddress);
 
     // Network statistics methods
     public static native double getPacketLossPercentage();
