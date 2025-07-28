@@ -1,5 +1,3 @@
-
-
 package pt.iris.network.lib;
 
 import static pt.iris.network.utils.Utils.asBytes;
@@ -32,9 +30,13 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import java.io.FileDescriptor;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.ServerSocket;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -49,6 +51,11 @@ import java.net.ServerSocket;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.IOException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import io.grpc.okhttp.internal.Util;
 import pt.iris.network.lib.WifiAwareModels.DeviceRole;
@@ -80,7 +87,14 @@ public class WifiAwareLibrary {
 
     // Connection tracking
     private final Map<PeerHandle, DataPathInfo> activeConnections = new ConcurrentHashMap<>();
-    private final Map<PeerHandle, DataPathInfo> discoveredPeers = new ConcurrentHashMap<>();
+
+    private static final int PING_INTERVAL_MS = 5000; // 5 seconds
+    private final ScheduledExecutorService pingExecutor = Executors.newScheduledThreadPool(1);
+    private final Map<PeerHandle, ServerSocket> serverSockets = new ConcurrentHashMap<>();
+
+    // Track sockets for each peer
+    private final Map<PeerHandle, Socket> peerSockets = new ConcurrentHashMap<>();
+
     private WifiAwareCallback wifiAwareCallback = null;
 
     // Use per-peer NetworkCallback to avoid duplicate/registered errors
@@ -216,8 +230,6 @@ public class WifiAwareLibrary {
             public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
                 Log.d(TAG, "Message received from: " + peerHandle);
 
-                DataPathInfo pathInfo = new DataPathInfo(peerHandle);
-                discoveredPeers.put(peerHandle, pathInfo);
                 notifyDiscoveredPeersChanged();
 
                 switch (new String(message)) {
@@ -276,10 +288,10 @@ public class WifiAwareLibrary {
                 Log.d(TAG, "Service discovered from peer: " + peerHandle);
    
                 if (!Utils.isMyUuidLower(deviceUUID, Utils.asUuid(serviceSpecificInfo))) {
-                    // Show as discovered for a short time, then connect automatically
+
                     new Handler(Looper.getMainLooper()).postDelayed(() -> {
                         subscribeSession.sendMessage(peerHandle,0, "CONNECT".getBytes());
-                    }, 700); // 700ms delay for UI to show discovered state
+                    }, 700);
                 }
 
             }
@@ -287,13 +299,11 @@ public class WifiAwareLibrary {
             @Override
             public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
                 Log.d(TAG, "Message received from: " + peerHandle);
-
                 switch (new String(message)) {
                     case "NETWORK":
                         establishDataPath(peerHandle, false);
                         break;
                 }
-
             }
 
             @Override
@@ -317,111 +327,215 @@ public class WifiAwareLibrary {
         Log.d(TAG, "Handling peer lost: " + peerHandle);
 
         // Remove peer from discovered peers and active connections
-        DataPathInfo removedPeer = discoveredPeers.remove(peerHandle);
         DataPathInfo removedConnection = activeConnections.remove(peerHandle);
 
-        if (removedPeer != null) {
-            wifiAwareCallback.onPeerLost(peerHandle);
-        }
         if (removedConnection != null) {
             wifiAwareCallback.onConnectionLost(peerHandle);
         }
 
-        // Update UI
-        notifyDiscoveredPeersChanged();
+        // Update UI (discovered peers update removed)
         notifyActiveConnectionsChanged();
-
     }
 
+
     public void establishDataPath(PeerHandle peerHandle, boolean masterIsInitiator) {
-        // masterIsInitiator: true if this device is master and should initiate (use publishSession)
         Log.d(TAG, "[establishDataPath] CALLED for peer=" + peerHandle + ", masterIsInitiator=" + masterIsInitiator);
-        Log.d(TAG, "[establishDataPath] publishSession=" + publishSession + ", subscribeSession=" + subscribeSession);
         try {
             DiscoverySession currentSession = masterIsInitiator ? publishSession : subscribeSession;
 
-            Log.d(TAG, "[establishDataPath] Master using publishSession for peer: " + peerHandle);
-            NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(currentSession, peerHandle)
-                .setPskPassphrase("IrisWifiAware2024")
-                .build();
+            if (masterIsInitiator) {
+                // PUBLISHER/SERVER SIDE
+                try {
+                    ServerSocket serverSocket = new ServerSocket(0);
+                    serverSocket.setReuseAddress(true);
+                    serverSockets.put(peerHandle, serverSocket);
 
-            NetworkRequest request = new NetworkRequest.Builder()
-                    .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
-                    .setNetworkSpecifier(networkSpecifier)
-                    .build();
+                    int port = serverSocket.getLocalPort();
+                    Log.d(TAG, "[establishDataPath] ServerSocket created on port: " + port);
 
-            Log.d(TAG, "[establishDataPath] Requesting WiFi Aware network as master. Peer=" + peerHandle);
+                    NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(currentSession, peerHandle)
+                            .setPskPassphrase("IrisWifiAware2024")
+                            .setPort(port)
+                            .build();
 
-            // Always create a new callback for this peer
-            Log.d(TAG, "[establishDataPath] About to call connectivityManager.requestNetwork for peer=" + peerHandle);
-            ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
-                @Override
-                public void onAvailable(Network network) {
-                    Log.d(TAG, "Wi-Fi Aware network available for peer: " + peerHandle);
+                    NetworkRequest request = new NetworkRequest.Builder()
+                            .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
+                            .setNetworkSpecifier(networkSpecifier)
+                            .build();
+
+                    ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
+                        @Override
+                        public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
+                            WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) networkCapabilities.getTransportInfo();
+                            if (peerAwareInfo != null) {
+                                Inet6Address peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
+                                Log.d(TAG, "Peer connection info - IP: " + peerIpv6);
+
+                                RustService.addSocket(peerIpv6.getHostAddress());
+
+                                DataPathInfo dataPath = new DataPathInfo(peerHandle, network, peerIpv6.getHostAddress());
+                                activeConnections.put(peerHandle, dataPath);
+
+                                Log.d(TAG, "Data path established successfully with peer: " + peerHandle);
+
+                                // Send port to the client before accepting
+                                if (publishSession != null) {
+                                    String portMsg = "PORT:" + port;
+                                    publishSession.sendMessage(peerHandle, 0, portMsg.getBytes());
+                                    Log.d(TAG, "Sent port to client: " + portMsg);
+                                }
+
+                                // Accept connection in a background thread
+                                new Thread(() -> acceptClientSocket(peerHandle, serverSocket)).start();
+
+                                wifiAwareCallback.onConnectionEstablished(peerHandle, dataPath);
+                            }
+                        }
+
+                        @Override
+                        public void onLost(Network network) {
+                            cleanupConnection(peerHandle);
+                        }
+
+                        @Override
+                        public void onUnavailable() {
+                            notifyError("Wi-Fi Aware network unavailable for peer: " + peerHandle);
+                            unregisterPeerNetworkCallback(peerHandle);
+                        }
+                    };
+
+                    networkCallbacks.put(peerHandle, callback);
+                    connectivityManager.requestNetwork(request, callback);
+
+                } catch (IOException e) {
+                    Log.e(TAG, "Failed to create ServerSocket for peer: " + peerHandle, e);
                 }
+            } else {
+                // SUBSCRIBER/CLIENT SIDE
+                NetworkSpecifier networkSpecifier = new WifiAwareNetworkSpecifier.Builder(currentSession, peerHandle)
+                        .setPskPassphrase("IrisWifiAware2024")
+                        .build();
 
-                @Override
-                public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
-                    WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) networkCapabilities.getTransportInfo();
-                    if (peerAwareInfo != null) {
-                        Inet6Address peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
-                        int peerPort = peerAwareInfo.getPort();
+                NetworkRequest request = new NetworkRequest.Builder()
+                        .addTransportType(NetworkCapabilities.TRANSPORT_WIFI_AWARE)
+                        .setNetworkSpecifier(networkSpecifier)
+                        .build();
 
-                        Log.d(TAG, "Peer connection info - IP: " + peerIpv6 + ", Port: " + peerPort);
+                ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
+                    @Override
+                    public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
+                        WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) networkCapabilities.getTransportInfo();
+                        if (peerAwareInfo != null) {
+                            Inet6Address peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
+                            int peerPort = peerAwareInfo.getPort();
+                            Log.d(TAG, "Connecting to server socket at: " + peerIpv6 + ":" + peerPort);
 
-                        RustService.addSocket(peerIpv6.getHostAddress());
+                            RustService.addSocket(peerIpv6.getHostAddress());
 
-                        DataPathInfo dataPath = new DataPathInfo(
-                                peerHandle, network, peerIpv6.getHostAddress());
+                            DataPathInfo dataPath = new DataPathInfo(peerHandle, network, peerIpv6.getHostAddress());
+                            activeConnections.put(peerHandle, dataPath);
 
-                        // Move from discovered to connected
-                        discoveredPeers.remove(peerHandle);
-                        activeConnections.put(peerHandle, dataPath);
+                            try {
+                                Socket socket = network.getSocketFactory().createSocket(peerIpv6, peerPort);
+                                socket.setSoTimeout(15000); // Timeout for read operations
+                                peerSockets.put(peerHandle, socket);
+                                Log.d(TAG, "Connected to server socket for peer: " + peerHandle);
 
-                        Log.d(TAG, "Data path established successfully with peer: " + peerHandle);
+                                // Start pinging periodically
+                                startPinging(peerHandle, socket);
 
-                        wifiAwareCallback.onConnectionEstablished(peerHandle, dataPath);
+                            } catch (IOException e) {
+                                Log.e(TAG, "Failed to connect to server socket for peer: " + peerHandle, e);
+                            }
+
+                            wifiAwareCallback.onConnectionEstablished(peerHandle, dataPath);
+                        }
                     }
-                }
 
-                @Override
-                public void onLost(Network network) {
-                    Log.d(TAG, "Wi-Fi Aware network lost for peer: " + peerHandle);
-                    DataPathInfo removedPath = activeConnections.remove(peerHandle);
-                    if (removedPath != null) {
-                        removedPath.isActive = false;
-                        wifiAwareCallback.onConnectionLost(peerHandle);
+                    @Override
+                    public void onLost(Network network) {
+                        cleanupConnection(peerHandle);
                     }
-                    // Unregister and remove callback
-                    unregisterPeerNetworkCallback(peerHandle);
-                }
 
-                @Override
-                public void onUnavailable() {
-                    Log.e(TAG, "Wi-Fi Aware network unavailable for peer: " + peerHandle);
-                    notifyError("Wi-Fi Aware network unavailable for peer: " + peerHandle);
-                    // Unregister and remove callback
-                    unregisterPeerNetworkCallback(peerHandle);
-                }
-            };
-            // Store callback for this peer
-            networkCallbacks.put(peerHandle, callback);
-            try {
+                    @Override
+                    public void onUnavailable() {
+                        notifyError("Wi-Fi Aware network unavailable for peer: " + peerHandle);
+                        unregisterPeerNetworkCallback(peerHandle);
+                    }
+                };
+
+                networkCallbacks.put(peerHandle, callback);
                 connectivityManager.requestNetwork(request, callback);
-                Log.d(TAG, "[establishDataPath] requestNetwork called successfully for peer: " + peerHandle);
-            } catch (Exception e) {
-                String errMsg = "Exception during requestNetwork: " + e.getMessage() + ". Peer=" + peerHandle;
-                Log.e(TAG, errMsg, e);
-                notifyError(errMsg);
-                unregisterPeerNetworkCallback(peerHandle);
             }
-
         } catch (Exception e) {
-            String errorLog = "Unexpected error during data path establishment: " + e.getMessage();
-            Log.e(TAG, errorLog, e);
-            notifyError(errorLog);
+            Log.e(TAG, "Unexpected error during data path establishment: " + e.getMessage(), e);
+            notifyError("Unexpected error: " + e.getMessage());
         }
     }
+
+    private void acceptClientSocket(PeerHandle peerHandle, ServerSocket serverSocket) {
+        try {
+            serverSocket.setSoTimeout(10000); // Wait up to 10 seconds per accept attempt
+
+            boolean connected = false;
+            long startTime = System.currentTimeMillis();
+
+            while (!connected && System.currentTimeMillis() - startTime < 30000) { // Retry for 30 seconds max
+                try {
+                    Socket clientSocket = serverSocket.accept(); // Blocking wait
+                    clientSocket.setSoTimeout(15000);
+                    peerSockets.put(peerHandle, clientSocket);
+                    Log.d(TAG, "Accepted client socket for peer: " + peerHandle);
+
+                    // Start pinging from server if desired
+                    startPinging(peerHandle, clientSocket);
+                    connected = true;
+                } catch (SocketTimeoutException e) {
+                    Log.w(TAG, "Accept timeout for peer: " + peerHandle + " - retrying...");
+                }
+            }
+
+            if (!connected) {
+                Log.e(TAG, "Failed to accept client socket for peer: " + peerHandle + " after retries");
+            }
+
+        } catch (IOException e) {
+            Log.e(TAG, "Error accepting client socket for peer: " + peerHandle, e);
+        }
+    }
+
+
+    private void startPinging(PeerHandle peerHandle, Socket socket) {
+        pingExecutor.scheduleWithFixedDelay(() -> {
+            try {
+                if (socket != null && socket.isConnected() && !socket.isClosed()) {
+                    OutputStream out = socket.getOutputStream();
+                    out.write("PING\n".getBytes());
+                    out.flush();
+                    Log.d(TAG, "Ping sent to peer: " + peerHandle);
+                }
+            } catch (IOException e) {
+                Log.e(TAG, "Ping failed for peer: " + peerHandle, e);
+                cleanupConnection(peerHandle);
+            }
+        }, PING_INTERVAL_MS, PING_INTERVAL_MS, TimeUnit.MILLISECONDS);
+    }
+
+    private void cleanupConnection(PeerHandle peerHandle) {
+        Log.d(TAG, "Cleaning up connection for peer: " + peerHandle);
+        DataPathInfo removedPath = activeConnections.remove(peerHandle);
+        if (removedPath != null) removedPath.isActive = false;
+        wifiAwareCallback.onConnectionLost(peerHandle);
+
+        Socket s = peerSockets.remove(peerHandle);
+        if (s != null) try { s.close(); } catch (IOException ignore) {}
+
+        ServerSocket server = serverSockets.remove(peerHandle);
+        if (server != null) try { server.close(); } catch (IOException ignore) {}
+
+        unregisterPeerNetworkCallback(peerHandle);
+    }
+
 
     // Helper to unregister and remove callback for a peer
     private void unregisterPeerNetworkCallback(PeerHandle peerHandle) {
@@ -439,31 +553,19 @@ public class WifiAwareLibrary {
         return new ConcurrentHashMap<>(activeConnections);
     }
 
-    public Map<PeerHandle, DataPathInfo> getDiscoveredPeers() {
-        return new ConcurrentHashMap<>(discoveredPeers);
-    }
 
     public Map<PeerHandle, DataPathInfo> getAllPeers() {
-        Map<PeerHandle, DataPathInfo> allPeers = new ConcurrentHashMap<>();
-        allPeers.putAll(discoveredPeers);
-        allPeers.putAll(activeConnections);
+		Map<PeerHandle, DataPathInfo> allPeers = new ConcurrentHashMap<>(activeConnections);
         return allPeers;
     }
 
-    /**
-     * Clear all discovered peers but keep active (connected) peers.
-     */
-    public void clearDiscoveredPeers() {
-        discoveredPeers.clear();
-        notifyDiscoveredPeersChanged();
-    }
+
 
     public SessionInfo getSessionInfo() {
         SessionState sessionState = SessionState.IDLE;
 
         return new SessionInfo(
                 sessionState,
-                discoveredPeers.size(),
                 activeConnections.size()
         );
     }
@@ -489,9 +591,7 @@ public class WifiAwareLibrary {
     }
 
     private void notifyDiscoveredPeersChanged() {
-        // This method can be extended to notify UI components about peer changes
-        // For now, we rely on the callback system
-        Log.d(TAG, "Discovered peers changed. Total: " + discoveredPeers.size());
+        // Removed discovered peers UI update
     }
 
     private void notifyActiveConnectionsChanged() {
@@ -506,21 +606,16 @@ public class WifiAwareLibrary {
 
     }
 
-
     private void handleSessionTermination() {
         Log.d(TAG, "Handling session termination - cleaning up peers");
 
         // Notify about lost peers
-        for (PeerHandle peerHandle : discoveredPeers.keySet()) {
-            wifiAwareCallback.onPeerLost(peerHandle);
-        }
 
         for (PeerHandle peerHandle : activeConnections.keySet()) {
             wifiAwareCallback.onConnectionLost(peerHandle);
         }
 
         // Clear peer lists
-        discoveredPeers.clear();
         activeConnections.clear();
     }
 
@@ -557,7 +652,12 @@ public class WifiAwareLibrary {
             path.isActive = false;
         }
         activeConnections.clear();
-        discoveredPeers.clear();
+
+        // Clean up all sockets
+        for (Socket s : peerSockets.values()) {
+            try { s.close(); } catch (IOException ignore) {}
+        }
+        peerSockets.clear();
 
     }
 

@@ -272,21 +272,7 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 		Log.e(TAG, "Wi-Fi Aware error: " + error);
 	}
 
-	@Override
-	public void onPeerDiscovered(PeerHandle peerHandle) {
-		Log.d(TAG, "onPeerDiscovered() called for peer=" + peerHandle);
-
-	}
-
-	@Override
-	public void onPeerLost(PeerHandle peerHandle) {
-		Log.d(TAG, "Peer lost: " + peerHandle);
-		Map<PeerHandle, DataPathInfo> allPeers = networkInitializer.getAllPeers();
-		Log.d(TAG, "All peers map size (after lost): " + (allPeers != null ? allPeers.size() : 0));
-		if (allPeers != null) {
-			wifiAwareConnections.postValue(new ConcurrentHashMap<>(allPeers));
-		}
-	}
+	// Discovered peers are not shown in the UI
 
 	/**
 	 * Connect to a discovered peer by PeerHandle (manual connect from UI)

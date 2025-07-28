@@ -214,14 +214,13 @@ public class WifiAwareModels {
      */
     public static class SessionInfo {
         public final SessionState sessionState;
-        public final int discoveredPeers;
+        // public final int discoveredPeers; // Removed, only active connections are shown
         public final int connectedPeers;
         public final long sessionStartTime;
 
         public SessionInfo(SessionState sessionState,
-                          int discoveredPeers, int connectedPeers) {
+                          int connectedPeers) {
             this.sessionState = sessionState;
-            this.discoveredPeers = discoveredPeers;
             this.connectedPeers = connectedPeers;
             this.sessionStartTime = System.currentTimeMillis();
         }

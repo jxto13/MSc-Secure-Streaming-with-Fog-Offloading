@@ -22,7 +22,7 @@ import pt.iris.network.lib.WifiAwareModels.DataPathInfo;
 import pt.iris.network.lib.WifiAwareModels.SessionInfo;
 
 /**
- * RecyclerView adapter for displaying Wi-Fi Aware connections and discovered peers
+ * RecyclerView adapter for displaying Wi-Fi Aware active connections only
  */
 public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareConnectionsAdapter.ConnectionViewHolder> {
     private List<DataPathInfo> connections = new ArrayList<>();
@@ -44,7 +44,7 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
         Log.d(TAG, "updateConnections called. Map size: " + (connectionsMap != null ? connectionsMap.size() : 0));
         connections.clear();
         if (connectionsMap != null) {
-			connections.addAll(connectionsMap.values());
+            connections.addAll(connectionsMap.values());
         }
         notifyDataSetChanged(); // Force UI refresh
     }
@@ -118,7 +118,7 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
 
         
         @SuppressLint("SetTextI18n")
-		public void bind(DataPathInfo connection, SessionInfo sessionInfo, pt.iris.network.lib.WifiAwareModels.DeviceRole unusedRole) {
+        public void bind(DataPathInfo connection, SessionInfo sessionInfo, pt.iris.network.lib.WifiAwareModels.DeviceRole unusedRole) {
             // Display peer UUID if available, otherwise fallback to peerHandle
             String displayStr;
             if (connection.peerUuid != null) {

@@ -29,8 +29,7 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	private final CopyOnWriteArrayList<NetworkConnectionListener> listeners = new CopyOnWriteArrayList<>();
 	private UUID myUUID;
 
-	// Toggle for showing discovered peers or only connected peers
-	private boolean showDiscoveredPeers = false;
+	// Only show active connections in the UI
 
 	private boolean isInitialized = false;
 	private SubscribeDiscoverySession subscribeSession = null;
@@ -41,8 +40,7 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 		void onConnectionLost(String ipAddress, PeerHandle peerHandle);
 		void onWifiAwareStateChanged(boolean available);
 		void onError(String error);
-		void onPeerDiscovered(PeerHandle peerHandle);
-		void onPeerLost(PeerHandle peerHandle);
+		// Discovered peer callbacks removed from UI
 		void onRoleChanged(DeviceRole newRole);
 		void onSessionInfoChanged(WifiAwareModels.SessionInfo sessionInfo);
 	}
@@ -116,35 +114,11 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	}
 
 
+	/**
+	 * Only return active connections for UI.
+	 */
 	public Map<PeerHandle, DataPathInfo> getAllPeers() {
-		return wifiAwareLibrary.getAllPeers();
-	}
-
-	/**
-	 * Set whether to show discovered peers (true) or only connected peers (false)
-	 */
-	   public void setShowDiscoveredPeers(boolean show) {
-			   this.showDiscoveredPeers = show;
-			   if (!show) {
-					   wifiAwareLibrary.clearDiscoveredPeers();
-			   }
-	   }
-
-	public boolean isShowDiscoveredPeers() {
-		return showDiscoveredPeers;
-	}
-
-	/**
-	 * Get the current peer list based on the toggle.
-	 * If showDiscoveredPeers is true, return all discovered peers.
-	 * Otherwise, return only active (connected) peers.
-	 */
-	public Map<PeerHandle, DataPathInfo> getCurrentPeers() {
-		if (showDiscoveredPeers) {
-			return wifiAwareLibrary.getAllPeers();
-		} else {
-			return wifiAwareLibrary.getActiveConnections();
-		}
+		return wifiAwareLibrary.getActiveConnections();
 	}
 
 	public WifiAwareLibrary getWifiAwareLibrary() {
@@ -189,19 +163,14 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 
 	@Override
 	public void onServiceDiscovered(PeerHandle peerHandle, byte[] serviceSpecificInfo) {
-		Log.d(TAG, "Wi-Fi Aware service discovered: " + peerHandle);
 		String info = new String(serviceSpecificInfo, StandardCharsets.UTF_8);
-		Log.d(TAG, "Service info: " + info);
-		for (NetworkConnectionListener listener : listeners) {
-			listener.onPeerDiscovered(peerHandle);
-		}
+		Log.d(TAG, "Wi-Fi Aware service discovered: " + peerHandle  + "Service info: " + info);
 	}
 
 	@Override
 	public void onMessageReceived(PeerHandle peerHandle, byte[] message) {
 		String messageStr = new String(message, StandardCharsets.UTF_8);
 		Log.d(TAG, "Message received from " + peerHandle + ": " + messageStr);
-		// Placeholder for parsing structured messages in future
 	}
 
 	@Override
@@ -226,18 +195,11 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	@Override
 	public void onPeerDiscovered(PeerHandle peerHandle) {
 		Log.d(TAG, "[mine] onPeerDiscovered (NetworkInitializer): " + peerHandle);
-		for (NetworkConnectionListener listener : listeners) {
-			Log.d(TAG, "[mine] Forwarding onPeerDiscovered to listener: " + peerHandle);
-			listener.onPeerDiscovered(peerHandle);
-		}
 	}
 
 	@Override
 	public void onPeerLost(PeerHandle peerHandle) {
 		Log.d(TAG, "Peer lost: " + peerHandle);
-		for (NetworkConnectionListener listener : listeners) {
-			listener.onPeerLost(peerHandle);
-		}
 	}
 
 	@Override
