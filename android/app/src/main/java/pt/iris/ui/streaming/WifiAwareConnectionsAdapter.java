@@ -1,5 +1,6 @@
 package pt.iris.ui.streaming;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.wifi.aware.PeerHandle;
 import android.util.Log;
@@ -28,6 +29,7 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
     private OnConnectionClickListener listener;
     private SessionInfo sessionInfo;
     private boolean connectionsEnabled = false;
+    private final String TAG = "WifiAwareConnectionsAdapter";
 
     public interface OnConnectionClickListener {
         void onConnectionClick(DataPathInfo connection);
@@ -39,15 +41,11 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
     }
     
     public void updateConnections(Map<PeerHandle, DataPathInfo> connectionsMap) {
-        Log.d("mine", "[WifiAwareConnectionsAdapter] updateConnections called. Map size: " + (connectionsMap != null ? connectionsMap.size() : 0));
+        Log.d(TAG, "updateConnections called. Map size: " + (connectionsMap != null ? connectionsMap.size() : 0));
         connections.clear();
         if (connectionsMap != null) {
-            for (DataPathInfo info : connectionsMap.values()) {
-                Log.d("mine", "[WifiAwareConnectionsAdapter] Adding connection: peerHandle=" + info.peerHandle + ", ipAddress=" + info.ipAddress + ", isActive=" + info.isActive + ", isConnected=" + info.isConnected);
-                connections.add(info);
-            }
+			connections.addAll(connectionsMap.values());
         }
-        Log.d("mine", "[WifiAwareConnectionsAdapter] Adapter connections list size: " + connections.size());
         notifyDataSetChanged(); // Force UI refresh
     }
 
@@ -60,37 +58,7 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
         this.connectionsEnabled = enabled;
         notifyDataSetChanged();
     }
-    
-    public void addConnection(DataPathInfo connection) {
-        // Check if connection already exists (by IP address)
-        for (int i = 0; i < connections.size(); i++) {
-            if (connections.get(i).ipAddress.equals(connection.ipAddress)) {
-                connections.set(i, connection);
-                notifyItemChanged(i);
-                return;
-            }
-        }
-        
-        // Add new connection
-        connections.add(connection);
-        notifyItemInserted(connections.size() - 1);
-    }
-    
-    public void removeConnection(PeerHandle peerHandle) {
-        for (int i = 0; i < connections.size(); i++) {
-            if (connections.get(i).peerHandle.equals(peerHandle)) {
-                connections.remove(i);
-                notifyItemRemoved(i);
-                break;
-            }
-        }
-    }
-    
-    public void clearConnections() {
-        int size = connections.size();
-        connections.clear();
-        notifyItemRangeRemoved(0, size);
-    }
+
     
     @NonNull
     @Override
@@ -149,7 +117,8 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
         }
 
         
-        public void bind(DataPathInfo connection, SessionInfo sessionInfo, pt.iris.network.lib.WifiAwareModels.DeviceRole unusedRole) {
+        @SuppressLint("SetTextI18n")
+		public void bind(DataPathInfo connection, SessionInfo sessionInfo, pt.iris.network.lib.WifiAwareModels.DeviceRole unusedRole) {
             // Display peer UUID if available, otherwise fallback to peerHandle
             String displayStr;
             if (connection.peerUuid != null) {

@@ -308,7 +308,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         thread::spawn({
             let client_sessions = Arc::clone(&client_sessions);
             move || {
-                // crate::reinforcement_learning::rl_loop::run_learning_loop(client_sessions);
+                crate::reinforcement_learning::rl_loop::run_learning_loop(client_sessions);
             }
         }),
     ));

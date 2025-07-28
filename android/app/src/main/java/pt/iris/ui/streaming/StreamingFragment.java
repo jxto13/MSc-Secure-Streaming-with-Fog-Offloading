@@ -1,22 +1,20 @@
 package pt.iris.ui.streaming;
 
+import android.annotation.SuppressLint;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.TextView;
+
 import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
-import pt.iris.R;
 import pt.iris.databinding.FragmentStreamingBinding;
 import pt.iris.network.lib.WifiAwareModels.DataPathInfo;
 
@@ -25,13 +23,13 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.Enumeration;
-import java.util.List;
-import java.util.Map;
+import java.util.Objects;
 
 public class StreamingFragment extends Fragment {
 
     private FragmentStreamingBinding binding;
     private StreamingViewModel streamingViewModel;
+    private final String TAG = "StreamingFragment";
 
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -73,7 +71,7 @@ public class StreamingFragment extends Fragment {
             public void onConnectPeer(DataPathInfo peer) {
                 // Only allow connect if peer is publisher-discovered (not subscriber)
                 // If DataPathInfo or peer has a flag/role, check it here. Otherwise, always allow (UI will only show publisher peers)
-                Log.d("StreamingFragment", "onConnectPeer called for peer: " + peer.peerHandle);
+                Log.d(TAG, "onConnectPeer called for peer: " + peer.peerHandle);
                 if (getContext() == null || !isAdded()) return;
                 new AlertDialog.Builder(getContext())
                         .setTitle("Connect to Peer")
@@ -88,25 +86,14 @@ public class StreamingFragment extends Fragment {
         });
         
         // Update adapter when network connections change
-        streamingViewModel.getWifiAwareConnections().observe(getViewLifecycleOwner(), connections -> {
-            int size = (connections != null) ? connections.size() : 0;
-            Log.d("mine", "[StreamingFragment] LiveData observer triggered. Map size: " + size);
-            if (connections != null) {
-                for (Map.Entry<?, ?> entry : connections.entrySet()) {
-                    Log.d("mine", "[StreamingFragment] LiveData entry: " + entry.getKey() + " -> " + entry.getValue());
-                }
-            }
-            adapter.updateConnections(connections);
-        });
+        streamingViewModel.getWifiAwareConnections().observe(getViewLifecycleOwner(), adapter::updateConnections);
         
         // Update adapter when session info changes
-        streamingViewModel.getWifiAwareSessionInfo().observe(getViewLifecycleOwner(), sessionInfo -> {
-            adapter.updateSessionInfo(sessionInfo);
-        });
+        streamingViewModel.getWifiAwareSessionInfo().observe(getViewLifecycleOwner(), adapter::updateSessionInfo);
         
         // Update adapter based on stream connection state
         streamingViewModel.getIsStreamConnected().observe(getViewLifecycleOwner(), isConnected -> {
-            Log.d("StreamingFragment", "Stream connection state changed: " + isConnected);
+            Log.d(TAG, "Stream connection state changed: " + isConnected);
             adapter.setConnectionsEnabled(isConnected != null && isConnected);
         });
     }
@@ -116,7 +103,7 @@ public class StreamingFragment extends Fragment {
     private void setupUI() {
         // Stream URI connection controls
         binding.btnConnectStream.setOnClickListener(v -> {
-            String uriText = binding.editStreamUri.getText().toString().trim();
+            String uriText = Objects.requireNonNull(binding.editStreamUri.getText()).toString().trim();
             if (uriText.isEmpty()) {
                 Toast.makeText(getContext(), "Please enter a stream URI", Toast.LENGTH_SHORT).show();
                 return;
@@ -143,10 +130,8 @@ public class StreamingFragment extends Fragment {
         });
 
         // Hide the add client button since we get connections automatically from NetworkInitializer
-        if (binding.addClientButton != null) {
-            binding.addClientButton.setVisibility(View.GONE);
-        }
-    }
+		binding.addClientButton.setVisibility(View.GONE);
+	}
 
     private void updateStreamButtons(boolean connected) {
         binding.btnConnectStream.setEnabled(!connected);
@@ -154,7 +139,8 @@ public class StreamingFragment extends Fragment {
         binding.editStreamUri.setEnabled(!connected);
     }
 
-    private void observeViewModel() {
+    @SuppressLint({"DefaultLocale", "SetTextI18n"})
+	private void observeViewModel() {
 
         // Observe network stats
         streamingViewModel.getNetworkStats().observe(getViewLifecycleOwner(), stats -> {
@@ -233,7 +219,7 @@ public class StreamingFragment extends Fragment {
 
     private void showConnectionDetails(DataPathInfo connection) {
         if (getContext() == null || !isAdded()) {
-            Log.w("StreamingFragment", "Cannot show details - context is null or fragment not added");
+            Log.w(TAG, "Cannot show details - context is null or fragment not added");
             return;
         }
 
@@ -242,7 +228,7 @@ public class StreamingFragment extends Fragment {
 
     private void showIPv6InterfaceInfoDialog(String interfaceName) {
         if (getContext() == null || !isAdded()) {
-            Log.w("StreamingFragment", "Cannot show details - context is null or fragment not added");
+            Log.w(TAG, "Cannot show details - context is null or fragment not added");
             return;
         }
 
@@ -271,23 +257,14 @@ public class StreamingFragment extends Fragment {
                     details.append("MAC Address: Not available\n");
                 }
 
-                details.append("IPv6 Addresses:\n");
-                Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
-                boolean hasIPv6 = false;
-                while (addresses.hasMoreElements()) {
-                    InetAddress addr = addresses.nextElement();
-                    if (addr instanceof Inet6Address) {
-                        details.append("  - ").append(addr.getHostAddress()).append("\n");
-                        hasIPv6 = true;
-                    }
-                }
+                boolean hasIPv6 = isHasIPv6(details, networkInterface);
                 if (!hasIPv6) {
-                    details.append("  No IPv6 addresses assigned.\n");
+                    details.append("No IPv6 addresses assigned.\n");
                 }
             }
         } catch (SocketException e) {
             details.append("Error retrieving interface info: ").append(e.getMessage());
-            Log.e("StreamingFragment", "SocketException", e);
+            Log.e(TAG, "SocketException", e);
         }
 
 		// Show info in AlertDialog
@@ -295,6 +272,20 @@ public class StreamingFragment extends Fragment {
                 .setMessage(details.toString())
                 .setPositiveButton("OK", null)
                 .show();
+    }
+
+    private static boolean isHasIPv6(StringBuilder details, NetworkInterface networkInterface) {
+        details.append("IPv6 Addresses:\n");
+        Enumeration<InetAddress> addresses = networkInterface.getInetAddresses();
+        boolean hasIPv6 = false;
+        while (addresses.hasMoreElements()) {
+            InetAddress addr = addresses.nextElement();
+            if (addr instanceof Inet6Address) {
+                details.append("  - ").append(addr.getHostAddress()).append("\n");
+                hasIPv6 = true;
+            }
+        }
+        return hasIPv6;
     }
 
 

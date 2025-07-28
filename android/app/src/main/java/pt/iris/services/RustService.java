@@ -21,6 +21,7 @@ public class RustService extends Service {
     public static native void addSocket(String ipAddress);
     public static native void removeSocket(String ipAddress);
 
+    public static native boolean testTUN(String ipAddress);
     // Network statistics methods
     public static native double getPacketLossPercentage();
     public static native double getCurrentBitrateMbps();

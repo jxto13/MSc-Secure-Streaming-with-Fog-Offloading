@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Permission for VPN service (required for TUN interface) -->
+    <uses-permission android:name="android.permission.BIND_VPN_SERVICE" tools:ignore="ProtectedPermissions" />
+
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
@@ -16,12 +19,11 @@
         android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+
     <uses-permission android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE"/>
 
     <uses-feature android:name="android.hardware.wifi.rtt" />
     <application
@@ -34,11 +36,10 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.Iris"
         >
-        <activity android:name=".MulticastReceiverActivity" />
+
         <activity
             android:name="pt.iris.MainActivity"
             android:exported="true"
-            android:label="@string/app_name"
             android:theme="@style/Theme.Iris.NoActionBar"
             android:enableOnBackInvokedCallback="true">
             <intent-filter>
@@ -47,6 +48,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <service
+            android:label="VPN Service"
+            android:name="pt.iris.services.MyVpnService"
+            android:permission="android.permission.BIND_VPN_SERVICE"
+            android:exported="true"
+            android:foregroundServiceType="specialUse"
+            tools:ignore="ForegroundServicePermission">
+            <intent-filter>
+                <action android:name="android.net.VpnService"/>
+            </intent-filter>
+        </service>
+
+
         <service
             android:label="Rust Service"
             android:name="pt.iris.services.RustService" />

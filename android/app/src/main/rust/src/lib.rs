@@ -1,11 +1,14 @@
 mod mesh_networking;
+mod router;
 
 #[allow(non_snake_case)]
 pub mod android {
-    use std::io::Write;
+    use std::io::{Read, Write};
+    use std::net::UdpSocket;
     use std::os::fd::{FromRawFd, RawFd};
     use std::sync::{Arc, RwLock};
     use std::thread;
+    use std::time::Duration;
 
     use jni::objects::{JClass, JString};
     use jni::sys::jint;
@@ -13,9 +16,10 @@ pub mod android {
     use log::info;
     use once_cell::sync::OnceCell;
     use std::sync::Once;
+    use tokio::runtime::Runtime;
 
-    use crate::mesh_networking::Node;
-
+    // use crate::mesh_networking::Node;
+    use crate::router::start_router;
     // Static variable to hold the iris client instance
     static CLIENT: OnceCell<Arc<RwLock<Option<iris_client::Client>>>> = OnceCell::new();
 
@@ -26,19 +30,23 @@ pub mod android {
     /// Initializes the logging system for Android.
     static INIT: Once = Once::new();
 
-    static MESH_NETWORK_NODE: OnceCell<Arc<Node>> = OnceCell::new();
+    // static MESH_NETWORK_NODE: OnceCell<Arc<Node>> = OnceCell::new();
 
     // Initialize the mesh networking module
-    pub fn init_mesh_networking() {
-        // This function can be used to initialize any mesh networking components if needed
-        info!("Mesh networking module initialized");
+    pub fn init_mesh_networking(tun_fd: RawFd) {
+        // Start the router in a separate thread and give tun_fd to it
+        thread::spawn(move || {
+            start_router(tun_fd).unwrap_or_else(|e| {
+                log::error!("Failed to start router: {}", e);
+            });
+        });
 
-        let node = Node::new();
-        if MESH_NETWORK_NODE.set(node).is_err() {
-            info!("Mesh networking node already initialized");
-        } else {
-            info!("Mesh networking node created successfully");
-        }
+        // let node = Node::new();
+        // if MESH_NETWORK_NODE.set(node).is_err() {
+        //     info!("Mesh networking node already initialized");
+        // } else {
+        //     info!("Mesh networking node created successfully");
+        // }
     }
 
     /// Initializes the logging system and panic hook for Android.
@@ -86,10 +94,85 @@ pub mod android {
     pub extern "system" fn Java_pt_iris_services_RustService_startService(
         _env: JNIEnv,
         _class: JClass,
+        tun_fd: jint,
     ) {
         // Initialize the mesh networking node and logging
         init_logging();
-        init_mesh_networking();
+        init_mesh_networking(tun_fd as RawFd);
+    }
+
+    #[no_mangle]
+    pub extern "system" fn Java_pt_iris_services_RustService_testTUN(
+        mut env: JNIEnv,
+        _class: JClass,
+        ipv6: JString,
+    ) -> jni::sys::jboolean {
+        // Convert JString to Rust String
+        let ipv6_addr: String = match env.get_string(&ipv6) {
+            Ok(s) => s.into(),
+            Err(e) => {
+                log::error!("Failed to convert stream URL from Java: {}", e);
+                return jni::sys::JNI_FALSE;
+            }
+        };
+
+        let ipv6_clone = ipv6_addr.clone();
+
+        thread::spawn(move || {
+            info!("Testing TUN interface with IPv6: {}", ipv6_clone);
+
+            // Bind socket to the given IPv6 address and port 5555
+            let bind_addr = format!("[{}]:{}", "::", 0);
+            let socket = match UdpSocket::bind(&bind_addr) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("Failed to bind UDP socket to {}: {}", bind_addr, e);
+                    return;
+                }
+            };
+
+            let dest_addr = format!("[{}]:{}", "fd00:1234::1", 5555);
+
+            let message = b"Hello World";
+
+            loop {
+                match socket.send_to(message, &dest_addr) {
+                    Ok(sent) => {
+                        info!("Sent {} bytes to {}", sent, dest_addr);
+                    }
+                    Err(e) => {
+                        log::error!("Failed to send UDP packet: {}", e);
+                    }
+                }
+                thread::sleep(Duration::from_secs(2));
+            }
+        });
+
+        thread::spawn(move || {
+            info!("Listening for UDP packets on {}", ipv6_addr);
+            let bind_addr = format!("[{}]:{}", ipv6_addr, 5555);
+            let socket = match UdpSocket::bind(&bind_addr) {
+                Ok(s) => s,
+                Err(e) => {
+                    log::error!("Failed to bind UDP socket to {}: {}", bind_addr, e);
+                    return;
+                }
+            };
+
+            let mut buf = [0; 1024];
+            loop {
+                match socket.recv_from(&mut buf) {
+                    Ok((size, src)) => {
+                        info!("Received {} bytes from {}: {:?}", size, src, &buf[..size]);
+                    }
+                    Err(e) => {
+                        log::error!("Failed to receive UDP packet: {}", e);
+                    }
+                }
+            }
+        });
+
+        jni::sys::JNI_TRUE
     }
 
     /// Starts the mesh networking node and its tasks.
@@ -229,20 +312,20 @@ pub mod android {
 
         log::info!("Adding socket for IP: {}", ip_str);
 
-        // Get node instance
-        let node = match MESH_NETWORK_NODE.get() {
-            Some(node) => node.clone(),
-            None => {
-                log::error!("Mesh networking node is not initialized");
-                return;
-            }
-        };
+        // // Get node instance
+        // let node = match MESH_NETWORK_NODE.get() {
+        //     Some(node) => node.clone(),
+        //     None => {
+        //         log::error!("Mesh networking node is not initialized");
+        //         return;
+        //     }
+        // };
 
-        // Add socket to the node
-        match node.add_socket_sync(&ip_str) {
-            Ok(_) => log::info!("Successfully added socket for IP: {}", ip_str),
-            Err(e) => log::error!("Failed to add socket for IP {}: {:?}", ip_str, e),
-        };
+        // // Add socket to the node
+        // match node.add_socket_sync(&ip_str) {
+        //     Ok(_) => log::info!("Successfully added socket for IP: {}", ip_str),
+        //     Err(e) => log::error!("Failed to add socket for IP {}: {:?}", ip_str, e),
+        // };
 
         // SAFETY: CLIENT is a static variable, so we can safely access it
         // if let Some(client_holder) = CLIENT.get() {

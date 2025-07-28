@@ -4,9 +4,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
@@ -19,10 +23,17 @@ import com.google.android.material.navigation.NavigationView;
 
 import pt.iris.databinding.ActivityMainBinding;
 import pt.iris.network.NetworkInitializer;
+import pt.iris.services.MyVpnService;
 import pt.iris.services.RustService;
 import pt.iris.utils.AppContainer;
 import pt.iris.utils.CertificateUtil;
 import pt.iris.utils.PermissionHandler;
+
+import pt.iris.network.lib.TunManager;
+import android.net.VpnService;
+import android.os.Build;
+import android.os.ParcelFileDescriptor;
+import androidx.annotation.RequiresApi;
 
 import java.io.IOException;
 import java.util.List;
@@ -37,12 +48,16 @@ public class MainActivity extends AppCompatActivity {
     public NetworkInitializer wifiAwareNetwork;
     private AppContainer appContainer;
     private Intent serviceIntent;
+    private Intent serviceIntentVpn;
+    private ActivityResultLauncher<Intent> vpnPermissionLauncher;
+
     private ActivityMainBinding binding;
     private NavController navController;
     private AppBarConfiguration mAppBarConfiguration;
 
     private static final String PREFS_NAME = "MyPrefsFile";
     private static final String UUID_KEY = "uuid";
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -60,11 +75,11 @@ public class MainActivity extends AppCompatActivity {
 
     private void initializeBasicComponents() {
         // Copy public key certificate to data folder of app
-        try {
+        /*try {
             CertificateUtil.copyCertificateToDataFolder(this);
         } catch (IOException e) {
             throw new RuntimeException("Failed to copy certificate", e);
-        }
+        }*/
 
         // Generate or retrieve the UUID
         String uuid = getOrCreateUUID();
@@ -134,21 +149,19 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onPermissionsDenied(List<String> deniedPermissions) {
                 // Some permissions denied, show warning but continue
-                Toast.makeText(MainActivity.this, 
-                    "Some features may not work without all permissions", 
+                Toast.makeText(MainActivity.this,
+                    "Some features may not work without all permissions",
                     Toast.LENGTH_LONG).show();
-                initializeAppWithPermissions();
+                finish();
             }
 
             @Override
             public void onPermissionsPermanentlyDenied(List<String> permanentlyDeniedPermissions) {
                 // Critical permissions permanently denied
-                Toast.makeText(MainActivity.this, 
-                    "App cannot function without required permissions. Please enable them in settings.", 
+                Toast.makeText(MainActivity.this,
+                    "App cannot function without required permissions. Please enable them in settings.",
                     Toast.LENGTH_LONG).show();
-                
-                // Still try to initialize but with limited functionality
-                initializeAppWithPermissions();
+                finish();
             }
         });
     }
@@ -158,10 +171,8 @@ public class MainActivity extends AppCompatActivity {
         android.content.SharedPreferences prefs = getSharedPreferences("wifi_aware_settings", Context.MODE_PRIVATE);
         boolean wifiAwareEnabled = prefs.getBoolean("wifi_aware_enabled", true);
 
-
         // Set up network initialization callback via AppContainer for server-dependent features
         AppContainer.getInstance().setNetworkInitializationCallback(() -> {
-            // This will be called when the Rust client successfully connects to server
             runOnUiThread(() -> {
                 Toast.makeText(MainActivity.this, "Server connected! Ready for streaming...", Toast.LENGTH_SHORT).show();
             });
@@ -170,9 +181,36 @@ public class MainActivity extends AppCompatActivity {
         // Prepare Rust service (start when needed)
         serviceIntent = new Intent(this, RustService.class);
 
+        vpnPermissionLauncher = registerForActivityResult(
+                new ActivityResultContracts.StartActivityForResult(),
+                result -> {
+                    if (result.getResultCode() == RESULT_OK) {
+                        // Permission granted, start VPN service
+                        Intent serviceIntentVpn = new Intent(this, MyVpnService.class);
+						startForegroundService(serviceIntentVpn);
+					} else {
+                        Log.e("VPN", "User denied VPN permission.");
+                    }
+                }
+        );
+
+        // Request permission when needed:
+        requestVpnPermission();
+
         initializeWifiAwareNetwork(wifiAwareEnabled);
     }
-    
+
+    private void requestVpnPermission() {
+        Intent vpnIntent = VpnService.prepare(this);
+        if (vpnIntent != null) {
+            vpnPermissionLauncher.launch(vpnIntent); // Launch permission dialog
+        } else {
+            // Already granted
+            Intent serviceIntentVpn = new Intent(this, MyVpnService.class);
+			startForegroundService(serviceIntentVpn);
+		}
+    }
+
     private void initializeWifiAwareNetwork(boolean wifiAwareEnabled) {
         // Always start WiFi Aware if permissions are granted (ignoring the setting)
         if (PermissionHandler.areAllPermissionsGranted(this) && wifiAwareEnabled) {
@@ -258,14 +296,11 @@ public class MainActivity extends AppCompatActivity {
         super.onPause();
         // Optionally stop client when app goes to background to save resources
         // Uncomment if you want to stop streaming when app is backgrounded
-        // stopRustClient();
     }
 
     @Override
     protected void onStop() {
         super.onStop();
-        // Stop client when activity is not visible
-        stopRustClient();
     }
 
     private void stopRustClient() {

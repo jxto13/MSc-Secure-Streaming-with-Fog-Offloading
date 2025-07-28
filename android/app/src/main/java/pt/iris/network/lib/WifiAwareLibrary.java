@@ -42,6 +42,13 @@ import java.util.UUID;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.net.Socket;
+import java.net.InetAddress;
+import java.net.Inet6Address;
+import java.net.ServerSocket;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.IOException;
 
 import io.grpc.okhttp.internal.Util;
 import pt.iris.network.lib.WifiAwareModels.DeviceRole;
@@ -58,15 +65,7 @@ import pt.iris.utils.AppContainer;
  */
 @SuppressLint("MissingPermission")
 public class WifiAwareLibrary {
-    /**
-     * Clear all discovered peers but keep active (connected) peers.
-     */
-    public void clearDiscoveredPeers() {
-        discoveredPeers.clear();
-        Log.d(TAG, "[mine] Discovered peers cleared");
-        notifyDiscoveredPeersChanged();
-    }
-    // [mine] DEBUG: Log every function entry for UI update tracing
+
     private static final String TAG = "WifiAwareLibrary";
     public static final String SERVICE_NAME = "Iris_Streaming_Service";
 
@@ -134,27 +133,22 @@ public class WifiAwareLibrary {
     }
 
     public boolean isWifiAwareSupported() {
-        Log.d("mine", "[WifiAwareLibrary] isWifiAwareSupported() called");
         return context.getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI_AWARE);
     }
 
     public boolean isWifiAwareAvailable() {
-        Log.d("mine", "[WifiAwareLibrary] isWifiAwareAvailable() called");
         return wifiAwareManager != null && wifiAwareManager.isAvailable();
     }
 
     public void addCallback(WifiAwareCallback callback) {
-        Log.d("mine", "[WifiAwareLibrary] addCallback() called");
         wifiAwareCallback = callback;
     }
 
     public void removeCallback() {
-        Log.d("mine", "[WifiAwareLibrary] removeCallback() called");
         wifiAwareCallback = null;
     }
 
     public void initialize() {
-        Log.d("mine", "[WifiAwareLibrary] initialize() called");
         if (!isWifiAwareSupported()) {
             notifyError("Wi-Fi Aware not supported on this device");
             return;
@@ -192,7 +186,6 @@ public class WifiAwareLibrary {
     }
 
     public void startPublishing() {
-        Log.d("mine", "[WifiAwareLibrary] startPublishing() called");
         if (wifiAwareSession == null) {
             notifyError("Wi-Fi Aware session not available");
             return;
@@ -252,7 +245,6 @@ public class WifiAwareLibrary {
     }
 
     public void startSubscribing() {
-        Log.d("mine", "[WifiAwareLibrary] startSubscribing() called");
         if (wifiAwareSession == null) {
             notifyError("Wi-Fi Aware session not available");
             return;
@@ -444,7 +436,6 @@ public class WifiAwareLibrary {
     }
 
     public Map<PeerHandle, DataPathInfo> getActiveConnections() {
-        Log.d("mine", "[WifiAwareLibrary] getActiveConnections() called");
         return new ConcurrentHashMap<>(activeConnections);
     }
 
@@ -456,11 +447,15 @@ public class WifiAwareLibrary {
         Map<PeerHandle, DataPathInfo> allPeers = new ConcurrentHashMap<>();
         allPeers.putAll(discoveredPeers);
         allPeers.putAll(activeConnections);
-        Log.d(TAG, "[mine] allPeers size: " + allPeers.size());
-        for (Map.Entry<PeerHandle, DataPathInfo> entry : allPeers.entrySet()) {
-            Log.d(TAG, "[mine] allPeers entry: " + entry.getKey() + " -> " + entry.getValue().ipAddress + ", connected=" + entry.getValue().isConnected);
-        }
         return allPeers;
+    }
+
+    /**
+     * Clear all discovered peers but keep active (connected) peers.
+     */
+    public void clearDiscoveredPeers() {
+        discoveredPeers.clear();
+        notifyDiscoveredPeersChanged();
     }
 
     public SessionInfo getSessionInfo() {
@@ -475,7 +470,6 @@ public class WifiAwareLibrary {
 
 
     public String getWifiAwareStats() {
-        Log.d("mine", "[WifiAwareLibrary] getWifiAwareStats() called");
         if (activeConnections.isEmpty()) {
             return "N/A";
         }

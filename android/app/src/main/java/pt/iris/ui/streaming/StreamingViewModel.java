@@ -49,6 +49,8 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 	private NetworkInitializer networkInitializer;
 	private Uri currentStreamUri;
 
+	private final String TAG = "StreamingViewModel";
+
 	public static class NetworkStats {
 		public int totalConnectedClients;
 		public long totalBytesReceived;
@@ -124,15 +126,15 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 			boolean connectionSuccessful = RustService.startClient(writePfd.getFd(), streamUrl);
 
 			if (connectionSuccessful) {
-				android.util.Log.i("StreamingViewModel", "Client connected successfully, triggering WiFi Aware initialization");
+				android.util.Log.i(TAG, "Client connected successfully, triggering WiFi Aware initialization");
 				isStreamConnected.postValue(true); // Update UI immediately on success
 				try {
 					pt.iris.utils.AppContainer.getInstance().triggerNetworkInitialization();
 				} catch (Exception e) {
-					android.util.Log.w("StreamingViewModel", "Failed to trigger network initialization: " + e.getMessage());
+					android.util.Log.w(TAG, "Failed to trigger network initialization: " + e.getMessage());
 				}
 			} else {
-				android.util.Log.e("StreamingViewModel", "Failed to connect to server");
+				android.util.Log.e(TAG, "Failed to connect to server");
 				isStreamConnected.postValue(false); // Ensure UI is updated on failure
 				throw new RuntimeException("Failed to connect to server");
 			}
@@ -210,7 +212,6 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 	}
 	
 	public LiveData<Map<PeerHandle, DataPathInfo>> getWifiAwareConnections() {
-		Log.d("mine", "[StreamingViewModel] getWifiAwareConnections() called");
 		return wifiAwareConnections;
 	}
 	
@@ -225,10 +226,9 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 
 	@Override
 	public void onConnectionEstablished(String ipAddress, PeerHandle peerHandle) {
-		Log.d("mine", "[StreamingViewModel] onConnectionEstablished() called for peer=" + peerHandle);
-		Log.d("StreamingViewModel", "Wi-Fi Aware connection established: " + ipAddress);
+		Log.d(TAG, "Wi-Fi Aware connection established: " + ipAddress);
 		Map<PeerHandle, DataPathInfo> allPeers = networkInitializer.getAllPeers();
-		Log.d("StreamingViewModel", "All peers map size (after connection): " + (allPeers != null ? allPeers.size() : 0));
+		Log.d(TAG, "All peers map size (after connection): " + (allPeers != null ? allPeers.size() : 0));
 		if (allPeers != null) {
 			// Use the actual DataPathInfo from activeConnections if available
 			Map<PeerHandle, DataPathInfo> activeConnections = networkInitializer.getWifiAwareLibrary().getActiveConnections();
@@ -240,7 +240,7 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 				wifiAwareConnections.postValue(allPeers);
 
 			} else {
-				Log.w("StreamingViewModel", "No DataPathInfo found in activeConnections for peer: " + peerHandle);
+				Log.w(TAG, "No DataPathInfo found in activeConnections for peer: " + peerHandle);
 			}
 
 
@@ -249,10 +249,9 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 
 	@Override
 	public void onConnectionLost(String ipAddress, PeerHandle peerHandle) {
-		Log.d("mine", "[StreamingViewModel] onConnectionLost() called for peer=" + peerHandle);
-		Log.d("StreamingViewModel", "Wi-Fi Aware connection lost: " + ipAddress);
+		Log.d(TAG, "Wi-Fi Aware connection lost: " + ipAddress);
 		Map<PeerHandle, DataPathInfo> allPeers = networkInitializer.getAllPeers();
-		Log.d("StreamingViewModel", "All peers map size (after lost): " + (allPeers != null ? allPeers.size() : 0));
+		Log.d(TAG, "All peers map size (after lost): " + (allPeers != null ? allPeers.size() : 0));
 		if (allPeers != null) {
 			wifiAwareConnections.postValue(new ConcurrentHashMap<>(allPeers));
 		}
@@ -260,8 +259,7 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 
 	@Override
 	public void onWifiAwareStateChanged(boolean available) {
-		Log.d("mine", "[StreamingViewModel] onWifiAwareStateChanged() called: available=" + available);
-		Log.d("StreamingViewModel", "Wi-Fi Aware state changed: " + available);
+		Log.d(TAG, "Wi-Fi Aware state changed: " + available);
 		if (!available) {
 			// Clear connections when Wi-Fi Aware becomes unavailable
 			wifiAwareConnections.postValue(new ConcurrentHashMap<>());
@@ -271,22 +269,20 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 
 	@Override
 	public void onError(String error) {
-		Log.d("mine", "[StreamingViewModel] onError() called: " + error);
-		Log.e("StreamingViewModel", "Wi-Fi Aware error: " + error);
+		Log.e(TAG, "Wi-Fi Aware error: " + error);
 	}
 
 	@Override
 	public void onPeerDiscovered(PeerHandle peerHandle) {
-		Log.d("mine", "[StreamingViewModel] onPeerDiscovered() called for peer=" + peerHandle);
+		Log.d(TAG, "onPeerDiscovered() called for peer=" + peerHandle);
 
 	}
 
 	@Override
 	public void onPeerLost(PeerHandle peerHandle) {
-		Log.d("mine", "[StreamingViewModel] onPeerLost() called for peer=" + peerHandle);
-		Log.d("StreamingViewModel", "Peer lost: " + peerHandle);
+		Log.d(TAG, "Peer lost: " + peerHandle);
 		Map<PeerHandle, DataPathInfo> allPeers = networkInitializer.getAllPeers();
-		Log.d("StreamingViewModel", "All peers map size (after lost): " + (allPeers != null ? allPeers.size() : 0));
+		Log.d(TAG, "All peers map size (after lost): " + (allPeers != null ? allPeers.size() : 0));
 		if (allPeers != null) {
 			wifiAwareConnections.postValue(new ConcurrentHashMap<>(allPeers));
 		}
@@ -296,13 +292,12 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 	 * Connect to a discovered peer by PeerHandle (manual connect from UI)
 	 */
 	public void connectToPeer(PeerHandle peerHandle) {
-		Log.d("mine", "[StreamingViewModel] connectToPeer() called for peer=" + peerHandle);
 		if (networkInitializer != null) {
 			// Always try as master initiator for simplicity (or add role logic if needed)
 			networkInitializer.getWifiAwareLibrary().establishDataPath(peerHandle, true);
-			Log.d("StreamingViewModel", "Requested connection to peer: " + peerHandle);
+			Log.d(TAG, "Requested connection to peer: " + peerHandle);
 		} else {
-			Log.w("StreamingViewModel", "NetworkInitializer is null, cannot connect to peer");
+			Log.w(TAG, "NetworkInitializer is null, cannot connect to peer");
 		}
 	}
 
@@ -328,8 +323,7 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 
 	@Override
 	public void onRoleChanged(WifiAwareModels.DeviceRole newRole) {
-		Log.d("mine", "[StreamingViewModel] onRoleChanged() called: newRole=" + newRole);
-		Log.d("StreamingViewModel", "Role changed to: " + newRole);
+		Log.d(TAG, "Role changed to: " + newRole);
 		updateSessionInfo();
 		// Force UI update for peer role change
 		if (wifiAwareConnections != null && wifiAwareConnections.getValue() != null) {
@@ -339,33 +333,11 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 
 	@Override
 	public void onSessionInfoChanged(SessionInfo sessionInfo) {
-		Log.d("mine", "[StreamingViewModel] onSessionInfoChanged() called");
-		Log.d("StreamingViewModel", "Session info changed");
+		Log.d(TAG, "Session info changed");
 		wifiAwareSessionInfo.postValue(sessionInfo);
 	}
 
-	/**
-	 * Set the toggle for showing discovered peers or only connected peers.
-	 */
-	public void setShowDiscoveredPeers(boolean show) {
-		if (networkInitializer != null) {
-			networkInitializer.setShowDiscoveredPeers(show);
-		}
-	}
-
-	/**
-	 * Refresh the LiveData for wifiAwareConnections based on the current toggle.
-	 */
-	public void refreshWifiAwareConnections() {
-		if (networkInitializer != null) {
-			Map<PeerHandle, DataPathInfo> peers = networkInitializer.getCurrentPeers();
-			wifiAwareConnections.postValue(new ConcurrentHashMap<>(peers));
-		}
-	}
-
-
 	public void connectToStream(Context context, Uri streamUri) {
-		Log.d("mine", "[StreamingViewModel] connectToStream() called");
 		// Initialize and configure the player with the provided URI
 		player = initializePlayer(context, streamUri);
 		currentStreamUri = streamUri;
@@ -376,7 +348,6 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 	}
 
 	public void disconnectStream() {
-		Log.d("mine", "[StreamingViewModel] disconnectStream() called");
 		if (player != null) {
 			player.stop();
 			player.clearMediaItems();
@@ -401,7 +372,7 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 		try {
 			RustService.stopClient();
 		} catch (Exception e) {
-			android.util.Log.w("StreamingViewModel", "Error stopping Rust client", e);
+			android.util.Log.w(TAG, "Error stopping Rust client", e);
 		}
 		
 		// Release ExoPlayer
@@ -457,7 +428,7 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 					return extractedHost;
 				}
 			} catch (Exception e) {
-				android.util.Log.w("StreamingViewModel", "Failed to extract host from URI: " + uriString, e);
+				android.util.Log.w(TAG, "Failed to extract host from URI: " + uriString, e);
 			}
 		}
 		
@@ -477,7 +448,6 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 	 * Stop streaming and release all resources
 	 */
 	public void stopStreaming() {
-		Log.d("mine", "[StreamingViewModel] stopStreaming() called");
 		releasePlayer();
 	}
 

@@ -56,17 +56,14 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	}
 
 	public void addListener(NetworkConnectionListener listener) {
-		Log.d("mine", "[NetworkInitializer] addListener() called");
 		listeners.add(listener);
 	}
 
 	public void removeListener(NetworkConnectionListener listener) {
-		Log.d("mine", "[NetworkInitializer] removeListener() called");
 		listeners.remove(listener);
 	}
 
 	public void initialize() {
-		Log.d("mine", "[NetworkInitializer] initialize() called");
 		if (isInitialized) {
 			Log.d(TAG, "Already initialized");
 			return;
@@ -88,7 +85,6 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	}
 
 	public void startPublishing() {
-		Log.d("mine", "[NetworkInitializer] startPublishing() called");
 		if (!isInitialized) {
 			Log.w(TAG, "Not initialized, cannot start publishing");
 			return;
@@ -102,7 +98,6 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	}
 
 	public void startSubscribing() {
-		Log.d("mine", "[NetworkInitializer] startSubscribing() called");
 		if (!isInitialized) {
 			Log.w(TAG, "Not initialized, cannot start subscribing");
 			return;
@@ -116,14 +111,12 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	}
 
 	public void startBoth() {
-		Log.d("mine", "[NetworkInitializer] startBoth() called");
 		startPublishing();
 		startSubscribing();
 	}
 
 
 	public Map<PeerHandle, DataPathInfo> getAllPeers() {
-		Log.d("mine", "[NetworkInitializer] getAllPeers() called");
 		return wifiAwareLibrary.getAllPeers();
 	}
 
@@ -159,7 +152,6 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 	}
 
 	public String getWifiAwareStats() {
-		Log.d("mine", "[NetworkInitializer] getWifiAwareStats() called");
 		return wifiAwareLibrary.getWifiAwareStats();
 	}
 
