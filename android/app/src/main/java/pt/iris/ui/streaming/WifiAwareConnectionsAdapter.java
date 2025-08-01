@@ -71,7 +71,6 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
     @Override
     public void onBindViewHolder(@NonNull ConnectionViewHolder holder, int position) {
         DataPathInfo connection = connections.get(position);
-        Log.d("WifiAwareAdapter", "onBindViewHolder: position=" + position + ", peerHandle=" + connection.peerHandle + ", ipAddress=" + connection.ipAddress + ", isActive=" + connection.isActive);
         holder.bind(connection, sessionInfo, null);
     }
 
@@ -139,7 +138,6 @@ public class WifiAwareConnectionsAdapter extends RecyclerView.Adapter<WifiAwareC
             // IP Address and role info
             String addressInfo = connection.getDisplayAddress();
             ipAddressText.setText(addressInfo);
-            // ...existing code...
 
             // Only display duration after connection
             if (connection.isConnected()) {

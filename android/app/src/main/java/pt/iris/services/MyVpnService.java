@@ -5,23 +5,35 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Intent;
 import android.net.VpnService;
-import android.os.Build;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 
-import androidx.annotation.RequiresApi;
-
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.InetSocketAddress;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
+import pt.iris.network.lib.WifiAwareLibrary;
 import pt.iris.network.lib.TunManager;
+import pt.iris.utils.AppContainer;
 
 public class MyVpnService extends VpnService {
-	private static final String TAG = "MyVpnService";
-	private TunManager tunManager;
-	private Thread vpnThread;
-	private boolean running = false;
+   private static final String TAG = "MyVpnService";
+   private TunManager tunManager;
+   private Thread vpnThread;
+   private boolean running = false;
+   private final Set<Object> peersWithForwarders = new HashSet<>();
+
+   // Reference to WifiAwareLibrary (should be set from your app logic)
+   private WifiAwareLibrary wifiAwareLibrary;
 
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
@@ -29,6 +41,8 @@ public class MyVpnService extends VpnService {
 
 		// MUST call startForeground() within 5 seconds if started with startForegroundService()
 		startForeground(1, createNotification());
+
+		this.wifiAwareLibrary = AppContainer.getInstance().getNetworkInitializer().getWifiAwareLibrary();
 
 		if (!running) {
 			running = true;
@@ -58,73 +72,244 @@ public class MyVpnService extends VpnService {
 
 	private void startVpn() {
 		vpnThread = new Thread(() -> {
+			Log.i(TAG, "VPN thread started");
 			try {
 				tunManager = new TunManager(getApplicationContext(), this);
 				String ulaAddress = tunManager.spinTun();
 				Log.i(TAG, "TUN interface established with ULA IPv6: " + ulaAddress);
 
-				RustService.testTUN(ulaAddress);
-				ParcelFileDescriptor tun = tunManager.getTunInterface();
-				if (tun != null) {
-					Log.i(TAG, "TUN fd: " + tun.getFd());
-
-					// Create input/output streams to read/write packets
-					FileInputStream in = new FileInputStream(tun.getFileDescriptor());
-					FileOutputStream out = new FileOutputStream(tun.getFileDescriptor());
-
-					ByteBuffer packetBuffer = ByteBuffer.allocate(32767); // Max MTU size
-
-					while (running) {
-						// Read packet from TUN
-						int length = in.read(packetBuffer.array());
-						if (length > 0) {
-							logPacket(packetBuffer.array(), length); // Log packet contents
-						}
-
-						// (Optional) Write packet back or forward as needed
-						//out.write(packetBuffer.array(), 0, length);
-					}
-
-					in.close();
-					out.close();
+				// Set the TUN IP in WifiAwareLibrary 
+				if (wifiAwareLibrary != null) {
+					wifiAwareLibrary.setLocalTunIP(ulaAddress);
 				}
 
+				RustService.testTUN(ulaAddress);
+
+				ParcelFileDescriptor tun = tunManager.getTunInterface();
+				if (tun != null) {
+					Log.i(TAG, "TUN file descriptor obtained: " + tun.getFd());
+
+					FileInputStream tunIn = new FileInputStream(tun.getFileDescriptor());
+					FileOutputStream tunOut = new FileOutputStream(tun.getFileDescriptor());
+
+					// Start TCP-to-TUN forwarding threads
+					Log.i(TAG, "Starting TCP-to-TUN forwarder threads...");
+					startSocketForwarderMonitor(tunOut);
+
+					// Start TUN-to-TCP forwarding loop
+					Log.i(TAG, "Starting TUN-to-TCP forwarding loop...");
+					byte[] buffer = new byte[32767]; // Max MTU size
+
+						while (running) {
+							int length = tunIn.read(buffer);
+							if (length > 0) {
+								logPacketDetailed(buffer, length);
+								forwardPacketToAllPeers(buffer, length);
+							}
+						}					Log.i(TAG, "TUN forwarding loop exited, closing streams...");
+					tunIn.close();
+					tunOut.close();
+				} else {
+					Log.e(TAG, "Failed to get TUN interface (tun=null)");
+				}
+
+			} catch (IOException e) {
+				Log.e(TAG, "VPN I/O error: " + e.getMessage(), e);
 			} catch (Exception e) {
-				Log.e(TAG, "VPN error: ", e);
+				Log.e(TAG, "Unexpected VPN error: ", e);
+			} finally {
+				Log.i(TAG, "VPN thread stopping, cleaning up...");
 				stopSelf();
 			}
-		});
+		}, "VPN-Thread");
 		vpnThread.start();
 	}
 
-	/**
-	 * Logs the raw packet data in hex format.
-	 */
-	private void logPacket(byte[] packet, int length) {
+	private void logPacketDetailed(byte[] packet, int length) {
+		if (length < 40) { // Minimum IPv6 header size
+			Log.w(TAG, "Packet too short (" + length + " bytes), skipping log");
+			return;
+		}
+
+		// Extract IPv6 header fields
+		String srcAddr = formatIpv6Address(packet, 8);   // Bytes 8-23
+		String dstAddr = formatIpv6Address(packet, 24);  // Bytes 24-39
+		int nextHeader = packet[6] & 0xFF;               // Protocol
+		String protoName = (nextHeader == 6) ? "TCP" :
+				(nextHeader == 17) ? "UDP" :
+						(nextHeader == 58) ? "ICMPv6" : "Other(" + nextHeader + ")";
+
+		Log.d(TAG, String.format("IPv6 Packet: %d bytes | %s -> %s | Proto=%s",
+				length, srcAddr, dstAddr, protoName));
+	}
+
+	private String formatIpv6Address(byte[] packet, int offset) {
 		StringBuilder sb = new StringBuilder();
-		for (int i = 0; i < length; i++) {
-			sb.append(String.format("%02X ", packet[i]));
+		for (int i = 0; i < 16; i += 2) {
+			sb.append(String.format("%02x%02x", packet[offset + i], packet[offset + i + 1]));
+			if (i < 14) sb.append(":");
 		}
-		Log.d(TAG, "Packet (" + length + " bytes): " + sb.toString());
+		return sb.toString();
 	}
 
 
-	@Override
-	public void onDestroy() {
-		Log.i(TAG, "Stopping VPN service...");
-		running = false;
-		if (tunManager != null) {
-			tunManager.closeTun();
-		}
-		if (vpnThread != null) {
-			vpnThread.interrupt();
-		}
-		super.onDestroy();
-	}
 
-	@Override
-	public android.os.IBinder onBind(Intent intent) {
-		// Required for VpnService binding
-		return super.onBind(intent);
-	}
+	/**
+	* Simple socket forwarder monitor for TCP connections
+	*/
+   private void forwardPacketToAllPeers(byte[] data, int length) {
+	   if (wifiAwareLibrary == null) {
+		   Log.w(TAG, "forwardPacketToAllPeers: WifiAwareLibrary is null, cannot forward.");
+		   return;
+	   }
+
+	   Map<?, Socket> peerSockets = wifiAwareLibrary.getPeerClientSockets();
+	   
+	   if (peerSockets.isEmpty()) {
+		   Log.v(TAG, "No peer TCP sockets available for forwarding");
+		   return;
+	   }
+
+	   int forwardedCount = 0;
+	   for (Map.Entry<?, Socket> entry : peerSockets.entrySet()) {
+		   Object peerId = entry.getKey();
+		   Socket socket = entry.getValue();
+
+		   if (socket != null && !socket.isClosed() && socket.isConnected()) {
+			   try {
+				   socket.getOutputStream().write(data, 0, length);
+				   socket.getOutputStream().flush();
+				   forwardedCount++;
+				   Log.v(TAG, "Packet (" + length + " bytes) forwarded to peer: " + peerId);
+			   } catch (IOException e) {
+				   Log.e(TAG, "Failed to forward to peer " + peerId + ": " + e.getMessage());
+			   }
+		   } else {
+			   Log.v(TAG, "Peer " + peerId + " socket is closed or disconnected");
+		   }
+	   }
+
+	   Log.d(TAG, "Packet forwarded to " + forwardedCount + "/" + peerSockets.size() + " peers");
+   }
+
+   /**
+    * Socket forwarder that reads from TCP connections and forwards to TUN interface
+    */
+   private void startSocketForwarderMonitor(FileOutputStream tunOut) {
+	   if (wifiAwareLibrary == null) {
+		   Log.w(TAG, "startSocketForwarderMonitor: WifiAwareLibrary is null, cannot start monitor.");
+		   return;
+	   }
+
+	   new Thread(() -> {
+		   Log.d(TAG, "Socket forwarder monitor started for TCP connections");
+		   
+		   while (running) {
+			   try {
+				   // Get both client and server sockets for bidirectional communication
+				   Map<?, Socket> clientSockets = wifiAwareLibrary.getPeerClientSockets();
+				   Map<?, ServerSocket> serverSockets = wifiAwareLibrary.getPeerServerSockets();
+				   
+				   Log.v(TAG, "Monitoring " + clientSockets.size() + " client sockets");
+				   
+				   synchronized (peersWithForwarders) {
+					   // Remove peers whose sockets are closed
+					   peersWithForwarders.removeIf(peerId -> {
+						   Socket s = clientSockets.get(peerId);
+						   return s == null || s.isClosed() || !s.isConnected();
+					   });
+
+					   // Start forwarders for new client socket connections
+					   for (Map.Entry<?, Socket> entry : clientSockets.entrySet()) {
+						   Object peerId = entry.getKey();
+						   Socket socket = entry.getValue();
+						   
+						   if (socket != null && !peersWithForwarders.contains(peerId) && 
+							   !socket.isClosed() && socket.isConnected()) {
+							   
+							   peersWithForwarders.add(peerId);
+							   Log.i(TAG, "Launching TCP→TUN forwarder thread for peer: " + peerId);
+							   
+							   new Thread(() -> {
+								   try {
+									   InputStream inputStream = socket.getInputStream();
+									   byte[] buffer = new byte[32768]; // 32KB buffer
+									   
+									   while (running && !socket.isClosed() && socket.isConnected()) {
+										   try {
+											   int bytesRead = inputStream.read(buffer);
+											   if (bytesRead > 0) {
+												   // Check if this is a keepalive ping message
+												   String receivedData = new String(buffer, 0, bytesRead);
+												   if (receivedData.startsWith("PING_KEEPALIVE")) {
+													   Log.v(TAG, "Received keepalive ping from peer " + peerId + ", ignoring");
+													   continue;
+												   }
+												   
+												   Log.v(TAG, "Received " + bytesRead + " bytes from peer " + peerId + ", forwarding to TUN");
+												   
+												   // Forward received data to TUN interface
+												   tunOut.write(buffer, 0, bytesRead);
+												   tunOut.flush();
+												   
+												   logPacketDetailed(buffer, bytesRead);
+											   } else if (bytesRead == -1) {
+												   Log.d(TAG, "End of stream reached for peer: " + peerId);
+												   break;
+											   }
+										   } catch (IOException e) {
+											   if (running && !socket.isClosed()) {
+												   Log.w(TAG, "TCP read error for peer " + peerId + ": " + e.getMessage());
+											   }
+											   break;
+										   }
+									   }
+									   
+									   Log.i(TAG, "TCP→TUN forwarder thread for peer " + peerId + " exiting");
+								   } catch (Exception e) {
+									   Log.w(TAG, "TCP→TUN forwarder error for peer " + peerId + ": " + e.getMessage());
+								   } finally {
+									   synchronized (peersWithForwarders) {
+										   peersWithForwarders.remove(peerId);
+									   }
+								   }
+							   }, "TcpToTun-" + peerId).start();
+						   }
+					   }
+				   }
+				   
+				   Thread.sleep(2000); // Check for new connections every 2 seconds
+				   
+			   } catch (InterruptedException e) {
+				   Log.d(TAG, "Socket forwarder monitor interrupted");
+				   break;
+			   } catch (Exception e) {
+				   Log.e(TAG, "Error in socket forwarder monitor", e);
+			   }
+		   }
+		   
+		   Log.d(TAG, "Socket forwarder monitor exiting");
+	   }, "SocketForwarderMonitor").start();
+   }
+
+   @Override
+   public void onDestroy() {
+	   Log.i(TAG, "Stopping VPN service...");
+	   running = false;
+	   
+	   if (tunManager != null) {
+		   tunManager.closeTun();
+	   }
+	   if (vpnThread != null) {
+		   vpnThread.interrupt();
+	   }
+	   super.onDestroy();
+   }
+
+   @Override
+   public android.os.IBinder onBind(Intent intent) {
+	   // Required for VpnService binding
+	   return super.onBind(intent);
+   }
+
 }

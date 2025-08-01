@@ -120,60 +120,6 @@ pub mod android {
 
         let ipv6_clone = ipv6_addr.clone();
 
-        // thread::spawn(move || {
-        //     info!("Testing TUN interface with IPv6: {}", ipv6_clone);
-
-        //     // Bind socket to the given IPv6 address and port 5555
-        //     let bind_addr = format!("[{}]:{}", "::", 0);
-        //     let socket = match UdpSocket::bind(&bind_addr) {
-        //         Ok(s) => s,
-        //         Err(e) => {
-        //             log::error!("Failed to bind UDP socket to {}: {}", bind_addr, e);
-        //             return;
-        //         }
-        //     };
-
-        //     let dest_addr = format!("[{}]:{}", "fd00:1234::1", 5555);
-
-        //     let message = b"Hello World";
-
-        //     loop {
-        //         match socket.send_to(message, &dest_addr) {
-        //             Ok(sent) => {
-        //                 info!("Sent {} bytes to {}", sent, dest_addr);
-        //             }
-        //             Err(e) => {
-        //                 log::error!("Failed to send UDP packet: {}", e);
-        //             }
-        //         }
-        //         thread::sleep(Duration::from_secs(2));
-        //     }
-        // });
-
-        // thread::spawn(move || {
-        //     info!("Listening for UDP packets on {}", ipv6_addr);
-        //     let bind_addr = format!("[{}]:{}", ipv6_addr, 5555);
-        //     let socket = match UdpSocket::bind(&bind_addr) {
-        //         Ok(s) => s,
-        //         Err(e) => {
-        //             log::error!("Failed to bind UDP socket to {}: {}", bind_addr, e);
-        //             return;
-        //         }
-        //     };
-
-        //     let mut buf = [0; 1024];
-        //     loop {
-        //         match socket.recv_from(&mut buf) {
-        //             Ok((size, src)) => {
-        //                 info!("Received {} bytes from {}: {:?}", size, src, &buf[..size]);
-        //             }
-        //             Err(e) => {
-        //                 log::error!("Failed to receive UDP packet: {}", e);
-        //             }
-        //         }
-        //     }
-        // });
-
         jni::sys::JNI_TRUE
     }
 

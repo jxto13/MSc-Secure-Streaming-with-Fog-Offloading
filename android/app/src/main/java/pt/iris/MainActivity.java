@@ -178,8 +178,11 @@ public class MainActivity extends AppCompatActivity {
             });
         });
 
+
         // Prepare Rust service (start when needed)
         serviceIntent = new Intent(this, RustService.class);
+
+        initializeWifiAwareNetwork(wifiAwareEnabled);
 
         vpnPermissionLauncher = registerForActivityResult(
                 new ActivityResultContracts.StartActivityForResult(),
@@ -197,7 +200,6 @@ public class MainActivity extends AppCompatActivity {
         // Request permission when needed:
         requestVpnPermission();
 
-        initializeWifiAwareNetwork(wifiAwareEnabled);
     }
 
     private void requestVpnPermission() {

@@ -247,4 +247,6 @@ public class NetworkInitializer implements WifiAwareLibrary.WifiAwareCallback {
 			wifiAwareLibrary.destroy();
 		}
 	}
+
+
 }

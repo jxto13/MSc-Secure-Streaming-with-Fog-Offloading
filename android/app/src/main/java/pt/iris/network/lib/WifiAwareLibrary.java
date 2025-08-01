@@ -1,3 +1,4 @@
+
 package pt.iris.network.lib;
 
 import static pt.iris.network.utils.Utils.asBytes;
@@ -30,26 +31,27 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.net.Socket;
+import java.util.concurrent.CopyOnWriteArraySet;
 import java.net.InetAddress;
-import java.net.Inet6Address;
-import java.net.ServerSocket;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.net.InetSocketAddress;
 import java.io.IOException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -88,12 +90,23 @@ public class WifiAwareLibrary {
     // Connection tracking
     private final Map<PeerHandle, DataPathInfo> activeConnections = new ConcurrentHashMap<>();
 
-    private static final int PING_INTERVAL_MS = 5000; // 5 seconds
-    private final ScheduledExecutorService pingExecutor = Executors.newScheduledThreadPool(1);
+    private static final int TCP_PORT = 8080;
     private final Map<PeerHandle, ServerSocket> serverSockets = new ConcurrentHashMap<>();
+    private final Map<PeerHandle, Socket> clientSockets = new ConcurrentHashMap<>();
 
-    // Track sockets for each peer
-    private final Map<PeerHandle, Socket> peerSockets = new ConcurrentHashMap<>();
+    // Keepalive ping mechanism
+    private static final int PING_INTERVAL_MS = 30000; // 30 seconds
+    private final ScheduledExecutorService pingExecutor = Executors.newScheduledThreadPool(2);
+    private final Set<PeerHandle> activePings = new CopyOnWriteArraySet<>();
+
+    // Routing table for intelligent packet forwarding
+    private final RoutingTable routingTable = new RoutingTable();
+
+    // Track peer TUN IP addresses learned from ping responses
+    private final Map<PeerHandle, String> peerTunIPs = new ConcurrentHashMap<>();
+    
+    // Track which peers we're actively connected to
+    private final Set<PeerHandle> activeConnections2 = new CopyOnWriteArraySet<>();
 
     private WifiAwareCallback wifiAwareCallback = null;
 
@@ -347,7 +360,6 @@ public class WifiAwareLibrary {
                 // PUBLISHER/SERVER SIDE
                 try {
                     ServerSocket serverSocket = new ServerSocket(0);
-                    serverSocket.setReuseAddress(true);
                     serverSockets.put(peerHandle, serverSocket);
 
                     int port = serverSocket.getLocalPort();
@@ -365,35 +377,56 @@ public class WifiAwareLibrary {
 
                     ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
                         @Override
-                        public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
+                        public void onAvailable(@NonNull Network network){
+                            connectivityManager.bindProcessToNetwork(network);
+                        }
+
+                        @Override
+                        public void onCapabilitiesChanged(@NonNull Network network, NetworkCapabilities networkCapabilities) {
                             WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) networkCapabilities.getTransportInfo();
                             if (peerAwareInfo != null) {
                                 Inet6Address peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
-                                Log.d(TAG, "Peer connection info - IP: " + peerIpv6);
-
-                                RustService.addSocket(peerIpv6.getHostAddress());
 
                                 DataPathInfo dataPath = new DataPathInfo(peerHandle, network, peerIpv6.getHostAddress());
                                 activeConnections.put(peerHandle, dataPath);
 
-                                Log.d(TAG, "Data path established successfully with peer: " + peerHandle);
-
-                                // Send port to the client before accepting
+                                // Send port to the client before starting to listen
                                 if (publishSession != null) {
                                     String portMsg = "PORT:" + port;
                                     publishSession.sendMessage(peerHandle, 0, portMsg.getBytes());
                                     Log.d(TAG, "Sent port to client: " + portMsg);
                                 }
 
-                                // Accept connection in a background thread
-                                new Thread(() -> acceptClientSocket(peerHandle, serverSocket)).start();
+                                // Start listening for client connections
+                                new Thread(() -> {
+                                    try {
+                                        // Set a reasonable timeout for accept operations
+                                        serverSocket.setSoTimeout(30000); // 30 seconds
+                                        Log.d(TAG, "Server waiting for client connection on port: " + port);
+                                        
+                                        Socket clientSocket = serverSocket.accept();
+                                        clientSockets.put(peerHandle, clientSocket);
+                                        Log.d(TAG, "Client connected from: " + clientSocket.getRemoteSocketAddress());
+                                        
+                                        // Start continuous packet listener and keepalive pings
+                                        startContinuousPacketListener(peerHandle, clientSocket);
+                                        startKeepAlivePing(peerHandle, clientSocket);
+                                        
+                                    } catch (java.net.SocketTimeoutException e) {
+                                        Log.w(TAG, "Timeout waiting for client connection from peer: " + peerHandle);
+                                    } catch (IOException e) {
+                                        Log.e(TAG, "Error accepting client connection", e);
+                                    }
+                                }, "ServerAccept-" + peerHandle).start();
+
+                                Log.d(TAG, "Server side: ServerSocket created for peer " + peerHandle + " on port " + port);
 
                                 wifiAwareCallback.onConnectionEstablished(peerHandle, dataPath);
                             }
                         }
 
                         @Override
-                        public void onLost(Network network) {
+                        public void onLost(@NonNull Network network) {
                             cleanupConnection(peerHandle);
                         }
 
@@ -423,30 +456,39 @@ public class WifiAwareLibrary {
 
                 ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
                     @Override
+                    public void onAvailable(@NonNull Network network){
+                        connectivityManager.bindProcessToNetwork(network);
+                    }
+
+                    @Override
                     public void onCapabilitiesChanged(Network network, NetworkCapabilities networkCapabilities) {
                         WifiAwareNetworkInfo peerAwareInfo = (WifiAwareNetworkInfo) networkCapabilities.getTransportInfo();
                         if (peerAwareInfo != null) {
                             Inet6Address peerIpv6 = peerAwareInfo.getPeerIpv6Addr();
                             int peerPort = peerAwareInfo.getPort();
-                            Log.d(TAG, "Connecting to server socket at: " + peerIpv6 + ":" + peerPort);
-
-                            RustService.addSocket(peerIpv6.getHostAddress());
 
                             DataPathInfo dataPath = new DataPathInfo(peerHandle, network, peerIpv6.getHostAddress());
                             activeConnections.put(peerHandle, dataPath);
 
-                            try {
-                                Socket socket = network.getSocketFactory().createSocket(peerIpv6, peerPort);
-                                socket.setSoTimeout(15000); // Timeout for read operations
-                                peerSockets.put(peerHandle, socket);
-                                Log.d(TAG, "Connected to server socket for peer: " + peerHandle);
+                            // Connect to server using network socket factory
+                            new Thread(() -> {
+                                try {
+                                    Log.d(TAG, "Connecting to server at: " + peerIpv6 + ":" + peerPort);
+                                    Socket socket = network.getSocketFactory().createSocket(peerIpv6, peerPort);
+                                    
+                                    clientSockets.put(peerHandle, socket);
+                                    Log.d(TAG, "Client connected to server at: " + socket.getRemoteSocketAddress());
+                                    
+                                    // Start continuous packet listener and keepalive pings
+                                    startContinuousPacketListener(peerHandle, socket);
+                                    startKeepAlivePing(peerHandle, socket);
+                                    
+                                } catch (IOException e) {
+                                    Log.e(TAG, "Failed to connect to server at " + peerIpv6 + ":" + peerPort, e);
+                                }
+                            }, "ClientConnect-" + peerHandle).start();
 
-                                // Start pinging periodically
-                                startPinging(peerHandle, socket);
-
-                            } catch (IOException e) {
-                                Log.e(TAG, "Failed to connect to server socket for peer: " + peerHandle, e);
-                            }
+                            Log.d(TAG, "Client side: Socket connection initiated for peer " + peerHandle);
 
                             wifiAwareCallback.onConnectionEstablished(peerHandle, dataPath);
                         }
@@ -473,52 +515,80 @@ public class WifiAwareLibrary {
         }
     }
 
-    private void acceptClientSocket(PeerHandle peerHandle, ServerSocket serverSocket) {
-        try {
-            serverSocket.setSoTimeout(10000); // Wait up to 10 seconds per accept attempt
-
-            boolean connected = false;
-            long startTime = System.currentTimeMillis();
-
-            while (!connected && System.currentTimeMillis() - startTime < 30000) { // Retry for 30 seconds max
-                try {
-                    Socket clientSocket = serverSocket.accept(); // Blocking wait
-                    clientSocket.setSoTimeout(15000);
-                    peerSockets.put(peerHandle, clientSocket);
-                    Log.d(TAG, "Accepted client socket for peer: " + peerHandle);
-
-                    // Start pinging from server if desired
-                    startPinging(peerHandle, clientSocket);
-                    connected = true;
-                } catch (SocketTimeoutException e) {
-                    Log.w(TAG, "Accept timeout for peer: " + peerHandle + " - retrying...");
+    /**
+     * Starts continuous packet listener for the TCP socket
+     */
+    private void startContinuousPacketListener(PeerHandle peerHandle, Socket socket) {
+        new Thread(() -> {
+            try {
+                // Socket is now established and ready for data exchange
+                Log.d(TAG, "TCP connection established with peer: " + peerHandle);
+                activeConnections2.add(peerHandle);
+                
+                // Keep connection alive but don't read data here
+                // Data reading will be handled by VPN service to avoid conflicts
+                while (!socket.isClosed() && socket.isConnected()) {
+                    try {
+                        Thread.sleep(5000); // Check connection every 5 seconds
+                        if (!socket.isConnected()) {
+                            break;
+                        }
+                    } catch (InterruptedException e) {
+                        Log.d(TAG, "TCP listener interrupted for peer: " + peerHandle);
+                        break;
+                    }
                 }
+                
+            } catch (Exception e) {
+                Log.w(TAG, "TCP connection monitor error for peer " + peerHandle, e);
             }
-
-            if (!connected) {
-                Log.e(TAG, "Failed to accept client socket for peer: " + peerHandle + " after retries");
+            finally {
+                activeConnections2.remove(peerHandle);
             }
-
-        } catch (IOException e) {
-            Log.e(TAG, "Error accepting client socket for peer: " + peerHandle, e);
-        }
+            Log.d(TAG, "TCP connection monitor exiting for peer: " + peerHandle);
+        }, "TCPMonitor-" + peerHandle).start();
     }
 
-
-    private void startPinging(PeerHandle peerHandle, Socket socket) {
+    /**
+     * Starts keepalive ping mechanism for TCP socket
+     */
+    private void startKeepAlivePing(PeerHandle peerHandle, Socket socket) {
+        if (activePings.contains(peerHandle)) {
+            Log.d(TAG, "Already pinging peer: " + peerHandle);
+            return;
+        }
+        
+        activePings.add(peerHandle);
+        Log.d(TAG, "Starting keepalive ping for peer: " + peerHandle);
+        
         pingExecutor.scheduleWithFixedDelay(() -> {
             try {
-                if (socket != null && socket.isConnected() && !socket.isClosed()) {
-                    OutputStream out = socket.getOutputStream();
-                    out.write("PING\n".getBytes());
-                    out.flush();
-                    Log.d(TAG, "Ping sent to peer: " + peerHandle);
+                if (socket != null && !socket.isClosed() && socket.isConnected()) {
+                    // Send a simple ping message
+                    String pingMessage = "PING_KEEPALIVE\n";
+                    byte[] pingData = pingMessage.getBytes();
+                    
+                    socket.getOutputStream().write(pingData);
+                    socket.getOutputStream().flush();
+                    
+                    Log.v(TAG, "Keepalive ping sent to peer: " + peerHandle);
+                } else {
+                    Log.w(TAG, "Socket closed for peer: " + peerHandle + ", stopping pings");
+                    activePings.remove(peerHandle);
                 }
             } catch (IOException e) {
-                Log.e(TAG, "Ping failed for peer: " + peerHandle, e);
+                Log.e(TAG, "Keepalive ping failed for peer: " + peerHandle, e);
+                activePings.remove(peerHandle);
                 cleanupConnection(peerHandle);
             }
         }, PING_INTERVAL_MS, PING_INTERVAL_MS, TimeUnit.MILLISECONDS);
+    }
+
+    /**
+     * Gets the local TUN IP address
+     */
+    private String getLocalTunIP() {
+        return localTunIP;
     }
 
     private void cleanupConnection(PeerHandle peerHandle) {
@@ -527,11 +597,31 @@ public class WifiAwareLibrary {
         if (removedPath != null) removedPath.isActive = false;
         wifiAwareCallback.onConnectionLost(peerHandle);
 
-        Socket s = peerSockets.remove(peerHandle);
-        if (s != null) try { s.close(); } catch (IOException ignore) {}
+        // Close ServerSocket if exists
+        ServerSocket serverSocket = serverSockets.remove(peerHandle);
+        if (serverSocket != null && !serverSocket.isClosed()) {
+            try {
+                serverSocket.close();
+            } catch (IOException e) {
+                Log.w(TAG, "Error closing ServerSocket for peer: " + peerHandle, e);
+            }
+        }
 
-        ServerSocket server = serverSockets.remove(peerHandle);
-        if (server != null) try { server.close(); } catch (IOException ignore) {}
+        // Close client Socket if exists
+        Socket clientSocket = clientSockets.remove(peerHandle);
+        if (clientSocket != null && !clientSocket.isClosed()) {
+            try {
+                clientSocket.close();
+            } catch (IOException e) {
+                Log.w(TAG, "Error closing client Socket for peer: " + peerHandle, e);
+            }
+        }
+        
+        // Clean up routing table entries for this peer
+        routingTable.removePeer(peerHandle);
+        peerTunIPs.remove(peerHandle);
+        activeConnections2.remove(peerHandle);
+        activePings.remove(peerHandle);
 
         unregisterPeerNetworkCallback(peerHandle);
     }
@@ -555,11 +645,70 @@ public class WifiAwareLibrary {
 
 
     public Map<PeerHandle, DataPathInfo> getAllPeers() {
-		Map<PeerHandle, DataPathInfo> allPeers = new ConcurrentHashMap<>(activeConnections);
+        Map<PeerHandle, DataPathInfo> allPeers = new ConcurrentHashMap<>(activeConnections);
         return allPeers;
     }
 
 
+    /**
+     * Returns a copy of the current peer ServerSockets map.
+     */
+    public Map<PeerHandle, ServerSocket> getPeerServerSockets() {
+        return new ConcurrentHashMap<>(serverSockets);
+    }
+
+    /**
+     * Returns a copy of the current peer client Sockets map.
+     */
+    public Map<PeerHandle, Socket> getPeerClientSockets() {
+        return new ConcurrentHashMap<>(clientSockets);
+    }
+
+    /**
+     * Sends data to a specific peer via TCP (simplified for revert).
+     */
+    public boolean sendDataToPeer(PeerHandle peerHandle, byte[] data) {
+        Socket socket = clientSockets.get(peerHandle);
+        
+        if (socket == null || socket.isClosed() || !socket.isConnected()) {
+            Log.w(TAG, "Cannot send data to peer " + peerHandle + ": socket unavailable");
+            return false;
+        }
+        
+        try {
+            socket.getOutputStream().write(data);
+            socket.getOutputStream().flush();
+            Log.d(TAG, "Sent " + data.length + " bytes to peer: " + peerHandle);
+            return true;
+        } catch (IOException e) {
+            Log.e(TAG, "Failed to send data to peer " + peerHandle, e);
+            return false;
+        }
+    }
+
+    /**
+     * Gets the routing table for intelligent packet forwarding
+     */
+    public RoutingTable getRoutingTable() {
+        return routingTable;
+    }
+
+    /**
+     * Gets a peer handle for a specific destination IP
+     */
+    public PeerHandle getPeerForDestination(String destinationIP) {
+        return routingTable.getPeerForIp(destinationIP);
+    }
+
+    /**
+     * Sets the local TUN IP address (should be called from VPN service)
+     */
+    public void setLocalTunIP(String tunIP) {
+        // This will be used in getLocalTunIP()
+        this.localTunIP = tunIP;
+    }
+
+    private String localTunIP = null;
 
     public SessionInfo getSessionInfo() {
         SessionState sessionState = SessionState.IDLE;
@@ -653,11 +802,48 @@ public class WifiAwareLibrary {
         }
         activeConnections.clear();
 
-        // Clean up all sockets
-        for (Socket s : peerSockets.values()) {
-            try { s.close(); } catch (IOException ignore) {}
+        // Clean up all ServerSockets
+        for (ServerSocket serverSocket : serverSockets.values()) {
+            if (!serverSocket.isClosed()) {
+                try {
+                    serverSocket.close();
+                } catch (IOException e) {
+                    Log.w(TAG, "Error closing ServerSocket during cleanup", e);
+                }
+            }
         }
-        peerSockets.clear();
+        serverSockets.clear();
+
+        // Clean up all client Sockets
+        for (Socket clientSocket : clientSockets.values()) {
+            if (!clientSocket.isClosed()) {
+                try {
+                    clientSocket.close();
+                } catch (IOException e) {
+                    Log.w(TAG, "Error closing client Socket during cleanup", e);
+                }
+            }
+        }
+        clientSockets.clear();
+
+        // Clean up routing table and peer TUN IPs
+        routingTable.clear();
+        peerTunIPs.clear();
+        activeConnections2.clear();
+        activePings.clear();
+
+        // Shutdown ping executor
+        if (pingExecutor != null && !pingExecutor.isShutdown()) {
+            pingExecutor.shutdown();
+            try {
+                if (!pingExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    pingExecutor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                pingExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }
 
     }
 

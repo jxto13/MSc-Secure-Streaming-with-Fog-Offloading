@@ -36,21 +36,31 @@ public class TunManager {
         builder = vpnService.new Builder();
         ulaAddress = generateRandomUlaInSubnet();
 
-        builder.addAllowedApplication(context.getPackageName());
-
         // Configure IPv6 TUN interface with /64 mask
-        tunInterface = builder
-                .addAddress(ulaAddress, 64)
-                .addRoute("fd00:1234::", 64) // route only your ULA subnet
-                .setSession("TunManagerSession")
-                .establish();
+        builder.addAddress(ulaAddress, 64);
+
+        try {
+            builder.addRoute("::", 0);
+            android.util.Log.i("TunManager", "Added route ::/0 to builder");
+        } catch (Exception e) {
+            android.util.Log.e("TunManager", "Error adding route: " + e.getMessage(), e);
+        }
+
+        try {
+            tunInterface = builder.establish();
+        } catch (Exception e) {
+            android.util.Log.e("TunManager", "Error establishing TUN: " + e.getMessage(), e);
+            throw e;
+        }
 
         if (tunInterface == null) {
+            android.util.Log.e("TunManager", "Failed to establish TUN interface");
             throw new Exception("Failed to establish TUN interface");
         }
 
-        return ulaAddress;
-    }
+		return ulaAddress;
+	}
+
 
     /**
      * Generates a random IPv6 address within the fixed ULA subnet fd00:1234::/64
@@ -88,5 +98,12 @@ public class TunManager {
      */
     public ParcelFileDescriptor getTunInterface() {
         return tunInterface;
+    }
+
+    /**
+     * Gets the assigned ULA IPv6 address for this TUN interface.
+     */
+    public String getTunAddress() {
+        return ulaAddress;
     }
 }
