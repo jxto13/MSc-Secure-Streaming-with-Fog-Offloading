@@ -239,20 +239,44 @@ public class MyVpnService extends VpnService {
 										   try {
 											   int bytesRead = inputStream.read(buffer);
 											   if (bytesRead > 0) {
-												   // Check if this is a keepalive ping message
-												   String receivedData = new String(buffer, 0, bytesRead);
-												   if (receivedData.startsWith("PING_KEEPALIVE")) {
-													   Log.v(TAG, "Received keepalive ping from peer " + peerId + ", ignoring");
-													   continue;
+												   // Check if this is a keepalive ping message (text-based check)
+												   boolean isPing = false;
+												   if (bytesRead >= 13) { // "PING_KEEPALIVE" is 13 chars + newline
+													   try {
+														   String potentialPing = new String(buffer, 0, Math.min(bytesRead, 50), "UTF-8");
+														   if (potentialPing.startsWith("PING_KEEPALIVE")) {
+															   isPing = true;
+															   Log.v(TAG, "Received keepalive ping from peer " + peerId + ", ignoring");
+														   }
+													   } catch (Exception e) {
+														   // Not a text message, continue as normal packet
+													   }
+												   }
+												   
+												   if (isPing) {
+													   continue; // Skip ping messages
 												   }
 												   
 												   Log.v(TAG, "Received " + bytesRead + " bytes from peer " + peerId + ", forwarding to TUN");
 												   
-												   // Forward received data to TUN interface
-												   tunOut.write(buffer, 0, bytesRead);
-												   tunOut.flush();
-												   
-												   logPacketDetailed(buffer, bytesRead);
+												   // Validate packet before writing to TUN
+												   if (isValidIPv6Packet(buffer, bytesRead)) {
+													   // Forward received data to TUN interface
+													   try {
+														   tunOut.write(buffer, 0, bytesRead);
+														   tunOut.flush();
+														   Log.v(TAG, "Successfully wrote " + bytesRead + " bytes to TUN");
+													   } catch (IOException writeError) {
+														   Log.e(TAG, "Failed to write to TUN interface: " + writeError.getMessage());
+														   Log.d(TAG, "Packet details: " + bytesToHex(buffer, Math.min(bytesRead, 64)));
+														   // Don't break on write error, continue trying
+													   }
+													   
+													   logPacketDetailed(buffer, bytesRead);
+												   } else {
+													   Log.w(TAG, "Received invalid IPv6 packet from peer " + peerId + " (" + bytesRead + " bytes), dropping");
+													   Log.d(TAG, "Invalid packet details: " + bytesToHex(buffer, Math.min(bytesRead, 64)));
+												   }
 											   } else if (bytesRead == -1) {
 												   Log.d(TAG, "End of stream reached for peer: " + peerId);
 												   break;
@@ -288,9 +312,53 @@ public class MyVpnService extends VpnService {
 			   }
 		   }
 		   
-		   Log.d(TAG, "Socket forwarder monitor exiting");
+		   	   Log.d(TAG, "Socket forwarder monitor exiting");
 	   }, "SocketForwarderMonitor").start();
    }
+
+
+
+   /**
+    * Validates if the packet is a proper IPv6 packet
+    */
+   private boolean isValidIPv6Packet(byte[] packet, int length) {
+	   if (length < 40) { // Minimum IPv6 header size
+		   Log.w(TAG, "Packet too short for IPv6: " + length + " bytes");
+		   return false;
+	   }
+	   
+	   // Check IPv6 version (first 4 bits should be 6)
+	   int version = (packet[0] & 0xF0) >> 4;
+	   if (version != 6) {
+		   Log.w(TAG, "Not an IPv6 packet, version: " + version);
+		   return false;
+	   }
+	   
+	   // Check payload length
+	   int payloadLength = ((packet[4] & 0xFF) << 8) | (packet[5] & 0xFF);
+	   int expectedLength = payloadLength + 40; // IPv6 header is 40 bytes
+	   
+	   if (expectedLength != length) {
+		   Log.w(TAG, "IPv6 packet length mismatch. Expected: " + expectedLength + ", Actual: " + length);
+		   // Don't reject based on this alone, as it might be fragmented or have padding
+	   }
+	   
+	   return true;
+   }
+
+   /**
+    * Converts bytes to hex string for debugging
+    */
+   private String bytesToHex(byte[] bytes, int length) {
+	   StringBuilder sb = new StringBuilder();
+	   for (int i = 0; i < length && i < bytes.length; i++) {
+		   sb.append(String.format("%02x", bytes[i]));
+		   if (i % 16 == 15) sb.append(" ");
+		   else if (i % 2 == 1) sb.append(" ");
+	   }
+	   return sb.toString();
+   }
+
 
    @Override
    public void onDestroy() {
