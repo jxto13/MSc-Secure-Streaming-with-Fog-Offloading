@@ -107,6 +107,14 @@ public class WifiAwareLibrary {
 
     private WifiAwareCallback wifiAwareCallback = null;
 
+    // Socket callback interface for immediate socket notifications
+    public interface SocketCallback {
+        void onNewSocketAvailable(Object peerId, Socket socket);
+        void onSocketClosed(Object peerId);
+    }
+    
+    private SocketCallback socketCallback = null;
+
     // Use per-peer NetworkCallback to avoid duplicate/registered errors
     private final ConcurrentHashMap<PeerHandle, ConnectivityManager.NetworkCallback> networkCallbacks = new ConcurrentHashMap<>();
 
@@ -405,6 +413,11 @@ public class WifiAwareLibrary {
                                         clientSockets.put(peerHandle, clientSocket);
                                         Log.d(TAG, "Client connected from: " + clientSocket.getRemoteSocketAddress());
                                         
+                                        // Notify VPN service about new socket
+                                        if (socketCallback != null) {
+                                            socketCallback.onNewSocketAvailable(peerHandle, clientSocket);
+                                        }
+                                        
                                         // Start continuous packet listener and keepalive pings
                                         startContinuousPacketListener(peerHandle, clientSocket);
                                         startKeepAlivePing(peerHandle, clientSocket);
@@ -475,6 +488,11 @@ public class WifiAwareLibrary {
                                     
                                     clientSockets.put(peerHandle, socket);
                                     Log.d(TAG, "Client connected to server at: " + socket.getRemoteSocketAddress());
+                                    
+                                    // Notify VPN service about new socket
+                                    if (socketCallback != null) {
+                                        socketCallback.onNewSocketAvailable(peerHandle, socket);
+                                    }
                                     
                                     // Start continuous packet listener and keepalive pings
                                     startContinuousPacketListener(peerHandle, socket);
@@ -614,6 +632,11 @@ public class WifiAwareLibrary {
             }
         }
         
+        // Notify VPN service about socket closure
+        if (socketCallback != null) {
+            socketCallback.onSocketClosed(peerHandle);
+        }
+        
         // Clean up routing table entries for this peer
         peerTunIPs.remove(peerHandle);
         activeConnections2.remove(peerHandle);
@@ -689,6 +712,14 @@ public class WifiAwareLibrary {
     public void setLocalTunIP(String tunIP) {
         // This will be used in getLocalTunIP()
         this.localTunIP = tunIP;
+    }
+
+    /**
+     * Sets the socket callback for immediate notification of new sockets
+     */
+    public void setSocketCallback(SocketCallback callback) {
+        this.socketCallback = callback;
+        Log.d(TAG, "Socket callback set: " + (callback != null ? "enabled" : "disabled"));
     }
 
     private String localTunIP = null;

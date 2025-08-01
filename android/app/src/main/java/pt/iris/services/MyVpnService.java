@@ -30,11 +30,10 @@ import pt.iris.utils.AppContainer;
 public class MyVpnService extends VpnService {
    private static final String TAG = "MyVpnService";
    private TunManager tunManager;
-   private Thread vpnThread;
-   private boolean running = false;
-   private final Set<Object> peersWithForwarders = new HashSet<>();
-
-   // Routing table: IPv6 address -> peer ID
+	private Thread vpnThread;
+	private boolean running = false;
+	private final Set<Object> peersWithForwarders = new HashSet<>();
+	private FileOutputStream tunOut; // Store TUN output stream for callbacks   // Routing table: IPv6 address -> peer ID
    private final ConcurrentMap<String, Object> routingTable = new ConcurrentHashMap<>();
    
    // Reference to WifiAwareLibrary (should be set from your app logic)
@@ -86,6 +85,22 @@ public class MyVpnService extends VpnService {
 				// Set the TUN IP in WifiAwareLibrary 
 				if (wifiAwareLibrary != null) {
 					wifiAwareLibrary.setLocalTunIP(ulaAddress);
+					// Register callback for immediate socket notifications
+					wifiAwareLibrary.setSocketCallback(new WifiAwareLibrary.SocketCallback() {
+						@Override
+						public void onNewSocketAvailable(Object peerId, Socket socket) {
+							Log.i(TAG, "New socket available for peer: " + peerId);
+							startSocketForwarder(peerId, socket, tunOut);
+						}
+						
+						@Override
+						public void onSocketClosed(Object peerId) {
+							Log.i(TAG, "Socket closed for peer: " + peerId);
+							synchronized (peersWithForwarders) {
+								peersWithForwarders.remove(peerId);
+							}
+						}
+					});
 				}
 
 				RustService.testTUN(ulaAddress);
@@ -95,11 +110,11 @@ public class MyVpnService extends VpnService {
 					Log.i(TAG, "TUN file descriptor obtained: " + tun.getFd());
 
 					FileInputStream tunIn = new FileInputStream(tun.getFileDescriptor());
-					FileOutputStream tunOut = new FileOutputStream(tun.getFileDescriptor());
+					tunOut = new FileOutputStream(tun.getFileDescriptor());
 
-					// Start TCP-to-TUN forwarding threads
-					Log.i(TAG, "Starting TCP-to-TUN forwarder threads...");
-					startSocketForwarderMonitor(tunOut);
+					// Start initial socket forwarders for existing connections
+					Log.i(TAG, "Starting initial socket forwarders...");
+					startInitialSocketForwarders(tunOut);
 
 					// Start TUN-to-TCP forwarding loop
 					Log.i(TAG, "Starting TUN-to-TCP forwarding loop...");
@@ -270,126 +285,109 @@ public class MyVpnService extends VpnService {
 
 	   Log.d(TAG, "Packet broadcasted to " + forwardedCount + "/" + peerSockets.size() + " peers for dest: " + destIPv6);
    }   /**
-    * Socket forwarder that reads from TCP connections and forwards to TUN interface
+    * Start initial socket forwarders for any existing connections
     */
-   private void startSocketForwarderMonitor(FileOutputStream tunOut) {
+   private void startInitialSocketForwarders(FileOutputStream tunOut) {
 	   if (wifiAwareLibrary == null) {
-		   Log.w(TAG, "startSocketForwarderMonitor: WifiAwareLibrary is null, cannot start monitor.");
+		   Log.w(TAG, "startInitialSocketForwarders: WifiAwareLibrary is null, cannot start forwarders.");
 		   return;
 	   }
 
-	   new Thread(() -> {
-		   Log.d(TAG, "Socket forwarder monitor started for TCP connections");
+	   Map<?, Socket> clientSockets = wifiAwareLibrary.getPeerClientSockets();
+	   Log.d(TAG, "Starting initial forwarders for " + clientSockets.size() + " existing client sockets");
+	   
+	   for (Map.Entry<?, Socket> entry : clientSockets.entrySet()) {
+		   Object peerId = entry.getKey();
+		   Socket socket = entry.getValue();
 		   
-		   while (running) {
-			   try {
-				   // Get both client and server sockets for bidirectional communication
-				   Map<?, Socket> clientSockets = wifiAwareLibrary.getPeerClientSockets();
-				   Map<?, ServerSocket> serverSockets = wifiAwareLibrary.getPeerServerSockets();
+		   if (socket != null && !socket.isClosed() && socket.isConnected()) {
+			   startSocketForwarder(peerId, socket, tunOut);
+		   }
+	   }
+   }
 
-				   Log.v(TAG, "Monitoring " + clientSockets.size() + " client sockets");
-				   
-				   synchronized (peersWithForwarders) {
-					   // Remove peers whose sockets are closed
-					   peersWithForwarders.removeIf(peerId -> {
-						   Socket s = clientSockets.get(peerId);
-						   return s == null || s.isClosed() || !s.isConnected();
-					   });
-
-					   // Start forwarders for new client socket connections
-					   for (Map.Entry<?, Socket> entry : clientSockets.entrySet()) {
-						   Object peerId = entry.getKey();
-						   Socket socket = entry.getValue();
-						   
-						   if (socket != null && !peersWithForwarders.contains(peerId) && 
-							   !socket.isClosed() && socket.isConnected()) {
-							   
-							   peersWithForwarders.add(peerId);
-							   Log.i(TAG, "Launching TCP→TUN forwarder thread for peer: " + peerId);
-							   
-							   new Thread(() -> {
-								   try {
-									   InputStream inputStream = socket.getInputStream();
-									   byte[] buffer = new byte[32768]; // 32KB buffer
-									   
-									   while (running && !socket.isClosed() && socket.isConnected()) {
-										   try {
-											   int bytesRead = inputStream.read(buffer);
-											   if (bytesRead > 0) {
-												   // Check if this is a keepalive ping message (text-based check)
-												   boolean isPing = false;
-												   if (bytesRead >= 13) { // "PING_KEEPALIVE" is 13 chars + newline
-													   try {
-														   String potentialPing = new String(buffer, 0, Math.min(bytesRead, 50), "UTF-8");
-														   if (potentialPing.startsWith("PING_KEEPALIVE")) {
-															   isPing = true;
-															   Log.v(TAG, "Received keepalive ping from peer " + peerId + ", ignoring");
-														   }
-													   } catch (Exception e) {
-														   // Not a text message, continue as normal packet
-													   }
-												   }
-												   
-												   if (isPing) {
-													   continue; // Skip ping messages
-												   }
-												   
-												   Log.v(TAG, "Received " + bytesRead + " bytes from peer " + peerId + ", forwarding to TUN");
-												   
-												   // Learn the route: map source IPv6 to this peer (if valid IPv6)
-												   String sourceIPv6 = extractSourceIPv6(buffer, bytesRead);
-												   if (sourceIPv6 != null) {
-													   learnRoute(sourceIPv6, peerId);
-												   }
-												   
-												   // Forward received data to TUN interface (no validation, forward everything except pings)
-												   try {
-													   tunOut.write(buffer, 0, bytesRead);
-													   tunOut.flush();
-													   Log.v(TAG, "Successfully wrote " + bytesRead + " bytes to TUN from peer " + peerId);
-												   } catch (IOException writeError) {
-													   Log.e(TAG, "Failed to write to TUN interface: " + writeError.getMessage());
-													   Log.d(TAG, "Packet details: " + bytesToHex(buffer, Math.min(bytesRead, 64)));
-												   }
-												   
-												   logPacketDetailed(buffer, bytesRead);
-											   } else if (bytesRead == -1) {
-												   Log.d(TAG, "End of stream reached for peer: " + peerId);
-												   break;
-											   }
-										   } catch (IOException e) {
-											   if (running && !socket.isClosed()) {
-												   Log.w(TAG, "TCP read error for peer " + peerId + ": " + e.getMessage());
-											   }
-											   break;
-										   }
-									   }
-									   
-									   Log.i(TAG, "TCP→TUN forwarder thread for peer " + peerId + " exiting");
-								   } catch (Exception e) {
-									   Log.w(TAG, "TCP→TUN forwarder error for peer " + peerId + ": " + e.getMessage());
-								   } finally {
-									   synchronized (peersWithForwarders) {
-										   peersWithForwarders.remove(peerId);
-									   }
+   /**
+    * Start a socket forwarder for a specific peer (called via callback)
+    */
+   private void startSocketForwarder(Object peerId, Socket socket, FileOutputStream tunOut) {
+	   synchronized (peersWithForwarders) {
+		   if (peersWithForwarders.contains(peerId)) {
+			   Log.d(TAG, "Forwarder already exists for peer: " + peerId);
+			   return;
+		   }
+		   peersWithForwarders.add(peerId);
+	   }
+	   
+	   Log.i(TAG, "Starting TCP→TUN forwarder thread for peer: " + peerId);
+	   
+	   new Thread(() -> {
+		   try {
+			   InputStream inputStream = socket.getInputStream();
+			   byte[] buffer = new byte[32768]; // 32KB buffer
+			   
+			   while (running && !socket.isClosed() && socket.isConnected()) {
+				   try {
+					   int bytesRead = inputStream.read(buffer);
+					   if (bytesRead > 0) {
+						   // Check if this is a keepalive ping message (text-based check)
+						   boolean isPing = false;
+						   if (bytesRead >= 13) { // "PING_KEEPALIVE" is 13 chars + newline
+							   try {
+								   String potentialPing = new String(buffer, 0, Math.min(bytesRead, 50), "UTF-8");
+								   if (potentialPing.startsWith("PING_KEEPALIVE")) {
+									   isPing = true;
+									   Log.v(TAG, "Received keepalive ping from peer " + peerId + ", ignoring");
 								   }
-							   }, "TcpToTun-" + peerId).start();
+							   } catch (Exception e) {
+								   // Not a text message, continue as normal packet
+							   }
 						   }
+						   
+						   if (isPing) {
+							   continue; // Skip ping messages
+						   }
+						   
+						   Log.v(TAG, "Received " + bytesRead + " bytes from peer " + peerId + ", forwarding to TUN");
+						   
+						   // Learn the route: map source IPv6 to this peer (if valid IPv6)
+						   String sourceIPv6 = extractSourceIPv6(buffer, bytesRead);
+						   if (sourceIPv6 != null) {
+							   learnRoute(sourceIPv6, peerId);
+						   }
+						   
+						   // Forward received data to TUN interface (no validation, forward everything except pings)
+						   try {
+							   tunOut.write(buffer, 0, bytesRead);
+							   tunOut.flush();
+							   Log.v(TAG, "Successfully wrote " + bytesRead + " bytes to TUN from peer " + peerId);
+						   } catch (IOException writeError) {
+							   Log.e(TAG, "Failed to write to TUN interface: " + writeError.getMessage());
+							   Log.d(TAG, "Packet details: " + bytesToHex(buffer, Math.min(bytesRead, 64)));
+							   // Don't break on write error, continue trying
+						   }
+						   
+						   logPacketDetailed(buffer, bytesRead);
+					   } else if (bytesRead == -1) {
+						   Log.d(TAG, "End of stream reached for peer: " + peerId);
+						   break;
 					   }
+				   } catch (IOException e) {
+					   if (running && !socket.isClosed()) {
+						   Log.w(TAG, "TCP read error for peer " + peerId + ": " + e.getMessage());
+					   }
+					   break;
 				   }
-				   
-				   Thread.sleep(2000); // Check for new connections every 2 seconds
-				   
-			   } catch (InterruptedException e) {
-				   Log.d(TAG, "Socket forwarder monitor interrupted");
-				   break;
-			   } catch (Exception e) {
-				   Log.e(TAG, "Error in socket forwarder monitor", e);
+			   }
+			   
+			   Log.i(TAG, "TCP→TUN forwarder thread for peer " + peerId + " exiting");
+		   } catch (Exception e) {
+			   Log.w(TAG, "TCP→TUN forwarder error for peer " + peerId + ": " + e.getMessage());
+		   } finally {
+			   synchronized (peersWithForwarders) {
+				   peersWithForwarders.remove(peerId);
 			   }
 		   }
-		   
-		   	   Log.d(TAG, "Socket forwarder monitor exiting");
-	   }, "SocketForwarderMonitor").start();
+	   }, "TcpToTun-" + peerId).start();
    }
 
 
