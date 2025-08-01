@@ -99,9 +99,6 @@ public class WifiAwareLibrary {
     private final ScheduledExecutorService pingExecutor = Executors.newScheduledThreadPool(2);
     private final Set<PeerHandle> activePings = new CopyOnWriteArraySet<>();
 
-    // Routing table for intelligent packet forwarding
-    private final RoutingTable routingTable = new RoutingTable();
-
     // Track peer TUN IP addresses learned from ping responses
     private final Map<PeerHandle, String> peerTunIPs = new ConcurrentHashMap<>();
     
@@ -618,7 +615,6 @@ public class WifiAwareLibrary {
         }
         
         // Clean up routing table entries for this peer
-        routingTable.removePeer(peerHandle);
         peerTunIPs.remove(peerHandle);
         activeConnections2.remove(peerHandle);
         activePings.remove(peerHandle);
@@ -686,19 +682,6 @@ public class WifiAwareLibrary {
         }
     }
 
-    /**
-     * Gets the routing table for intelligent packet forwarding
-     */
-    public RoutingTable getRoutingTable() {
-        return routingTable;
-    }
-
-    /**
-     * Gets a peer handle for a specific destination IP
-     */
-    public PeerHandle getPeerForDestination(String destinationIP) {
-        return routingTable.getPeerForIp(destinationIP);
-    }
 
     /**
      * Sets the local TUN IP address (should be called from VPN service)
@@ -827,7 +810,6 @@ public class WifiAwareLibrary {
         clientSockets.clear();
 
         // Clean up routing table and peer TUN IPs
-        routingTable.clear();
         peerTunIPs.clear();
         activeConnections2.clear();
         activePings.clear();

@@ -20,6 +20,8 @@ import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 import pt.iris.network.lib.WifiAwareLibrary;
 import pt.iris.network.lib.TunManager;
@@ -32,6 +34,9 @@ public class MyVpnService extends VpnService {
    private boolean running = false;
    private final Set<Object> peersWithForwarders = new HashSet<>();
 
+   // Routing table: IPv6 address -> peer ID
+   private final ConcurrentMap<String, Object> routingTable = new ConcurrentHashMap<>();
+   
    // Reference to WifiAwareLibrary (should be set from your app logic)
    private WifiAwareLibrary wifiAwareLibrary;
 
@@ -152,11 +157,53 @@ public class MyVpnService extends VpnService {
 		return sb.toString();
 	}
 
-
+	/**
+	 * Learn routing: associate an IPv6 source address with a peer ID
+	 * Only updates if route is new or changed to avoid unnecessary overhead
+	 */
+	private void learnRoute(String ipv6Address, Object peerId) {
+		if (ipv6Address != null && peerId != null) {
+			Object existingPeer = routingTable.get(ipv6Address);
+			if (!peerId.equals(existingPeer)) {
+				routingTable.put(ipv6Address, peerId);
+				if (existingPeer == null) {
+					Log.v(TAG, "Learned new route: " + ipv6Address + " -> peer " + peerId);
+				} else {
+					Log.v(TAG, "Updated route: " + ipv6Address + " -> peer " + peerId + " (was: " + existingPeer + ")");
+				}
+			}
+			// No log if route already exists and hasn't changed
+		}
+	}
 
 	/**
-	* Simple socket forwarder monitor for TCP connections
-	*/
+	 * Look up which peer to route to for a given IPv6 destination
+	 */
+	private Object lookupRoute(String ipv6Address) {
+		return routingTable.get(ipv6Address);
+	}
+
+	/**
+	 * Extract IPv6 destination address from packet
+	 */
+	private String extractDestinationIPv6(byte[] packet, int length) {
+		if (length < 40) return null; // Not a valid IPv6 packet
+		return formatIpv6Address(packet, 24); // Destination is at offset 24-39
+	}
+
+	/**
+	 * Extract IPv6 source address from packet
+	 */
+	private String extractSourceIPv6(byte[] packet, int length) {
+		if (length < 40) return null; // Not a valid IPv6 packet
+		return formatIpv6Address(packet, 8); // Source is at offset 8-23
+	}
+
+
+
+   /**
+    * Forward packet from TUN to appropriate peer(s) using routing table
+    */
    private void forwardPacketToAllPeers(byte[] data, int length) {
 	   if (wifiAwareLibrary == null) {
 		   Log.w(TAG, "forwardPacketToAllPeers: WifiAwareLibrary is null, cannot forward.");
@@ -170,6 +217,38 @@ public class MyVpnService extends VpnService {
 		   return;
 	   }
 
+	   // Extract destination IPv6 address from packet
+	   String destIPv6 = extractDestinationIPv6(data, length);
+	   if (destIPv6 == null) {
+		   Log.w(TAG, "Cannot extract destination IPv6 from packet, dropping");
+		   return;
+	   }
+
+	   // Look up the specific peer for this destination
+	   Object targetPeerId = lookupRoute(destIPv6);
+	   
+	   if (targetPeerId != null) {
+		   // Route to specific peer
+		   Socket targetSocket = peerSockets.get(targetPeerId);
+		   if (targetSocket != null && !targetSocket.isClosed() && targetSocket.isConnected()) {
+			   try {
+				   targetSocket.getOutputStream().write(data, 0, length);
+				   targetSocket.getOutputStream().flush();
+				   Log.v(TAG, "Packet (" + length + " bytes) routed to specific peer: " + targetPeerId + " for dest: " + destIPv6);
+				   return; // Successfully routed
+			   } catch (IOException e) {
+				   Log.e(TAG, "Failed to route to peer " + targetPeerId + ": " + e.getMessage());
+				   // Remove invalid route and fall back to broadcast
+				   routingTable.remove(destIPv6);
+			   }
+		   } else {
+			   Log.w(TAG, "Target peer " + targetPeerId + " socket is closed, removing route");
+			   routingTable.remove(destIPv6);
+		   }
+	   }
+
+	   // No specific route found or routing failed, broadcast to all peers
+	   Log.v(TAG, "No specific route for " + destIPv6 + ", broadcasting to all peers");
 	   int forwardedCount = 0;
 	   for (Map.Entry<?, Socket> entry : peerSockets.entrySet()) {
 		   Object peerId = entry.getKey();
@@ -180,19 +259,17 @@ public class MyVpnService extends VpnService {
 				   socket.getOutputStream().write(data, 0, length);
 				   socket.getOutputStream().flush();
 				   forwardedCount++;
-				   Log.v(TAG, "Packet (" + length + " bytes) forwarded to peer: " + peerId);
+				   Log.v(TAG, "Packet (" + length + " bytes) broadcasted to peer: " + peerId);
 			   } catch (IOException e) {
-				   Log.e(TAG, "Failed to forward to peer " + peerId + ": " + e.getMessage());
+				   Log.e(TAG, "Failed to broadcast to peer " + peerId + ": " + e.getMessage());
 			   }
 		   } else {
 			   Log.v(TAG, "Peer " + peerId + " socket is closed or disconnected");
 		   }
 	   }
 
-	   Log.d(TAG, "Packet forwarded to " + forwardedCount + "/" + peerSockets.size() + " peers");
-   }
-
-   /**
+	   Log.d(TAG, "Packet broadcasted to " + forwardedCount + "/" + peerSockets.size() + " peers for dest: " + destIPv6);
+   }   /**
     * Socket forwarder that reads from TCP connections and forwards to TUN interface
     */
    private void startSocketForwarderMonitor(FileOutputStream tunOut) {
@@ -209,7 +286,7 @@ public class MyVpnService extends VpnService {
 				   // Get both client and server sockets for bidirectional communication
 				   Map<?, Socket> clientSockets = wifiAwareLibrary.getPeerClientSockets();
 				   Map<?, ServerSocket> serverSockets = wifiAwareLibrary.getPeerServerSockets();
-				   
+
 				   Log.v(TAG, "Monitoring " + clientSockets.size() + " client sockets");
 				   
 				   synchronized (peersWithForwarders) {
@@ -259,24 +336,23 @@ public class MyVpnService extends VpnService {
 												   
 												   Log.v(TAG, "Received " + bytesRead + " bytes from peer " + peerId + ", forwarding to TUN");
 												   
-												   // Validate packet before writing to TUN
-												   if (isValidIPv6Packet(buffer, bytesRead)) {
-													   // Forward received data to TUN interface
-													   try {
-														   tunOut.write(buffer, 0, bytesRead);
-														   tunOut.flush();
-														   Log.v(TAG, "Successfully wrote " + bytesRead + " bytes to TUN");
-													   } catch (IOException writeError) {
-														   Log.e(TAG, "Failed to write to TUN interface: " + writeError.getMessage());
-														   Log.d(TAG, "Packet details: " + bytesToHex(buffer, Math.min(bytesRead, 64)));
-														   // Don't break on write error, continue trying
-													   }
-													   
-													   logPacketDetailed(buffer, bytesRead);
-												   } else {
-													   Log.w(TAG, "Received invalid IPv6 packet from peer " + peerId + " (" + bytesRead + " bytes), dropping");
-													   Log.d(TAG, "Invalid packet details: " + bytesToHex(buffer, Math.min(bytesRead, 64)));
+												   // Learn the route: map source IPv6 to this peer (if valid IPv6)
+												   String sourceIPv6 = extractSourceIPv6(buffer, bytesRead);
+												   if (sourceIPv6 != null) {
+													   learnRoute(sourceIPv6, peerId);
 												   }
+												   
+												   // Forward received data to TUN interface (no validation, forward everything except pings)
+												   try {
+													   tunOut.write(buffer, 0, bytesRead);
+													   tunOut.flush();
+													   Log.v(TAG, "Successfully wrote " + bytesRead + " bytes to TUN from peer " + peerId);
+												   } catch (IOException writeError) {
+													   Log.e(TAG, "Failed to write to TUN interface: " + writeError.getMessage());
+													   Log.d(TAG, "Packet details: " + bytesToHex(buffer, Math.min(bytesRead, 64)));
+												   }
+												   
+												   logPacketDetailed(buffer, bytesRead);
 											   } else if (bytesRead == -1) {
 												   Log.d(TAG, "End of stream reached for peer: " + peerId);
 												   break;
@@ -319,7 +395,8 @@ public class MyVpnService extends VpnService {
 
 
    /**
-    * Validates if the packet is a proper IPv6 packet
+    * Simplified packet validation - only check if it's potentially IPv6
+    * No strict length validation to avoid dropping valid packets
     */
    private boolean isValidIPv6Packet(byte[] packet, int length) {
 	   if (length < 40) { // Minimum IPv6 header size
@@ -334,14 +411,8 @@ public class MyVpnService extends VpnService {
 		   return false;
 	   }
 	   
-	   // Check payload length
-	   int payloadLength = ((packet[4] & 0xFF) << 8) | (packet[5] & 0xFF);
-	   int expectedLength = payloadLength + 40; // IPv6 header is 40 bytes
-	   
-	   if (expectedLength != length) {
-		   Log.w(TAG, "IPv6 packet length mismatch. Expected: " + expectedLength + ", Actual: " + length);
-		   // Don't reject based on this alone, as it might be fragmented or have padding
-	   }
+	   // Remove strict length validation that was causing issues
+	   // IPv6 packets can have variable lengths due to padding, fragmentation, etc.
 	   
 	   return true;
    }
