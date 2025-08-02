@@ -98,9 +98,6 @@ public class WifiAwareLibrary {
     private static final int PING_INTERVAL_MS = 30000; // 30 seconds
     private final ScheduledExecutorService pingExecutor = Executors.newScheduledThreadPool(2);
     private final Set<PeerHandle> activePings = new CopyOnWriteArraySet<>();
-
-    // Track peer TUN IP addresses learned from ping responses
-    private final Map<PeerHandle, String> peerTunIPs = new ConcurrentHashMap<>();
     
     // Track which peers we're actively connected to
     private final Set<PeerHandle> activeConnections2 = new CopyOnWriteArraySet<>();
@@ -637,8 +634,7 @@ public class WifiAwareLibrary {
             socketCallback.onSocketClosed(peerHandle);
         }
         
-        // Clean up routing table entries for this peer
-        peerTunIPs.remove(peerHandle);
+        // Clean up peer data
         activeConnections2.remove(peerHandle);
         activePings.remove(peerHandle);
 
@@ -840,8 +836,7 @@ public class WifiAwareLibrary {
         }
         clientSockets.clear();
 
-        // Clean up routing table and peer TUN IPs
-        peerTunIPs.clear();
+        // Clean up peer data
         activeConnections2.clear();
         activePings.clear();
 
