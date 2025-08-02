@@ -39,11 +39,13 @@ public class TunManager {
         // Configure IPv6 TUN interface with /64 mask
         builder.addAddress(ulaAddress, 64);
 
+        // Only route our ULA subnet traffic through the VPN
+        // Don't route all IPv6 traffic to prevent capturing internet traffic
         try {
-            builder.addRoute("::", 0);
-            android.util.Log.i("TunManager", "Added route ::/0 to builder");
+            builder.addRoute("fd00:1234::", 64);  // Only route our ULA subnet
+            android.util.Log.i("TunManager", "Added route fd00:1234::/64 to builder (ULA subnet only)");
         } catch (Exception e) {
-            android.util.Log.e("TunManager", "Error adding route: " + e.getMessage(), e);
+            android.util.Log.e("TunManager", "Error adding ULA route: " + e.getMessage(), e);
         }
 
         try {

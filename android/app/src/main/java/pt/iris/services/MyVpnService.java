@@ -120,13 +120,21 @@ public class MyVpnService extends VpnService {
 					Log.i(TAG, "Starting TUN-to-TCP forwarding loop...");
 					byte[] buffer = new byte[32767]; // Max MTU size
 
-						while (running) {
-							int length = tunIn.read(buffer);
-							if (length > 0) {
-								logPacketDetailed(buffer, length);
-								forwardPacketToAllPeers(buffer, length);
-							}
-						}					Log.i(TAG, "TUN forwarding loop exited, closing streams...");
+					while (running) {
+						int length = tunIn.read(buffer);
+						if (length > 0) {
+							logPacketDetailed(buffer, length);
+							forwardPacketToAllPeers(buffer, length);
+
+//								String destIPv6 = extractDestinationIPv6(buffer, length);
+//								if (destIPv6 != null && (isInUlaRange(destIPv6) || isMulticastIPv6(destIPv6))) {
+//									forwardPacketToAllPeers(buffer, length);
+//								} else {
+//									Log.v(TAG, "Dropping external traffic to " + destIPv6 + " (not in ULA range or multicast)");
+//								}
+						}
+					}
+					Log.i(TAG, "TUN forwarding loop exited, closing streams...");
 					tunIn.close();
 					tunOut.close();
 				} else {
@@ -214,6 +222,22 @@ public class MyVpnService extends VpnService {
 		return formatIpv6Address(packet, 8); // Source is at offset 8-23
 	}
 
+	/**
+	 * Check if an IPv6 address is multicast (starts with ff00::/8)
+	 */
+	private boolean isMulticastIPv6(String ipv6Address) {
+		if (ipv6Address == null || ipv6Address.length() < 4) return false;
+		return ipv6Address.toLowerCase().startsWith("ff");
+	}
+
+	/**
+	 * Check if an IPv6 address is in the ULA range fd00:1234::/64
+	 */
+	private boolean isInUlaRange(String ipv6Address) {
+		if (ipv6Address == null) return false;
+		return ipv6Address.toLowerCase().startsWith("fd00:1234:");
+	}
+
 
 
    /**
@@ -239,7 +263,37 @@ public class MyVpnService extends VpnService {
 		   return;
 	   }
 
-	   // Look up the specific peer for this destination
+//	   // SAFETY CHECK: Only forward ULA traffic and multicast
+//	   // This prevents routing loops with external internet traffic
+//	   if (!isInUlaRange(destIPv6) && !isMulticastIPv6(destIPv6)) {
+//		   Log.w(TAG, "Refusing to forward external traffic to " + destIPv6 + " (prevents routing loops)");
+//		   return;
+//	   }
+
+	   // Handle multicast traffic differently
+	   if (isMulticastIPv6(destIPv6)) {
+		   Log.v(TAG, "Multicast packet detected for " + destIPv6 + ", forwarding to all peers");
+		   int forwardedCount = 0;
+		   for (Map.Entry<?, Socket> entry : peerSockets.entrySet()) {
+			   Object peerId = entry.getKey();
+			   Socket socket = entry.getValue();
+
+			   if (socket != null && !socket.isClosed() && socket.isConnected()) {
+				   try {
+					   socket.getOutputStream().write(data, 0, length);
+					   socket.getOutputStream().flush();
+					   forwardedCount++;
+					   Log.v(TAG, "Multicast packet (" + length + " bytes) sent to peer: " + peerId);
+				   } catch (IOException e) {
+					   Log.e(TAG, "Failed to send multicast to peer " + peerId + ": " + e.getMessage());
+				   }
+			   }
+		   }
+		   Log.d(TAG, "Multicast packet sent to " + forwardedCount + "/" + peerSockets.size() + " peers for dest: " + destIPv6);
+		   return;
+	   }
+
+	   // Handle unicast traffic with routing table
 	   Object targetPeerId = lookupRoute(destIPv6);
 	   
 	   if (targetPeerId != null) {
@@ -346,16 +400,18 @@ public class MyVpnService extends VpnService {
 						   if (isPing) {
 							   continue; // Skip ping messages
 						   }
-						   
-						   Log.v(TAG, "Received " + bytesRead + " bytes from peer " + peerId + ", forwarding to TUN");
-						   
-						   // Learn the route: map source IPv6 to this peer (if valid IPv6)
+
+						   // Extract source and destination for validation
 						   String sourceIPv6 = extractSourceIPv6(buffer, bytesRead);
-						   if (sourceIPv6 != null) {
+						   String destIPv6 = extractDestinationIPv6(buffer, bytesRead);
+
+						   
+						   // Learn the route: map source IPv6 to this peer (only for ULA addresses)
+						   if (isInUlaRange(sourceIPv6)) {
 							   learnRoute(sourceIPv6, peerId);
 						   }
 						   
-						   // Forward received data to TUN interface (no validation, forward everything except pings)
+						   // Forward valid packet to TUN interface
 						   try {
 							   tunOut.write(buffer, 0, bytesRead);
 							   tunOut.flush();
@@ -363,7 +419,7 @@ public class MyVpnService extends VpnService {
 						   } catch (IOException writeError) {
 							   Log.e(TAG, "Failed to write to TUN interface: " + writeError.getMessage());
 							   Log.d(TAG, "Packet details: " + bytesToHex(buffer, Math.min(bytesRead, 64)));
-							   // Don't break on write error, continue trying
+							   continue;
 						   }
 						   
 						   logPacketDetailed(buffer, bytesRead);
@@ -388,31 +444,6 @@ public class MyVpnService extends VpnService {
 			   }
 		   }
 	   }, "TcpToTun-" + peerId).start();
-   }
-
-
-
-   /**
-    * Simplified packet validation - only check if it's potentially IPv6
-    * No strict length validation to avoid dropping valid packets
-    */
-   private boolean isValidIPv6Packet(byte[] packet, int length) {
-	   if (length < 40) { // Minimum IPv6 header size
-		   Log.w(TAG, "Packet too short for IPv6: " + length + " bytes");
-		   return false;
-	   }
-	   
-	   // Check IPv6 version (first 4 bits should be 6)
-	   int version = (packet[0] & 0xF0) >> 4;
-	   if (version != 6) {
-		   Log.w(TAG, "Not an IPv6 packet, version: " + version);
-		   return false;
-	   }
-	   
-	   // Remove strict length validation that was causing issues
-	   // IPv6 packets can have variable lengths due to padding, fragmentation, etc.
-	   
-	   return true;
    }
 
    /**

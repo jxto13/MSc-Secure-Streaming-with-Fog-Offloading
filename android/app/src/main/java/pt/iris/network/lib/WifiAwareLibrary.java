@@ -499,7 +499,7 @@ public class WifiAwareLibrary {
                                     startKeepAlivePing(peerHandle, socket);
                                     
                                 } catch (IOException e) {
-                                    Log.e(TAG, "Failed to connect to server at " + peerIpv6 + ":" + peerPort, e);
+//                                    Log.e(TAG, "Failed to connect to server at " + peerIpv6 + ":" + peerPort, e);
                                 }
                             }, "ClientConnect-" + peerHandle).start();
 
