@@ -1,13 +1,18 @@
 mod decoder;
 pub mod receiver;
+mod retransmission_manager;
 mod session;
 mod utils;
 
-use crossbeam_channel::{unbounded, Receiver};
+use crossbeam_channel::{unbounded, Receiver, Sender};
 use iris_shared::compression::compress_data;
 use prost::Message;
 
+use crate::decoder::Decoder;
+use crate::proto::mesh_packet::PacketType;
+use crate::proto::{MeshPacket, RetransmissionRequest};
 use crate::receiver::{Command, DynamicReceiver, ReceiverType};
+use crate::retransmission_manager::RetransmissionManager;
 use crate::session::ClientSession;
 
 use openssl::ec::{EcGroup, EcKey};
@@ -42,12 +47,18 @@ const CA_PUBLIC_CERTIFICATE: &[u8] = include_bytes!("../../server/certs/ca_certi
 
 /// Main client for managing streaming connections and data reception
 pub struct Client {
-    session: Arc<RwLock<ClientSession>>,
-    channel: Option<Channel>,
-    runtime: Arc<Runtime>,
-    shutdown_flag: Arc<AtomicBool>,
+    session: Arc<RwLock<ClientSession>>, // Shared session state
+    channel: Option<Channel>,            // gRPC channel for communication with the server
+    runtime: Arc<Runtime>,               // Tokio runtime for async operations
+
+    retransmission_manager: Option<Arc<RetransmissionManager>>, // Manager for handling retransmissions with Mesh
+    decoder: Option<Arc<Decoder>>, // Decoder for processing received data
+
+    data_sender: Option<Sender<(ReceiverType, Vec<u8>)>>,
     command_sender: Option<crossbeam_channel::Sender<Command>>,
+
     thread_handles: RwLock<Vec<JoinHandle<()>>>,
+    shutdown_flag: Arc<AtomicBool>,
 }
 
 impl Client {
@@ -57,9 +68,15 @@ impl Client {
             session: Arc::new(RwLock::new(ClientSession::default())),
             channel: None,
             runtime: Arc::new(Runtime::new().expect("Failed to create Tokio runtime")),
-            shutdown_flag: Arc::new(AtomicBool::new(false)),
+
+            retransmission_manager: None,
+            decoder: None,
+
+            data_sender: None,
             command_sender: None,
+
             thread_handles: RwLock::new(Vec::new()),
+            shutdown_flag: Arc::new(AtomicBool::new(false)),
         }
     }
 
@@ -86,18 +103,29 @@ impl Client {
         let (decoded_data_sender, decoded_data_receiver) = unbounded();
         let (client_report_sender, client_report_receiver) = unbounded();
         let (command_sender, command_receiver) = unbounded();
+        let (retransmission_manager_sender, retransmission_manager_receiver) = unbounded();
 
         // Store command sender for socket management
         self.command_sender = Some(command_sender.clone());
 
+        // Store data sender for receiving data
+        self.data_sender = Some(data_receiver_sender.clone());
+
         // Start worker threads
         self.start_receiver_thread(data_receiver_sender, command_receiver)?;
+
         self.start_decoder_thread(
             data_receiver_receiver,
             decoded_data_sender,
             client_report_sender,
         )?;
-        self.start_report_thread(client_report_receiver)?;
+
+        self.start_report_thread(client_report_receiver, retransmission_manager_sender)?;
+
+        self.retransmission_manager = Some(Arc::new(RetransmissionManager::new(
+            retransmission_manager_receiver,
+        )));
+        self.start_retransmission_thread()?;
 
         // Setup initial sockets
         self.setup_multicast_socket(&command_sender)?;
@@ -376,15 +404,19 @@ impl Client {
         let session = Arc::clone(&self.session);
         let channel = self.channel.as_ref().unwrap().clone();
 
+        let decoder = Arc::new(Decoder::new(
+            data_receiver_receiver,
+            decoded_data_sender,
+            client_report_sender,
+            shutdown_flag,
+            session,
+            channel,
+        ));
+
+        self.decoder = Some(Arc::clone(&decoder));
+
         let handle = thread::spawn(move || {
-            decoder::start(
-                data_receiver_receiver,
-                decoded_data_sender,
-                client_report_sender,
-                shutdown_flag,
-                session,
-                channel,
-            );
+            decoder.start();
             info!("Decoder thread shutting down");
         });
 
@@ -395,6 +427,7 @@ impl Client {
     fn start_report_thread(
         &mut self,
         client_report_receiver: crossbeam_channel::Receiver<proto::ClientReport>,
+        retransmission_manager_sender: crossbeam_channel::Sender<MeshPacket>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let shutdown_flag = Arc::clone(&self.shutdown_flag);
         let session = Arc::clone(&self.session);
@@ -441,12 +474,51 @@ impl Client {
                     break;
                 }
 
+                // Create a MeshPacket for retransmission per packet loss
+                for item in &report.reports {
+                    let indexes = Client::find_zero_indices(&item.bitmap);
+
+                    for index in indexes {
+                        let packet = MeshPacket {
+                            message_id: format!("{}-{:?}", item.matrix_index, index),
+                            ttl: 0,
+                            packet_type: Some(PacketType::Request(RetransmissionRequest {
+                                matrix: item.matrix_index as i32,
+                                packet: index as i32,
+                            })),
+                        };
+
+                        // Send the packet to the retransmission manager
+                        // This will handle the retransmission logic
+                        if let Err(e) = retransmission_manager_sender.send(packet.clone()) {
+                            error!("Failed to send retransmission request: {}", e);
+                        }
+                    }
+                }
+
                 let compressed = compress_data(&report.encode_to_vec());
                 if let Err(e) = socket.send_to(&compressed, &report_sink_dst) {
                     error!("Failed to send UDP message: {}", e);
                 }
             }
             info!("Report thread shutting down");
+        });
+
+        self.thread_handles.write().unwrap().push(handle);
+        Ok(())
+    }
+    fn start_retransmission_thread(&mut self) -> Result<(), Box<dyn std::error::Error>> {
+        let shutdown_flag = Arc::clone(&self.shutdown_flag);
+
+        let retransmission_manager = self
+            .retransmission_manager
+            .as_ref()
+            .ok_or("Retransmission manager not initialized")?;
+
+        let retransmission_manager = Arc::clone(retransmission_manager);
+
+        let handle = thread::spawn(move || {
+            retransmission_manager.process_requests(shutdown_flag);
         });
 
         self.thread_handles.write().unwrap().push(handle);
@@ -488,5 +560,31 @@ impl Client {
         command_sender.send(Command::AddSocket(unicast_socket, ReceiverType::Unicast))?;
         info!("Unicast socket bound to: {}", unicast_addr);
         Ok(())
+    }
+
+    /// Returns all indices where the bit is `0` in the bitmap.
+    pub fn find_zero_indices(vec: &Vec<u8>) -> Vec<usize> {
+        vec.iter()
+            .enumerate()
+            .filter_map(|(index, &value)| if value == 0 { Some(index) } else { None })
+            .collect()
+    }
+
+    pub fn data_sender(&self) -> Option<Sender<(ReceiverType, Vec<u8>)>> {
+        self.data_sender.clone()
+    }
+    /// Returns the most recent packet loss percentage (0-100)
+    pub fn get_packet_loss_percentage(&self) -> f64 {
+        match &self.decoder {
+            Some(decoder) => {
+                let metrics = decoder.get_metrics();
+                let metrics = metrics.read().unwrap();
+                metrics.packet_loss_percentage
+            }
+            None => {
+                error!("Decoder is not initialized");
+                return 0.0;
+            }
+        }
     }
 }

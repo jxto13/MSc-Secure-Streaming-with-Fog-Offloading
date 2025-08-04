@@ -1,6 +1,27 @@
 syntax = "proto3";
 package edge_client;
 
-message Data {
-    bytes data = 1;
+// The MeshPacket message represents a data packet with a unique identifier, time-to-live (TTL), and payload.
+message MeshPacket {
+    string message_id = 1;
+    int32 ttl = 2;
+    oneof packet_type {
+        RetransmissionRequest request = 3; // Request for retransmission
+        RetransmissionResponse response = 4; // Response to a retransmission request
+        HeartbeatPacket heartbeat = 5; // Heartbeat packet to maintain connection
+    }
+}
+
+message HeartbeatPacket {
+    string uuid = 1; 
+}
+
+message RetransmissionRequest {
+    int32 matrix = 1; // the matrix index
+    int32 packet = 2; // the index of the packet in the matrix
+}
+
+message RetransmissionResponse {
+    string message_id = 1; // Unique identifier for the retransmitted packet
+    bytes payload = 2; // The actual data of the retransmitted packet
 }

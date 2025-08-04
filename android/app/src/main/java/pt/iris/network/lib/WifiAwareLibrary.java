@@ -392,6 +392,9 @@ public class WifiAwareLibrary {
                                 DataPathInfo dataPath = new DataPathInfo(peerHandle, network, peerIpv6.getHostAddress());
                                 activeConnections.put(peerHandle, dataPath);
 
+                                RustService.addSocket(peerIpv6.getHostAddress());
+
+
                                 // Send port to the client before starting to listen
                                 if (publishSession != null) {
                                     String portMsg = "PORT:" + port;
@@ -476,6 +479,8 @@ public class WifiAwareLibrary {
 
                             DataPathInfo dataPath = new DataPathInfo(peerHandle, network, peerIpv6.getHostAddress());
                             activeConnections.put(peerHandle, dataPath);
+
+                            RustService.addSocket(peerIpv6.getHostAddress());
 
                             // Connect to server using network socket factory
                             new Thread(() -> {

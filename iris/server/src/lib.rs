@@ -79,6 +79,7 @@ pub struct Retransmission {
 
 #[derive(Deserialize, Debug)]
 pub struct ReinforcementLearning {
+    pub enabled: bool,
     pub agent_data_path: String,
     pub learning_rate: f64,    // alpha
     pub discount_factor: f64,  // gamma

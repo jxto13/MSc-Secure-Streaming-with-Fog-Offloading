@@ -25,8 +25,8 @@ use iris_shared::crypto_utils::decrypt;
 use crate::proto::packet_wrapper::PacketType;
 use crate::proto::retransmission_packet::RetransmissionType;
 use crate::proto::{
-    MatrixReportBitmap, PacketWrapper, ReportMetrics, RequestKey, SessionKey, TransmissionPacket,
-    VideoData, XorPacket,
+    MatrixReportBitmap, MeshPacket, PacketWrapper, ReportMetrics, RequestKey, SessionKey,
+    TransmissionPacket, VideoData, XorPacket,
 };
 use crate::receiver::{ReceiverType, RetransmissionCounters};
 use crate::session::ClientSession;
@@ -68,6 +68,9 @@ struct MatrixTracker {
 
     /// Bitmap to track the presence of packets.
     bitmap: Vec<u8>,
+
+    /// Packet loss percentage for this matrix.
+    packet_loss_percentage: f64,
 }
 
 impl MatrixTracker {
@@ -89,6 +92,7 @@ impl MatrixTracker {
                 ((packet.rows + packet.cols_fec) * (packet.cols + packet.rows_fec))
                     as usize
             ], // Initialize the bitmap with 0s
+            packet_loss_percentage: 0.0,
         };
 
         // Add the initial packet to the tracker.
@@ -119,6 +123,9 @@ impl MatrixTracker {
         if (packet.index as usize) < self.bitmap.len() {
             self.bitmap[packet.index as usize] = 1;
         }
+
+        // Recalculate packet loss after adding the packet
+        self.calculate_packet_loss();
     }
 
     /// Returns a reference to the packet at the given (row, col) if it exists.
@@ -288,6 +295,34 @@ impl MatrixTracker {
             }
         }
         missing
+    }
+
+    /// Calculate and update the packet loss percentage for this matrix.
+    /// Considers both data packets and FEC packets.
+    fn calculate_packet_loss(&mut self) {
+        let total_packets = ((self.rows + self.cols_fec) * (self.cols + self.rows_fec)) as usize;
+        let mut received_packets = 0;
+
+        // Count all received packets (both data and FEC)
+        for row in 0..(self.rows + self.cols_fec) as usize {
+            for col in 0..(self.cols + self.rows_fec) as usize {
+                if self.matrix_packets[(row, col)].is_some() {
+                    received_packets += 1;
+                }
+            }
+        }
+
+        let lost_packets = total_packets - received_packets;
+        self.packet_loss_percentage = if total_packets > 0 {
+            (lost_packets as f64 / total_packets as f64) * 100.0
+        } else {
+            0.0
+        };
+    }
+
+    /// Get the current packet loss percentage.
+    fn get_packet_loss_percentage(&self) -> f64 {
+        self.packet_loss_percentage
     }
 }
 
@@ -574,263 +609,326 @@ fn rotate_key(
     *next_key = Some(new_key);
 }
 
-pub fn start(
+pub struct Metrics {
+    pub packet_loss_percentage: f64,
+}
+
+pub struct Decoder {
     data_receiver: Receiver<(ReceiverType, Vec<u8>)>,
-    decode_data_sender: Sender<Vec<u8>>,
+    decoded_data_sender: Sender<Vec<u8>>,
     client_report_sender: Sender<ClientReport>,
     shutdown_flag: Arc<AtomicBool>,
     session: Arc<RwLock<ClientSession>>,
     channel: Channel,
-) {
-    let mut buffer: VecDeque<MatrixTracker> = VecDeque::new();
+    metrics: Arc<RwLock<Metrics>>,
+}
 
-    let session_config = session.read().unwrap();
-
-    // Public Key from Server to verify packets signature
-    let x509_public_key = X509::from_pem(&session_config.ec_server_certificate)
-        .unwrap()
-        .public_key()
-        .unwrap()
-        .ec_key()
-        .unwrap();
-
-    // Current encryption key and Option for next encryption key
-    let mut current_key_session = session_config.current_key.clone();
-    let mut next_key_session: Option<SessionKey> = Some(session_config.next_key.clone());
-
-    // Client EC Key
-    let client_ec_key = if let Some(ec_key) = &session_config.client_ec_key {
-        ec_key
-    } else {
-        panic!("Client EC Key is not set.");
-    };
-
-    let mut report_counter = 1;
-    let client_id = sha256(&client_ec_key.public_key_to_der().unwrap()).to_vec();
-
-    let rint = Duration::from_millis(session_config.client_reporting_interval as u64); // interval between retries
-    let max_rounds = session_config.client_sliding_window;
-
-    let retry_tick = tick(rint);
-    let mut attempt = 0;
-
-    let mut counters = RetransmissionCounters::default();
-
-    loop {
-        // Check for shutdown signal first
-        if shutdown_flag.load(Ordering::Relaxed) {
-            info!("Decoder shutting down gracefully");
-            break;
+impl Decoder {
+    pub fn new(
+        data_receiver: Receiver<(ReceiverType, Vec<u8>)>,
+        decoded_data_sender: Sender<Vec<u8>>,
+        client_report_sender: Sender<ClientReport>,
+        shutdown_flag: Arc<AtomicBool>,
+        session: Arc<RwLock<ClientSession>>,
+        channel: Channel,
+    ) -> Self {
+        Decoder {
+            data_receiver,
+            decoded_data_sender,
+            client_report_sender,
+            shutdown_flag,
+            session,
+            channel,
+            metrics: Arc::new(RwLock::new(Metrics {
+                packet_loss_percentage: 0.0,
+            })),
         }
+    }
 
-        crossbeam_channel::select_biased! {
-            recv(retry_tick) -> _ => {
+    pub fn start(&self) {
+        let mut buffer: VecDeque<MatrixTracker> = VecDeque::new();
 
-                let tick = if attempt == max_rounds {
-                    attempt = 0; // Reset attempt after reaching max rounds
-                    TickType::DecodeToApp
-                } else {
-                    attempt += 1; // Increment attempt
-                    TickType::Report
-                };
+        let session_config = self.session.read().unwrap();
 
-                // Match the tick type
-                match tick {
-                    TickType::Report => {
+        // Public Key from Server to verify packets signature
+        let x509_public_key = X509::from_pem(&session_config.ec_server_certificate)
+            .unwrap()
+            .public_key()
+            .unwrap()
+            .ec_key()
+            .unwrap();
 
-                        // Check if the buffer has more than one item
-                        if buffer.len() < 1 {
-                            debug!("Buffer is empty or has only one item, skipping report.");
-                            continue;
-                        }
+        // Current encryption key and Option for next encryption key
+        let mut current_key_session = session_config.current_key.clone();
+        let mut next_key_session: Option<SessionKey> = Some(session_config.next_key.clone());
 
-                        // Create a new ClientReport
-                        let mut report = ClientReport {
-                            client_id: client_id.clone(),
-                            counter: report_counter.clone(),
-                            metrics: Some(ReportMetrics {
-                                multicast_retransmissions: counters.get(ReceiverType::Multicast) as u32,
-                                unicast_retransmissions: counters.get(ReceiverType::Unicast) as u32,
-                                wifi_aware_retransmissions: counters.get(ReceiverType::WifiAware) as u32,
-                            }),
-                            reports: Vec::with_capacity(buffer.len() - 1),
-                            signature: vec![0, 255],
-                        };
+        // Client EC Key
+        let client_ec_key = if let Some(ec_key) = &session_config.client_ec_key {
+            ec_key
+        } else {
+            panic!("Client EC Key is not set.");
+        };
 
-                        // Iterate over the buffer and collect reports
-                        for item in buffer.iter().take(buffer.len() - 1) {
-                            report.reports.push(MatrixReportBitmap {
-                                matrix_index: item.matrix_index,
-                                bitmap: item.bitmap.clone(),
-                            });
-                        }
+        let mut report_counter = 1;
+        let client_id = sha256(&client_ec_key.public_key_to_der().unwrap()).to_vec();
 
-                        // Sign the report
-                        match EcdsaSig::sign(&sha256(&report.encode_to_vec()), &client_ec_key) {
-                            Ok(sig) => {
-                                match sig.to_der() {
-                                    Ok(der) => report.signature = der,
+        let rint = Duration::from_millis(session_config.client_reporting_interval as u64); // interval between retries
+        let max_rounds = session_config.client_sliding_window;
+
+        let retry_tick = tick(rint);
+        let mut attempt = 0;
+
+        let mut counters = RetransmissionCounters::default();
+
+        use std::collections::HashMap;
+        let mut last_reported_bitmaps: HashMap<u32, Vec<u8>> = HashMap::new();
+
+        loop {
+            // Check for shutdown signal first
+            if self.shutdown_flag.load(Ordering::Relaxed) {
+                info!("Decoder shutting down gracefully");
+                break;
+            }
+
+            crossbeam_channel::select_biased! {
+                recv(retry_tick) -> _ => {
+
+                    let tick = if attempt == max_rounds {
+                        attempt = 0; // Reset attempt after reaching max rounds
+                        TickType::DecodeToApp
+                    } else {
+                        attempt += 1; // Increment attempt
+                        TickType::Report
+                    };
+
+                    // Match the tick type
+                    match tick {
+                        TickType::Report => {
+
+                            // Check if the buffer has more than one item
+                            if buffer.len() < 1 {
+                                debug!("Buffer is empty or has only one item, skipping report.");
+                                continue;
+                            }
+
+
+                            // Clean up last_reported_bitmaps to avoid unbounded growth
+                            let buffer_indices: std::collections::HashSet<u32> = buffer.iter().take(buffer.len() - 1).map(|item| item.matrix_index).collect();
+                            last_reported_bitmaps.retain(|matrix_index, _| buffer_indices.contains(matrix_index));
+
+                            // Only report matrices whose bitmap has changed since last report
+                            let mut changed_reports = Vec::new();
+                            for item in buffer.iter().take(buffer.len() - 1) {
+                                let matrix_index = item.matrix_index;
+                                let bitmap = &item.bitmap;
+                                let last_bitmap = last_reported_bitmaps.get(&matrix_index);
+                                if last_bitmap.map_or(true, |b| b != bitmap) {
+                                    changed_reports.push(MatrixReportBitmap {
+                                        matrix_index,
+                                        bitmap: bitmap.clone(),
+                                    });
+                                    last_reported_bitmaps.insert(matrix_index, bitmap.clone());
+                                }
+                            }
+
+                            if !changed_reports.is_empty() {
+                                let mut report = ClientReport {
+                                    client_id: client_id.clone(),
+                                    counter: report_counter.clone(),
+                                    metrics: Some(ReportMetrics {
+                                        multicast_retransmissions: counters.get(ReceiverType::Multicast) as u32,
+                                        unicast_retransmissions: counters.get(ReceiverType::Unicast) as u32,
+                                        wifi_aware_retransmissions: counters.get(ReceiverType::WifiAware) as u32,
+                                    }),
+                                    reports: changed_reports,
+                                    signature: vec![0, 255],
+                                };
+
+                                // Sign the report
+                                match EcdsaSig::sign(&sha256(&report.encode_to_vec()), &client_ec_key) {
+                                    Ok(sig) => {
+                                        match sig.to_der() {
+                                            Ok(der) => report.signature = der,
+                                            Err(e) => {
+                                                error!("Failed to convert signature to DER: {}. Skipping report.", e);
+                                                continue;
+                                            }
+                                        }
+                                    },
                                     Err(e) => {
-                                        error!("Failed to convert signature to DER: {}. Skipping report.", e);
+                                        error!("Failed to sign report: {}. Skipping report.", e);
                                         continue;
                                     }
                                 }
-                            },
-                            Err(e) => {
-                                error!("Failed to sign report: {}. Skipping report.", e);
+
+                                // Send the report
+                                if let Err(e) = self.client_report_sender.send(report) {
+                                    error!("Failed to send client report: {}. Decoder shutting down.", e);
+                                    break;
+                                }
+
+                                // Increment the report counter
+                                report_counter += 1;
+                            } else {
+                                // debug!("No changed matrix bitmaps to report.");
+                            }
+
+                        },
+                        TickType::DecodeToApp => {
+
+                            // Check if the buffer has more than one item
+                            if buffer.len() > 1 {
+
+                                // info!("Decoding to application layer...");
+
+                                // Drain all elements except the last one
+                                let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
+
+                                // Reset the counters for the next round
+                                let mut overall_loss = 0.0;
+
+                                for mut item in drained {
+
+                                    // Reconstruct the matrix
+                                    item.reconstruct_matrix(&client_ec_key).unwrap();
+
+                                    log::debug!("Missing packets: {:?} - {:?}", item.matrix_index, item.missing_indexes());
+
+                                    // Calculate packet loss before reconstruction
+                                    item.calculate_packet_loss();
+
+                                    overall_loss += item.get_packet_loss_percentage();
+
+                                    // Update the metrics
+                                    self.metrics.write().unwrap().packet_loss_percentage = overall_loss;
+
+                                    // Decode the matrix to the application layer
+                                    match decode_to_app_layer(&mut item, &self.decoded_data_sender, &x509_public_key, &self.session, &self.channel) {
+                                        Ok(_) => {
+                                            // If decoding was successful, we can consider the keys updated
+                                        },
+                                        Err(e) => {
+                                            error!("Failed to decode matrix {}: {}", item.matrix_index, e);
+                                        }
+                                    }
+                                }
+
+                            }
+
+                        }
+                    }
+
+                },
+
+                // Receive data from the channel
+                recv(self.data_receiver) -> msg => {
+                    // Attempt to receive data from the channel
+                    let (source, data) = match msg {
+                        Ok(val) => val,
+                        Err(err) => {
+                            error!("Channel closed: {:?}", err);
+                            break;
+                        }
+                    };
+
+                    // This is for tracking if we incremented the multicast retransmissions counter
+                    let mut is_multicast = false;
+
+                    let wrapper: Vec<u8> = match source {
+                        // This can be helpful to track metrics
+                        ReceiverType::Multicast => {
+                            is_multicast = true;
+                            data
+                        },
+                        ReceiverType::Unicast => {
+                            // Increment the unicast retransmissions counter
+                            counters.increment(ReceiverType::Unicast);
+                            data
+                        },
+                        ReceiverType::WifiAware => {
+                            // Increment the wifi aware retransmissions counter
+                            counters.increment(ReceiverType::WifiAware);
+                            data
+                        }
+                    };
+
+                    // Attempt to decode the wrapper as a PacketWrapper
+                    let packet_wrapper = match PacketWrapper::decode(&*wrapper) {
+                        Ok(pw) => pw,
+                        Err(err) => {
+                            error!("Failed to decode PacketWrapper: {}", err);
+                            continue;
+                        }
+                    };
+
+                    match packet_wrapper.packet_type {
+                        Some(PacketType::TransmissionPacket(mut transmission)) => {
+                            // Validate the packet signature, if invalid, skip the packet
+                            if validate_packet(&mut transmission, &x509_public_key) {
+                                // Process the packet if valid
+                                process_packet(&mut buffer, transmission, &mut current_key_session, &mut next_key_session, &self.session);
+                            } else {
+                                // Invalid packet, skip
                                 continue;
                             }
                         }
+                        Some(PacketType::RetransmissionPacket(retransmission)) => {
+                            // handle RetransmissionPacket
+                            match retransmission.retransmission_type {
 
-                        // Send the report
-                        if let Err(e) = client_report_sender.send(report) {
-                            error!("Failed to send client report: {}. Decoder shutting down.", e);
-                            break;
-                        }
+                                Some(RetransmissionType::XorPacket(mut packet)) => {
 
-                        // Increment the report counter
-                        report_counter += 1;
+                                    // Validate the packet signature, if invalid, skip the packet
+                                    if validate_xor_packet(&mut packet, &x509_public_key) {
 
-                    },
-                    TickType::DecodeToApp => {
+                                        // Process the XOR packet
+                                        process_xor_packet(&mut packet, &mut buffer);
 
-                        // Check if the buffer has more than one item
-                        if buffer.len() > 1 {
-
-                            // info!("Decoding to application layer...");
-
-                            // Drain all elements except the last one
-                            let drained : Vec<MatrixTracker> = buffer.drain(0..buffer.len() - 1).collect();
-
-                            for mut item in drained {
-
-                                // Reconstruct the matrix
-                                item.reconstruct_matrix(&client_ec_key).unwrap();
-
-                                log::debug!("Missing packets: {:?} - {:?}", item.matrix_index, item.missing_indexes());
-
-                                // Decode the matrix to the application layer
-                                match decode_to_app_layer(&mut item, &decode_data_sender, &x509_public_key, &session, &channel) {
-                                    Ok(_) => {
-                                        // If decoding was successful, we can consider the keys updated
-                                    },
-                                    Err(e) => {
-                                        error!("Failed to decode matrix {}: {}", item.matrix_index, e);
+                                    } else {
+                                        // Invalid packet, skip
+                                        continue;
                                     }
+                                }
+                                // This is a normal TransmissionPacket inside a RetransmissionPacket
+                                Some(RetransmissionType::TransmissionPacket(mut packet)) => {
+                                    // info!("Received retransmission packet for matrix: {} packet {}", packet.matrix, packet.index);
+                                    // Validate the packet signature, if invalid, skip the packet
+                                    if validate_packet(&mut packet, &x509_public_key) {
+                                        // debug!("Received retransmission packet for matrix: {} packet {}", packet.matrix, packet.index);
+                                        // Process the packet if valid
+                                        process_retransmission_packet(&mut buffer, packet);
+                                    } else {
+                                        // Invalid packet, skip
+                                        continue;
+                                    }
+                                }
+                                None => {
+                                    error!("RetransmissionPacket contained no retransmission type.");
                                 }
                             }
 
+                            // Check if the packet is a multicast retransmission and increment counter
+                            if is_multicast {
+                                // Increment the multicast retransmissions counter
+                                counters.increment(ReceiverType::Multicast);
+                            }
+
                         }
-
-                    }
-                }
-
-            },
-
-            // Receive data from the channel
-            recv(data_receiver) -> msg => {
-                // Attempt to receive data from the channel
-                let (source, data) = match msg {
-                    Ok(val) => val,
-                    Err(err) => {
-                        error!("Channel closed: {:?}", err);
-                        break;
-                    }
-                };
-
-                // This is for tracking if we incremented the multicast retransmissions counter
-                let mut is_multicast = false;
-
-                let wrapper: Vec<u8> = match source {
-                    // This can be helpful to track metrics
-                    ReceiverType::Multicast => {
-                        is_multicast = true;
-                        data
-                    },
-                    ReceiverType::Unicast => {
-                        // Increment the unicast retransmissions counter
-                        counters.increment(ReceiverType::Unicast);
-                        data
-                    },
-                    ReceiverType::WifiAware => {
-                        // Increment the wifi aware retransmissions counter
-                        counters.increment(ReceiverType::WifiAware);
-                        data
-                    }
-                };
-
-                // Attempt to decode the wrapper as a PacketWrapper
-                let packet_wrapper = match PacketWrapper::decode(&*wrapper) {
-                    Ok(pw) => pw,
-                    Err(err) => {
-                        error!("Failed to decode PacketWrapper: {}", err);
-                        continue;
-                    }
-                };
-
-                match packet_wrapper.packet_type {
-                    Some(PacketType::TransmissionPacket(mut transmission)) => {
-                        // Validate the packet signature, if invalid, skip the packet
-                        if validate_packet(&mut transmission, &x509_public_key) {
-                            // Process the packet if valid
-                            process_packet(&mut buffer, transmission, &mut current_key_session, &mut next_key_session, &session);
-                        } else {
-                            // Invalid packet, skip
+                        None => {
+                            // no packet set — error or ignore
+                            error!("PacketWrapper contained no packet type.");
                             continue;
                         }
                     }
-                    Some(PacketType::RetransmissionPacket(retransmission)) => {
-                        // handle RetransmissionPacket
-                        match retransmission.retransmission_type {
 
-                            Some(RetransmissionType::XorPacket(mut packet)) => {
 
-                                // Validate the packet signature, if invalid, skip the packet
-                                if validate_xor_packet(&mut packet, &x509_public_key) {
-
-                                    // Process the XOR packet
-                                    process_xor_packet(&mut packet, &mut buffer);
-
-                                } else {
-                                    // Invalid packet, skip
-                                    continue;
-                                }
-                            }
-                            // This is a normal TransmissionPacket inside a RetransmissionPacket
-                            Some(RetransmissionType::TransmissionPacket(mut packet)) => {
-                                // info!("Received retransmission packet for matrix: {} packet {}", packet.matrix, packet.index);
-                                // Validate the packet signature, if invalid, skip the packet
-                                if validate_packet(&mut packet, &x509_public_key) {
-                                    // debug!("Received retransmission packet for matrix: {} packet {}", packet.matrix, packet.index);
-                                    // Process the packet if valid
-                                    process_retransmission_packet(&mut buffer, packet);
-                                } else {
-                                    // Invalid packet, skip
-                                    continue;
-                                }
-                            }
-                            None => {
-                                error!("RetransmissionPacket contained no retransmission type.");
-                            }
-                        }
-
-                        // Check if the packet is a multicast retransmission and increment counter
-                        if is_multicast {
-                            // Increment the multicast retransmissions counter
-                            counters.increment(ReceiverType::Multicast);
-                        }
-
-                    }
-                    None => {
-                        // no packet set — error or ignore
-                        error!("PacketWrapper contained no packet type.");
-                        continue;
-                    }
                 }
-
-
             }
         }
+    }
+
+    pub fn get_metrics(&self) -> Arc<RwLock<Metrics>> {
+        self.metrics.clone()
     }
 }
 

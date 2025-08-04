@@ -102,8 +102,6 @@ public class MyVpnService extends VpnService {
 					});
 				}
 
-				RustService.testTUN(ulaAddress);
-
 				ParcelFileDescriptor tun = tunManager.getTunInterface();
 				if (tun != null) {
 					Log.i(TAG, "TUN file descriptor obtained: " + tun.getFd());

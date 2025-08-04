@@ -303,15 +303,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         }),
     ));
 
-    handlers.push((
-        "reinforcement_learning_handler",
-        thread::spawn({
-            let client_sessions = Arc::clone(&client_sessions);
-            move || {
-                crate::reinforcement_learning::rl_loop::run_learning_loop(client_sessions);
-            }
-        }),
-    ));
+    // If reinforcement learning is enabled, start the reinforcement learning handler
+    if CONFIG.get().unwrap().reinforcement_learning.enabled {
+        info!("Reinforcement learning is enabled in the configuration.");
+        handlers.push((
+            "reinforcement_learning_handler",
+            thread::spawn({
+                let client_sessions = Arc::clone(&client_sessions);
+                move || {
+                    crate::reinforcement_learning::rl_loop::run_learning_loop(client_sessions);
+                }
+            }),
+        ));
+    }
 
     let client_sessions_clone = Arc::clone(&client_sessions);
 

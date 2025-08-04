@@ -194,6 +194,10 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 			updateSessionInfo();
 		}
 
+		// Grab packet loss stats from Rust client
+		assert stats != null;
+		stats.packetLossRate =  RustService.getPacketLossPercentage();
+
 		networkStats.postValue(stats);
 	}
 
