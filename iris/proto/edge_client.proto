@@ -13,8 +13,11 @@ message MeshPacket {
 }
 
 message HeartbeatPacket {
-    string uuid = 1; 
+    string uuid = 1;
+    string addr = 2; 
+    repeated string peers = 3; // optional: list of peer UUIDs this node knows (routing hint)
 }
+
 
 message RetransmissionRequest {
     int32 matrix = 1; // the matrix index

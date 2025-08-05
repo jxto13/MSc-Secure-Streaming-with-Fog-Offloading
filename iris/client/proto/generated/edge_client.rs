@@ -28,6 +28,11 @@ pub mod mesh_packet {
 pub struct HeartbeatPacket {
     #[prost(string, tag = "1")]
     pub uuid: ::prost::alloc::string::String,
+    #[prost(string, tag = "2")]
+    pub addr: ::prost::alloc::string::String,
+    /// optional: list of peer UUIDs this node knows (routing hint)
+    #[prost(string, repeated, tag = "3")]
+    pub peers: ::prost::alloc::vec::Vec<::prost::alloc::string::String>,
 }
 #[derive(Clone, Copy, PartialEq, ::prost::Message)]
 pub struct RetransmissionRequest {

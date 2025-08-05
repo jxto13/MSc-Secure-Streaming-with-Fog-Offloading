@@ -19,8 +19,8 @@ pub mod android {
     // Static variable to hold the iris client instance
     static CLIENT: OnceCell<Arc<RwLock<Option<iris_client::Client>>>> = OnceCell::new();
 
-    // Thread handle to keep track of the spawned thread
-    static THREAD_HANDLE: OnceCell<Arc<RwLock<Option<std::thread::JoinHandle<()>>>>> =
+    // Thread handles to keep track of multiple spawned threads
+    static THREAD_HANDLES: OnceCell<Arc<RwLock<Vec<std::thread::JoinHandle<()>>>>> =
         OnceCell::new();
 
     /// Initializes the logging system for Android.
@@ -123,8 +123,8 @@ pub mod android {
                 if CLIENT.get().is_none() {
                     let _ = CLIENT.set(Arc::new(RwLock::new(None)));
                 }
-                if THREAD_HANDLE.get().is_none() {
-                    let _ = THREAD_HANDLE.set(Arc::new(RwLock::new(None)));
+                if THREAD_HANDLES.get().is_none() {
+                    let _ = THREAD_HANDLES.set(Arc::new(RwLock::new(Vec::new())));
                 }
 
                 // Store the client
@@ -159,10 +159,10 @@ pub mod android {
                     log::error!("Client stream ended for URL: {}", url_str);
                 });
 
-                // Store the thread handle
-                if let Some(handle_holder) = THREAD_HANDLE.get() {
-                    if let Ok(mut guard) = handle_holder.write() {
-                        *guard = Some(handle);
+                // Store the thread handle in the vector
+                if let Some(handles_holder) = THREAD_HANDLES.get() {
+                    if let Ok(mut guard) = handles_holder.write() {
+                        guard.push(handle);
                     }
                 }
             }
@@ -175,6 +175,36 @@ pub mod android {
         if let Some(client_holder) = CLIENT.get() {
             if let Ok(guard) = client_holder.read() {
                 if let Some(client) = guard.as_ref() {
+                    let retransmission_manager = client.get_retransmission_manager();
+
+                    // Get the mesh networking node
+                    let node = match MESH_NETWORK_NODE.get() {
+                        Some(node) => node.clone(),
+                        None => {
+                            log::error!("Mesh networking node is not initialized");
+                            return jni::sys::JNI_FALSE;
+                        }
+                    };
+
+                    // Get the IPC channels from Node to RetransmissionManager
+                    let ipc_channels = node.get_ipc_channels();
+
+                    let handle = thread::spawn({
+                        let ipc_channels = Arc::clone(&ipc_channels);
+                        move || {
+                            retransmission_manager.middleware(
+                                ipc_channels.request_from_mesh.0.clone(),
+                                &ipc_channels.request_to_mesh.1,
+                            );
+                        }
+                    });
+
+                    // Store the thread handle in the vector
+                    if let Some(handles_holder) = THREAD_HANDLES.get() {
+                        if let Ok(mut guard) = handles_holder.write() {
+                            guard.push(handle);
+                        }
+                    }
                 } else {
                     log::error!("Iris client is not initialized");
                 }
@@ -205,10 +235,10 @@ pub mod android {
             }
         }
 
-        // Wait for the thread to finish
-        if let Some(handle_holder) = THREAD_HANDLE.get() {
-            if let Ok(mut guard) = handle_holder.write() {
-                if let Some(handle) = guard.take() {
+        // Wait for all threads to finish
+        if let Some(handles_holder) = THREAD_HANDLES.get() {
+            if let Ok(mut guard) = handles_holder.write() {
+                while let Some(handle) = guard.pop() {
                     match handle.join() {
                         Ok(_) => log::info!("Thread joined successfully"),
                         Err(e) => log::error!("Error joining thread: {:?}", e),
@@ -273,7 +303,6 @@ pub mod android {
                 0.0
             }
         } else {
-            log::error!("Iris client holder is not initialized");
             0.0
         }
     }

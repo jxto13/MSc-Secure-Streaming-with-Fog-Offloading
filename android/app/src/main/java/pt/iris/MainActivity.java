@@ -184,21 +184,21 @@ public class MainActivity extends AppCompatActivity {
 
         initializeWifiAwareNetwork(wifiAwareEnabled);
 
-        vpnPermissionLauncher = registerForActivityResult(
-                new ActivityResultContracts.StartActivityForResult(),
-                result -> {
-                    if (result.getResultCode() == RESULT_OK) {
-                        // Permission granted, start VPN service
-                        Intent serviceIntentVpn = new Intent(this, MyVpnService.class);
-						startForegroundService(serviceIntentVpn);
-					} else {
-                        Log.e("VPN", "User denied VPN permission.");
-                    }
-                }
-        );
-
-        // Request permission when needed:
-        requestVpnPermission();
+//        vpnPermissionLauncher = registerForActivityResult(
+//                new ActivityResultContracts.StartActivityForResult(),
+//                result -> {
+//                    if (result.getResultCode() == RESULT_OK) {
+//                        // Permission granted, start VPN service
+//                        Intent serviceIntentVpn = new Intent(this, MyVpnService.class);
+//						startForegroundService(serviceIntentVpn);
+//					} else {
+//                        Log.e("VPN", "User denied VPN permission.");
+//                    }
+//                }
+//        );
+//
+//        // Request permission when needed:
+//        requestVpnPermission();
 
     }
 

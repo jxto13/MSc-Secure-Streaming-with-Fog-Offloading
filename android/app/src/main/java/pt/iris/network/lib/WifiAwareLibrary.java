@@ -380,7 +380,7 @@ public class WifiAwareLibrary {
                     ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
                         @Override
                         public void onAvailable(@NonNull Network network){
-                            connectivityManager.bindProcessToNetwork(network);
+//                            connectivityManager.bindProcessToNetwork(network);
                         }
 
                         @Override
@@ -467,7 +467,7 @@ public class WifiAwareLibrary {
                 ConnectivityManager.NetworkCallback callback = new ConnectivityManager.NetworkCallback() {
                     @Override
                     public void onAvailable(@NonNull Network network){
-                        connectivityManager.bindProcessToNetwork(network);
+//                        connectivityManager.bindProcessToNetwork(network);
                     }
 
                     @Override

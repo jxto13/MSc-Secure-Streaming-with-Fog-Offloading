@@ -103,7 +103,7 @@ impl Client {
         let (decoded_data_sender, decoded_data_receiver) = unbounded();
         let (client_report_sender, client_report_receiver) = unbounded();
         let (command_sender, command_receiver) = unbounded();
-        let (retransmission_manager_sender, retransmission_manager_receiver) = unbounded();
+        let (retransmission_manager_sender, retransmission_manager_receiver) = loole::unbounded();
 
         // Store command sender for socket management
         self.command_sender = Some(command_sender.clone());
@@ -112,19 +112,29 @@ impl Client {
         self.data_sender = Some(data_receiver_sender.clone());
 
         // Start worker threads
-        self.start_receiver_thread(data_receiver_sender, command_receiver)?;
+        self.start_receiver_thread(data_receiver_sender.clone(), command_receiver)?;
 
+        // Start the decoder thread
         self.start_decoder_thread(
             data_receiver_receiver,
             decoded_data_sender,
             client_report_sender,
         )?;
 
+        // Start the client report thread
         self.start_report_thread(client_report_receiver, retransmission_manager_sender)?;
 
+        // Get decoder reference
+        let decoder = self.decoder.as_ref().ok_or("Decoder not initialized")?;
+
+        // Create and start the retransmission manager
         self.retransmission_manager = Some(Arc::new(RetransmissionManager::new(
+            self.runtime.clone(),
+            Arc::clone(decoder),
             retransmission_manager_receiver,
+            data_receiver_sender.clone(),
         )));
+
         self.start_retransmission_thread()?;
 
         // Setup initial sockets
@@ -133,6 +143,13 @@ impl Client {
 
         info!("Client started successfully");
         Ok(decoded_data_receiver)
+    }
+
+    pub fn get_retransmission_manager(&self) -> Arc<RetransmissionManager> {
+        self.retransmission_manager
+            .as_ref()
+            .expect("Retransmission manager not initialized")
+            .clone()
     }
 
     /// Shutdown the client gracefully
@@ -427,7 +444,7 @@ impl Client {
     fn start_report_thread(
         &mut self,
         client_report_receiver: crossbeam_channel::Receiver<proto::ClientReport>,
-        retransmission_manager_sender: crossbeam_channel::Sender<MeshPacket>,
+        retransmission_manager_sender: loole::Sender<MeshPacket>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let shutdown_flag = Arc::clone(&self.shutdown_flag);
         let session = Arc::clone(&self.session);
@@ -481,7 +498,7 @@ impl Client {
                     for index in indexes {
                         let packet = MeshPacket {
                             message_id: format!("{}-{:?}", item.matrix_index, index),
-                            ttl: 0,
+                            ttl: 3,
                             packet_type: Some(PacketType::Request(RetransmissionRequest {
                                 matrix: item.matrix_index as i32,
                                 packet: index as i32,

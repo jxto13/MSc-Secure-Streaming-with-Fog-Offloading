@@ -609,10 +609,12 @@ fn rotate_key(
     *next_key = Some(new_key);
 }
 
+#[derive(Debug)]
 pub struct Metrics {
     pub packet_loss_percentage: f64,
 }
 
+#[derive(Debug)]
 pub struct Decoder {
     data_receiver: Receiver<(ReceiverType, Vec<u8>)>,
     decoded_data_sender: Sender<Vec<u8>>,
