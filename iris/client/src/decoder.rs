@@ -25,8 +25,8 @@ use iris_shared::crypto_utils::decrypt;
 use crate::proto::packet_wrapper::PacketType;
 use crate::proto::retransmission_packet::RetransmissionType;
 use crate::proto::{
-    MatrixReportBitmap, MeshPacket, PacketWrapper, ReportMetrics, RequestKey, SessionKey,
-    TransmissionPacket, VideoData, XorPacket,
+    MatrixReportBitmap, PacketWrapper, ReportMetrics, RequestKey, SessionKey, TransmissionPacket,
+    VideoData, XorPacket,
 };
 use crate::receiver::{ReceiverType, RetransmissionCounters};
 use crate::session::ClientSession;
@@ -53,35 +53,35 @@ pub enum TickType {
     DecodeToApp,
 }
 
-#[derive(Default, Debug)]
+#[derive(Default, Debug, Clone)]
 /// A struct to track the state of a matrix.
-struct MatrixTracker {
+pub struct MatrixTracker {
     /// Index of the matrix.
-    matrix_index: u32,
+    pub matrix_index: u32,
 
     /// Number of columns in the matrix.
-    cols: u32,
+    pub cols: u32,
 
     /// Number of rows in the matrix.
-    rows: u32,
+    pub rows: u32,
 
     /// Number of columns for Forward Error Correction.
-    cols_fec: u32,
+    pub cols_fec: u32,
 
     /// Number of rows for Forward Error Correction.
-    rows_fec: u32,
+    pub rows_fec: u32,
 
     /// Matrix to store the packets.
-    matrix_packets: Matrix<Option<TransmissionPacket>>,
+    pub matrix_packets: Matrix<Option<TransmissionPacket>>,
 
     /// Session key to decrypt the matrix.
-    session_key: Option<SessionKey>,
+    pub session_key: Option<SessionKey>,
 
     /// Bitmap to track the presence of packets.
-    bitmap: Vec<u8>,
+    pub bitmap: Vec<u8>,
 
     /// Packet loss percentage for this matrix.
-    packet_loss_percentage: f64,
+    pub packet_loss_percentage: f64,
 }
 
 impl MatrixTracker {
@@ -641,6 +641,7 @@ pub struct Decoder {
     decoded_data_sender: Sender<Vec<u8>>,
     client_report_sender: Sender<ClientReport>,
     packet_request_receiver: Receiver<(PacketRequest, crossbeam_channel::Sender<PacketResponse>)>,
+    buffer_sync_sender: Option<Sender<Vec<MatrixTracker>>>,
     shutdown_flag: Arc<AtomicBool>,
     session: Arc<RwLock<ClientSession>>,
     channel: Channel,
@@ -656,6 +657,7 @@ impl Decoder {
             PacketRequest,
             crossbeam_channel::Sender<PacketResponse>,
         )>,
+        buffer_sync_sender: Option<Sender<Vec<MatrixTracker>>>,
         shutdown_flag: Arc<AtomicBool>,
         session: Arc<RwLock<ClientSession>>,
         channel: Channel,
@@ -665,6 +667,7 @@ impl Decoder {
             decoded_data_sender,
             client_report_sender,
             packet_request_receiver,
+            buffer_sync_sender,
             shutdown_flag,
             session,
             channel,
@@ -733,6 +736,15 @@ impl Decoder {
                     // Match the tick type
                     match tick {
                         TickType::Report => {
+
+                            // Send buffer snapshot to retransmission manager for caching
+                            if let Some(ref sync_sender) = self.buffer_sync_sender {
+                                // Clone the buffer for the retransmission manager
+                                let buffer_snapshot: Vec<MatrixTracker> = buffer.iter().cloned().collect();
+                                if let Err(e) = sync_sender.try_send(buffer_snapshot) {
+                                    debug!("Failed to send buffer snapshot to retransmission manager: {}", e);
+                                }
+                            }
 
                             // Check if the buffer has more than one item
                             if buffer.len() < 1 {

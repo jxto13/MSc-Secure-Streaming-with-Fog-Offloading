@@ -56,19 +56,7 @@ pub struct Client {
 
     data_sender: Option<Sender<(ReceiverType, Vec<u8>)>>,
     command_sender: Option<crossbeam_channel::Sender<Command>>,
-    packet_request_sender: Option<
-        crossbeam_channel::Sender<(
-            decoder::PacketRequest,
-            crossbeam_channel::Sender<decoder::PacketResponse>,
-        )>,
-    >,
-    packet_requester_sender: Option<
-        crossbeam_channel::Sender<(
-            u32,
-            u32,
-            crossbeam_channel::Sender<Option<proto::TransmissionPacket>>,
-        )>,
-    >,
+    buffer_sync_sender: Option<crossbeam_channel::Sender<Vec<crate::decoder::MatrixTracker>>>,
 
     thread_handles: RwLock<Vec<JoinHandle<()>>>,
     shutdown_flag: Arc<AtomicBool>,
@@ -87,8 +75,7 @@ impl Client {
 
             data_sender: None,
             command_sender: None,
-            packet_request_sender: None,
-            packet_requester_sender: None,
+            buffer_sync_sender: None,
 
             thread_handles: RwLock::new(Vec::new()),
             shutdown_flag: Arc::new(AtomicBool::new(false)),
@@ -120,6 +107,10 @@ impl Client {
         let (command_sender, command_receiver) = unbounded();
         let (retransmission_manager_sender, retransmission_manager_receiver) = loole::unbounded();
 
+        // Create buffer synchronization channel
+        let (buffer_sync_sender, buffer_sync_receiver) = unbounded();
+        self.buffer_sync_sender = Some(buffer_sync_sender);
+
         // Store command sender for socket management
         self.command_sender = Some(command_sender.clone());
 
@@ -134,22 +125,15 @@ impl Client {
             data_receiver_receiver,
             decoded_data_sender,
             client_report_sender,
+            self.buffer_sync_sender.clone(),
         )?;
 
         // Start the client report thread
         self.start_report_thread(client_report_receiver, retransmission_manager_sender)?;
 
-        // Get the packet requester sender
-        let packet_requester_sender = self
-            .packet_requester_sender
-            .as_ref()
-            .ok_or("Packet requester not initialized")?
-            .clone();
-
-        // Create and start the retransmission manager
+        // Create and start the retransmission manager with buffer sync
         self.retransmission_manager = Some(Arc::new(RetransmissionManager::new(
-            self.runtime.clone(),
-            packet_requester_sender,
+            Some(buffer_sync_receiver),
             retransmission_manager_receiver,
             data_receiver_sender.clone(),
         )));
@@ -433,67 +417,27 @@ impl Client {
         data_receiver_receiver: crossbeam_channel::Receiver<(ReceiverType, Vec<u8>)>,
         decoded_data_sender: crossbeam_channel::Sender<Vec<u8>>,
         client_report_sender: crossbeam_channel::Sender<proto::ClientReport>,
+        buffer_sync_sender: Option<crossbeam_channel::Sender<Vec<crate::decoder::MatrixTracker>>>,
     ) -> Result<(), Box<dyn std::error::Error>> {
         let shutdown_flag = Arc::clone(&self.shutdown_flag);
         let session = Arc::clone(&self.session);
         let channel = self.channel.as_ref().unwrap().clone();
 
-        // Create packet request channel
-        let (packet_request_sender, packet_request_receiver) = unbounded();
-        self.packet_request_sender = Some(packet_request_sender);
-
-        // Create packet requester channel (for RetransmissionManager)
-        let (packet_requester_sender, packet_requester_receiver) = unbounded();
-        self.packet_requester_sender = Some(packet_requester_sender);
+        // Create packet request channel (still needed for backwards compatibility)
+        let (_packet_request_sender, packet_request_receiver) = unbounded();
 
         let decoder = Arc::new(Decoder::new(
             data_receiver_receiver,
             decoded_data_sender,
             client_report_sender,
             packet_request_receiver,
+            buffer_sync_sender,
             shutdown_flag.clone(),
             session,
             channel,
         ));
 
         self.decoder = Some(Arc::clone(&decoder));
-
-        // Start the packet request handler thread
-        let packet_request_sender_clone = self.packet_request_sender.as_ref().unwrap().clone();
-        let shutdown_flag_clone = shutdown_flag.clone();
-        let packet_handler = thread::spawn(move || {
-            for (matrix_index, packet_index, response_sender) in packet_requester_receiver.iter() {
-                if shutdown_flag_clone.load(Ordering::Relaxed) {
-                    break;
-                }
-
-                let (decoder_response_sender, decoder_response_receiver) = unbounded();
-                let request = decoder::PacketRequest {
-                    matrix_index,
-                    packet_index,
-                };
-
-                // Forward request to decoder
-                if packet_request_sender_clone
-                    .send((request, decoder_response_sender))
-                    .is_ok()
-                {
-                    // Wait for response and forward it
-                    match decoder_response_receiver
-                        .recv_timeout(std::time::Duration::from_millis(100))
-                    {
-                        Ok(decoder_response) => {
-                            let _ = response_sender.send(decoder_response.packet);
-                        }
-                        Err(_) => {
-                            let _ = response_sender.send(None);
-                        }
-                    }
-                } else {
-                    let _ = response_sender.send(None);
-                }
-            }
-        });
 
         // Start the main decoder thread
         let handle = thread::spawn(move || {
@@ -502,7 +446,6 @@ impl Client {
         });
 
         self.thread_handles.write().unwrap().push(handle);
-        self.thread_handles.write().unwrap().push(packet_handler);
         Ok(())
     }
 
@@ -624,31 +567,6 @@ impl Client {
         command_sender.send(Command::AddSocket(unicast_socket, ReceiverType::Unicast))?;
         info!("Unicast socket bound to: {}", unicast_addr);
         Ok(())
-    }
-
-    /// Request a packet from the decoder
-    pub fn request_packet(
-        &self,
-        matrix_index: u32,
-        packet_index: u32,
-    ) -> Option<proto::TransmissionPacket> {
-        let packet_requester_sender = self.packet_requester_sender.as_ref()?;
-
-        let (response_sender, response_receiver) = unbounded();
-
-        // Send the request
-        if packet_requester_sender
-            .send((matrix_index, packet_index, response_sender))
-            .is_err()
-        {
-            return None;
-        }
-
-        // Wait for response with a timeout
-        match response_receiver.recv_timeout(std::time::Duration::from_millis(100)) {
-            Ok(packet) => packet,
-            Err(_) => None,
-        }
     }
 
     /// Returns all indices where the bit is `0` in the bitmap.
