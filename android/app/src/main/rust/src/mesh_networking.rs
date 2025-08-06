@@ -346,7 +346,7 @@ impl Node {
                                         }
                                     }
                                     Some(PacketType::Request(_)) => {
-                                        debug!("Received retransmission request");
+                                        // debug!("Received retransmission request");
 
                                         // Relay the request if TTL allows
                                         if packet.ttl > 0 {
@@ -369,7 +369,7 @@ impl Node {
                                         }
                                     }
                                     Some(PacketType::Response(_)) => {
-                                        debug!("Received retransmission response");
+                                        // debug!("Received retransmission response");
 
                                         // Relay response if TTL allows
                                         if packet.ttl > 0 {
@@ -399,7 +399,7 @@ impl Node {
                 // Process packets from the RetransmissionManager with high priority
                 manager_packet = self.channels.rx.1.recv_async() => {
                     if let Ok(packet) = manager_packet {
-                        debug!("Mesh received packet from RetransmissionManager");
+                        // debug!("Mesh received packet from RetransmissionManager");
 
                         // Broadcast in separate task to avoid blocking
                         let self_clone = self.clone();
