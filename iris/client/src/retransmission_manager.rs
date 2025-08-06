@@ -1,137 +1,152 @@
-use crossbeam_channel::select;
 use log::{error, info};
+use prost::Message;
 use std::{
-    sync::{
-        atomic::{AtomicBool, Ordering},
-        Arc,
-    },
+    sync::Arc,
     thread,
     time::Duration,
 };
 use tokio::runtime::Runtime;
 
-use crate::{decoder::Decoder, proto::MeshPacket, receiver::ReceiverType};
+use crate::{
+    proto::{
+        self, mesh_packet::PacketType, MeshPacket, PacketWrapper, RetransmissionResponse,
+        TransmissionPacket,
+    },
+    receiver::ReceiverType,
+};
 
 #[derive(Debug)]
 pub struct RetransmissionManager {
     runtime: Arc<Runtime>, // Tokio runtime for async operations
-    decoder: Arc<Decoder>, // Decoder for processing packets
+    packet_requester: crossbeam_channel::Sender<(
+        u32,
+        u32,
+        crossbeam_channel::Sender<Option<crate::proto::TransmissionPacket>>,
+    )>, // Channel to request packets
     requests_channel: loole::Receiver<MeshPacket>, // Channel for retransmission requests
     data_sender: crossbeam_channel::Sender<(ReceiverType, Vec<u8>)>, // Channel to send data packets
-    ipc_channels: (loole::Sender<MeshPacket>, loole::Receiver<MeshPacket>),
-    ipc_active: Arc<AtomicBool>, // Tracks if middleware is running
 }
 
 impl RetransmissionManager {
     pub fn new(
         runtime: Arc<Runtime>,
-        decoder: Arc<Decoder>,
+        packet_requester: crossbeam_channel::Sender<(
+            u32,
+            u32,
+            crossbeam_channel::Sender<Option<crate::proto::TransmissionPacket>>,
+        )>,
         requests_channel: loole::Receiver<MeshPacket>,
         data_sender: crossbeam_channel::Sender<(ReceiverType, Vec<u8>)>,
     ) -> Self {
-        let ipc_channels = loole::unbounded();
         Self {
             runtime,
-            decoder,
+            packet_requester,
             requests_channel,
             data_sender,
-            ipc_channels,
-            ipc_active: Arc::new(AtomicBool::new(false)),
         }
     }
 
     pub fn middleware(
         &self,
-        request_to_mesh: loole::Sender<MeshPacket>,
-        request_from_mesh: &loole::Receiver<MeshPacket>,
+        node_rx: loole::Sender<MeshPacket>,
+        node_tx: &loole::Receiver<MeshPacket>,
     ) {
-        self.ipc_active.store(true, Ordering::SeqCst); // Mark IPC as active
-
-        let mut idle_count = 0;
-        let max_idle = 5; // After 5 idle checks, start sleeping
-
+        info!("RetransmissionManager middleware started");
         loop {
-            let mut got_message = false;
+            // Requests from Decoder, sends to mesh network
+            if let Ok(msg) = self.requests_channel.try_recv() {
+                // info!("Processing request from | DECODER | to MESH: {:?}", msg);
 
-            if let Ok(msg) = self.ipc_channels.1.try_recv() {
-                info!("Sending request to | MESH |  {:?}", msg);
-
-                request_to_mesh.send(msg).unwrap_or_else(|e| {
+                node_rx.send(msg).unwrap_or_else(|e| {
                     error!("Failed to send message to MESH channel: {}", e);
                 });
-
-                got_message = true;
             }
 
-            if let Ok(msg) = request_from_mesh.try_recv() {
-                info!("Received request from | MESH |  {:?}", msg);
+            // Receiving request from MESH channel, this is receiving a packet from mesh network
+            if let Ok(mesh_packet) = node_tx.try_recv() {
+                // info!("Received request from | MESH |  {:?}", mesh_packet);
 
-                got_message = true;
-            }
+                // Get the packet from the decoder if we have it
+                match mesh_packet.packet_type {
+                    Some(PacketType::Request(request)) => {
+                        let matrix_index = request.matrix as u32;
+                        let packet_index = request.packet as u32;
 
-            if got_message {
-                idle_count = 0; // reset idle counter if we got something
-            } else {
-                idle_count += 1;
+                        // Request the packet from the decoder
+                        let (response_sender, response_receiver) = crossbeam_channel::unbounded();
+                        if self
+                            .packet_requester
+                            .send((matrix_index, packet_index, response_sender))
+                            .is_ok()
+                        {
+                            // Wait for response with a short timeout
+                            match response_receiver
+                                .recv_timeout(std::time::Duration::from_millis(50))
+                            {
+                                Ok(Some(packet)) => {
+                                    let payload_len = packet.payload.len();
+                                    let mesh_data_packet = MeshPacket {
+                                        ttl: 3, // Allow responses to propagate back
+                                        packet_type: Some(PacketType::Response(
+                                            RetransmissionResponse {
+                                                payload: PacketWrapper {
+                                                    packet_type:
+                                                        Some(proto::packet_wrapper::PacketType::TransmissionPacket(
+                                                            packet.clone(),
+                                                        )),
+                                                }.encode_to_vec() 
+                                            },
+                                        )),
+                                    };
 
-                if idle_count > max_idle {
-                    // Exponential backoff sleep
-                    let sleep_ms = (idle_count - max_idle).min(50); // cap at 50ms
-                    thread::sleep(Duration::from_millis(sleep_ms as u64));
-                } else {
-                    // Short yield if still within fast-polling threshold
-                    std::thread::yield_now();
+                                    // Send the response back through the mesh
+                                    if let Err(e) = node_rx.send(mesh_data_packet) {
+                                        error!("Failed to send response to mesh: {}", e);
+                                    } else {
+                                        info!(
+                                            "Sent response for matrix {} and index {}: data len = {}",
+                                            matrix_index, packet_index, payload_len
+                                        );
+                                    }
+                                }
+                                Ok(None) => {
+                                    error!(
+                                        "No packet found for matrix {} and index {}",
+                                        matrix_index, packet_index
+                                    );
+                                }
+                                Err(_) => {
+                                    error!(
+                                        "Timeout requesting packet for matrix {} and index {}",
+                                        matrix_index, packet_index
+                                    );
+                                }
+                            }
+                        } else {
+                            error!("Failed to send packet request");
+                        }
+                    }
+
+                    Some(PacketType::Response(data)) => {
+                        info!("Received response packet: {:?}", data);
+                    
+                        
+                        self.data_sender
+                            .send((ReceiverType::WifiAware, data.payload))
+                            .unwrap_or_else(|e| {
+                                error!("Failed to send data packet: {}", e);
+                            });
+                            
+                    }
+                    _ => {
+                        error!(
+                            "Received unexpected packet type: {:?}",
+                            mesh_packet.packet_type
+                        );
+                    }
                 }
             }
-        }
-    }
-
-    /// Processes all active retransmission requests only if IPC is active.
-    pub fn process_requests(&self, shutdown_flag: Arc<AtomicBool>) {
-        let requests_channel = self.requests_channel.clone();
-        let ipc_active = self.ipc_active.clone();
-
-        let mut idle_count = 0;
-        let max_idle = 5; // After 5 idle checks, start sleeping
-
-        loop {
-            if shutdown_flag.load(Ordering::Relaxed) {
-                info!("RetransmissionManager shutting down gracefully");
-                break;
-            }
-
-            if !ipc_active.load(Ordering::SeqCst) {
-                info!("IPC is not active, skipping request processing");
-                thread::sleep(Duration::from_millis(100)); // Sleep briefly if IPC is inactive
-                continue;
-            }
-
-            let mut got_message = false;
-
-            if let Ok(msg) = requests_channel.try_recv() {
-                info!("Processing request from | DECODER |  {:?}", msg);
-
-                self.ipc_channels.0.send(msg).unwrap_or_else(|e| {
-                    error!("Failed to send message to IPC channel: {}", e);
-                });
-
-                got_message = true;
-            }
-
-            if got_message {
-                idle_count = 0; // reset idle counter if we got something
-            } else {
-                idle_count += 1;
-
-                if idle_count > max_idle {
-                    // Exponential backoff sleep
-                    let sleep_ms = (idle_count - max_idle).min(50); // cap at 50ms
-                    thread::sleep(Duration::from_millis(sleep_ms as u64));
-                } else {
-                    // Short yield if still within fast-polling threshold
-                    std::thread::yield_now();
-                }
-            }
+            thread::sleep(Duration::from_millis(100));
         }
     }
 }

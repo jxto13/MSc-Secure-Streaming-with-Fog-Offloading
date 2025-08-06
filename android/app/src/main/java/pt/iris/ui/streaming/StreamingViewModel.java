@@ -1,5 +1,3 @@
-
-
 package pt.iris.ui.streaming;
 
 import android.content.Context;
@@ -52,7 +50,6 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 	private final String TAG = "StreamingViewModel";
 
 	public static class NetworkStats {
-		public int totalConnectedClients;
 		public long totalBytesReceived;
 		public long uptime;
 		public double currentBitrate;
@@ -61,7 +58,6 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 		public String wifiAwareDataPaths;
 
 		public NetworkStats() {
-			this.totalConnectedClients = 0;
 			this.totalBytesReceived = 0;
 			this.uptime = 0;
 			this.currentBitrate = 0.0;
@@ -189,7 +185,6 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 		// Update Wi-Fi Aware specific stats
 		if (networkInitializer != null) {
 			stats.wifiAwareDataPaths = networkInitializer.getWifiAwareLibrary().wifiAwareManager.getAvailableAwareResources().getAvailableDataPathsCount() + "/" + networkInitializer.getWifiAwareLibrary().wifiAwareManager.getCharacteristics().getNumberOfSupportedDataPaths();
-			
 			// Update session info
 			updateSessionInfo();
 		}
@@ -197,6 +192,21 @@ public class StreamingViewModel extends ViewModel implements NetworkInitializer.
 		// Grab packet loss stats from Rust client
 		assert stats != null;
 		stats.packetLossRate =  RustService.getPacketLossPercentage();
+
+		// Update bitrate and total bytes received from PfdPipeDataSource
+		try {
+			pt.iris.ui.streaming.PfdPipeDataSource pfdSource = pt.iris.ui.streaming.PfdPipeDataSource.Factory.getLastInstance();
+			if (pfdSource != null) {
+				long totalBytes = pfdSource.getTotalBytesRead();
+				stats.totalBytesReceived = totalBytes;
+				// Calculate bitrate (bits per second)
+				long uptime = stats.uptime > 0 ? stats.uptime : 1;
+				stats.currentBitrate = (totalBytes * 8.0) / uptime;
+			}
+		} catch (Exception ignored) {}
+
+		// Update uptime
+		stats.uptime += 1; // Called every second
 
 		networkStats.postValue(stats);
 	}

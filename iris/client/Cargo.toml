@@ -10,9 +10,9 @@ env_logger = "0.11.8"
 log = "0.4.27"
 
 tokio = { version = "1.45.0", features = ["rt-multi-thread"] }
-tonic = { version =  "0.13.1", features = ["transport", "tls-ring"] }
+tonic = { version =  "0.13.0", features = ["transport", "tls-ring"] }
 openssl = "0.10.72"
-prost = "0.13.5"
+prost = "0.13.1"
 reed-solomon-16  = "0.1.0"
 grid = "0.16.2"
 crossbeam-channel = "0.5.15"
@@ -29,6 +29,7 @@ mio = {version =  "1.0.3", features = ["os-poll", "net"]}
 dashmap = "6.1.0"
 socket2 = "0.5.8"
 pnet_datalink = "0.35.0"
+loole = "0.4.1"
 
 # This compiles openssl for android using NDK
 [target.'cfg(target_os = "android")'.dependencies]

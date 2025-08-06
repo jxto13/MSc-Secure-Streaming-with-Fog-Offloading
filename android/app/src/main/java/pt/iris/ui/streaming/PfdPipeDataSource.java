@@ -21,14 +21,20 @@ public class PfdPipeDataSource implements DataSource {
     @Nullable private TransferListener transferListener;
     @Nullable private DataSpec dataSpec;
     private boolean opened = false;
+    private long totalBytesRead = 0;
 
     public PfdPipeDataSource(ParcelFileDescriptor readPfd) {
         this.readPfd = readPfd;
         this.inputStream = new FileInputStream(readPfd.getFileDescriptor());
     }
 
+    public long getTotalBytesRead() {
+        return totalBytesRead;
+    }
+
     public static class Factory implements DataSource.Factory {
         private final ParcelFileDescriptor readPfd;
+        private static PfdPipeDataSource lastInstance;
 
         public Factory(ParcelFileDescriptor readPfd) {
             this.readPfd = readPfd;
@@ -37,7 +43,12 @@ public class PfdPipeDataSource implements DataSource {
         @NonNull
         @Override
         public DataSource createDataSource() {
-            return new PfdPipeDataSource(readPfd);
+            lastInstance = new PfdPipeDataSource(readPfd);
+            return lastInstance;
+        }
+
+        public static PfdPipeDataSource getLastInstance() {
+            return lastInstance;
         }
     }
 
@@ -60,9 +71,12 @@ public class PfdPipeDataSource implements DataSource {
     public int read(@NonNull byte[] target, int offset, int length) throws IOException {
         if (!opened) return -1;
         int bytesRead = inputStream.read(target, offset, length);
-        if (bytesRead > 0 && transferListener != null) {
-            assert dataSpec != null;
-            transferListener.onBytesTransferred(this, dataSpec, true, bytesRead);
+        if (bytesRead > 0) {
+            totalBytesRead += bytesRead;
+            if (transferListener != null) {
+                assert dataSpec != null;
+                transferListener.onBytesTransferred(this, dataSpec, true, bytesRead);
+            }
         }
         return bytesRead;
     }

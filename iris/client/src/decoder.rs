@@ -30,6 +30,17 @@ use crate::proto::{
 };
 use crate::receiver::{ReceiverType, RetransmissionCounters};
 use crate::session::ClientSession;
+
+#[derive(Debug, Clone)]
+pub struct PacketRequest {
+    pub matrix_index: u32,
+    pub packet_index: u32,
+}
+
+#[derive(Debug, Clone)]
+pub struct PacketResponse {
+    pub packet: Option<TransmissionPacket>,
+}
 use tonic::transport::Channel;
 
 use super::proto::{key_service_client::KeyServiceClient, ClientReport};
@@ -328,6 +339,9 @@ impl MatrixTracker {
 
 /// Validate the packet signature and return true if valid, false otherwise.
 fn validate_packet(packet: &mut TransmissionPacket, x509_public_key: &EcKey<Public>) -> bool {
+    // Save the packet signature to restore it later
+    let packet_signature = packet.packet_signature.clone();
+
     // Get the signature from the packet and put the packet_signature field with 0's to calculate local hash computation
     let signature = match EcdsaSig::from_der(&packet.packet_signature) {
         Ok(sig) => sig,
@@ -347,11 +361,16 @@ fn validate_packet(packet: &mut TransmissionPacket, x509_public_key: &EcKey<Publ
         return false;
     }
 
+    packet.packet_signature = packet_signature; // Restore the original signature
+
     // Validate the packet
     true
 }
 
 fn validate_xor_packet(xor_packet: &mut XorPacket, x509_public_key: &EcKey<Public>) -> bool {
+    // Save the packet signature to restore it later
+    let packet_signature = xor_packet.packet_signature.clone();
+
     // Get the signature from the packet and put the packet_signature field with 0's to calculate local hash computation
     let signature = match EcdsaSig::from_der(&xor_packet.packet_signature) {
         Ok(sig) => sig,
@@ -370,6 +389,8 @@ fn validate_xor_packet(xor_packet: &mut XorPacket, x509_public_key: &EcKey<Publi
         error!("Signature verification failed: {}", err);
         return false;
     }
+
+    xor_packet.packet_signature = packet_signature; // Restore the original signature
 
     // Validate the packet
     true
@@ -619,6 +640,7 @@ pub struct Decoder {
     data_receiver: Receiver<(ReceiverType, Vec<u8>)>,
     decoded_data_sender: Sender<Vec<u8>>,
     client_report_sender: Sender<ClientReport>,
+    packet_request_receiver: Receiver<(PacketRequest, crossbeam_channel::Sender<PacketResponse>)>,
     shutdown_flag: Arc<AtomicBool>,
     session: Arc<RwLock<ClientSession>>,
     channel: Channel,
@@ -630,6 +652,10 @@ impl Decoder {
         data_receiver: Receiver<(ReceiverType, Vec<u8>)>,
         decoded_data_sender: Sender<Vec<u8>>,
         client_report_sender: Sender<ClientReport>,
+        packet_request_receiver: Receiver<(
+            PacketRequest,
+            crossbeam_channel::Sender<PacketResponse>,
+        )>,
         shutdown_flag: Arc<AtomicBool>,
         session: Arc<RwLock<ClientSession>>,
         channel: Channel,
@@ -638,6 +664,7 @@ impl Decoder {
             data_receiver,
             decoded_data_sender,
             client_report_sender,
+            packet_request_receiver,
             shutdown_flag,
             session,
             channel,
@@ -924,6 +951,38 @@ impl Decoder {
                     }
 
 
+                }
+
+                // Handle packet requests from RetransmissionManager
+                recv(self.packet_request_receiver) -> msg => {
+                    let (request, response_sender) = match msg {
+                        Ok(val) => val,
+                        Err(_) => continue, // Channel closed or no message
+                    };
+
+                    // Search for the packet in the buffer
+                    let mut found_packet = None;
+                    for tracker in buffer.iter() {
+                        if tracker.matrix_index == request.matrix_index {
+                            let packet_index = request.packet_index as usize;
+                            let row = packet_index / (tracker.cols + tracker.rows_fec) as usize;
+                            let col = packet_index % (tracker.cols + tracker.rows_fec) as usize;
+
+                            if let Some(packet) = tracker.get_packet(row, col) {
+                                found_packet = Some(packet.clone());
+                                break;
+                            }
+                        }
+                    }
+
+                    // Send response
+                    let response = PacketResponse {
+                        packet: found_packet,
+                    };
+
+                    if let Err(_) = response_sender.send(response) {
+                        // Receiver dropped, ignore
+                    }
                 }
             }
         }

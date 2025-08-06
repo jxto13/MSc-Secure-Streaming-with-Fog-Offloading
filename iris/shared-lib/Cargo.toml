@@ -4,9 +4,9 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-openssl = "0.10.66"
-rand = "0.8.5"
-grid = "0.16.1"
-flate2 = "1.1.1"
+openssl = "0.10.73"
+rand = "0.9.2"
+grid = "0.18.0"
+flate2 = "1.1.2"
 dashmap = "6.1.0"
 reed-solomon-16  = "0.1.0"

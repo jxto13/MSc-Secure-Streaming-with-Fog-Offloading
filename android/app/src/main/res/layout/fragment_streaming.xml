@@ -142,17 +142,17 @@
                         android:orientation="vertical">
 
                         <TextView
-                            android:id="@+id/clientCountText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Connected: 0"
-                            android:textSize="12sp" />
-
-                        <TextView
                             android:id="@+id/bitrateText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Bitrate: 0 kbps"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/totalBytesText"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Total: 0 MB"
                             android:textSize="12sp"
                             android:layout_marginTop="4dp" />
 
@@ -165,19 +165,11 @@
                         android:orientation="vertical">
 
                         <TextView
-                            android:id="@+id/totalBytesText"
-                            android:layout_width="wrap_content"
-                            android:layout_height="wrap_content"
-                            android:text="Total: 0 MB"
-                            android:textSize="12sp" />
-
-                        <TextView
                             android:id="@+id/packetLossText"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="Loss: 0%"
-                            android:textSize="12sp"
-                            android:layout_marginTop="4dp" />
+                            android:textSize="12sp" />
 
                     </LinearLayout>
 
@@ -210,8 +202,6 @@
 
         </androidx.cardview.widget.CardView>
 
-        <!-- WiFi Aware Data Paths Section -->
-
         <!-- WiFi Aware Connections Section -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"
@@ -224,7 +214,6 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:padding="12dp">
-
 
                 <LinearLayout
                     android:layout_width="match_parent"

@@ -192,10 +192,11 @@ pub mod android {
                     let handle = thread::spawn({
                         let ipc_channels = Arc::clone(&ipc_channels);
                         move || {
-                            retransmission_manager.middleware(
-                                ipc_channels.request_from_mesh.0.clone(),
-                                &ipc_channels.request_to_mesh.1,
-                            );
+                            // Correct channel mapping:
+                            // - rx.0 is what retransmission manager uses to send TO mesh (mesh receives via rx.1)
+                            // - tx.1 is what retransmission manager uses to receive FROM mesh (mesh sends via tx.0)
+                            retransmission_manager
+                                .middleware(ipc_channels.rx.0.clone(), &ipc_channels.tx.1);
                         }
                     });
 

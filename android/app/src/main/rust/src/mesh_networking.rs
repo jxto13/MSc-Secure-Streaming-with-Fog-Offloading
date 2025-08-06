@@ -1,49 +1,42 @@
 use iris_client::proto::mesh_packet::PacketType;
-use iris_client::proto::{
-    HeartbeatPacket, MeshPacket, RetransmissionRequest, RetransmissionResponse,
-};
-use log::{debug, error, info, warn};
+use iris_client::proto::{HeartbeatPacket, MeshPacket};
+use log::{debug, error, info};
 use pnet_datalink;
 use prost::Message;
 use socket2::{Domain, Protocol, Socket, Type};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::net::{Ipv6Addr, SocketAddr, SocketAddrV6};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 use tokio::net::UdpSocket;
 use tokio::runtime::Runtime;
-use tokio::sync::{mpsc, watch, RwLock};
+use tokio::sync::{watch, RwLock};
 use tokio::time::interval;
 use uuid::Uuid;
 
-// === Routing and Shared Types ===
-#[derive(Debug, Clone)]
-pub struct RoutingEntry {
-    pub next_hop: SocketAddr,
-    pub cost: u32,
-    pub last_seen: Instant,
-}
-
-pub type RoutingTable = Arc<RwLock<HashMap<String, RoutingEntry>>>;
-pub type SeenSet = Arc<RwLock<HashSet<String>>>;
+// === Shared Types ===
 pub type PeerMap = Arc<Mutex<HashMap<String, Instant>>>;
 
 // Channels for application-level request/response injection
-pub struct AppChannels {
-    pub request_from_mesh: (loole::Sender<MeshPacket>, loole::Receiver<MeshPacket>),
-    pub request_to_mesh: (loole::Sender<MeshPacket>, loole::Receiver<MeshPacket>),
+pub struct NodeChannels {
+    // tx channel: Mesh -> RetransmissionManager
+    // tx.0 = Sender (mesh uses this to send TO retransmission manager)
+    // tx.1 = Receiver (retransmission manager uses this to receive FROM mesh)
+    pub tx: (loole::Sender<MeshPacket>, loole::Receiver<MeshPacket>),
+
+    // rx channel: RetransmissionManager -> Mesh
+    // rx.0 = Sender (retransmission manager uses this to send TO mesh)
+    // rx.1 = Receiver (mesh uses this to receive FROM retransmission manager)
+    pub rx: (loole::Sender<MeshPacket>, loole::Receiver<MeshPacket>),
 }
 
 pub struct Node {
     pub node_id: String,
-    pub seen: SeenSet,
     pub peer_map: PeerMap,
-    pub routing: RoutingTable,
     pub sockets: Arc<RwLock<HashMap<String, Arc<UdpSocket>>>>,
     pub socket_notify: watch::Sender<()>,
-    pub channels: Arc<AppChannels>,
+    pub channels: Arc<NodeChannels>,
     pub runtime: Arc<Runtime>,
-    pub heartbeat_counter: Arc<tokio::sync::Mutex<u64>>, // Counter for heartbeat messages
 }
 
 impl Node {
@@ -53,17 +46,14 @@ impl Node {
 
         let node = Arc::new(Self {
             node_id: Uuid::new_v4().to_string(),
-            seen: Arc::new(RwLock::new(HashSet::new())),
             peer_map: Arc::new(Mutex::new(HashMap::new())),
-            routing: Arc::new(RwLock::new(HashMap::new())),
             sockets: Arc::new(RwLock::new(HashMap::new())),
             socket_notify: tx_notify,
-            channels: Arc::new(AppChannels {
-                request_from_mesh: loole::unbounded(),
-                request_to_mesh: loole::unbounded(),
+            channels: Arc::new(NodeChannels {
+                tx: loole::unbounded(),
+                rx: loole::unbounded(),
             }),
             runtime: Arc::new(runtime),
-            heartbeat_counter: Arc::new(tokio::sync::Mutex::new(0)),
         });
 
         info!("Node {} initialized", node.node_id);
@@ -76,12 +66,6 @@ impl Node {
             }
         });
 
-        // Route pruning
-        let routing = node.routing.clone();
-        node.runtime.spawn(async move {
-            Node::prune_routes(routing).await;
-        });
-
         // Peer cleanup
         let peer_map = node.peer_map.clone();
         node.runtime.spawn(async move {
@@ -91,7 +75,7 @@ impl Node {
         node
     }
 
-    pub fn get_ipc_channels(&self) -> Arc<AppChannels> {
+    pub fn get_ipc_channels(&self) -> Arc<NodeChannels> {
         self.channels.clone()
     }
 
@@ -148,6 +132,11 @@ impl Node {
     async fn create_reusable_udp_socket(addr: SocketAddrV6) -> std::io::Result<UdpSocket> {
         let socket = Socket::new(Domain::IPV6, Type::DGRAM, Some(Protocol::UDP))?;
         socket.set_reuse_address(true)?;
+
+        // Optimize socket buffer sizes for better throughput
+        // socket.set_recv_buffer_size(131072)?; // 128KB
+        // socket.set_send_buffer_size(131072)?; // 128KB
+
         socket.bind(&addr.into())?;
         let std_socket: std::net::UdpSocket = socket.into();
         std_socket.set_nonblocking(true)?;
@@ -180,46 +169,58 @@ impl Node {
         let _ = self.socket_notify.send(());
     }
 
-    // === Heartbeat + Routing ===
+    // === Heartbeat ===
     async fn heartbeat_sender(self: Arc<Self>) {
         use tokio::select;
-        let mut ticker = interval(Duration::from_secs(10));
+        let mut ticker = interval(Duration::from_secs(5));
         let mut rx = self.socket_notify.subscribe();
+
         loop {
             select! {
                 _ = ticker.tick() => {
-                    let routing = self.routing.read().await;
-                    let peer_list: Vec<String> = routing.keys().cloned().collect();
-
-                    // Increment heartbeat counter
-                    let mut counter = self.heartbeat_counter.lock().await;
-                    *counter += 1;
-                    let current_count = *counter;
+                    // Get peer list from peer map instead of routing
+                    let peer_list: Vec<String> = {
+                        let peer_map = self.peer_map.lock().unwrap();
+                        peer_map.keys().cloned().collect()
+                    };
 
                     let hb = MeshPacket {
-                        message_id: format!("heartbeat-{}-{}", self.node_id, current_count),
-                        ttl: 0,
+                        ttl: 3,
                         packet_type: Some(PacketType::Heartbeat(HeartbeatPacket {
                             uuid: self.node_id.clone(),
                             addr: "".into(),
                             peers: peer_list,
                         })),
                     };
-                    let mut buf = Vec::new();
+
+                    let mut buf = Vec::with_capacity(512);
                     hb.encode(&mut buf).unwrap();
 
                     let sockets = self.sockets.read().await;
-                    for (sock_addr, socket) in sockets.iter() {
-                        if let Ok(mut ipv6) = Self::parse_ipv6_str(sock_addr) {
-                            ipv6.set_port(9060);
-                            let res = socket.send_to(&buf, ipv6).await;
-                            if let Err(e) = res {
-                                debug!("Failed to send heartbeat to {}: {}", sock_addr, e);
+
+                    // Send heartbeats concurrently to all sockets
+                    let send_futures: Vec<_> = sockets
+                        .iter()
+                        .filter_map(|(sock_addr, socket)| {
+                            if let Ok(mut ipv6) = Self::parse_ipv6_str(sock_addr) {
+                                ipv6.set_port(9060);
+                                let buf = buf.clone();
+                                let socket = socket.clone();
+                                let addr_str = sock_addr.clone();
+                                Some(async move {
+                                    if let Err(e) = socket.send_to(&buf, ipv6).await {
+                                        debug!("Failed to send heartbeat to {}: {}", addr_str, e);
+                                    }
+                                })
+                            } else {
+                                debug!("Invalid IPv6 address for socket: {}", sock_addr);
+                                None
                             }
-                        } else {
-                            debug!("Invalid IPv6 address for socket: {}", sock_addr);
-                        }
-                    }
+                        })
+                        .collect();
+
+                    // Execute all sends concurrently
+                    futures::future::join_all(send_futures).await;
                 }
                 _ = rx.changed() => {
                     debug!("Socket list changed, heartbeat sender will use updated sockets.");
@@ -228,70 +229,43 @@ impl Node {
         }
     }
 
-    async fn update_routing(&self, hb: &HeartbeatPacket, sender_addr: SocketAddr) {
-        let mut routing = self.routing.write().await;
-
-        routing.insert(
-            hb.uuid.clone(),
-            RoutingEntry {
-                next_hop: sender_addr,
-                cost: 1,
-                last_seen: Instant::now(),
-            },
-        );
-
-        for peer in &hb.peers {
-            if peer != &self.node_id && !routing.contains_key(peer) {
-                routing.insert(
-                    peer.clone(),
-                    RoutingEntry {
-                        next_hop: sender_addr,
-                        cost: 2,
-                        last_seen: Instant::now(),
-                    },
-                );
-            }
-        }
-    }
-
-    async fn prune_routes(routing: RoutingTable) {
-        let mut ticker = interval(Duration::from_secs(10));
-        loop {
-            ticker.tick().await;
-            routing
-                .write()
-                .await
-                .retain(|_, entry| entry.last_seen.elapsed() < Duration::from_secs(30));
-        }
-    }
-
-    async fn send_to_peer(&self, dest_uuid: &str, packet: &MeshPacket) -> std::io::Result<()> {
-        let routing = self.routing.read().await;
-        if let Some(route) = routing.get(dest_uuid) {
-            let socket = {
-                let sockets = self.sockets.read().await;
-                sockets.values().next().unwrap().clone()
-            };
-            let mut buf = Vec::new();
-            packet.encode(&mut buf).unwrap();
-            socket.send_to(&buf, route.next_hop).await?;
-            Ok(())
-        } else {
-            warn!("No route to {}, broadcasting", dest_uuid);
-            self.broadcast(packet).await
-        }
+    async fn process_heartbeat(&self, hb: &HeartbeatPacket) {
+        // Simply update peer information
+        self.update_peer_info(&hb.uuid).await;
+        debug!("Updated peer info for {}", hb.uuid);
     }
 
     async fn broadcast(&self, packet: &MeshPacket) -> std::io::Result<()> {
-        let mut buf = Vec::new();
+        let mut buf = Vec::with_capacity(1024); // Pre-allocate capacity
         packet.encode(&mut buf).unwrap();
+
         let sockets = self.sockets.read().await;
-        for (sock_addr, socket) in sockets.iter() {
-            if let Ok(mut ipv6) = Self::parse_ipv6_str(sock_addr) {
-                ipv6.set_port(9060);
-                socket.send_to(&buf, ipv6).await?;
+
+        // Use parallel sending for better performance
+        let send_futures: Vec<_> = sockets
+            .iter()
+            .filter_map(|(sock_addr, socket)| {
+                if let Ok(mut ipv6) = Self::parse_ipv6_str(sock_addr) {
+                    ipv6.set_port(9060);
+                    let buf = buf.clone();
+                    let socket = socket.clone();
+                    Some(async move { socket.send_to(&buf, ipv6).await })
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        // Send to all sockets concurrently
+        let results = futures::future::join_all(send_futures).await;
+
+        // Check if any sends failed and return the first error
+        for result in results {
+            if let Err(e) = result {
+                return Err(e);
             }
         }
+
         Ok(())
     }
 
@@ -303,6 +277,10 @@ impl Node {
         tokio::spawn(self.clone().heartbeat_sender());
 
         let mut rx = self.socket_notify.subscribe();
+
+        // Increased buffer size for better performance
+        const BUFFER_SIZE: usize = 2048;
+
         loop {
             let sockets_snapshot: Vec<_> = {
                 let sockets = self.sockets.read().await;
@@ -317,163 +295,171 @@ impl Node {
                 continue;
             }
 
+            // Create multiple concurrent receive tasks for each socket for better throughput
             let mut recv_stream: FuturesUnordered<_> = sockets_snapshot
                 .iter()
-                .map(|(key, socket)| {
-                    let mut buf = vec![0u8; 1024];
-                    let socket = socket.clone();
-                    let key = key.clone();
-                    async move {
-                        match socket.recv_from(&mut buf).await {
-                            Ok((len, addr)) => Some((key, socket, addr, buf[..len].to_vec())),
-                            Err(_) => None,
+                .flat_map(|(key, socket)| {
+                    // Create multiple concurrent receivers per socket
+                    (0..3).map(move |i| {
+                        let mut buf = vec![0u8; BUFFER_SIZE];
+                        let socket = socket.clone();
+                        let key = format!("{}-{}", key, i);
+                        async move {
+                            match socket.recv_from(&mut buf).await {
+                                Ok((len, addr)) => Some((key, socket, addr, buf[..len].to_vec())),
+                                Err(_) => None,
+                            }
                         }
-                    }
+                    })
                 })
                 .collect();
 
             select! {
                 _ = rx.changed() => continue,
 
-                // Process incoming packets from all sockets
-                maybe_packet = recv_stream.next() => {
-                    if let Some(Some((_sock, _socket, sender_addr, data))) = maybe_packet {
-                        if let Ok(packet) = MeshPacket::decode(&data[..]) {
-                            if !self.should_process(&packet.message_id).await { continue; }
+                // Process incoming packets from all sockets with async processing
+                mesh_incoming_packet = recv_stream.next() => {
+                    if let Some(Some((_sock, _socket, sender_addr, data))) = mesh_incoming_packet {
+                        // Process packet in a separate task to avoid blocking the main loop
+                        let self_clone = self.clone();
+                        tokio::spawn(async move {
+                            if let Ok(packet) = MeshPacket::decode(&data[..]) {
+                                // Process all packets without duplicate checking
 
-                            match packet.packet_type.clone() {
-                                Some(PacketType::Heartbeat(hb)) => {
-                                    self.update_routing(&hb, sender_addr).await;
-                                    self.update_peer_info(&hb.uuid).await;
-                                    info!("Received heartbeat from {}: {:?}", hb.uuid, hb);
-                                }
-                                Some(PacketType::Request(req)) => {
-                                    debug!("Received retransmission request: matrix={}, packet={}", req.matrix, req.packet);
+                                match packet.packet_type.clone() {
+                                    Some(PacketType::Heartbeat(hb)) => {
+                                        // Process heartbeat
+                                        self_clone.process_heartbeat(&hb).await;
+                                        debug!("Received heartbeat from {}: {:?}", hb.uuid, hb);
 
-                                    // Relay the request if TTL allows
-                                    if packet.ttl > 0 {
-                                        let mut relay_packet = packet.clone();
-                                        relay_packet.ttl -= 1;
-                                        let _ = self.relay_packet(&relay_packet).await;
+                                        // Relay heartbeat if TTL allows and it's not from ourselves
+                                        if packet.ttl > 0 && hb.uuid != self_clone.node_id {
+                                            let mut relay_packet = packet.clone();
+                                            relay_packet.ttl -= 1;
+                                            let self_for_relay = self_clone.clone();
+
+                                            tokio::spawn(async move {
+                                                if let Err(e) = self_for_relay.broadcast_with_loop_prevention(&relay_packet, Some(sender_addr)).await {
+                                                    debug!("Failed to relay heartbeat: {}", e);
+                                                }
+                                            });
+                                        }
                                     }
+                                    Some(PacketType::Request(_)) => {
+                                        debug!("Received retransmission request");
 
-                                    self.channels.request_to_mesh.0.send(packet).unwrap_or_else(|e| {
-                                        error!("Failed to send request to RetransmissionManager: {}", e);
-                                    });
+                                        // Relay the request if TTL allows
+                                        if packet.ttl > 0 {
+                                            let mut relay_packet = packet.clone();
+                                            relay_packet.ttl -= 1;
+                                            let self_for_relay = self_clone.clone();
 
+                                            tokio::spawn(async move {
+                                                if let Err(e) = self_for_relay.broadcast_with_loop_prevention(&relay_packet, Some(sender_addr)).await {
+                                                    debug!("Failed to relay request: {}", e);
+                                                }
+                                            });
+                                        }
 
+                                        // Send to RetransmissionManager
+                                        if let Err(e) = self_clone.channels.tx.0.send(packet) {
+                                            error!("Failed to send request to RetransmissionManager: {}", e);
+                                        } else {
+                                            debug!("Successfully sent packet to RetransmissionManager");
+                                        }
+                                    }
+                                    Some(PacketType::Response(_)) => {
+                                        debug!("Received retransmission response");
+
+                                        // Relay response if TTL allows
+                                        if packet.ttl > 0 {
+                                            let mut relay_packet = packet.clone();
+                                            relay_packet.ttl -= 1;
+                                            let self_for_relay = self_clone.clone();
+
+                                            tokio::spawn(async move {
+                                                if let Err(e) = self_for_relay.broadcast_with_loop_prevention(&relay_packet, Some(sender_addr)).await {
+                                                    debug!("Failed to relay response: {}", e);
+                                                }
+                                            });
+                                        }
+
+                                        // Send to RetransmissionManager
+                                        if let Err(e) = self_clone.channels.tx.0.send(packet) {
+                                            error!("Failed to send response to RetransmissionManager: {}", e);
+                                        }
+                                    }
+                                    _ => {}
                                 }
-                                Some(PacketType::Response(resp)) => {
-                                    debug!("Received retransmission response: message_id={}", resp.message_id);
-
-                                }
-                                _ => {}
                             }
-                        }
+                        });
                     }
                 }
 
-                // Process packets from the RetransmissionManager
-                maybe_packet = self.channels.request_from_mesh.1.recv_async() => {
-                    if let Ok(packet) = maybe_packet {
-                        debug!("Received packet from RetransmissionManager: {:?}", packet);
+                // Process packets from the RetransmissionManager with high priority
+                manager_packet = self.channels.rx.1.recv_async() => {
+                    if let Ok(packet) = manager_packet {
+                        debug!("Mesh received packet from RetransmissionManager");
 
-                        if let Err(e) = self.broadcast(&packet).await {
-                            error!("Failed to broadcast packet: {}", e);
-                        }
+                        // Broadcast in separate task to avoid blocking
+                        let self_clone = self.clone();
+                        tokio::spawn(async move {
+                            if let Err(e) = self_clone.broadcast(&packet).await {
+                                error!("Failed to broadcast packet: {}", e);
+                            }
+                        });
                     }
                 }
             }
         }
     }
 
-    pub async fn should_process(&self, message_id: &str) -> bool {
-        let mut set = self.seen.write().await;
-        if set.contains(message_id) {
-            false
-        } else {
-            set.insert(message_id.into());
-            true
-        }
-    }
-
     // === Message Handling Methods ===
 
-    /// Relay a packet to other nodes in the mesh
-    async fn relay_packet(&self, packet: &MeshPacket) -> std::io::Result<()> {
-        if packet.ttl <= 0 {
-            return Ok(()); // Don't relay packets with expired TTL
+    /// Broadcast with loop prevention
+    async fn broadcast_with_loop_prevention(
+        &self,
+        packet: &MeshPacket,
+        exclude_sender: Option<SocketAddr>,
+    ) -> std::io::Result<()> {
+        let mut buf = Vec::with_capacity(1024);
+        packet.encode(&mut buf).unwrap();
+
+        let sockets = self.sockets.read().await;
+
+        let send_futures: Vec<_> = sockets
+            .iter()
+            .filter_map(|(sock_addr, socket)| {
+                if let Ok(mut ipv6) = Self::parse_ipv6_str(sock_addr) {
+                    ipv6.set_port(9060);
+
+                    // Skip sending back to the sender to prevent immediate loops
+                    if let Some(sender) = exclude_sender {
+                        if let std::net::IpAddr::V6(sender_ipv6) = sender.ip() {
+                            if ipv6.ip() == &sender_ipv6 {
+                                return None;
+                            }
+                        }
+                    }
+
+                    let buf = buf.clone();
+                    let socket = socket.clone();
+                    Some(async move { socket.send_to(&buf, ipv6).await })
+                } else {
+                    None
+                }
+            })
+            .collect();
+
+        let results = futures::future::join_all(send_futures).await;
+
+        for result in results {
+            if let Err(e) = result {
+                return Err(e);
+            }
         }
 
-        // Broadcast to all connected sockets except the sender
-        self.broadcast(packet).await
-    }
-
-    /// Send a retransmission request to the mesh network
-    pub async fn request_retransmission(
-        &self,
-        matrix: i32,
-        packet_index: i32,
-    ) -> std::io::Result<()> {
-        let request = RetransmissionRequest {
-            matrix,
-            packet: packet_index,
-        };
-
-        let mesh_packet = MeshPacket {
-            message_id: format!("req-{}-{}-{}", self.node_id, matrix, packet_index),
-            ttl: 5, // Allow up to 5 hops
-            packet_type: Some(PacketType::Request(request)),
-        };
-
-        info!(
-            "Sending retransmission request for matrix={}, packet={}",
-            matrix, packet_index
-        );
-        self.broadcast(&mesh_packet).await
-    }
-
-    /// Send a retransmission response to the mesh network
-    pub async fn send_retransmission_response(
-        &self,
-        message_id: &str,
-        payload: Vec<u8>,
-    ) -> std::io::Result<()> {
-        let response = RetransmissionResponse {
-            message_id: message_id.to_string(),
-            payload,
-        };
-
-        let mesh_packet = MeshPacket {
-            message_id: format!("resp-{}-{}", self.node_id, message_id),
-            ttl: 5, // Allow up to 5 hops
-            packet_type: Some(PacketType::Response(response)),
-        };
-
-        info!(
-            "Sending retransmission response for message_id={}",
-            message_id
-        );
-        self.broadcast(&mesh_packet).await
-    }
-
-    /// Get the next request from the channel (non-blocking)
-    pub async fn get_next_request(&self) -> Option<MeshPacket> {
-        // This would need access to rx_requests, but it's currently in AppChannels
-        // We'll need to modify the architecture slightly
-        None
-    }
-
-    /// Get the next response from the channel (non-blocking)
-    pub async fn get_next_response(&self) -> Option<MeshPacket> {
-        // This would need access to rx_responses, but it's currently in AppChannels
-        // We'll need to modify the architecture slightly
-        None
-    }
-
-    /// Get routing information for debugging
-    pub async fn get_routing_info(&self) -> HashMap<String, RoutingEntry> {
-        self.routing.read().await.clone()
+        Ok(())
     }
 
     /// Get peer information
@@ -489,11 +475,11 @@ impl Node {
 
     /// Clean up old peer entries
     async fn cleanup_peers(peer_map: PeerMap) {
-        let mut ticker = interval(Duration::from_secs(15));
+        let mut ticker = interval(Duration::from_secs(10));
         loop {
             ticker.tick().await;
             let mut map = peer_map.lock().unwrap();
-            map.retain(|_, last_seen| last_seen.elapsed() < Duration::from_secs(60));
+            map.retain(|_, last_seen| last_seen.elapsed() < Duration::from_secs(30));
         }
     }
 }
