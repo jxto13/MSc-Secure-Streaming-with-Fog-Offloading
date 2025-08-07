@@ -37,7 +37,7 @@ col = 10
 row_fec = 0 # can be 0 if network loss allows it
 col_fec = 0 # can be 0 if network loss allows it
 
-epoch = 10 # number of matrix to rotate encryption key
+epoch = 20 # number of matrix to rotate encryption key
 
 # This is the protocol defined, this is optimized for MTU 1500, can be easily changed with another MTU size
 data_size = 940 # 188 x 5, this is 5 ts packets
@@ -46,14 +46,15 @@ shard_size = 1088 # must be a multiple of 64 but needs to be bigger then data an
 mtu_size = 1500 # default in most AP or routers
 
 [retransmission]
-wifi_multicast = true
-wifi_unicast = true
+wifi_multicast = false
+wifi_unicast = false
 unicast_bitrate = 1000 # kbit/s, this is the bitrate for unicast retransmissions per client, this is the maximum bitrate that the server will use to retransmit data to clients
-interval = 100 # in miliseconds, this is the time between retransmissions rounds
-deadline = 1000 # in miliseconds, this is the time before a matrix is not considered valid for retransmissions
+interval = 75 # in miliseconds, reduced from 100ms to speed up retransmission response time
+deadline = 1800 # in miliseconds, increased to 1800ms to better accommodate client decode timing + WiFi RTT + safety margin
 port = 50053 # port for report sink, this is the port that the clients will send reports to the server
 
 [reinforcement_learning]
+enabled = false
 agent_data_path = "../reinforcement_learning_data"
 learning_rate = 0.1 # alpha
 discount_factor = 0.9 # gamma
@@ -64,6 +65,7 @@ exploration_rate = 0.1 # epsilon
 port = 9186 # bind prometheus to all interfaces
 
 [settings]
-timeout_clients = 5000 # in miliseconds
-client_reporting_interval = 200 # in miliseconds
-client_sliding_window = 6 # number of reports that will be send to the server before the client decodes the data to application layer
+timeout_clients = 20000 # in miliseconds
+client_reporting_interval = 125 # in miliseconds (reduced to 125ms for faster feedback and better timing alignment)
+client_sliding_window = 8 # number of reports that will be send to the server before the client decodes the data to application layer
+# Total client decode time = 125ms * 8 = 1000ms (allowing more time for retransmissions to complete)

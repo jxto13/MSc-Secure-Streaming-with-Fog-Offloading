@@ -1,0 +1,1017 @@
+{
+    "version": 4,
+    "process": {
+        "restreamer-ui:egress:mpegts:607d816b-cae1-431e-a019-f2f4b5194b37": {
+            "id": "restreamer-ui:egress:mpegts:607d816b-cae1-431e-a019-f2f4b5194b37",
+            "reference": "875aa91b-1ac0-4cce-b68d-a7e09fe51e35",
+            "config": {
+                "id": "restreamer-ui:egress:mpegts:607d816b-cae1-431e-a019-f2f4b5194b37",
+                "reference": "875aa91b-1ac0-4cce-b68d-a7e09fe51e35",
+                "ffversion": "^6.1.1",
+                "input": [
+                    {
+                        "id": "input_0",
+                        "address": "{memfs}/875aa91b-1ac0-4cce-b68d-a7e09fe51e35.m3u8",
+                        "options": [
+                            "-re"
+                        ],
+                        "cleanup": []
+                    }
+                ],
+                "output": [
+                    {
+                        "id": "output_0",
+                        "address": "udp://172.22.0.1:1234",
+                        "options": [
+                            "-map",
+                            "0:0",
+                            "-codec:v",
+                            "copy",
+                            "-an",
+                            "-f",
+                            "mpegts",
+                            "-metadata",
+                            "service_provider=\"FFmpeg\"",
+                            "-metadata",
+                            "service_name=\"Service01\"",
+                            "-mpegts_transport_stream_id",
+                            "0x0001",
+                            "-mpegts_original_network_id",
+                            "0x0001",
+                            "-mpegts_service_id",
+                            "0x0001",
+                            "-mpegts_service_type",
+                            "digital_tv",
+                            "-mpegts_pmt_start_pid",
+                            "0x1000",
+                            "-mpegts_start_pid",
+                            "0x0100",
+                            "-mpegts_m2ts_mode",
+                            "-1",
+                            "-pes_payload_size",
+                            "2930",
+                            "-mpegts_copyts",
+                            "-1",
+                            "-omit_video_pes_length",
+                            "1",
+                            "-pcr_period",
+                            "-1",
+                            "-pat_period",
+                            "0.1",
+                            "-sdt_period",
+                            "0.5",
+                            "-tables_version",
+                            "0"
+                        ],
+                        "cleanup": []
+                    }
+                ],
+                "options": [
+                    "-loglevel",
+                    "level+info",
+                    "-err_detect",
+                    "ignore_err"
+                ],
+                "reconnect": true,
+                "reconnect_delay_seconds": 15,
+                "autostart": false,
+                "stale_timeout_seconds": 30,
+                "limit_cpu_usage": 0,
+                "limit_memory_bytes": 0,
+                "limit_waitfor_seconds": 5
+            },
+            "created_at": 1731878623,
+            "updated_at": 1731878623,
+            "order": "start"
+        },
+        "restreamer-ui:egress:mpegts:67b4f273-9524-4933-b544-561db7b9be1f": {
+            "id": "restreamer-ui:egress:mpegts:67b4f273-9524-4933-b544-561db7b9be1f",
+            "reference": "875aa91b-1ac0-4cce-b68d-a7e09fe51e35",
+            "config": {
+                "id": "restreamer-ui:egress:mpegts:67b4f273-9524-4933-b544-561db7b9be1f",
+                "reference": "875aa91b-1ac0-4cce-b68d-a7e09fe51e35",
+                "ffversion": "^6.1.1",
+                "input": [
+                    {
+                        "id": "input_0",
+                        "address": "{memfs}/875aa91b-1ac0-4cce-b68d-a7e09fe51e35.m3u8",
+                        "options": [
+                            "-re"
+                        ],
+                        "cleanup": []
+                    }
+                ],
+                "output": [
+                    {
+                        "id": "output_0",
+                        "address": "udp://172.22.0.102:1234",
+                        "options": [
+                            "-map",
+                            "0:0",
+                            "-codec:v",
+                            "copy",
+                            "-an",
+                            "-f",
+                            "mpegts",
+                            "-metadata",
+                            "service_provider=\"FFmpeg\"",
+                            "-metadata",
+                            "service_name=\"Service01\"",
+                            "-mpegts_transport_stream_id",
+                            "0x0001",
+                            "-mpegts_original_network_id",
+                            "0x0001",
+                            "-mpegts_service_id",
+                            "0x0001",
+                            "-mpegts_service_type",
+                            "digital_tv",
+                            "-mpegts_pmt_start_pid",
+                            "0x1000",
+                            "-mpegts_start_pid",
+                            "0x0100",
+                            "-mpegts_m2ts_mode",
+                            "-1",
+                            "-pes_payload_size",
+                            "2930",
+                            "-mpegts_copyts",
+                            "-1",
+                            "-omit_video_pes_length",
+                            "1",
+                            "-pcr_period",
+                            "-1",
+                            "-pat_period",
+                            "0.1",
+                            "-sdt_period",
+                            "0.5",
+                            "-tables_version",
+                            "0"
+                        ],
+                        "cleanup": []
+                    }
+                ],
+                "options": [
+                    "-loglevel",
+                    "level+info",
+                    "-err_detect",
+                    "ignore_err"
+                ],
+                "reconnect": true,
+                "reconnect_delay_seconds": 15,
+                "autostart": false,
+                "stale_timeout_seconds": 30,
+                "limit_cpu_usage": 0,
+                "limit_memory_bytes": 0,
+                "limit_waitfor_seconds": 5
+            },
+            "created_at": 1736299992,
+            "updated_at": 1736299992,
+            "order": "start"
+        },
+        "restreamer-ui:ingest:875aa91b-1ac0-4cce-b68d-a7e09fe51e35": {
+            "id": "restreamer-ui:ingest:875aa91b-1ac0-4cce-b68d-a7e09fe51e35",
+            "reference": "875aa91b-1ac0-4cce-b68d-a7e09fe51e35",
+            "config": {
+                "id": "restreamer-ui:ingest:875aa91b-1ac0-4cce-b68d-a7e09fe51e35",
+                "reference": "875aa91b-1ac0-4cce-b68d-a7e09fe51e35",
+                "ffversion": "^6.1.1",
+                "input": [
+                    {
+                        "id": "input_0",
+                        "address": "testsrc2=rate=25:size=1920x1080",
+                        "options": [
+                            "-f",
+                            "lavfi",
+                            "-re"
+                        ],
+                        "cleanup": []
+                    }
+                ],
+                "output": [
+                    {
+                        "id": "output_0",
+                        "address": "[f=hls:start_number=0:hls_time=2:hls_list_size=6:hls_flags=append_list+delete_segments+program_date_time+temp_file:hls_delete_threshold=4:hls_segment_filename={memfs^:}/875aa91b-1ac0-4cce-b68d-a7e09fe51e35_{outputid}_%04d.ts:master_pl_name=875aa91b-1ac0-4cce-b68d-a7e09fe51e35.m3u8:master_pl_publish_rate=2:method=PUT]{memfs}/875aa91b-1ac0-4cce-b68d-a7e09fe51e35_{outputid}.m3u8|[f=mpegts]{srt,name=875aa91b-1ac0-4cce-b68d-a7e09fe51e35,mode=publish}",
+                        "options": [
+                            "-dn",
+                            "-sn",
+                            "-map",
+                            "0:0",
+                            "-codec:v",
+                            "libx264",
+                            "-preset:v",
+                            "ultrafast",
+                            "-b:v",
+                            "2048k",
+                            "-maxrate:v",
+                            "2048k",
+                            "-bufsize:v",
+                            "2048k",
+                            "-r",
+                            "30",
+                            "-sc_threshold",
+                            "0",
+                            "-pix_fmt",
+                            "yuv420p",
+                            "-g",
+                            "60",
+                            "-keyint_min",
+                            "60",
+                            "-fps_mode",
+                            "cfr",
+                            "-tune:v",
+                            "zerolatency",
+                            "-map",
+                            "0:0",
+                            "-codec:a",
+                            "aac",
+                            "-b:a",
+                            "64k",
+                            "-shortest",
+                            "-metadata",
+                            "title=http://127.0.0.1:8080/875aa91b-1ac0-4cce-b68d-a7e09fe51e35/oembed.json",
+                            "-metadata",
+                            "service_provider=datarhei-Restreamer",
+                            "-flags",
+                            "+low_delay+global_header",
+                            "-tag:v",
+                            "7",
+                            "-tag:a",
+                            "10",
+                            "-f",
+                            "tee"
+                        ],
+                        "cleanup": [
+                            {
+                                "pattern": "memfs:/875aa91b-1ac0-4cce-b68d-a7e09fe51e35**",
+                                "max_files": 0,
+                                "max_file_age_seconds": 0,
+                                "purge_on_delete": true
+                            },
+                            {
+                                "pattern": "memfs:/875aa91b-1ac0-4cce-b68d-a7e09fe51e35_{outputid}.m3u8",
+                                "max_files": 0,
+                                "max_file_age_seconds": 24,
+                                "purge_on_delete": true
+                            },
+                            {
+                                "pattern": "memfs:/875aa91b-1ac0-4cce-b68d-a7e09fe51e35_{outputid}_**.ts",
+                                "max_files": 12,
+                                "max_file_age_seconds": 24,
+                                "purge_on_delete": true
+                            },
+                            {
+                                "pattern": "memfs:/875aa91b-1ac0-4cce-b68d-a7e09fe51e35.m3u8",
+                                "max_files": 0,
+                                "max_file_age_seconds": 24,
+                                "purge_on_delete": true
+                            }
+                        ]
+                    }
+                ],
+                "options": [
+                    "-loglevel",
+                    "level+info",
+                    "-err_detect",
+                    "ignore_err",
+                    "-y"
+                ],
+                "reconnect": false,
+                "reconnect_delay_seconds": 15,
+                "autostart": true,
+                "stale_timeout_seconds": 30,
+                "limit_cpu_usage": 0,
+                "limit_memory_bytes": 0,
+                "limit_waitfor_seconds": 5
+            },
+            "created_at": 1753088981,
+            "updated_at": 1753088981,
+            "order": "start"
+        },
+        "restreamer-ui:ingest:875aa91b-1ac0-4cce-b68d-a7e09fe51e35_snapshot": {
+            "id": "restreamer-ui:ingest:875aa91b-1ac0-4cce-b68d-a7e09fe51e35_snapshot",
+            "reference": "875aa91b-1ac0-4cce-b68d-a7e09fe51e35",
+            "config": {
+                "id": "restreamer-ui:ingest:875aa91b-1ac0-4cce-b68d-a7e09fe51e35_snapshot",
+                "reference": "875aa91b-1ac0-4cce-b68d-a7e09fe51e35",
+                "ffversion": "^6.1.1",
+                "input": [
+                    {
+                        "id": "input_0",
+                        "address": "{memfs}/875aa91b-1ac0-4cce-b68d-a7e09fe51e35.m3u8",
+                        "options": [],
+                        "cleanup": []
+                    }
+                ],
+                "output": [
+                    {
+                        "id": "output_0",
+                        "address": "{memfs}/875aa91b-1ac0-4cce-b68d-a7e09fe51e35.jpg",
+                        "options": [
+                            "-vframes",
+                            "1",
+                            "-f",
+                            "image2",
+                            "-update",
+                            "1"
+                        ],
+                        "cleanup": [
+                            {
+                                "pattern": "memfs:/875aa91b-1ac0-4cce-b68d-a7e09fe51e35.jpg",
+                                "max_files": 0,
+                                "max_file_age_seconds": 0,
+                                "purge_on_delete": true
+                            }
+                        ]
+                    }
+                ],
+                "options": [
+                    "-err_detect",
+                    "ignore_err"
+                ],
+                "reconnect": true,
+                "reconnect_delay_seconds": 60,
+                "autostart": true,
+                "stale_timeout_seconds": 30,
+                "limit_cpu_usage": 0,
+                "limit_memory_bytes": 0,
+                "limit_waitfor_seconds": 0
+            },
+            "created_at": 1753088981,
+            "updated_at": 1753088981,
+            "order": "start"
+        }
+    },
+    "metadata": {
+        "system": {
+            "restreamer-ui": {
+                "bundle": {
+                    "version": "v2.11.0"
+                },
+                "playersite": {
+                    "airplay": false,
+                    "bgcolor_default": "rgba(56,56,56,1)",
+                    "bgcolor_header": "rgba(44,44,44,1)",
+                    "bgcolor_selected": "rgba(0,0,0,.15)",
+                    "bgcolor_unselected": "rgba(255,255,255,.05)",
+                    "bgimage_url": "",
+                    "channelid": "875aa91b-1ac0-4cce-b68d-a7e09fe51e35",
+                    "chromecast": false,
+                    "hrcolor": "rgba(102,102,102,1)",
+                    "imprint": "",
+                    "inject1": "",
+                    "inject2": "",
+                    "inject3": "",
+                    "inject4": "",
+                    "player": "videojs",
+                    "playersite": true,
+                    "share": false,
+                    "support": true,
+                    "template": "!default",
+                    "templatename": "",
+                    "terms": "",
+                    "textcolor_default": "rgba(230,230,230,1)",
+                    "textcolor_link": "rgba(230,230,230,1)",
+                    "textcolor_link_hover": "rgba(255,255,255,1)",
+                    "textcolor_title": "rgba(255,255,255,1)",
+                    "title": "restreamer"
+                },
+                "version": "1.13.0"
+            }
+        },
+        "process": {
+            "restreamer-ui:egress:mpegts:607d816b-cae1-431e-a019-f2f4b5194b37": {
+                "restreamer-ui": {
+                    "control": {
+                        "limits": {
+                            "cpu_usage": 0,
+                            "memory_mbytes": 0,
+                            "waitfor_seconds": 5
+                        },
+                        "process": {
+                            "autostart": false,
+                            "delay": 15,
+                            "reconnect": true,
+                            "staleTimeout": 30
+                        },
+                        "source": {
+                            "source": "hls+memfs"
+                        }
+                    },
+                    "name": "MPEG-TS-Loopback",
+                    "outputs": [
+                        {
+                            "address": "udp://172.22.0.1:1234",
+                            "options": [
+                                "-f",
+                                "mpegts",
+                                "-metadata",
+                                "service_provider=\"FFmpeg\"",
+                                "-metadata",
+                                "service_name=\"Service01\"",
+                                "-mpegts_transport_stream_id",
+                                "0x0001",
+                                "-mpegts_original_network_id",
+                                "0x0001",
+                                "-mpegts_service_id",
+                                "0x0001",
+                                "-mpegts_service_type",
+                                "digital_tv",
+                                "-mpegts_pmt_start_pid",
+                                "0x1000",
+                                "-mpegts_start_pid",
+                                "0x0100",
+                                "-mpegts_m2ts_mode",
+                                "-1",
+                                "-pes_payload_size",
+                                "2930",
+                                "-mpegts_copyts",
+                                "-1",
+                                "-omit_video_pes_length",
+                                "1",
+                                "-pcr_period",
+                                "-1",
+                                "-pat_period",
+                                "0.1",
+                                "-sdt_period",
+                                "0.5",
+                                "-tables_version",
+                                "0"
+                            ]
+                        }
+                    ],
+                    "profiles": [
+                        {
+                            "audio": {
+                                "decoder": {
+                                    "coder": "default",
+                                    "mapping": {
+                                        "global": [],
+                                        "local": []
+                                    },
+                                    "settings": {}
+                                },
+                                "encoder": {
+                                    "coder": "none",
+                                    "mapping": {
+                                        "global": [],
+                                        "local": []
+                                    },
+                                    "settings": {}
+                                },
+                                "filter": {
+                                    "graph": "",
+                                    "settings": {}
+                                },
+                                "source": 0,
+                                "stream": -1
+                            },
+                            "custom": {
+                                "selected": false,
+                                "stream": -1
+                            },
+                            "video": {
+                                "decoder": {
+                                    "coder": "default",
+                                    "mapping": {
+                                        "global": [],
+                                        "local": []
+                                    },
+                                    "settings": {}
+                                },
+                                "encoder": {
+                                    "coder": "copy",
+                                    "mapping": {
+                                        "global": [],
+                                        "local": [
+                                            "-codec:v",
+                                            "copy"
+                                        ]
+                                    },
+                                    "settings": {}
+                                },
+                                "filter": {
+                                    "graph": "",
+                                    "settings": {}
+                                },
+                                "source": 0,
+                                "stream": 0
+                            }
+                        }
+                    ],
+                    "settings": {
+                        "address": "172.22.0.1:1234",
+                        "options": {
+                            "mpegts_copyts": false,
+                            "mpegts_flags": [],
+                            "mpegts_m2ts_mode": false,
+                            "mpegts_original_network_id": "0x0001",
+                            "mpegts_pmt_start_pid": "0x1000",
+                            "mpegts_service_id": "0x0001",
+                            "mpegts_service_type": "digital_tv",
+                            "mpegts_service_type_hex_value": "",
+                            "mpegts_start_pid": "0x0100",
+                            "mpegts_transport_stream_id": "0x0001",
+                            "muxrate": "",
+                            "omit_video_pes_length": true,
+                            "pat_period": "0.1",
+                            "pcr_period": "-1",
+                            "pes_payload_size": "2930",
+                            "sdt_period": "0.5",
+                            "service_name": "Service01",
+                            "service_provider": "FFmpeg",
+                            "tables_version": "0"
+                        },
+                        "protocol": "udp://"
+                    },
+                    "streams": [
+                        {
+                            "channels": 0,
+                            "codec": "h264",
+                            "height": 1080,
+                            "index": 0,
+                            "layout": "",
+                            "pix_fmt": "",
+                            "sampling_hz": 0,
+                            "stream": 0,
+                            "type": "video",
+                            "url": "",
+                            "width": 1920
+                        }
+                    ],
+                    "version": "1.13.0"
+                }
+            },
+            "restreamer-ui:egress:mpegts:67b4f273-9524-4933-b544-561db7b9be1f": {
+                "restreamer-ui": {
+                    "control": {
+                        "limits": {
+                            "cpu_usage": 0,
+                            "memory_mbytes": 0,
+                            "waitfor_seconds": 5
+                        },
+                        "process": {
+                            "autostart": false,
+                            "delay": 15,
+                            "reconnect": true,
+                            "staleTimeout": 30
+                        },
+                        "source": {
+                            "source": "hls+memfs"
+                        }
+                    },
+                    "name": "MPEG-TS-Docker",
+                    "outputs": [
+                        {
+                            "address": "udp://172.22.0.102:1234",
+                            "options": [
+                                "-f",
+                                "mpegts",
+                                "-metadata",
+                                "service_provider=\"FFmpeg\"",
+                                "-metadata",
+                                "service_name=\"Service01\"",
+                                "-mpegts_transport_stream_id",
+                                "0x0001",
+                                "-mpegts_original_network_id",
+                                "0x0001",
+                                "-mpegts_service_id",
+                                "0x0001",
+                                "-mpegts_service_type",
+                                "digital_tv",
+                                "-mpegts_pmt_start_pid",
+                                "0x1000",
+                                "-mpegts_start_pid",
+                                "0x0100",
+                                "-mpegts_m2ts_mode",
+                                "-1",
+                                "-pes_payload_size",
+                                "2930",
+                                "-mpegts_copyts",
+                                "-1",
+                                "-omit_video_pes_length",
+                                "1",
+                                "-pcr_period",
+                                "-1",
+                                "-pat_period",
+                                "0.1",
+                                "-sdt_period",
+                                "0.5",
+                                "-tables_version",
+                                "0"
+                            ]
+                        }
+                    ],
+                    "profiles": [
+                        {
+                            "audio": {
+                                "decoder": {
+                                    "coder": "default",
+                                    "mapping": {
+                                        "global": [],
+                                        "local": []
+                                    },
+                                    "settings": {}
+                                },
+                                "encoder": {
+                                    "coder": "none",
+                                    "mapping": {
+                                        "global": [],
+                                        "local": []
+                                    },
+                                    "settings": {}
+                                },
+                                "filter": {
+                                    "graph": "",
+                                    "settings": {}
+                                },
+                                "source": 0,
+                                "stream": -1
+                            },
+                            "custom": {
+                                "selected": false,
+                                "stream": -1
+                            },
+                            "video": {
+                                "decoder": {
+                                    "coder": "default",
+                                    "mapping": {
+                                        "global": [],
+                                        "local": []
+                                    },
+                                    "settings": {}
+                                },
+                                "encoder": {
+                                    "coder": "copy",
+                                    "mapping": {
+                                        "global": [],
+                                        "local": [
+                                            "-codec:v",
+                                            "copy"
+                                        ]
+                                    },
+                                    "settings": {}
+                                },
+                                "filter": {
+                                    "graph": "",
+                                    "settings": {}
+                                },
+                                "source": 0,
+                                "stream": 0
+                            }
+                        }
+                    ],
+                    "settings": {
+                        "address": "172.22.0.102:1234",
+                        "options": {
+                            "mpegts_copyts": false,
+                            "mpegts_flags": [],
+                            "mpegts_m2ts_mode": false,
+                            "mpegts_original_network_id": "0x0001",
+                            "mpegts_pmt_start_pid": "0x1000",
+                            "mpegts_service_id": "0x0001",
+                            "mpegts_service_type": "digital_tv",
+                            "mpegts_service_type_hex_value": "",
+                            "mpegts_start_pid": "0x0100",
+                            "mpegts_transport_stream_id": "0x0001",
+                            "muxrate": "",
+                            "omit_video_pes_length": true,
+                            "pat_period": "0.1",
+                            "pcr_period": "-1",
+                            "pes_payload_size": "2930",
+                            "sdt_period": "0.5",
+                            "service_name": "Service01",
+                            "service_provider": "FFmpeg",
+                            "tables_version": "0"
+                        },
+                        "protocol": "udp://"
+                    },
+                    "streams": [
+                        {
+                            "channels": 0,
+                            "codec": "h264",
+                            "height": 1080,
+                            "index": 0,
+                            "layout": "",
+                            "pix_fmt": "",
+                            "sampling_hz": 0,
+                            "stream": 0,
+                            "type": "video",
+                            "url": "",
+                            "width": 1920
+                        }
+                    ],
+                    "version": "1.13.0"
+                }
+            },
+            "restreamer-ui:ingest:875aa91b-1ac0-4cce-b68d-a7e09fe51e35": {
+                "restreamer-ui": {
+                    "control": {
+                        "hls": {
+                            "cleanup": true,
+                            "lhls": false,
+                            "listSize": 6,
+                            "master_playlist": true,
+                            "segmentDuration": 2,
+                            "storage": "memfs",
+                            "version": 3
+                        },
+                        "limits": {
+                            "cpu_usage": 0,
+                            "memory_mbytes": 0,
+                            "waitfor_seconds": 5
+                        },
+                        "process": {
+                            "autostart": true,
+                            "delay": 15,
+                            "low_delay": true,
+                            "reconnect": false,
+                            "staleTimeout": 30
+                        },
+                        "rtmp": {
+                            "enable": false
+                        },
+                        "snapshot": {
+                            "enable": false,
+                            "interval": 60
+                        },
+                        "srt": {
+                            "enable": true
+                        }
+                    },
+                    "license": "CC BY 4.0",
+                    "meta": {
+                        "author": {
+                            "description": "",
+                            "name": ""
+                        },
+                        "description": "Live from earth. Powered by datarhei Restreamer.",
+                        "name": "Iris"
+                    },
+                    "player": {},
+                    "profiles": [
+                        {
+                            "audio": {
+                                "coder": "aac",
+                                "decoder": {
+                                    "coder": "default",
+                                    "mapping": {
+                                        "global": [],
+                                        "local": []
+                                    },
+                                    "settings": {}
+                                },
+                                "encoder": {
+                                    "coder": "aac",
+                                    "mapping": {
+                                        "global": [],
+                                        "local": [
+                                            "-codec:a",
+                                            "aac",
+                                            "-b:a",
+                                            "64k",
+                                            "-shortest"
+                                        ]
+                                    },
+                                    "settings": {
+                                        "bitrate": "64"
+                                    }
+                                },
+                                "filter": {
+                                    "graph": "",
+                                    "settings": {}
+                                },
+                                "source": 0,
+                                "stream": 0
+                            },
+                            "custom": {
+                                "selected": false,
+                                "stream": -1
+                            },
+                            "video": {
+                                "decoder": {
+                                    "coder": "default",
+                                    "mapping": {
+                                        "global": [],
+                                        "local": []
+                                    },
+                                    "settings": {}
+                                },
+                                "encoder": {
+                                    "coder": "libx264",
+                                    "mapping": {
+                                        "global": [],
+                                        "local": [
+                                            "-codec:v",
+                                            "libx264",
+                                            "-preset:v",
+                                            "ultrafast",
+                                            "-b:v",
+                                            "2048k",
+                                            "-maxrate:v",
+                                            "2048k",
+                                            "-bufsize:v",
+                                            "2048k",
+                                            "-r",
+                                            "30",
+                                            "-sc_threshold",
+                                            "0",
+                                            "-pix_fmt",
+                                            "yuv420p",
+                                            "-g",
+                                            "60",
+                                            "-keyint_min",
+                                            "60",
+                                            "-fps_mode",
+                                            "cfr",
+                                            "-tune:v",
+                                            "zerolatency"
+                                        ]
+                                    },
+                                    "settings": {
+                                        "bitrate": "2048",
+                                        "fps": "30",
+                                        "fps_mode": "cfr",
+                                        "gop": "2",
+                                        "preset": "ultrafast",
+                                        "profile": "auto",
+                                        "tune": "zerolatency"
+                                    }
+                                },
+                                "filter": {
+                                    "graph": "",
+                                    "settings": {
+                                        "bwdif": {
+                                            "graph": "",
+                                            "settings": {
+                                                "deint": "0",
+                                                "enabled": false,
+                                                "mode": "1",
+                                                "parity": "-1"
+                                            }
+                                        },
+                                        "fps": {
+                                            "graph": "",
+                                            "settings": {
+                                                "enabled": false,
+                                                "fps": "30"
+                                            }
+                                        },
+                                        "hflip": {
+                                            "graph": "",
+                                            "settings": {
+                                                "enabled": false
+                                            }
+                                        },
+                                        "scale": {
+                                            "graph": "",
+                                            "settings": {
+                                                "fix": "1280x720",
+                                                "height": "720",
+                                                "mode": "none",
+                                                "width": "1280"
+                                            }
+                                        },
+                                        "transpose": {
+                                            "graph": "",
+                                            "settings": {
+                                                "value": "none"
+                                            }
+                                        },
+                                        "vflip": {
+                                            "graph": "",
+                                            "settings": {
+                                                "enabled": false
+                                            }
+                                        }
+                                    }
+                                },
+                                "source": 0,
+                                "stream": 0
+                            }
+                        }
+                    ],
+                    "sources": [
+                        {
+                            "inputs": [
+                                {
+                                    "address": "testsrc2=rate=25:size=1920x1080",
+                                    "options": [
+                                        "-f",
+                                        "lavfi",
+                                        "-re"
+                                    ]
+                                }
+                            ],
+                            "settings": {
+                                "death_color": "#383838",
+                                "flags": "fast_bilinear",
+                                "fps": "25",
+                                "life_color": "#FCEE21",
+                                "mold": "10",
+                                "ratio": "2/3",
+                                "rule": "S23/B3",
+                                "scale": "1920x1080",
+                                "size": "1920x1080",
+                                "source": "testsrc2"
+                            },
+                            "streams": [
+                                {
+                                    "bitrate_kbps": 0,
+                                    "channels": 0,
+                                    "codec": "wrapped_avframe",
+                                    "coder": "wrapped_avframe",
+                                    "duration_sec": 0,
+                                    "format": "lavfi",
+                                    "fps": 25,
+                                    "height": 1080,
+                                    "index": 0,
+                                    "language": "und",
+                                    "layout": "",
+                                    "pix_fmt": "yuv420p",
+                                    "sampling_hz": 0,
+                                    "stream": 0,
+                                    "type": "video",
+                                    "url": "testsrc2=rate=25:size=1920x1080",
+                                    "width": 1920
+                                }
+                            ],
+                            "type": "virtualvideo"
+                        },
+                        {
+                            "inputs": [
+                                {
+                                    "address": "anullsrc=r=44100:cl=stereo",
+                                    "options": [
+                                        "-f",
+                                        "lavfi"
+                                    ]
+                                }
+                            ],
+                            "settings": {
+                                "address": "hw:1,6",
+                                "amplitude": 1,
+                                "beepfactor": 4,
+                                "color": "white",
+                                "frequency": 440,
+                                "layout": "stereo",
+                                "sampling": "44100",
+                                "source": "silence"
+                            },
+                            "streams": [
+                                {
+                                    "bitrate_kbps": 705,
+                                    "channels": 2,
+                                    "codec": "pcm_u8",
+                                    "coder": "pcm_u8",
+                                    "duration_sec": 0,
+                                    "format": "lavfi",
+                                    "fps": 0,
+                                    "height": 0,
+                                    "index": 0,
+                                    "language": "und",
+                                    "layout": "stereo",
+                                    "pix_fmt": "",
+                                    "sampling_hz": 44100,
+                                    "stream": 0,
+                                    "type": "audio",
+                                    "url": "anullsrc=r=44100:cl=stereo",
+                                    "width": 0
+                                }
+                            ],
+                            "type": "virtualaudio"
+                        }
+                    ],
+                    "streams": [
+                        {
+                            "channels": 0,
+                            "codec": "h264",
+                            "height": 1080,
+                            "index": 0,
+                            "layout": "",
+                            "pix_fmt": "",
+                            "sampling_hz": 0,
+                            "stream": 0,
+                            "type": "video",
+                            "url": "",
+                            "width": 1920
+                        },
+                        {
+                            "channels": 0,
+                            "codec": "aac",
+                            "height": 0,
+                            "index": 0,
+                            "layout": "",
+                            "pix_fmt": "",
+                            "sampling_hz": 0,
+                            "stream": 1,
+                            "type": "video",
+                            "url": "",
+                            "width": 0
+                        }
+                    ],
+                    "version": "1.13.0"
+                }
+            },
+            "restreamer-ui:ingest:875aa91b-1ac0-4cce-b68d-a7e09fe51e35_snapshot": null
+        }
+    }
+}

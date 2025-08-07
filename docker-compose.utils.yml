@@ -1,0 +1,64 @@
+
+services:
+
+  restreamer:
+    container_name: restreamer
+    image: datarhei/restreamer:latest
+    volumes:
+          - ./encoder/config:/core/config
+          - ./encoder/data:/core/data
+    ports:
+        - 8080:8080
+        - 8181:8181
+        - 1935:1935
+    user: "$UID:$GID"
+    networks: 
+      iris-network:
+          ipv4_address: 172.22.0.101
+    restart: always
+
+  tcgui:
+    container_name: tcgui_server
+    image: tcgui:latest
+    build:
+      context: ./utils/tcgui
+      dockerfile: Dockerfile
+    environment:
+      TCGUI_PORT: ${TCGUI_PORT}
+    cap_add:
+      - NET_ADMIN
+    network_mode: host
+    restart: unless-stopped
+
+  grafana:
+    container_name: grafana
+    image: grafana/grafana:latest
+    volumes: 
+      - ./stats/grafana/data:/var/lib/grafana
+    user: "$UID:$GID"
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GF_SECURITY_ADMIN_USER}
+      - GF_SECURITY_ADMIN_PASSWORD=${GF_SECURITY_ADMIN_PASSWORD}
+    ports:
+      - '3000:3000'
+    networks: 
+        iris-network:
+            ipv4_address: 172.22.0.103
+    restart: unless-stopped
+
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus:latest
+    volumes:
+      - "./stats/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml"
+    ports:
+      - 9090:9090
+    networks: 
+        iris-network:
+            ipv4_address: 172.22.0.104
+    restart: unless-stopped
+
+networks:
+  iris-network:
+    external: true

@@ -1,0 +1,17 @@
+{
+	"version": "1.0",
+	"type": "video",
+	"title": "Iris",
+	"description": "Live from earth. Powered by datarhei Restreamer.",
+	"author_name": "",
+	"author_url": "http://127.0.0.1:8080/875aa91b-1ac0-4cce-b68d-a7e09fe51e35.html",
+	"provider_name": "datarhei Restreamer",
+	"provider_url": "https://datarhei.org",
+	"license": "CC BY 4.0",
+	"html": "<iframe src=\"http://127.0.0.1:8080/875aa91b-1ac0-4cce-b68d-a7e09fe51e35.html\" width=\"640\" height=\"360\" frameborder=\"no\" scrolling=\"no\" allowfullscreen=\"true\"></iframe>",
+	"width": 640,
+	"height": 360,
+	"thumbnail_url": "http://127.0.0.1:8080/memfs/875aa91b-1ac0-4cce-b68d-a7e09fe51e35.jpg",
+	"thumbnail_width": 640,
+	"thumbnail_height": 360
+}

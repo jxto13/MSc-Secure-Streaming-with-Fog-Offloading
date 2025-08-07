@@ -1,1 +1,2 @@
-.env
+grafana/data
+!grafana/data/grafana.db
