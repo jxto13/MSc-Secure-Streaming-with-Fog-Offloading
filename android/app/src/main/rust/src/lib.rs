@@ -1,5 +1,3 @@
-mod mesh_networking;
-
 #[allow(non_snake_case)]
 pub mod android {
     use std::io::Write;
@@ -14,7 +12,7 @@ pub mod android {
     use once_cell::sync::OnceCell;
     use std::sync::Once;
 
-    use crate::mesh_networking::Node;
+    use iris_client::mesh_networking::Node;
 
     // Static variable to hold the iris client instance
     static CLIENT: OnceCell<Arc<RwLock<Option<iris_client::Client>>>> = OnceCell::new();

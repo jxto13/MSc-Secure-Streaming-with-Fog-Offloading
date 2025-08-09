@@ -1,5 +1,3 @@
-use iris_client::proto::mesh_packet::PacketType;
-use iris_client::proto::{HeartbeatPacket, MeshPacket};
 use log::{debug, error, info};
 use pnet_datalink;
 use prost::Message;
@@ -13,6 +11,9 @@ use tokio::runtime::Runtime;
 use tokio::sync::{watch, RwLock};
 use tokio::time::interval;
 use uuid::Uuid;
+
+use crate::proto::mesh_packet::PacketType;
+use crate::proto::{HeartbeatPacket, MeshPacket};
 
 // === Shared Types ===
 pub type PeerMap = Arc<Mutex<HashMap<String, Instant>>>;

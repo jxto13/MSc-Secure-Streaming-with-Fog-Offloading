@@ -1,4 +1,5 @@
 mod decoder;
+pub mod mesh_networking;
 pub mod receiver;
 mod retransmission_manager;
 mod session;
