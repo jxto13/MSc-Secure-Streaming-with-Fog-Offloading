@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.22.0 (TeX Live 2026/dev/Arch Linux)  (format=lualatex 2025.7.8)  11 AUG 2025 16:48
+This is LuaHBTeX, Version 1.22.0 (TeX Live 2026/dev/Arch Linux)  (format=lualatex 2025.7.8)  11 AUG 2025 22:37
  restricted system commands enabled.
 **main.tex
 (./main.tex
@@ -938,6 +938,9 @@ File: xkeyval.tex 2014/12/03 v2.7a key=value parser (HA)
 \xargs@toksa=\toks60
 \xargs@toksb=\toks61
 )
+(./listings-rust.sty
+Package: listings-rust 2018/01/23 Custom Package
+)
 (/usr/share/texmf-dist/tex/latex/algorithmicx/algorithmicx.sty
 Package: algorithmicx 2005/04/27 v1.2 Algorithmicx
 
@@ -955,9 +958,9 @@ Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
 ) (/usr/share/texmf-dist/tex/latex/hyperref/backref.sty
 Package: backref 2023-11-26 v1.44 Bibliographical back referencing
 )
-Package hyperref Info: Option `colorlinks' set `true' on input line 154.
-Package hyperref Info: Option `breaklinks' set `true' on input line 154.
-Package hyperref Info: Option `hypertexnames' set `true' on input line 154.
+Package hyperref Info: Option `colorlinks' set `true' on input line 156.
+Package hyperref Info: Option `breaklinks' set `true' on input line 156.
+Package hyperref Info: Option `hypertexnames' set `true' on input line 156.
 
 (/usr/share/texmf-dist/tex/latex/fancybox/fancybox.sty
 Package: fancybox 2010/05/15 1.4
@@ -1360,11 +1363,11 @@ Package: glossary-tree 2025/03/03 v4.56 (NLCT)
 \glo@main@file=\write6
 
 \openout6 = main.glo
-Package glossaries Info: Writing glossary file main.glo on input line 223.
+Package glossaries Info: Writing glossary file main.glo on input line 225.
 \glo@acronym@file=\write7
 
 \openout7 = main.acn
-Package glossaries Info: Writing glossary file main.acn on input line 223.
+Package glossaries Info: Writing glossary file main.acn on input line 225.
 
 (/usr/share/texmf-dist/tex/latex/titlesec/titletoc.sty
 Package: titletoc 2025/01/04 v2.17 TOC entries
@@ -1495,12 +1498,12 @@ an be solved by adding a line like \setlength {\marginparwidth }{2cm} prior to
 loading the todonotes package. on input line 36.
 
 (./main.glsdefs)
-<Front/main.pdf, id=127, 597.5123pt x 845.04709pt>
+<Front/main.pdf, id=131, 597.5123pt x 845.04709pt>
 File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf>
 Package luatex.def Info: Front/main.pdf  used on input line 43.
 (luatex.def)             Requested size: 597.51083pt x 845.04503pt.
-<Front/main.pdf, id=129, page=1, 597.5123pt x 845.04709pt>
+<Front/main.pdf, id=133, page=1, 597.5123pt x 845.04709pt>
 File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf, page 1>
 Package luatex.def Info: Front/main.pdf , page1 used on input line 43.
@@ -1533,7 +1536,7 @@ File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf>
 Package luatex.def Info: Front/main.pdf  used on input line 45.
 (luatex.def)             Requested size: 597.51083pt x 845.04503pt.
-<Front/main.pdf, id=152, page=2, 597.5123pt x 845.04709pt>
+<Front/main.pdf, id=156, page=2, 597.5123pt x 845.04709pt>
 File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf, page 2>
 Package luatex.def Info: Front/main.pdf , page2 used on input line 45.
@@ -1664,63 +1667,38 @@ Overfull \hbox (6.08986pt too wide) detected at line 21
  []
 
 
-Overfull \hbox (6.08986pt too wide) detected at line 22
- \TU/Arial(0)/m/n/10.95 4
+Overfull \hbox (6.08986pt too wide) detected at line 27
+ \TU/Arial(0)/m/n/10.95 7
  []
 
 
-Overfull \hbox (6.08986pt too wide) detected at line 23
- \TU/Arial(0)/m/n/10.95 5
- []
-
-
-Overfull \hbox (6.08986pt too wide) detected at line 24
+Overfull \hbox (6.08986pt too wide) detected at line 28
  \TU/Arial(0)/m/n/10.95 8
  []
 
 
-Overfull \hbox (6.08986pt too wide) detected at line 25
- \TU/Arial(0)/m/n/10.95 8
- []
-
-
-Overfull \hbox (6.08986pt too wide) detected at line 26
+Overfull \hbox (6.08986pt too wide) detected at line 29
  \TU/Arial(0)/m/n/10.95 9
  []
 
 
-Overfull \hbox (12.17972pt too wide) detected at line 27
- \TU/Arial(0)/m/n/10.95 10
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 28
+Overfull \hbox (12.17972pt too wide) detected at line 30
  \TU/Arial(0)/m/n/10.95 11
  []
 
 
-Overfull \hbox (12.17972pt too wide) detected at line 29
- \TU/Arial(0)/m/n/10.95 13
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 30
- \TU/Arial(0)/m/n/10.95 13
- []
-
-
 Overfull \hbox (12.17972pt too wide) detected at line 31
- \TU/Arial(0)/m/n/10.95 14
+ \TU/Arial(0)/m/n/10.95 11
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 32
- \TU/Arial(0)/m/n/10.95 14
+ \TU/Arial(0)/m/n/10.95 12
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 33
- \TU/Arial(0)/m/n/10.95 14
+ \TU/Arial(0)/m/n/10.95 13
  []
 
 
@@ -1730,22 +1708,22 @@ Overfull \hbox (12.17972pt too wide) detected at line 34
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 35
- \TU/Arial(0)/m/n/10.95 14
+ \TU/Arial(0)/m/n/10.95 16
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 36
- \TU/Arial(0)/m/n/10.95 15
+ \TU/Arial(0)/m/n/10.95 16
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 37
- \TU/Arial(0)/m/n/10.95 15
+ \TU/Arial(0)/m/n/10.95 17
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 38
- \TU/Arial(0)/m/n/10.95 16
+ \TU/Arial(0)/m/n/10.95 17
  []
 
 
@@ -1769,8 +1747,38 @@ Overfull \hbox (12.17972pt too wide) detected at line 42
  []
 
 
+Overfull \hbox (12.17972pt too wide) detected at line 43
+ \TU/Arial(0)/m/n/10.95 19
+ []
+
+
 Overfull \hbox (12.17972pt too wide) detected at line 44
- \TU/Arial(0)/m/n/10.95 18
+ \TU/Arial(0)/m/n/10.95 19
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 45
+ \TU/Arial(0)/m/n/10.95 21
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 46
+ \TU/Arial(0)/m/n/10.95 22
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 47
+ \TU/Arial(0)/m/n/10.95 22
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 48
+ \TU/Arial(0)/m/n/10.95 22
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 50
+ \TU/Arial(0)/m/n/10.95 22
  []
 
 )
@@ -1795,7 +1803,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 -----------------------------------------------------
 (./main.lof
 Overfull \hbox (12.17972pt too wide) detected at line 8
- \TU/Arial(0)/m/n/10.95 13
+ \TU/Arial(0)/m/n/10.95 16
  []
 
 )
@@ -1841,44 +1849,32 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 [2]
 Chapter 2.
 
-Package natbib Warning: Citation `dacast2025' on page 3 undefined on input line
- 18.
+Package hyperref Warning: Difference (2) between bookmark levels is greater 
+(hyperref)                than one, level fixed on input line 17.
 
 
-Package natbib Warning: Citation `dacast2025' on page 3 undefined on input line
- 18.
+Package natbib Warning: Citation `prompeg' on page 3 undefined on input line 20
+.
 
 
-Package natbib Warning: Citation `getstream2025' on page 3 undefined on input l
-ine 18.
+Package natbib Warning: Citation `smpte2022' on page 3 undefined on input line 
+20.
+
+LaTeX Font Info:    Font shape `U/msa/m/n' will be
+(Font)              scaled to size 11.40997pt on input line 21.
+LaTeX Font Info:    Font shape `U/msb/m/n' will be
+(Font)              scaled to size 11.40997pt on input line 21.
+
+Package natbib Warning: Citation `rfc6865' on page 3 undefined on input line 22
+.
 
 
-Package natbib Warning: Citation `dyte2024' on page 3 undefined on input line 2
-0.
+Package natbib Warning: Citation `fec_video_study' on page 3 undefined on input
+ line 22.
 
 
-Package natbib Warning: Citation `dacast2025' on page 3 undefined on input line
- 20.
-
-
-Package natbib Warning: Citation `dyte2024' on page 3 undefined on input line 2
-0.
-
-
-Package natbib Warning: Citation `dacast2025' on page 3 undefined on input line
- 20.
-
-
-Package natbib Warning: Citation `getstream2025' on page 3 undefined on input l
-ine 20.
-
-
-Package natbib Warning: Citation `getstream2025' on page 3 undefined on input l
-ine 22.
-
-
-Package natbib Warning: Citation `getstream2025' on page 3 undefined on input l
-ine 22.
+Package natbib Warning: Citation `rs_intro' on page 3 undefined on input line 4
+1.
 
 
 
@@ -1893,64 +1889,28 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 
 ]
 
-Package natbib Warning: Citation `dacast2025edge' on page 4 undefined on input 
-line 24.
+Package natbib Warning: Citation `limit_fec' on page 4 undefined on input line 
+59.
 
 
-Package natbib Warning: Citation `cachefly2024' on page 4 undefined on input li
-ne 24.
+Package natbib Warning: Citation `huawei_afec' on page 4 undefined on input lin
+e 59.
 
 
-Package natbib Warning: Citation `cachefly2024' on page 4 undefined on input li
-ne 24.
+Package natbib Warning: Citation `limit_fec' on page 4 undefined on input line 
+62.
 
 
-Package natbib Warning: Citation `fastpix2024' on page 4 undefined on input lin
-e 24.
+Package natbib Warning: Citation `fec_overhead_study' on page 4 undefined on in
+put line 62.
 
 
-Package natbib Warning: Citation `cachefly2024' on page 4 undefined on input li
-ne 24.
+Package natbib Warning: Citation `2d_fec_analysis' on page 4 undefined on input
+ line 68.
 
 
-Package natbib Warning: Citation `terrazone2025' on page 4 undefined on input l
-ine 28.
-
-
-Package natbib Warning: Citation `techtarget2023' on page 4 undefined on input 
-line 28.
-
-
-Package natbib Warning: Citation `diva2015' on page 4 undefined on input line 2
-8.
-
-
-Package natbib Warning: Citation `qualcomm2016' on page 4 undefined on input li
-ne 28.
-
-
-Package natbib Warning: Citation `techtarget2023' on page 4 undefined on input 
-line 30.
-
-
-Package natbib Warning: Citation `scirp2015' on page 4 undefined on input line 
-30.
-
-
-Package natbib Warning: Citation `diva2015' on page 4 undefined on input line 3
-0.
-
-
-Package natbib Warning: Citation `diva2015' on page 4 undefined on input line 3
-2.
-
-
-Package natbib Warning: Citation `maister2024' on page 4 undefined on input lin
-e 32.
-
-
-Package natbib Warning: Citation `maister2024' on page 4 undefined on input lin
-e 32.
+Package natbib Warning: Citation `2d_fec_bounds' on page 4 undefined on input l
+ine 68.
 
 
 
@@ -1963,40 +1923,52 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 
 [4]
 
-Package natbib Warning: Citation `scirp2015' on page 5 undefined on input line 
-34.
+Package natbib Warning: Citation `rs_error_bounds' on page 5 undefined on input
+ line 74.
 
 
-Package natbib Warning: Citation `traffic2009' on page 5 undefined on input lin
-e 34.
+Package natbib Warning: Citation `2d_fec_bounds' on page 5 undefined on input l
+ine 78.
 
 
-Package natbib Warning: Citation `springer2007' on page 5 undefined on input li
-ne 34.
+Package natbib Warning: Citation `2d_fec_bounds' on page 5 undefined on input l
+ine 78.
 
 
-Package natbib Warning: Citation `traffic2009' on page 5 undefined on input lin
-e 34.
+Package natbib Warning: Citation `raptor_vs_rs' on page 5 undefined on input li
+ne 80.
 
 
-Package natbib Warning: Citation `sciencedirect2006' on page 5 undefined on inp
-ut line 36.
+Package natbib Warning: Citation `raptor_vs_rs' on page 5 undefined on input li
+ne 80.
 
 
-Package natbib Warning: Citation `springer2007' on page 5 undefined on input li
-ne 36.
+Overfull \hbox (46.91655pt too wide) in paragraph at lines 80--81
+[]\TU/Arial(0)/m/n/10.95 **Over-head Ef-fi-ciency Com-par-i-son.** Com-pared to al-ter-na-tive FEC schemes, **2-D Reed
+–Solomon
+ []
 
 
-Package natbib Warning: Citation `uwaterloo2015' on page 5 undefined on input l
-ine 40.
+Package natbib Warning: Citation `limit_fec' on page 5 undefined on input line 
+82.
 
 
-Package natbib Warning: Citation `cambridge2015' on page 5 undefined on input l
-ine 40.
+Package natbib Warning: Citation `webrtc_fec' on page 5 undefined on input line
+ 82.
 
 
-Package natbib Warning: Citation `uwaterloo2015' on page 5 undefined on input l
-ine 40.
+Package natbib Warning: Citation `limit_fec' on page 5 undefined on input line 
+82.
+
+
+Package natbib Warning: Citation `fec_scalable_video' on page 5 undefined on in
+put line 82.
+
+
+Overfull \hbox (7.27571pt too wide) in paragraph at lines 82--83
+\TU/Arial(0)/m/n/10.95 pen-sive back-haul con-nec-tions**. When com-bined with 
+typ-i-cal **20% bit-rate guard bands**,
+ []
 
 
 
@@ -2009,50 +1981,32 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 
 [5]
 
-Package natbib Warning: Citation `uwaterloo2015' on page 6 undefined on input l
-ine 42.
+Package natbib Warning: Citation `smpte2022' on page 6 undefined on input line 
+90.
 
 
-Package natbib Warning: Citation `ieee2022' on page 6 undefined on input line 4
-2.
+Package natbib Warning: Citation `fec_video_study' on page 6 undefined on input
+ line 90.
 
 
-Package natbib Warning: Citation `cambridge2015' on page 6 undefined on input l
-ine 44.
+Package natbib Warning: Citation `huawei_afec' on page 6 undefined on input lin
+e 91.
 
 
-Package natbib Warning: Citation `tum2015' on page 6 undefined on input line 44
-.
+Package natbib Warning: Citation `rs_prod_codes' on page 6 undefined on input l
+ine 91.
 
 
-Package natbib Warning: Citation `tum2015' on page 6 undefined on input line 44
-.
+Package natbib Warning: Citation `dacast2025' on page 6 undefined on input line
+ 108.
 
 
-Package natbib Warning: Citation `cambridge2015' on page 6 undefined on input l
-ine 44.
+Package natbib Warning: Citation `dacast2025' on page 6 undefined on input line
+ 108.
 
 
-Package natbib Warning: Citation `tum2015' on page 6 undefined on input line 44
-.
-
-
-Package natbib Warning: Citation `sciencedirect2022' on page 6 undefined on inp
-ut line 46.
-
-
-Package natbib Warning: Citation `uwaterloo2015' on page 6 undefined on input l
-ine 46.
-
-
-Package natbib Warning: Citation `uwaterloo2015' on page 6 undefined on input l
-ine 48.
-
-
-Overfull \hbox (2.87305pt too wide) in paragraph at lines 48--49
-[]\TU/Arial(0)/m/n/10.95 Trust man-age-ment sys-tems rep-re-sent an-other crit-i
--cal com-po-nent in crowd-sourced stream-
- []
+Package natbib Warning: Citation `getstream2025' on page 6 undefined on input l
+ine 108.
 
 
 
@@ -2063,7 +2017,56 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[6]) (./Chapters/StateOfTheArt.tex
+[6]
+
+Package natbib Warning: Citation `dyte2024' on page 7 undefined on input line 1
+10.
+
+
+Package natbib Warning: Citation `dacast2025' on page 7 undefined on input line
+ 110.
+
+
+Package natbib Warning: Citation `dyte2024' on page 7 undefined on input line 1
+10.
+
+
+Package natbib Warning: Citation `dacast2025' on page 7 undefined on input line
+ 110.
+
+
+Package natbib Warning: Citation `getstream2025' on page 7 undefined on input l
+ine 110.
+
+
+Package natbib Warning: Citation `getstream2025' on page 7 undefined on input l
+ine 112.
+
+
+Package natbib Warning: Citation `getstream2025' on page 7 undefined on input l
+ine 112.
+
+
+Package natbib Warning: Citation `dacast2025edge' on page 7 undefined on input 
+line 114.
+
+
+Package natbib Warning: Citation `cachefly2024' on page 7 undefined on input li
+ne 114.
+
+
+Package natbib Warning: Citation `cachefly2024' on page 7 undefined on input li
+ne 114.
+
+
+Package natbib Warning: Citation `fastpix2024' on page 7 undefined on input lin
+e 114.
+
+
+Package natbib Warning: Citation `cachefly2024' on page 7 undefined on input li
+ne 114.
+
+
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2073,33 +2076,61 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [7]
-Chapter 3.
 
-Package natbib Warning: Citation `dacast2025' on page 8 undefined on input line
- 17.
-
-
-Package natbib Warning: Citation `dacast2025' on page 8 undefined on input line
- 19.
+Package natbib Warning: Citation `terrazone2025' on page 8 undefined on input l
+ine 118.
 
 
-Package natbib Warning: Citation `dev2024' on page 8 undefined on input line 19
-.
+Package natbib Warning: Citation `techtarget2023' on page 8 undefined on input 
+line 118.
 
 
-Overfull \hbox (7.84923pt too wide) in paragraph at lines 19--20
-\TU/Arial(0)/m/n/10.95 DASH de-liv-ery mech-a-nisms si-mul-ta-ne-ously [\TU/Ari
-al(0)/b/n/10.95 ? \TU/Arial(0)/m/n/10.95 ]. This uni-fi-ca-tion ef-fort ex-tends
- to WebRTC-
- []
+Package natbib Warning: Citation `diva2015' on page 8 undefined on input line 1
+18.
+
+
+Package natbib Warning: Citation `qualcomm2016' on page 8 undefined on input li
+ne 118.
+
+
+Package natbib Warning: Citation `techtarget2023' on page 8 undefined on input 
+line 120.
+
+
+Package natbib Warning: Citation `scirp2015' on page 8 undefined on input line 
+120.
+
+
+Package natbib Warning: Citation `diva2015' on page 8 undefined on input line 1
+20.
+
+
+Package natbib Warning: Citation `diva2015' on page 8 undefined on input line 1
+22.
 
 
 Package natbib Warning: Citation `maister2024' on page 8 undefined on input lin
-e 21.
+e 122.
 
 
-Package natbib Warning: Citation `sciencedirect2022prediction' on page 8 undefi
-ned on input line 23.
+Package natbib Warning: Citation `maister2024' on page 8 undefined on input lin
+e 122.
+
+
+Package natbib Warning: Citation `scirp2015' on page 8 undefined on input line 
+124.
+
+
+Package natbib Warning: Citation `traffic2009' on page 8 undefined on input lin
+e 124.
+
+
+Package natbib Warning: Citation `springer2007' on page 8 undefined on input li
+ne 124.
+
+
+Package natbib Warning: Citation `traffic2009' on page 8 undefined on input lin
+e 124.
 
 
 
@@ -2110,24 +2141,34 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[8
+[8]
 
-]
-
-Package natbib Warning: Citation `qualcomm2016' on page 9 undefined on input li
-ne 27.
+Package natbib Warning: Citation `sciencedirect2006' on page 9 undefined on inp
+ut line 126.
 
 
-Package natbib Warning: Citation `maister2024' on page 9 undefined on input lin
-e 27.
+Package natbib Warning: Citation `springer2007' on page 9 undefined on input li
+ne 126.
 
 
-Package natbib Warning: Citation `qualcomm2016' on page 9 undefined on input li
-ne 29.
+Package natbib Warning: Citation `uwaterloo2015' on page 9 undefined on input l
+ine 130.
 
 
-Package natbib Warning: Citation `arxiv2022' on page 9 undefined on input line 
-31.
+Package natbib Warning: Citation `cambridge2015' on page 9 undefined on input l
+ine 130.
+
+
+Package natbib Warning: Citation `uwaterloo2015' on page 9 undefined on input l
+ine 130.
+
+
+Package natbib Warning: Citation `uwaterloo2015' on page 9 undefined on input l
+ine 132.
+
+
+Package natbib Warning: Citation `ieee2022' on page 9 undefined on input line 1
+32.
 
 
 
@@ -2140,11 +2181,125 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 
 [9]
 
-Package natbib Warning: Citation `maister2024' on page 10 undefined on input li
+Package natbib Warning: Citation `cambridge2015' on page 10 undefined on input 
+line 134.
+
+
+Package natbib Warning: Citation `tum2015' on page 10 undefined on input line 1
+34.
+
+
+Package natbib Warning: Citation `tum2015' on page 10 undefined on input line 1
+34.
+
+
+Package natbib Warning: Citation `cambridge2015' on page 10 undefined on input 
+line 134.
+
+
+Package natbib Warning: Citation `tum2015' on page 10 undefined on input line 1
+34.
+
+
+Package natbib Warning: Citation `sciencedirect2022' on page 10 undefined on in
+put line 136.
+
+
+Package natbib Warning: Citation `uwaterloo2015' on page 10 undefined on input 
+line 136.
+
+
+Package natbib Warning: Citation `uwaterloo2015' on page 10 undefined on input 
+line 138.
+
+
+Overfull \hbox (2.87305pt too wide) in paragraph at lines 138--139
+[]\TU/Arial(0)/m/n/10.95 Trust man-age-ment sys-tems rep-re-sent an-other crit-i
+-cal com-po-nent in crowd-sourced stream-
+ []
+
+) (./Chapters/StateOfTheArt.tex
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[10]
+Chapter 3.
+
+Package natbib Warning: Citation `dacast2025' on page 11 undefined on input lin
+e 17.
+
+
+Package natbib Warning: Citation `dacast2025' on page 11 undefined on input lin
+e 19.
+
+
+Package natbib Warning: Citation `dev2024' on page 11 undefined on input line 1
+9.
+
+
+Overfull \hbox (7.84923pt too wide) in paragraph at lines 19--20
+\TU/Arial(0)/m/n/10.95 DASH de-liv-ery mech-a-nisms si-mul-ta-ne-ously [\TU/Ari
+al(0)/b/n/10.95 ? \TU/Arial(0)/m/n/10.95 ]. This uni-fi-ca-tion ef-fort ex-tends
+ to WebRTC-
+ []
+
+
+Package natbib Warning: Citation `maister2024' on page 11 undefined on input li
+ne 21.
+
+
+Package natbib Warning: Citation `sciencedirect2022prediction' on page 11 undef
+ined on input line 23.
+
+
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[11
+
+]
+
+Package natbib Warning: Citation `qualcomm2016' on page 12 undefined on input l
+ine 27.
+
+
+Package natbib Warning: Citation `maister2024' on page 12 undefined on input li
+ne 27.
+
+
+Package natbib Warning: Citation `qualcomm2016' on page 12 undefined on input l
+ine 29.
+
+
+Package natbib Warning: Citation `arxiv2022' on page 12 undefined on input line
+ 31.
+
+
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[12]
+
+Package natbib Warning: Citation `maister2024' on page 13 undefined on input li
 ne 33.
 
 
-Package natbib Warning: Citation `sciencedirect2022blockchain' on page 10 undef
+Package natbib Warning: Citation `sciencedirect2022blockchain' on page 13 undef
 ined on input line 37.
 
 
@@ -2159,7 +2314,7 @@ Overfull \hbox (26.30391pt too wide) in paragraph at lines 39--40
  []
 
 
-Package natbib Warning: Citation `sciencedirect2024' on page 10 undefined on in
+Package natbib Warning: Citation `sciencedirect2024' on page 13 undefined on in
 put line 41.
 
 
@@ -2171,17 +2326,17 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[10]
+[13]
 
-Package natbib Warning: Citation `uwaterloo2015' on page 11 undefined on input 
+Package natbib Warning: Citation `uwaterloo2015' on page 14 undefined on input 
 line 43.
 
 
-Package natbib Warning: Citation `sciencedirect2021' on page 11 undefined on in
+Package natbib Warning: Citation `sciencedirect2021' on page 14 undefined on in
 put line 43.
 
 
-Package natbib Warning: Citation `dacast2025edge' on page 11 undefined on input
+Package natbib Warning: Citation `dacast2025edge' on page 14 undefined on input
  line 47.
 
 
@@ -2191,11 +2346,11 @@ Overfull \hbox (6.37862pt too wide) in paragraph at lines 47--48
  []
 
 
-Package natbib Warning: Citation `sciencedirect2019' on page 11 undefined on in
+Package natbib Warning: Citation `sciencedirect2019' on page 14 undefined on in
 put line 49.
 
 
-Package natbib Warning: Citation `numberanalytics2025' on page 11 undefined on 
+Package natbib Warning: Citation `numberanalytics2025' on page 14 undefined on 
 input line 49.
 
 
@@ -2204,7 +2359,7 @@ Overfull \hbox (1.06052pt too wide) in paragraph at lines 49--50
  []
 
 
-Package natbib Warning: Citation `arxiv2021' on page 11 undefined on input line
+Package natbib Warning: Citation `arxiv2021' on page 14 undefined on input line
  51.
 
 
@@ -2223,13 +2378,13 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[11]
+[14]
 
-Package natbib Warning: Citation `wikipedia2014' on page 12 undefined on input 
+Package natbib Warning: Citation `wikipedia2014' on page 15 undefined on input 
 line 53.
 
 
-Package natbib Warning: Citation `resilio2023' on page 12 undefined on input li
+Package natbib Warning: Citation `resilio2023' on page 15 undefined on input li
 ne 55.
 
 ) (./Chapters/DesignAndImplementation.tex
@@ -2241,9 +2396,9 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[12]
+[15]
 Chapter 4.
-<Figures/DesignAndImplementation/system.png, id=322, 1347.0325pt x 1248.665pt>
+<Figures/DesignAndImplementation/system.png, id=360, 1347.0325pt x 1248.665pt>
 File: Figures/DesignAndImplementation/system.png Graphic file (type png)
 <use Figures/DesignAndImplementation/system.png>
 Package luatex.def Info: Figures/DesignAndImplementation/system.png  used on in
@@ -2262,18 +2417,12 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[13
+[16
 
 <./Figures/DesignAndImplementation/system.png>]
+LaTeX Font Info:    Font shape `TU/lmtt/bx/n' in size <9> not available
+(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 37.
 
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[14]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2282,7 +2431,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[15]) (./Chapters/Evaluation.tex
+[17]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2291,7 +2440,25 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[16]
+[18]) (./Chapters/Evaluation.tex
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[19]
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[20]
 Chapter 5.
 ) (./Chapters/Conclusion.tex
 
@@ -2302,7 +2469,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[17
+[21
 
 ]
 Chapter 6.
@@ -2319,14 +2486,9 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[18
+[22
 
 ]
-LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 11.40997pt on input line 30.
-LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 11.40997pt on input line 30.
-
 Underfull \hbox (badness 5147) in paragraph at lines 44--44
 []\TU/Arial(0)/m/n/10.95 News-cast An-a-lyt-ics, ``Global livestream-ing growth statis-tics
  []
@@ -2358,7 +2520,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[19
+[23
 
 ]) (./Appendices/Appendix.tex
 
@@ -2369,7 +2531,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[20])
+[24])
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2378,7 +2540,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[21
+[25
 
 ]
 
@@ -2399,31 +2561,37 @@ L3 programming layer <2025-01-18>
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: E736A0D37A68158D380E35A68575B45A;5892.
+(rerunfilecheck)             Checksum: A50A2888E330C17FFFAB485E4DDC6C72;6331.
 Package rerunfilecheck Info: File `main.brf' has not changed.
-(rerunfilecheck)             Checksum: 14681B053AF8A59EC177CA96E75D28A3;715.
+(rerunfilecheck)             Checksum: 549C6CD1D472E303D504DCE260A682A7;715.
 )
 
 Here is how much of LuaTeX's memory you used:
- 46699 strings out of 475506
- 125126,1648299 words of node,token memory allocated
- 900 words of node memory still in use:
-   7 hlist, 2 vlist, 2 rule, 5 glue, 4 kern, 1 glyph, 38 attribute, 96 glue_spec
-, 21 attribute_list, 3 write, 11 pdf_action nodes
-   avail lists: 1:2,2:1594,3:430,4:220,5:152,6:81,7:8217,8:143,9:720,10:20,11:83
-6
- 68332 multiletter control sequences out of 65536+600000
- 106 fonts using 8820991 bytes
- 108i,19n,125p,2747b,1276s stack positions out of 10000i,1000n,20000p,200000b,200000s
-{/usr/share/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/fonts/TTF/Ariali.
-TTF></usr/share/texmf-dist/fonts/opentype/public/lm/lmmono10-regular.otf></usr/s
-hare/fonts/TTF/Arialbd.TTF></usr/share/fonts/TTF/Arial.TTF></usr/share/texmf-dis
-t/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share/texmf-dist/fonts/type1/ur
-w/palatino/uplr8a.pfb>
-Output written on main.pdf (28 pages, 289187 bytes).
+ 47907 strings out of 475506
+ 125126,1977958 words of node,token memory allocated
+ 1068 words of node memory still in use:
+   7 hlist, 2 vlist, 2 rule, 5 glue, 4 kern, 1 glyph, 92 attribute, 96 glue_spec
+, 48 attribute_list, 3 write, 12 pdf_action nodes
+   avail lists: 1:2,2:2686,3:430,4:1006,5:408,6:83,7:7997,8:143,9:2060,10:20,11:
+836
+ 69501 multiletter control sequences out of 65536+600000
+ 109 fonts using 9294455 bytes
+ 108i,19n,125p,7880b,1806s stack positions out of 10000i,1000n,20000p,200000b,200000s
+</usr/share/texmf-dist/fonts/opentype/public/lm/lmmono9-regular.otf></usr/share/
+texmf-dist/fonts/opentype/public/lm/lmmonolt10-bold.otf></usr/share/texmf-dist/f
+onts/opentype/public/lm/lmmono10-regular.otf>{/usr/share/texmf-dist/fonts/enc/dv
+ips/base/8r.enc}</usr/share/fonts/TTF/Arialbd.TTF></usr/share/fonts/TTF/Ariali.T
+TF></usr/share/fonts/TTF/Arial.TTF></usr/share/texmf-dist/fonts/type1/public/ams
+fonts/cm/cmex10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10
+.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share
+/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texmf-dist/fon
+ts/type1/public/mathpazo/fplmr.pfb></usr/share/texmf-dist/fonts/type1/public/mat
+hpazo/fplmri.pfb></usr/share/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></us
+r/share/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
+Output written on main.pdf (32 pages, 372470 bytes).
 
-PDF statistics: 458 PDF objects out of 1000 (max. 8388607)
- 368 compressed objects within 4 object streams
- 82 named destinations out of 1000 (max. 131072)
- 256 words of extra memory for PDF output out of 10000 (max. 100000000)
+PDF statistics: 551 PDF objects out of 1000 (max. 8388607)
+ 443 compressed objects within 5 object streams
+ 116 named destinations out of 1000 (max. 131072)
+ 264 words of extra memory for PDF output out of 10000 (max. 100000000)
 

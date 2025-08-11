@@ -31,7 +31,31 @@ The android application uses all the android interfaces for the wifi aware api a
 
 The decoder uses multiple channels to receive and send data pacets, its main function is the verifiying, decoding and reconstruction packets, also it creates the client reports based on current buffer.
 
-The decoder can receive multiple types of packets, all are encapsulated in a PacketWrapper, the types can be TransmissionPacket, RetransmissionPacket and inside the last one it can be an XorPacket or a normal TransmissionPacket. As described before the data comes in matrixes, so we need to track the matrix and current encryption key for that current matrix
+The decoder can receive multiple types of packets, all are encapsulated in a PacketWrapper, the types can be TransmissionPacket, RetransmissionPacket and inside the last one it can be an XorPacket or a normal TransmissionPacket. As described before the data comes in matrixes, so we need to track the matrix and current encryption key for that current matrix.
+
+\begin{lstlisting}[language=Rust, style=boxed, basicstyle=\ttfamily\footnotesize]
+struct MatrixTracker {
+	/// Index of the matrix.
+	matrix_index: u32,
+	/// Number of columns in the matrix.
+	cols: u32,
+	/// Number of rows in the matrix.
+	rows: u32,
+	/// Number of columns for Forward Error Correction.
+	cols_fec: u32,
+	/// Number of rows for Forward Error Correction.
+	rows_fec: u32,
+	/// Matrix to store the packets.
+	matrix_packets: Matrix<Option<TransmissionPacket>>,
+	/// Session key to decrypt the matrix.
+	session_key: Option<SessionKey>,
+	/// Bitmap to track the presence of packets.
+	bitmap: Vec<u8>,
+	/// Packet loss percentage for this matrix.
+	packet_loss_percentage: f64,
+}
+\end{lstlisting}
+
 
 \subsection{Reporting Sink}
 
