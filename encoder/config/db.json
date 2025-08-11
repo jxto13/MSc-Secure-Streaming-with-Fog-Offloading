@@ -163,8 +163,8 @@
                 "limit_memory_bytes": 0,
                 "limit_waitfor_seconds": 5
             },
-            "created_at": 1736299992,
-            "updated_at": 1736299992,
+            "created_at": 1754877930,
+            "updated_at": 1754877930,
             "order": "start"
         },
         "restreamer-ui:ingest:875aa91b-1ac0-4cce-b68d-a7e09fe51e35": {
@@ -189,7 +189,7 @@
                 "output": [
                     {
                         "id": "output_0",
-                        "address": "[f=hls:start_number=0:hls_time=2:hls_list_size=6:hls_flags=append_list+delete_segments+program_date_time+temp_file:hls_delete_threshold=4:hls_segment_filename={memfs^:}/875aa91b-1ac0-4cce-b68d-a7e09fe51e35_{outputid}_%04d.ts:master_pl_name=875aa91b-1ac0-4cce-b68d-a7e09fe51e35.m3u8:master_pl_publish_rate=2:method=PUT]{memfs}/875aa91b-1ac0-4cce-b68d-a7e09fe51e35_{outputid}.m3u8|[f=mpegts]{srt,name=875aa91b-1ac0-4cce-b68d-a7e09fe51e35,mode=publish}",
+                        "address": "{memfs}/875aa91b-1ac0-4cce-b68d-a7e09fe51e35_{outputid}.m3u8",
                         "options": [
                             "-dn",
                             "-sn",
@@ -231,13 +231,27 @@
                             "-metadata",
                             "service_provider=datarhei-Restreamer",
                             "-flags",
-                            "+low_delay+global_header",
-                            "-tag:v",
-                            "7",
-                            "-tag:a",
-                            "10",
+                            "+low_delay",
                             "-f",
-                            "tee"
+                            "hls",
+                            "-start_number",
+                            "0",
+                            "-hls_time",
+                            "2",
+                            "-hls_list_size",
+                            "6",
+                            "-hls_flags",
+                            "append_list+delete_segments+program_date_time+temp_file",
+                            "-hls_delete_threshold",
+                            "4",
+                            "-hls_segment_filename",
+                            "{memfs}/875aa91b-1ac0-4cce-b68d-a7e09fe51e35_{outputid}_%04d.ts",
+                            "-master_pl_name",
+                            "875aa91b-1ac0-4cce-b68d-a7e09fe51e35.m3u8",
+                            "-master_pl_publish_rate",
+                            "2",
+                            "-method",
+                            "PUT"
                         ],
                         "cleanup": [
                             {
@@ -282,8 +296,8 @@
                 "limit_memory_bytes": 0,
                 "limit_waitfor_seconds": 5
             },
-            "created_at": 1753088981,
-            "updated_at": 1753088981,
+            "created_at": 1754876775,
+            "updated_at": 1754876775,
             "order": "start"
         },
         "restreamer-ui:ingest:875aa91b-1ac0-4cce-b68d-a7e09fe51e35_snapshot": {
@@ -335,8 +349,8 @@
                 "limit_memory_bytes": 0,
                 "limit_waitfor_seconds": 0
             },
-            "created_at": 1753088981,
-            "updated_at": 1753088981,
+            "created_at": 1754876775,
+            "updated_at": 1754876775,
             "order": "start"
         }
     },
@@ -734,7 +748,7 @@
                             "interval": 60
                         },
                         "srt": {
-                            "enable": true
+                            "enable": false
                         }
                     },
                     "license": "CC BY 4.0",
@@ -746,7 +760,27 @@
                         "description": "Live from earth. Powered by datarhei Restreamer.",
                         "name": "Iris"
                     },
-                    "player": {},
+                    "player": {
+                        "airplay": false,
+                        "autoplay": true,
+                        "chromecast": false,
+                        "color": {
+                            "buttons": "#ffffff",
+                            "seekbar": "#ffffff"
+                        },
+                        "ga": {
+                            "account": "",
+                            "name": ""
+                        },
+                        "logo": {
+                            "image": "",
+                            "link": "",
+                            "position": "top-left"
+                        },
+                        "mute": false,
+                        "poster": "",
+                        "statistics": false
+                    },
                     "profiles": [
                         {
                             "audio": {

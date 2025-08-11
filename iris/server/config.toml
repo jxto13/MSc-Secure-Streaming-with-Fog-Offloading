@@ -19,16 +19,11 @@ port = 50052 # unicast port for retransmissions
 [multicast]
 # Stream Config
 data_source = "mpegts"
-
-# This ip source is for docker network
-# ip_source = "172.22.0.102:1234"
-
-# This ip source is local development
-ip_source = "172.22.0.1:1234"
+ip_source = "0.0.0.0:1234"
 
 # Multicast Config
-# interface = "host-br" 
-interface = "wlp92s0"
+interface = "host-br" 
+# interface = "wlp92s0"
 # interface = "eth0"
 # interface = "enp0s20f0u3u1u2"
 

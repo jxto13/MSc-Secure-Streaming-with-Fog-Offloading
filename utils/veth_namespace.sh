@@ -37,8 +37,8 @@ VETH1="veth1"
 VETH1_BR="veth1-br"
 VETH2="veth2"
 VETH2_BR="veth2-br"
-LINK1="veth-link1"
-LINK2="veth-link2"
+LINK1="aware1"
+LINK2="aware2"
 NS1="myns1"
 NS2="myns2"
 BRIDGE="br0"
@@ -49,9 +49,6 @@ IP_HOST="192.168.15.1/24"
 IP_NS1="192.168.15.2/24"
 IP_NS2="192.168.15.3/24"
 
-# IPv6 link-local
-LL6_NS1="fe80::a1"
-LL6_NS2="fe80::a2"
 
 function start_network() {
     echo "[+] Creating namespaces, veth pairs, and bridge namespace..."
@@ -100,25 +97,14 @@ function start_network() {
     sudo ip netns exec ${NS2} ip addr add ${IP_NS2} dev ${VETH2}
     sudo ip netns exec ${NS2} ip link set ${VETH2} up
 
-    # --- Direct IPv6 link between ns1 and ns2 ---
-    sudo ip link add ${LINK1} type veth peer name ${LINK2}
-    sudo ip link set ${LINK1} netns ${NS1}
-    sudo ip link set ${LINK2} netns ${NS2}
-
-    sudo ip netns exec ${NS1} ip link set ${LINK1} up
-    sudo ip netns exec ${NS2} ip link set ${LINK2} up
-
-    sudo ip netns exec ${NS1} ip -6 addr add ${LL6_NS1}/64 dev ${LINK1}
-    sudo ip netns exec ${NS2} ip -6 addr add ${LL6_NS2}/64 dev ${LINK2}
+    # Direct aware link is now created by a separate option.
 
     echo "[+] Setup complete."
     echo "  - Bridge namespace: ${BRNS}"
     echo "  - Host bridge IP (in brns): ${IP_HOST}"
     echo "  - Host veth IP: 192.168.15.100/24 (host-br)"
-    echo "  - myns1: ${IP_NS1}, LL6: ${LL6_NS1}%${LINK1}"
-    echo "  - myns2: ${IP_NS2}, LL6: ${LL6_NS2}%${LINK2}"
 
-      # --- MULTICAST SETUP ---
+    # --- MULTICAST SETUP ---
 
     # Add multicast routes inside client namespaces for 224.0.0.0/4
     sudo ip netns exec ${NS1} ip route add 224.0.0.0/4 dev ${VETH1}
@@ -127,6 +113,29 @@ function start_network() {
     # Add multicast route in bridge namespace for 224.0.0.0/4
     sudo ip netns exec ${BRNS} ip route add 224.0.0.0/4 dev ${BRIDGE}
 
+}
+
+function add_aware_link() {
+    echo "[+] Adding aware1 <-> aware2 veth link between namespaces..."
+    sudo ip link add ${LINK1} type veth peer name ${LINK2}
+    sudo ip link set ${LINK1} netns ${NS1}
+    sudo ip link set ${LINK2} netns ${NS2}
+
+    sudo ip netns exec ${NS1} ip link set ${LINK1} up
+    sudo ip netns exec ${NS2} ip link set ${LINK2} up
+
+    echo "[+] aware link created."
+    echo "  - myns1: ${IP_NS1}"
+    echo "  - myns2: ${IP_NS2}"
+}
+
+
+# Function to remove aware1/aware2 veth link between namespaces
+function stop_aware_link() {
+    echo "[+] Removing aware1 <-> aware2 veth link between namespaces..."
+    sudo ip netns exec ${NS1} ip link delete aware1 2>/dev/null || true
+    sudo ip netns exec ${NS2} ip link delete aware2 2>/dev/null || true
+    echo "[+] aware link removed (if it existed)."
 }
 
 function stop_network() {
@@ -163,8 +172,14 @@ case "$1" in
     open)
         open_shell "$@"
         ;;
+    link)
+        add_aware_link
+        ;;
+    unlink)
+        stop_aware_link
+        ;;
     *)
-        echo "Usage: $0 {start|stop|open 1|2|br}"
+        echo "Usage: $0 {start|stop|open 1|2|br|link}"
         exit 1
         ;;
 esac

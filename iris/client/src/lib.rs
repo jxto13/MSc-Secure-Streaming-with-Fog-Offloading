@@ -424,14 +424,10 @@ impl Client {
         let session = Arc::clone(&self.session);
         let channel = self.channel.as_ref().unwrap().clone();
 
-        // Create packet request channel (still needed for backwards compatibility)
-        let (_packet_request_sender, packet_request_receiver) = unbounded();
-
         let decoder = Arc::new(Decoder::new(
             data_receiver_receiver,
             decoded_data_sender,
             client_report_sender,
-            packet_request_receiver,
             buffer_sync_sender,
             shutdown_flag.clone(),
             session,

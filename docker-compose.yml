@@ -8,7 +8,7 @@ services:
     ports:
       - "50051:50051"
     volumes:
-      - ./iris/server/config_docker.toml:/home/appuser/server/config.toml
+      - ./iris/server/config.toml:/home/appuser/server/config.toml
     networks:
       iris-network:
         ipv4_address: 172.22.0.102
@@ -19,7 +19,7 @@ services:
       context: ./iris
       dockerfile: client/Dockerfile
     deploy:
-      replicas: 50  # Replace 5 with your desired number of replicas (N)
+      replicas: 5  # Replace 5 with your desired number of replicas (N)
     extra_hosts:
       - "stream1.iris.dcc.fc.up.pt:172.22.0.102" # Very important because of the tls certificate
     environment:

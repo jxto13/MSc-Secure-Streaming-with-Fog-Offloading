@@ -37,10 +37,6 @@ pub struct PacketRequest {
     pub packet_index: u32,
 }
 
-#[derive(Debug, Clone)]
-pub struct PacketResponse {
-    pub packet: Option<TransmissionPacket>,
-}
 use tonic::transport::Channel;
 
 use super::proto::{key_service_client::KeyServiceClient, ClientReport};
@@ -640,7 +636,6 @@ pub struct Decoder {
     data_receiver: Receiver<(ReceiverType, Vec<u8>)>,
     decoded_data_sender: Sender<Vec<u8>>,
     client_report_sender: Sender<ClientReport>,
-    packet_request_receiver: Receiver<(PacketRequest, crossbeam_channel::Sender<PacketResponse>)>,
     buffer_sync_sender: Option<Sender<Vec<MatrixTracker>>>,
     shutdown_flag: Arc<AtomicBool>,
     session: Arc<RwLock<ClientSession>>,
@@ -653,10 +648,6 @@ impl Decoder {
         data_receiver: Receiver<(ReceiverType, Vec<u8>)>,
         decoded_data_sender: Sender<Vec<u8>>,
         client_report_sender: Sender<ClientReport>,
-        packet_request_receiver: Receiver<(
-            PacketRequest,
-            crossbeam_channel::Sender<PacketResponse>,
-        )>,
         buffer_sync_sender: Option<Sender<Vec<MatrixTracker>>>,
         shutdown_flag: Arc<AtomicBool>,
         session: Arc<RwLock<ClientSession>>,
@@ -666,7 +657,6 @@ impl Decoder {
             data_receiver,
             decoded_data_sender,
             client_report_sender,
-            packet_request_receiver,
             buffer_sync_sender,
             shutdown_flag,
             session,
@@ -965,37 +955,6 @@ impl Decoder {
 
                 }
 
-                // Handle packet requests from RetransmissionManager
-                recv(self.packet_request_receiver) -> msg => {
-                    let (request, response_sender) = match msg {
-                        Ok(val) => val,
-                        Err(_) => continue, // Channel closed or no message
-                    };
-
-                    // Search for the packet in the buffer
-                    let mut found_packet = None;
-                    for tracker in buffer.iter() {
-                        if tracker.matrix_index == request.matrix_index {
-                            let packet_index = request.packet_index as usize;
-                            let row = packet_index / (tracker.cols + tracker.rows_fec) as usize;
-                            let col = packet_index % (tracker.cols + tracker.rows_fec) as usize;
-
-                            if let Some(packet) = tracker.get_packet(row, col) {
-                                found_packet = Some(packet.clone());
-                                break;
-                            }
-                        }
-                    }
-
-                    // Send response
-                    let response = PacketResponse {
-                        packet: found_packet,
-                    };
-
-                    if let Err(_) = response_sender.send(response) {
-                        // Receiver dropped, ignore
-                    }
-                }
             }
         }
     }

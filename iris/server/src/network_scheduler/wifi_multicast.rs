@@ -41,12 +41,14 @@ impl WiFiMulticast {
     ) -> Result<(), Box<dyn std::error::Error>> {
         // Get the list of network interfaces.
         let interfaces = interfaces();
-
-        // Find the specific network interface by name.
+        let config_iface = &CONFIG.get().unwrap().multicast.interface;
+        // Try to find the interface from config, else fallback to eth0
         let interface = interfaces
-            .into_iter()
-            .find(|iface| iface.name == CONFIG.get().unwrap().multicast.interface)
-            .expect("Failed to get the network interface");
+            .iter()
+            .find(|iface| iface.name == *config_iface)
+            .or_else(|| interfaces.iter().find(|iface| iface.name == "eth0"))
+            .cloned()
+            .expect("Failed to get the network interface (tried config and eth0)");
 
         // Initialize the IPv4 address variable.
         let mut ipv4_address = None;

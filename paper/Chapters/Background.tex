@@ -11,114 +11,39 @@
 % For referencing this chapter elsewhere, use \ref{ChapterTemplate}
 \label{BackgroundWork}
 
-% Write text in here
-% Use \subsection and \subsubsection to organize text
+The emergence of live streaming as a dominant force in digital communication has fundamentally transformed how multimedia content reaches end users, creating unprecedented demands on network infrastructure while simultaneously exposing critical limitations in traditional delivery mechanisms, this occurs within a broader context of exponential growth in mobile data consumption, where video content increasingly dominates internet traffic patterns and challenges existing approaches to bandwidth management and quality assurance.
 
-This chapter establishes the theoretical foundations underlying secure, adaptive livestreaming systems in high-density wireless environments. Rather than providing general overviews, this chapter focuses on the specific theoretical aspects and mathematical principles that enable robust error correction, adaptive optimization, and cryptographic security in wireless streaming scenarios.
+\section{Evolution of Streaming Technologies and Network Infrastructure}
 
-\section{Streaming Technologies and Protocols}
+Modern live streaming architectures have evolved through successive generations of protocols, each addressing specific technical challenges while introducing new complexities. The foundational protocol landscape encompasses several key technologies that collectively define contemporary streaming capabilities \cite{dacast2025}. HTTP Live Streaming (HLS), originally developed by Apple, has established dominance through its compatibility with Content Delivery Networks and adaptive bitrate streaming mechanisms, enabling efficient content distribution through segmented delivery approaches that divide video streams into discrete chunks typically ranging from two to ten seconds \cite{dacast2025,getstream2025}. This segmentation strategy facilitates efficient caching mechanisms across distributed network infrastructures while supporting dynamic quality adaptation based on real-time network conditions.
 
-\subsection{MPEG-TS Streaming over UDP}
+The complementary role of Real-Time Messaging Protocol (RTMP) demonstrates the layered complexity of modern streaming architectures, where different protocols serve distinct functions within the overall delivery pipeline \cite{dyte2024}. RTMP's persistent connection model provides reliable stream ingestion capabilities with latency characteristics ranging from two to five seconds, making it particularly suitable for encoder-to-server transmission despite potential congestion control limitations inherent in TCP-based communication \cite{dacast2025,dyte2024}. However, the tension between reliability and latency becomes apparent when examining WebRTC's alternative approach, which achieves sub-second latency through peer-to-peer communication mechanisms while sacrificing the scalability advantages of traditional broadcast architectures \cite{dacast2025,getstream2025}.
 
-MPEG Transport Stream (MPEG-TS) represents a standardized container format for video content delivery \cite{mpeg1996ts}. Originally designed for broadcasting applications, MPEG-TS provides robust error resilience through its packet-based structure with 188-byte fixed-length packets that include synchronization bytes and error detection mechanisms.
+The emergence of hybrid streaming architectures represents a significant advancement in addressing these trade-offs, combining multiple protocols to optimize different aspects of the streaming pipeline \cite{getstream2025}. Contemporary platforms increasingly adopt RTMP for reliable ingestion, automatic transcoding to HLS or Dynamic Adaptive Streaming over HTTP (DASH) for scalable distribution, and WebRTC for interactive features, with real-time protocol switching based on device capabilities and network conditions \cite{getstream2025}. This multi-protocol approach reflects the inherent complexity of serving diverse user bases across heterogeneous network environments while maintaining consistent quality of experience.
 
-UDP (User Datagram Protocol) enables low-latency, connectionless transport suitable for real-time streaming applications. Unlike TCP, UDP does not provide reliability guarantees, requiring the application layer to handle packet loss through Forward Error Correction mechanisms. The combination of MPEG-TS over UDP balances efficient transmission with application-level error recovery.
+The integration of edge computing with traditional Content Delivery Network frameworks creates hybrid architectures that address fundamental limitations in both centralized and distributed content delivery approaches \cite{dacast2025edge,cachefly2024}. Edge computing extends cloud capabilities to network edges, enabling single-digit millisecond delivery times through geographically distributed processing resources while reducing computational burden on centralized infrastructure \cite{cachefly2024}. These systems dynamically allocate resources based on demand patterns, switching between edge and cloud processing as network conditions evolve, thereby creating more resilient and responsive streaming architectures \cite{fastpix2024,cachefly2024}.
 
-\subsection{UDP Multicast and Unicast}
+\section{Forward Error Correction and Wireless Communication Challenges}
 
-IP multicast enables efficient one-to-many content distribution by allowing network infrastructure to replicate packets rather than requiring the source to send individual copies \cite{ahlswede2000network}. Multicast addresses (224.0.0.0/4 in IPv4) enable scalable content delivery to multiple subscribers simultaneously.
+The unreliable nature of wireless communication channels necessitates sophisticated error recovery mechanisms that operate across multiple network layers, with Application Layer Forward Error Correction emerging as a critical technology for maintaining stream quality in environments characterized by packet loss and transmission errors \cite{terrazone2025,techtarget2023}. Unlike traditional physical-layer FEC approaches, application-layer mechanisms provide flexible and adaptive error recovery specifically designed for streaming applications, adding redundant information to video streams that enables receivers to reconstruct lost packets without requiring retransmission \cite{diva2015,qualcomm2016}.
 
-However, multicast suffers from reliability issues as the protocol operates on a best-effort basis without acknowledgments or retransmission mechanisms. This limitation necessitates combining multicast for primary content delivery with unicast channels for error recovery and control operations.
+The mathematical foundations of these error correction schemes reveal both their capabilities and limitations when applied to real-world streaming scenarios. Reed-Solomon codes form the basis of many AL-FEC implementations, offering strong error correction capabilities for block-based data transmission while maintaining reasonable computational overhead \cite{techtarget2023,scirp2015}. However, fixed redundancy levels in traditional Reed-Solomon implementations demonstrate poor adaptation to varying network conditions, leading to either insufficient protection during periods of high loss or excessive bandwidth consumption during stable transmission periods \cite{diva2015}.
 
-\section{Error Correction Foundations}
+Adaptive FEC mechanisms address these limitations through dynamic adjustment of parity packet quantities based on observed network performance, with Proportional and Proportional-Integral controllers significantly reducing discarded video blocks compared to simple on-off schemes \cite{diva2015,maister2024}. The implementation of these adaptive mechanisms reveals complex trade-offs between computational complexity, latency constraints, and error recovery effectiveness, particularly in real-time streaming applications where processing delays must remain below perceptible thresholds \cite{maister2024}.
 
-\subsection{Reed-Solomon Codes}
+The bursty error characteristics of wireless networks introduce additional complexity that traditional error correction schemes struggle to address effectively. Packet interleaving addresses these challenges by spreading potential losses over time, converting burst errors into isolated losses that prove more easily correctable through standard FEC techniques \cite{scirp2015,traffic2009,springer2007}. Block interleaving arrangements organize packets into matrices, filling by rows and transmitting by columns, effectively converting burst losses of length B into smaller bursts of length B/n, where n represents the interleaving depth \cite{traffic2009}. The optimization of interleaving parameters requires careful consideration of network conditions, application requirements, and the fundamental trade-off between buffering delay and error recovery capability.
 
-Reed-Solomon codes provide optimal error correction capabilities for symbol erasure channels, where entire symbols (typically bytes) are either received correctly or lost completely \cite{reed1960polynomial}. These codes operate over Galois Fields GF($2^m$), with GF($2^8$) being common for byte-oriented applications.
+Advanced interleaving techniques incorporate content-aware approaches that consider the relative importance of different video data elements during transmission sequence organization \cite{sciencedirect2006,springer2007}. These methods can improve subjective video quality without requiring additional bandwidth by prioritizing critical video elements, though they introduce implementation complexity that may not be suitable for all deployment scenarios. The effectiveness of content-aware interleaving depends heavily on accurate characterization of video content importance, which varies significantly across different types of multimedia applications and user interaction patterns.
 
-A Reed-Solomon code RS$(n,k)$ encodes $k$ data symbols into $n$ total symbols, enabling recovery of up to $t = (n-k)/2$ symbol errors or up to $(n-k)$ symbol erasures when error locations are known. The mathematical foundation relies on polynomial interpolation over finite fields, where data symbols form coefficients of a polynomial that is evaluated at multiple points to generate redundancy symbols.
+\section{Mobile Crowdsourcing Security and Trust Management}
 
-\subsection{Two-Dimensional Error Correction}
+The paradigm shift toward crowdsourced network resources introduces fundamental security challenges that traditional centralized systems do not encounter, requiring novel approaches to authentication, authorization, and trust management in distributed computing environments \cite{uwaterloo2015,cambridge2015}. Mobile Crowdsourcing Networks comprise service providers, end users, sensing crowds, and computing crowds working collaboratively to accomplish distributed tasks, creating architectural complexity that extends beyond traditional client-server models \cite{uwaterloo2015}. The distributed nature of these networks eliminates centralized authority structures that typically provide security guarantees, while human involvement introduces privacy concerns around location information and personal data that automated systems can more easily protect.
 
-Two-dimensional FEC schemes organize data into rectangular matrices where both rows and columns receive independent Reed-Solomon protection \cite{blomer2000practical}. This approach addresses the bursty nature of packet loss in wireless networks, where consecutive packets often fail together due to channel fading or interference.
+Privacy threats in crowdsourcing environments arise from both data exposure and task distribution mechanisms, where sensed data may contain implicit location information revealing user movement patterns, while task content may expose sensitive business or personal information to untrusted participants \cite{uwaterloo2015,ieee2022}. Location leakage represents a persistent concern because adversaries can infer user behavior and whereabouts from movement traces, creating privacy vulnerabilities that extend beyond the immediate crowdsourcing application to broader personal security risks. The challenge intensifies in live streaming applications where location-based content recommendation and geographic load balancing may require explicit location sharing among participants.
 
-For a matrix $M$ with dimensions $r \times c$, row-wise encoding applies RS$(r+p_r, r)$ and column-wise encoding applies RS$(c+p_c, c)$, where $p_r$ and $p_c$ represent redundancy packets. This scheme recovers from burst losses up to $\min(p_r, p_c)$ consecutive packets while maintaining high recovery probability for random losses.
+Device-to-Device communication security presents unique vulnerabilities that traditional network security models do not adequately address \cite{cambridge2015,tum2015}. The absence of centralized authority such as access points or base stations forces resource-constrained end devices to handle authentication functions typically managed by centralized entities, creating computational and security challenges \cite{tum2015}. GPS spoofing attacks can provide false location data leading to incorrect spectrum allocation and significant system performance degradation, while the broadcast nature of device discovery makes D2D networks particularly vulnerable to location tracking and privacy violations \cite{cambridge2015,tum2015}.
 
-\section{Cryptographic Foundations}
+Contemporary security frameworks have developed sophisticated approaches to address these challenges through blockchain-based crowdsourcing models that provide transparent and tamper-resistant task assignment and result verification mechanisms \cite{sciencedirect2022}. These systems utilize smart contracts to automate payment distribution and quality assessment while maintaining participant anonymity, though they introduce computational overhead and energy consumption that may not be suitable for resource-constrained mobile devices. Privacy-preserving task recommendation systems employ attribute-based encryption to protect both task content and participant preferences, enabling fine-grained access control without revealing sensitive information to service providers or other participants \cite{uwaterloo2015}.
 
-\subsection{AES-256 Galois/Counter Mode}
+Trust management systems represent another critical component in crowdsourced streaming architectures, utilizing reputation mechanisms to evaluate participant reliability and detect malicious behavior \cite{uwaterloo2015}. These systems combine behavioral analysis, result verification, and peer assessment to maintain service quality while encouraging honest participation, though they must balance between strict security requirements and the need to maintain sufficient participant pools for effective crowdsourcing functionality.
 
-Advanced Encryption Standard (AES) with 256-bit keys provides symmetric encryption with 128-bit security strength \cite{nist2013aes}. Galois/Counter Mode (GCM) combines Counter Mode encryption with Galois Mode authentication to provide authenticated encryption \cite{dworkin2007recommendation}.
-
-Counter Mode enables parallel encryption by treating the cipher as a stream cipher, XORing plaintext with encrypted counter values. The counter ensures that identical plaintext blocks produce different ciphertext, preventing pattern analysis. Galois Mode generates authentication tags using polynomial multiplication over GF($2^{128}$), detecting both intentional tampering and transmission errors.
-
-\subsection{Elliptic Curve Cryptography}
-
-Elliptic Curve Digital Signature Algorithm (ECDSA) provides digital signatures with smaller key sizes compared to RSA while maintaining equivalent security levels \cite{johnson2001elliptic}. The NIST P-256 curve offers 128-bit security equivalent to 3072-bit RSA with significantly reduced computational and bandwidth overhead.
-
-ECDSA signatures consist of two integers (r,s) computed using the private key and message hash. Verification requires only the public key and signature, making it suitable for resource-constrained environments. The reduced signature size benefits streaming applications where authentication overhead must be minimized.
-
-\subsection{Public Key Infrastructure}
-
-X.509 certificates provide standardized public key authentication and distribution \cite{housley2002internet}. Certificate Signing Requests (CSR) following PKCS\#10 enable distributed key generation where clients create key pairs locally and submit public keys for certification \cite{nystrom2000pkcs}.
-
-Simplified PKI implementations with embedded Certificate Authority functionality can reduce deployment complexity while maintaining security properties. Self-signed root certificates eliminate external dependencies, making such systems suitable for isolated or high-security environments.
-
-\section{Machine Learning Foundations}
-
-\subsection{Reinforcement Learning and Q-Learning}
-
-Reinforcement Learning models decision-making as interaction between an agent and environment through states, actions, and rewards \cite{sutton2018reinforcement}. Q-learning provides a model-free approach to learning optimal policies by estimating action-value functions $Q(s,a)$ representing expected future rewards \cite{watkins1992q}.
-
-The Q-learning update rule:
-$$Q(s,a) \leftarrow Q(s,a) + \alpha[r + \gamma \max_{a'} Q(s',a') - Q(s,a)]$$
-
-balances exploration and exploitation through the learning rate $\alpha$ and discount factor $\gamma$. This approach enables adaptive parameter adjustment without requiring explicit models of network dynamics.
-
-For streaming applications, the state space $S$ typically encompasses network conditions derived from client reports, the action space $A$ includes transmission parameters such as FEC redundancy levels, and rewards $R$ reflect quality metrics such as packet loss rates and user satisfaction. The Q-function $Q(s,a)$ estimates expected cumulative reward for taking action $a$ in state $s$, enabling systems to learn optimal configurations for varying network conditions.
-
-\section{Communication Protocols}
-
-\subsection{gRPC and Protocol Buffers}
-
-gRPC provides high-performance Remote Procedure Call framework built on HTTP/2 \cite{google2015grpc}. Features include multiplexing, flow control, header compression, and authentication. The framework supports streaming operations essential for real-time applications.
-
-Protocol Buffers enable efficient binary serialization with language independence and version compatibility \cite{google2008protobuf}. Variable-length encoding reduces message sizes, while field numbering supports schema evolution. The combination provides type-safe, efficient communication for control plane operations.
-
-\subsection{Transport Layer Security}
-
-TLS 1.3 provides secure communication channels with forward secrecy and reduced handshake latency \cite{rescorla2018tls13}. The protocol establishes authenticated, encrypted channels suitable for sensitive control operations while maintaining performance for real-time applications.
-
-\section{Implementation Technologies and Tools}
-
-\subsection{Rust Programming Language}
-
-Rust provides memory safety without garbage collection through ownership and borrowing mechanisms \cite{matsakis2014rust}. The type system prevents data races and memory errors at compile time, reducing security vulnerabilities common in systems programming languages.
-
-Rust's zero-cost abstractions enable high-level programming constructs without runtime overhead. The ownership model ensures deterministic resource management essential for real-time streaming applications.
-
-\subsection{Asynchronous Runtime: Tokio}
-
-Tokio provides an asynchronous runtime for Rust, enabling efficient handling of concurrent I/O operations \cite{tokio2023async}. The event-driven architecture scales to thousands of concurrent connections without the overhead of thread-per-connection models.
-
-Async/await syntax simplifies asynchronous programming while maintaining performance. The runtime coordinates task scheduling, I/O polling, and timer management essential for networking applications.
-
-\subsection{Low-Level I/O: Mio}
-
-Mio (Metal I/O) provides cross-platform, non-blocking I/O primitives for Rust \cite{mio2023async}. The library abstracts platform-specific event notification mechanisms (epoll, kqueue, IOCP) while maintaining zero-cost abstractions.
-
-The reactor pattern enables efficient event handling for network operations, supporting the high-throughput requirements of streaming applications while minimizing CPU usage.
-
-\section{Testing and Development Tools}
-
-\subsection{Linux Network Namespaces}
-
-Network namespaces provide isolated network stacks for testing complex network topologies without requiring physical infrastructure. Each namespace maintains independent routing tables, network interfaces, and iptables rules, enabling comprehensive testing of distributed systems.
-
-Traffic Control (tc) utilities enable precise network condition simulation, including packet loss, delay, and bandwidth limitations. This capability supports realistic testing of error correction and adaptive mechanisms under various network conditions.
-
-\subsection{Monitoring and Metrics}
-
-Prometheus provides time-series monitoring with pull-based metric collection \cite{prometheus2023monitoring}. Such systems capture performance metrics, error rates, and resource utilization essential for understanding system behavior under various conditions.
-
-Grafana enables visualization and alerting based on time-series metrics. The combination provides comprehensive observability for debugging and performance optimization during development and deployment.

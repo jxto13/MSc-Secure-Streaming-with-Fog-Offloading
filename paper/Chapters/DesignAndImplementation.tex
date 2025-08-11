@@ -11,35 +11,50 @@
 % For referencing this chapter elsewhere, use \ref{ChapterTemplate}
 \label{DesignAndImplementation}
 
-This chapter presents the detailed design and implementation of the IRIS system, building upon the system requirements and architectural principles established in Chapter~\ref{Introduction}. To address the challenges identified in the literature review (Chapter~\ref{State of the Art}), a secure livestreaming framework with fog offloading capabilities was developed leveraging the Rust programming language, chosen for its memory safety and concurrency guarantees, which reduces common vulnerabilities such as buffer overflows and data race conditions \cite{jung2017rust, matsakis2014rust}. In comparison to C++, Rust’s ownership model and strict compile-time checks help prevent undefined behavior and improve reliability in complex, high-performance systems \cite{sharma2020comparison}, also all code used in this implementation adheres strictly to safe Rust, avoiding the use of \texttt{unsafe} blocks entirely to maintain guarantees of safety.
+This chapter presents the detailed design and implementation of the system, building upon the system requirements and architectural principles established in Chapter~\ref{Introduction}. To address the challenges identified in the literature review (Chapter~\ref{State of the Art}), a secure livestreaming framework with fog offloading capabilities was developed leveraging the Rust programming language, chosen for its memory safety and concurrency guarantees, which reduces common vulnerabilities such as buffer overflows and data race conditions \cite{jung2017rust, matsakis2014rust}. In comparison to C++, Rust’s ownership model and strict compile-time checks help prevent undefined behavior and improve reliability in complex, high-performance systems \cite{sharma2020comparison}, also all code used in this implementation adheres strictly to safe Rust, avoiding the use of \texttt{unsafe} blocks entirely to maintain guarantees of safety.
 
 \section{System Architecture}
 
-The architecture of the system is grounded in the principles of modularity, service orientation, and distributed computing, drawing from established paradigms such as microservices and fog computing \cite{yu2015survey, bonomi2012fog, vaquero2014finding}. This approach enables the separation of concerns, scalability, and maintainability, which are essential for modern streaming platforms. The system is composed of several distinct components, each fulfilling a specialized role within the overall workflow.
-
-At the ingestion layer, the Restreamer application is employed as a dedicated encoder. Its primary function is to capture video streams from heterogeneous sources and perform protocol-agnostic encoding. This decoupling of encoding from distribution is a recognized best practice in distributed multimedia systems, as it allows for greater flexibility in adapting to varying input formats and network conditions \cite{li2016survey, zhang2017video}. The encoded streams are then forwarded to the core streaming server.
-
-The streaming server, implemented in Rust, serves as the central orchestrator for content distribution. It is responsible for managing client connections, routing streams, and handling protocol translation. The server leverages gRPC for inter-process communication, which provides efficient, low-latency, and language-agnostic messaging \cite{wang2016survey}. Specialized services within the server, such as time synchronization and client reporting, are designed to ensure consistent playback and facilitate adaptive control mechanisms. The strict use of safe Rust throughout the codebase, as recommended in systems programming literature \cite{jung2017rust, matsakis2014rust, sharma2020comparison}, mitigates risks associated with memory safety and concurrency, thereby enhancing reliability and security.
-
-Monitoring and observability are integral to the system’s operation. The streaming server exposes a comprehensive set of metrics via a Prometheus exporter, including retransmission rates, latency, and resource utilization. These metrics are collected and visualized in real time using Grafana, which enables operators to assess system health, diagnose issues, and optimize performance \cite{turnbull2018monitoring, barrett2016monitoring}. This observability framework is consistent with cloud-native and distributed system best practices, where continuous monitoring is critical for maintaining service quality.
-
-Client devices participate in the monitoring process by periodically submitting signed reports to the server. These reports contain performance metrics, counters to prevent replay attacks, and detailed statistics such as retransmission counts and bitmap representations of client status. This mechanism supports robust, data-driven monitoring and enhances the security posture of the system \cite{zhu2013multimedia, li2016survey}.
-
-The architecture is designed to support independent scaling of its components, allowing the encoder, streaming server, and monitoring subsystems to be scaled according to demand. By adhering to open standards and distributed system principles, the system is positioned for future expansion and integration with additional services, maintaining high levels of performance and reliability \cite{yu2015survey, bonomi2012fog, mach2017mobile}.
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=0.95\linewidth]{DesignAndImplementation/global_architecture.pdf}
-    \caption{Global architecture of the system, illustrating the main components and their interactions.}
-    \label{fig:global-architecture}
+\begin{figure}
+	\centering
+	\includegraphics[width=.75\linewidth]{DesignAndImplementation/system.png}
+	\captionof{figure}{\label{fig:}Sytem Overall Architecture}
 \end{figure}
 
-\subsection{Streaming Server}
-\section{Protocol Design}
+\section{Client}
 
-\subsection{Threat Model and Attack Mitigation}
-\label{sec:threat-model-mitigation}
+\subsection{Android Application}
 
-In addition to the architectural design, the implementation is organized to facilitate modular development, reproducibility, and ease of deployment. The project directory is structured into distinct folders, each corresponding to a major subsystem or supporting resource. For example, the 	exttt{encoder/} and 	exttt{iris/} directories contain the source code for the encoding and streaming server components, respectively, while configuration files, data, and utility scripts are separated into their own dedicated folders. This organization supports clear separation of concerns and simplifies navigation for developers and reviewers.
+The android application uses all the android interfaces for the wifi aware api and media codec, we create a custom data source that enables the use of a file descriptor, and all p2p connections are handled in java allowing the disable of the functionality for privace uses and control.
 
-To further enhance reproducibility and streamline deployment, containerization is employed throughout the implementation. Dockerfiles are provided for building isolated environments for each major component, and 	exttt{docker-compose.yml} files orchestrate multi-container setups for integration testing and production deployment. This approach ensures that dependencies are managed consistently, reduces the risk of environment-specific issues, and enables rapid setup of the system on different platforms \cite{boettiger2015introduction, merkel2014docker}. By leveraging Docker, the implementation adheres to best practices in modern software engineering, supporting both local development and scalable cloud deployment scenarios.
+\subsection{Decoder}
+
+The decoder uses multiple channels to receive and send data pacets, its main function is the verifiying, decoding and reconstruction packets, also it creates the client reports based on current buffer.
+
+The decoder can receive multiple types of packets, all are encapsulated in a PacketWrapper, the types can be TransmissionPacket, RetransmissionPacket and inside the last one it can be an XorPacket or a normal TransmissionPacket. As described before the data comes in matrixes, so we need to track the matrix and current encryption key for that current matrix
+
+\subsection{Reporting Sink}
+
+The reporting sink is used to send compress bitmap reports with metrics to the server, the reports have a signature to authentic the message and counter to avoid replay attacks. The report is serialized and compressed using gzip. 
+ 
+\subsection{Android Rust Linker}
+
+The android rust linker is a module that bridges the client abstract client library with the android jni, this enables automatic compilation and linking using org.mozilla.rust-android-gradle.rust-android, when the aarch64-linux-android toolchains are installed in the local computer, using this android library makes it automatic to integrate the code in the android application.
+
+The use of the jni is expensive, so we only call it when necessary and never to move a lot of data, we use it to starting the logging to adb logcat, starting and stoping the client, get metrics from the client, add and remove sockets dynamicly and managing threads. All decoded data from the client is passed to the java using a file descripter.
+
+\subsection{P2P discovery and connection}
+
+The wifi aware implementation in android has hardware limitations, as described in the chapter 2, this requires special logic when discovering clients, because we want a full decentrilized p2p network, every devices needs to be simultinisly a subscriber and a publisher, this implicates when two devices are in range of eatchouther they will as find the publisher as a subscriber creating a race condition, to solve this during the discovery phase, the wifi aware as metadata exchange capabilities (200bytes? non reliable delivery or order), we use that to exchange devices capabilites, every device implementation as diferent hardware, for example the google pixel 6 has only 1 interface and 8 nan data paths, where the google pixel 7a has 2 interfaces and 8 nan data paths, this results in that the google pixel 7a can be connected to 2 diferent devices at the same time, the metadata exchange gives the two devices trying to connect a role based on available resources, in last resort the lower uuid is chosen, making a predictable choice. When two devices create a succeful connection it creats a interface for that p2p link, the android java exposes a quick way to create a socket between the peers, but for our implementation, we use the jni interface to pass the ipv6 link local address with the corresponding scope id to the rust linker library, there we add the interface to our implementation of the mesh networking, that discovers and relays packets to all connected peers.
+
+\subsection{Mesh Networking}
+
+The mesh networking is a module inside the client library, by default the client starts without the mesh networking, this is by design and allows to be moduler and avoids creating resources where the offloading is not possible or required. The mesh is using a unstructed non fully connected mesh topology, because of the preview hardware constrains we talked in the previous chapter, to combate this constrains every packet in the mesh has a TTL, when we receive a new packet verify the ttl and if is different than 0, we process the packet and relay to all interfaces excepet the one we received, this avoids loops and follows the pattern of flooding a network, along side we added an heartbeat mechanism to keep interface active, by default android kills p2p links when theres no activities after 60 seconds.
+
+The mesh uses a tokio runtime to schedule and run periodic taks, as well detect new packets in sockets, the integration with the clients occours using channels, avoiding any data sharing, dead locks or race conditions, because of the async nature of tokio we cant use a normal syncrones channel, so the use of the crate loole was needed, this crate bridges async with sync channels, enabling the connection between the client retransmission manager and mesh.
+
+All the request and response are flooded to the network, so even before a client requested a matrix it can be already in the mesh, making low latency. 
+
+\subsection{Retransmission Manager}
+
+Restransmission manager is run in a sperate thread avoiding blocking the decoder that need to maintain a constant performance requirement, the manager needs to have access to the current data in the buffer but to avoid dead locks and performance issues of always requiring a lock in the data, a cache buffer is used in the manager with a periodic sync with a limit size, so when theres a report sent to the servers a channel connected from the decoder to the manager gets all the current buffer from decoder and compares with the cache and only updates matrixes that where changed, avoiding retransmission in the mesh network not necessary. Then the manager as a main loop that reads all the request from the mesh network send to him, checks the cache if it has the packet creates a response with the correct type defined in the protofile and sends the reponse to the mesh, when a clients receives the reponse it creates the correct type that the decoder is expected to receives and sends to the data channel. 

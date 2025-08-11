@@ -347,7 +347,7 @@ impl Node {
                                         }
                                     }
                                     Some(PacketType::Request(_)) => {
-                                        // debug!("Received retransmission request");
+                                        debug!("Received retransmission request");
 
                                         // Relay the request if TTL allows
                                         if packet.ttl > 0 {

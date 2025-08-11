@@ -113,7 +113,7 @@ The system uses Docker containers orchestrated across a custom bridge network (`
 
 1. **Create Docker Network**:
    ```bash
-   docker network create --driver=bridge --subnet=172.22.0.0/16 iris-network
+    docker network create --driver=bridge --subnet=172.22.0.0/16 --opt com.docker.network.bridge.name=br_iris iris-network
    ```
 
 2. **Build and Deploy**:

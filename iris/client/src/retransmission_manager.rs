@@ -102,6 +102,7 @@ impl RetransmissionManager {
 
             // Receiving request from MESH channel, this is receiving a packet from mesh network
             if let Ok(mesh_packet) = node_tx.try_recv() {
+                info!("Received packet from mesh network: {:?}", mesh_packet.packet_type);
                 // Get the packet from the cached buffer if we have it
                 match mesh_packet.packet_type {
                     Some(PacketType::Request(request)) => {
