@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.22.0 (TeX Live 2026/dev/Arch Linux)  (format=lualatex 2025.7.8)  11 AUG 2025 22:37
+This is LuaHBTeX, Version 1.22.0 (TeX Live 2026/dev/Arch Linux)  (format=lualatex 2025.7.8)  12 AUG 2025 19:14
  restricted system commands enabled.
 **main.tex
 (./main.tex
@@ -955,12 +955,22 @@ Document Style algorithmicx 1.2 - a greatly improved `algorithmic' style
 \c@ALG@storecount=\count373
 \c@ALG@tmpcounter=\count374
 \ALG@tmplength=\skip96
+) (/usr/share/texmf-dist/tex/latex/algorithms/algorithm.sty
+Package: algorithm 2009/08/24 v0.1 Document Style `algorithm' - floating enviro
+nment
+\@float@every@algorithm=\toks62
+\c@algorithm=\count375
+)
+(/usr/share/texmf-dist/tex/latex/algorithmicx/algpseudocode.sty
+Package: algpseudocode 
+
+Document Style - pseudocode environments for use with the `algorithmicx' style
 ) (/usr/share/texmf-dist/tex/latex/hyperref/backref.sty
 Package: backref 2023-11-26 v1.44 Bibliographical back referencing
 )
-Package hyperref Info: Option `colorlinks' set `true' on input line 156.
-Package hyperref Info: Option `breaklinks' set `true' on input line 156.
-Package hyperref Info: Option `hypertexnames' set `true' on input line 156.
+Package hyperref Info: Option `colorlinks' set `true' on input line 159.
+Package hyperref Info: Option `breaklinks' set `true' on input line 159.
+Package hyperref Info: Option `hypertexnames' set `true' on input line 159.
 
 (/usr/share/texmf-dist/tex/latex/fancybox/fancybox.sty
 Package: fancybox 2010/05/15 1.4
@@ -969,10 +979,10 @@ Style option: `fancybox' v1.4 <2010/05/15> (tvz)
 \@fancybox=\box85
 \shadowsize=\dimen295
 \@Sbox=\box86
-\do@VerbBox=\toks62
-\the@fancyput=\toks63
-\this@fancyput=\toks64
-\EndVerbatimTokens=\toks65
+\do@VerbBox=\toks63
+\the@fancyput=\toks64
+\this@fancyput=\toks65
+\EndVerbatimTokens=\toks66
 \Verbatim@Outfile=\write4
 \Verbatim@Infile=\read5
 ) (/usr/share/texmf-dist/tex/latex/ragged2e/ragged2e.sty
@@ -995,7 +1005,7 @@ Package: ragged2e 2023/06/22 v3.6 ragged2e Package
 (/usr/share/texmf-dist/tex/latex/multirow/multirow.sty
 Package: multirow 2024/11/12 v2.9 Span multiple rows of a table
 \multirow@colwidth=\skip111
-\multirow@cntb=\count375
+\multirow@cntb=\count376
 \multirow@dima=\skip112
 \bigstrutjot=\dimen296
 )
@@ -1023,11 +1033,11 @@ Package: pgfcore 2023-01-15 v3.1.10 (3.1.10)
 (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathutil.code.tex)
 (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathparser.code.tex
 \pgfmath@dimen=\dimen297
-\pgfmath@count=\count376
+\pgfmath@count=\count377
 \pgfmath@box=\box87
-\pgfmath@toks=\toks66
-\pgfmath@stack@operand=\toks67
-\pgfmath@stack@operation=\toks68
+\pgfmath@toks=\toks67
+\pgfmath@stack@operand=\toks68
+\pgfmath@stack@operation=\toks69
 )
 (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.code.tex)
 (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.basic.code.tex)
@@ -1041,7 +1051,7 @@ x) (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.base.code.tex)
 (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.integerarithmetics
 .code.tex) (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathcalc.code.tex)
 (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfloat.code.tex
-\c@pgfmathroundto@lastzeros=\count377
+\c@pgfmathroundto@lastzeros=\count378
 ))
 (/usr/share/texmf-dist/tex/generic/pgf/math/pgfint.code.tex)
 (/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepoints.code.tex
@@ -1075,7 +1085,7 @@ File: pgfcorescopes.code.tex 2023-01-15 v3.1.10 (3.1.10)
 \pgfpic=\box88
 \pgf@hbox=\box89
 \pgf@layerbox@main=\box90
-\pgf@picture@serial@count=\count378
+\pgf@picture@serial@count=\count379
 )
 (/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcoregraphicstate.code.tex
 File: pgfcoregraphicstate.code.tex 2023-01-15 v3.1.10 (3.1.10)
@@ -1103,8 +1113,8 @@ File: pgfcorearrows.code.tex 2023-01-15 v3.1.10 (3.1.10)
 (/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreshade.code.tex
 File: pgfcoreshade.code.tex 2023-01-15 v3.1.10 (3.1.10)
 \pgf@max=\dimen321
-\pgf@sys@shading@range@num=\count379
-\pgf@shadingcount=\count380
+\pgf@sys@shading@range@num=\count380
+\pgf@shadingcount=\count381
 )
 (/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreimage.code.tex
 File: pgfcoreimage.code.tex 2023-01-15 v3.1.10 (3.1.10)
@@ -1148,8 +1158,8 @@ Package: pgfcomp-version-1-18 2023-01-15 v3.1.10 (3.1.10)
 Package: pgffor 2023-01-15 v3.1.10 (3.1.10)
 \pgffor@iter=\dimen324
 \pgffor@skip=\dimen325
-\pgffor@stack=\toks69
-\pgffor@toks=\toks70
+\pgffor@stack=\toks70
+\pgffor@toks=\toks71
 ))
 (/usr/share/texmf-dist/tex/generic/pgf/frontendlayer/tikz/tikz.code.tex
 Package: tikz 2023-01-15 v3.1.10 (3.1.10)
@@ -1157,7 +1167,7 @@ Package: tikz 2023-01-15 v3.1.10 (3.1.10)
 (/usr/share/texmf-dist/tex/generic/pgf/libraries/pgflibraryplothandlers.code.te
 x
 File: pgflibraryplothandlers.code.tex 2023-01-15 v3.1.10 (3.1.10)
-\pgf@plot@mark@count=\count381
+\pgf@plot@mark@count=\count382
 \pgfplotmarksize=\dimen326
 )
 \tikz@lastx=\dimen327
@@ -1172,17 +1182,17 @@ File: pgflibraryplothandlers.code.tex 2023-01-15 v3.1.10 (3.1.10)
 \tikz@figbox@bg=\box94
 \tikz@tempbox=\box95
 \tikz@tempbox@bg=\box96
-\tikztreelevel=\count382
-\tikznumberofchildren=\count383
-\tikznumberofcurrentchild=\count384
-\tikz@fig@count=\count385
+\tikztreelevel=\count383
+\tikznumberofchildren=\count384
+\tikznumberofcurrentchild=\count385
+\tikz@fig@count=\count386
  (/usr/share/texmf-dist/tex/generic/pgf/modules/pgfmodulematrix.code.tex
 File: pgfmodulematrix.code.tex 2023-01-15 v3.1.10 (3.1.10)
-\pgfmatrixcurrentrow=\count386
-\pgfmatrixcurrentcolumn=\count387
-\pgf@matrix@numberofcolumns=\count388
+\pgfmatrixcurrentrow=\count387
+\pgfmatrixcurrentcolumn=\count388
+\pgf@matrix@numberofcolumns=\count389
 )
-\tikz@expandcount=\count389
+\tikz@expandcount=\count390
 
 (/usr/share/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrary
 topaths.code.tex
@@ -1192,24 +1202,24 @@ File: tikzlibrarytopaths.code.tex 2023-01-15 v3.1.10 (3.1.10)
 positioning.code.tex
 File: tikzlibrarypositioning.code.tex 2023-01-15 v3.1.10 (3.1.10)
 )
-\c@@todonotes@numberoftodonotes=\count390
+\c@@todonotes@numberoftodonotes=\count391
 ) (/usr/share/texmf-dist/tex/latex/fontspec/fontspec.sty
 Package: fontspec 2024/05/11 v2.9e Font selection for XeLaTeX and LuaLaTeX
 Lua module: fontspec 2024/05/11 v2.9e Font selection for XeLaTeX and LuaLaTeX
 (/usr/share/texmf-dist/tex/latex/fontspec/fontspec-luatex.sty
 Package: fontspec-luatex 2024/05/11 v2.9e Font selection for XeLaTeX and LuaLaT
 eX
-\l__fontspec_script_int=\count391
-\l__fontspec_language_int=\count392
-\l__fontspec_strnum_int=\count393
-\l__fontspec_tmp_int=\count394
-\l__fontspec_tmpa_int=\count395
-\l__fontspec_tmpb_int=\count396
-\l__fontspec_tmpc_int=\count397
-\l__fontspec_em_int=\count398
-\l__fontspec_emdef_int=\count399
-\l__fontspec_strong_int=\count400
-\l__fontspec_strongdef_int=\count401
+\l__fontspec_script_int=\count392
+\l__fontspec_language_int=\count393
+\l__fontspec_strnum_int=\count394
+\l__fontspec_tmp_int=\count395
+\l__fontspec_tmpa_int=\count396
+\l__fontspec_tmpb_int=\count397
+\l__fontspec_tmpc_int=\count398
+\l__fontspec_em_int=\count399
+\l__fontspec_emdef_int=\count400
+\l__fontspec_strong_int=\count401
+\l__fontspec_strongdef_int=\count402
 \l__fontspec_tmpa_dim=\dimen335
 \l__fontspec_tmpb_dim=\dimen336
 \l__fontspec_tmpc_dim=\dimen337
@@ -1243,8 +1253,8 @@ Package: glossaries 2025/03/03 v4.56 (NLCT)
 
 (/usr/share/texmf-dist/tex/latex/mfirstuc/mfirstuc.sty
 Package: mfirstuc 2022/10/14 v2.08 (NLCT)
-\@glsmfirst=\toks71
-\@glsmrest=\toks72
+\@glsmfirst=\toks72
+\@glsmrest=\toks73
 )
 (/usr/share/texmf-dist/tex/latex/xfor/xfor.sty
 Package: xfor 2009/02/05 v1.05 (NLCT)
@@ -1269,38 +1279,38 @@ Package: datatool-base 2025/03/05 v3.0.1 (NLCT)
 (/usr/share/texmf-dist/tex/latex/datatool/datatool-lua.def
 File: datatool-lua.def 2025/03/05 v3.0.1 (NLCT)
 )
-\@dtl@toks=\toks73
-\@dtl@tmpcount=\count402
+\@dtl@toks=\toks74
+\@dtl@tmpcount=\count403
 \dtl@tmplength=\skip113
 \l__datatool_measure_box=\box97
-\dtl@sortresult=\count403
+\dtl@sortresult=\count404
 
 (/usr/share/texmf-dist/tex/latex/datatool/datatool-utf8.ldf
 File: datatool-utf8.ldf 2025/03/05 v3.0.1 (NLCT)
 )
-\@dtl@datatype=\count404
-\l__datatool_tmpa_int=\count405
-\l__datatool_tmpb_int=\count406
-\l__datatool_tmpc_int=\count407
-\l__datatool_tmpd_int=\count408
-\l__datatool_count_int=\count409
-\l__datatool_tmp_datatype_int=\count410
+\@dtl@datatype=\count405
+\l__datatool_tmpa_int=\count406
+\l__datatool_tmpb_int=\count407
+\l__datatool_tmpc_int=\count408
+\l__datatool_tmpd_int=\count409
+\l__datatool_count_int=\count410
+\l__datatool_tmp_datatype_int=\count411
 \l__datatool_tmpa_dim=\dimen338
 \l__datatool_tmpb_dim=\dimen339
-\c_datatool_unknown_int=\count411
-\l__datatool_year_int=\count412
-\l__datatool_month_int=\count413
-\l__datatool_day_int=\count414
-\l__datatool_hour_int=\count415
-\l__datatool_minute_int=\count416
-\l__datatool_second_int=\count417
-\l__datatool_tzhour_int=\count418
-\l__datatool_tzminute_int=\count419
-\l__datatool_julian_int=\count420
-\l__datatool_local_julian_int=\count421
-\l__datatool_prefix_int=\count422
-\l__datatool_suffix_int=\count423
-\@dtl@foreach@level=\count424
+\c_datatool_unknown_int=\count412
+\l__datatool_year_int=\count413
+\l__datatool_month_int=\count414
+\l__datatool_day_int=\count415
+\l__datatool_hour_int=\count416
+\l__datatool_minute_int=\count417
+\l__datatool_second_int=\count418
+\l__datatool_tzhour_int=\count419
+\l__datatool_tzminute_int=\count420
+\l__datatool_julian_int=\count421
+\l__datatool_local_julian_int=\count422
+\l__datatool_prefix_int=\count423
+\l__datatool_suffix_int=\count424
+\@dtl@foreach@level=\count425
 
 (/usr/share/texmf-dist/tex/latex/datatool-english/datatool-english.ldf
 File: datatool-english.ldf 2025/03/01 v1.0 (NLCT)
@@ -1312,16 +1322,16 @@ File: datatool-english-utf8.ldf 2025/03/01 v1.0 (NLCT)
 Package tracklang Warning: No `datatool' support for dialect `portuguese'  on i
 nput line 9897.
 
-\dtl@codeA=\count425
-\dtl@codeB=\count426
+\dtl@codeA=\count426
+\dtl@codeB=\count427
 )
-\gls@level=\count427
-\@gls@tmpb=\toks74
+\gls@level=\count428
+\@gls@tmpb=\toks75
 \gls@tmplen=\skip114
-\glskeylisttok=\toks75
-\glslabeltok=\toks76
-\glsshorttok=\toks77
-\glslongtok=\toks78
+\glskeylisttok=\toks76
+\glslabeltok=\toks77
+\glsshorttok=\toks78
+\glslongtok=\toks79
  (/usr/share/texmf-dist/tex/latex/glossaries/styles/glossary-hypernav.sty
 Package: glossary-hypernav 2025/03/03 v4.56 (NLCT)
 )
@@ -1339,7 +1349,7 @@ Package: glossary-super 2025/03/03 v4.56 (NLCT)
 
 (/usr/share/texmf-dist/tex/latex/supertabular/supertabular.sty
 Package: supertabular 2024/07/20 v4.2c the supertabular environment
-\c@tracingst=\count428
+\c@tracingst=\count429
 \ST@wd=\dimen340
 \ST@rightskip=\skip118
 \ST@leftskip=\skip119
@@ -1363,11 +1373,11 @@ Package: glossary-tree 2025/03/03 v4.56 (NLCT)
 \glo@main@file=\write6
 
 \openout6 = main.glo
-Package glossaries Info: Writing glossary file main.glo on input line 225.
+Package glossaries Info: Writing glossary file main.glo on input line 228.
 \glo@acronym@file=\write7
 
 \openout7 = main.acn
-Package glossaries Info: Writing glossary file main.acn on input line 225.
+Package glossaries Info: Writing glossary file main.acn on input line 228.
 
 (/usr/share/texmf-dist/tex/latex/titlesec/titletoc.sty
 Package: titletoc 2025/01/04 v2.17 TOC entries
@@ -1449,19 +1459,19 @@ Package caption Info: End \AtBeginDocument code.
 
 (/usr/share/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count429
+\scratchcounter=\count430
 \scratchdimen=\dimen351
 \scratchbox=\box99
-\nofMPsegments=\count430
-\nofMParguments=\count431
-\everyMPshowfont=\toks79
-\MPscratchCnt=\count432
+\nofMPsegments=\count431
+\nofMParguments=\count432
+\everyMPshowfont=\toks80
+\MPscratchCnt=\count433
 \MPscratchDim=\dimen352
-\MPnumerator=\count433
-\makeMPintoPDFobject=\count434
-\everyMPtoPDFconversion=\toks80
+\MPnumerator=\count434
+\makeMPintoPDFobject=\count435
+\everyMPtoPDFconversion=\toks81
 )
-\c@lstlisting=\count435
+\c@lstlisting=\count436
 Package hyperref Info: Link coloring ON on input line 36.
  (./main.out) (./main.out)
 \@outlinefile=\write8
@@ -1498,12 +1508,12 @@ an be solved by adding a line like \setlength {\marginparwidth }{2cm} prior to
 loading the todonotes package. on input line 36.
 
 (./main.glsdefs)
-<Front/main.pdf, id=131, 597.5123pt x 845.04709pt>
+<Front/main.pdf, id=111, 597.5123pt x 845.04709pt>
 File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf>
 Package luatex.def Info: Front/main.pdf  used on input line 43.
 (luatex.def)             Requested size: 597.51083pt x 845.04503pt.
-<Front/main.pdf, id=133, page=1, 597.5123pt x 845.04709pt>
+<Front/main.pdf, id=113, page=1, 597.5123pt x 845.04709pt>
 File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf, page 1>
 Package luatex.def Info: Front/main.pdf , page1 used on input line 43.
@@ -1536,7 +1546,7 @@ File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf>
 Package luatex.def Info: Front/main.pdf  used on input line 45.
 (luatex.def)             Requested size: 597.51083pt x 845.04503pt.
-<Front/main.pdf, id=156, page=2, 597.5123pt x 845.04709pt>
+<Front/main.pdf, id=136, page=2, 597.5123pt x 845.04709pt>
 File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf, page 2>
 Package luatex.def Info: Front/main.pdf , page2 used on input line 45.
@@ -1667,118 +1677,93 @@ Overfull \hbox (6.08986pt too wide) detected at line 21
  []
 
 
-Overfull \hbox (6.08986pt too wide) detected at line 27
+Overfull \hbox (6.08986pt too wide) detected at line 29
  \TU/Arial(0)/m/n/10.95 7
  []
 
 
-Overfull \hbox (6.08986pt too wide) detected at line 28
+Overfull \hbox (6.08986pt too wide) detected at line 30
  \TU/Arial(0)/m/n/10.95 8
  []
 
 
-Overfull \hbox (6.08986pt too wide) detected at line 29
+Overfull \hbox (6.08986pt too wide) detected at line 31
+ \TU/Arial(0)/m/n/10.95 8
+ []
+
+
+Overfull \hbox (6.08986pt too wide) detected at line 32
+ \TU/Arial(0)/m/n/10.95 8
+ []
+
+
+Overfull \hbox (6.08986pt too wide) detected at line 33
  \TU/Arial(0)/m/n/10.95 9
  []
 
 
-Overfull \hbox (12.17972pt too wide) detected at line 30
- \TU/Arial(0)/m/n/10.95 11
+Overfull \hbox (6.08986pt too wide) detected at line 34
+ \TU/Arial(0)/m/n/10.95 9
  []
 
 
-Overfull \hbox (12.17972pt too wide) detected at line 31
- \TU/Arial(0)/m/n/10.95 11
+Overfull \hbox (6.08986pt too wide) detected at line 35
+ \TU/Arial(0)/m/n/10.95 9
  []
 
 
-Overfull \hbox (12.17972pt too wide) detected at line 32
- \TU/Arial(0)/m/n/10.95 12
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 33
- \TU/Arial(0)/m/n/10.95 13
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 34
- \TU/Arial(0)/m/n/10.95 14
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 35
- \TU/Arial(0)/m/n/10.95 16
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 36
- \TU/Arial(0)/m/n/10.95 16
+Overfull \hbox (6.08986pt too wide) detected at line 36
+ \TU/Arial(0)/m/n/10.95 9
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 37
- \TU/Arial(0)/m/n/10.95 17
+ \TU/Arial(0)/m/n/10.95 10
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 38
- \TU/Arial(0)/m/n/10.95 17
+ \TU/Arial(0)/m/n/10.95 10
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 39
- \TU/Arial(0)/m/n/10.95 17
+ \TU/Arial(0)/m/n/10.95 11
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 40
- \TU/Arial(0)/m/n/10.95 18
+ \TU/Arial(0)/m/n/10.95 11
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 41
- \TU/Arial(0)/m/n/10.95 18
+ \TU/Arial(0)/m/n/10.95 12
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 42
- \TU/Arial(0)/m/n/10.95 18
+ \TU/Arial(0)/m/n/10.95 13
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 43
- \TU/Arial(0)/m/n/10.95 19
+ \TU/Arial(0)/m/n/10.95 14
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 44
- \TU/Arial(0)/m/n/10.95 19
+ \TU/Arial(0)/m/n/10.95 14
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 45
- \TU/Arial(0)/m/n/10.95 21
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 46
- \TU/Arial(0)/m/n/10.95 22
+ \TU/Arial(0)/m/n/10.95 14
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 47
- \TU/Arial(0)/m/n/10.95 22
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 48
- \TU/Arial(0)/m/n/10.95 22
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 50
- \TU/Arial(0)/m/n/10.95 22
+ \TU/Arial(0)/m/n/10.95 14
  []
 
 )
@@ -1802,8 +1787,8 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
  List of Figures
 -----------------------------------------------------
 (./main.lof
-Overfull \hbox (12.17972pt too wide) detected at line 8
- \TU/Arial(0)/m/n/10.95 16
+Overfull \hbox (6.08986pt too wide) detected at line 8
+ \TU/Arial(0)/m/n/10.95 8
  []
 
 )
@@ -1850,32 +1835,12 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 Chapter 2.
 
 Package hyperref Warning: Difference (2) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 17.
-
-
-Package natbib Warning: Citation `prompeg' on page 3 undefined on input line 20
-.
-
-
-Package natbib Warning: Citation `smpte2022' on page 3 undefined on input line 
-20.
+(hyperref)                than one, level fixed on input line 16.
 
 LaTeX Font Info:    Font shape `U/msa/m/n' will be
-(Font)              scaled to size 11.40997pt on input line 21.
+(Font)              scaled to size 11.40997pt on input line 19.
 LaTeX Font Info:    Font shape `U/msb/m/n' will be
-(Font)              scaled to size 11.40997pt on input line 21.
-
-Package natbib Warning: Citation `rfc6865' on page 3 undefined on input line 22
-.
-
-
-Package natbib Warning: Citation `fec_video_study' on page 3 undefined on input
- line 22.
-
-
-Package natbib Warning: Citation `rs_intro' on page 3 undefined on input line 4
-1.
-
+(Font)              scaled to size 11.40997pt on input line 19.
 
 
 
@@ -1889,31 +1854,6 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 
 ]
 
-Package natbib Warning: Citation `limit_fec' on page 4 undefined on input line 
-59.
-
-
-Package natbib Warning: Citation `huawei_afec' on page 4 undefined on input lin
-e 59.
-
-
-Package natbib Warning: Citation `limit_fec' on page 4 undefined on input line 
-62.
-
-
-Package natbib Warning: Citation `fec_overhead_study' on page 4 undefined on in
-put line 62.
-
-
-Package natbib Warning: Citation `2d_fec_analysis' on page 4 undefined on input
- line 68.
-
-
-Package natbib Warning: Citation `2d_fec_bounds' on page 4 undefined on input l
-ine 68.
-
-
-
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
 (fancyhdr)                Make it at least 18.99997pt, for example:
@@ -1922,52 +1862,9 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [4]
-
-Package natbib Warning: Citation `rs_error_bounds' on page 5 undefined on input
- line 74.
-
-
-Package natbib Warning: Citation `2d_fec_bounds' on page 5 undefined on input l
-ine 78.
-
-
-Package natbib Warning: Citation `2d_fec_bounds' on page 5 undefined on input l
-ine 78.
-
-
-Package natbib Warning: Citation `raptor_vs_rs' on page 5 undefined on input li
-ne 80.
-
-
-Package natbib Warning: Citation `raptor_vs_rs' on page 5 undefined on input li
-ne 80.
-
-
-Overfull \hbox (46.91655pt too wide) in paragraph at lines 80--81
-[]\TU/Arial(0)/m/n/10.95 **Over-head Ef-fi-ciency Com-par-i-son.** Com-pared to al-ter-na-tive FEC schemes, **2-D Reed
-–Solomon
- []
-
-
-Package natbib Warning: Citation `limit_fec' on page 5 undefined on input line 
-82.
-
-
-Package natbib Warning: Citation `webrtc_fec' on page 5 undefined on input line
- 82.
-
-
-Package natbib Warning: Citation `limit_fec' on page 5 undefined on input line 
-82.
-
-
-Package natbib Warning: Citation `fec_scalable_video' on page 5 undefined on in
-put line 82.
-
-
-Overfull \hbox (7.27571pt too wide) in paragraph at lines 82--83
-\TU/Arial(0)/m/n/10.95 pen-sive back-haul con-nec-tions**. When com-bined with 
-typ-i-cal **20% bit-rate guard bands**,
+Overfull \hbox (15.03778pt too wide) in paragraph at lines 85--89
+[][]\TU/Arial(0)/b/n/10.95 Over-head Ef-fi-ciency Com-par-i-son.[] \TU/Arial(0)
+/m/n/10.95 Com-pared to other FEC meth-ods, 2-D Reed--Solomon
  []
 
 
@@ -1979,36 +1876,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[5]
-
-Package natbib Warning: Citation `smpte2022' on page 6 undefined on input line 
-90.
-
-
-Package natbib Warning: Citation `fec_video_study' on page 6 undefined on input
- line 90.
-
-
-Package natbib Warning: Citation `huawei_afec' on page 6 undefined on input lin
-e 91.
-
-
-Package natbib Warning: Citation `rs_prod_codes' on page 6 undefined on input l
-ine 91.
-
-
-Package natbib Warning: Citation `dacast2025' on page 6 undefined on input line
- 108.
-
-
-Package natbib Warning: Citation `dacast2025' on page 6 undefined on input line
- 108.
-
-
-Package natbib Warning: Citation `getstream2025' on page 6 undefined on input l
-ine 108.
-
-
+[5]) (./Chapters/StateOfTheArt.tex
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2018,375 +1886,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [6]
-
-Package natbib Warning: Citation `dyte2024' on page 7 undefined on input line 1
-10.
-
-
-Package natbib Warning: Citation `dacast2025' on page 7 undefined on input line
- 110.
-
-
-Package natbib Warning: Citation `dyte2024' on page 7 undefined on input line 1
-10.
-
-
-Package natbib Warning: Citation `dacast2025' on page 7 undefined on input line
- 110.
-
-
-Package natbib Warning: Citation `getstream2025' on page 7 undefined on input l
-ine 110.
-
-
-Package natbib Warning: Citation `getstream2025' on page 7 undefined on input l
-ine 112.
-
-
-Package natbib Warning: Citation `getstream2025' on page 7 undefined on input l
-ine 112.
-
-
-Package natbib Warning: Citation `dacast2025edge' on page 7 undefined on input 
-line 114.
-
-
-Package natbib Warning: Citation `cachefly2024' on page 7 undefined on input li
-ne 114.
-
-
-Package natbib Warning: Citation `cachefly2024' on page 7 undefined on input li
-ne 114.
-
-
-Package natbib Warning: Citation `fastpix2024' on page 7 undefined on input lin
-e 114.
-
-
-Package natbib Warning: Citation `cachefly2024' on page 7 undefined on input li
-ne 114.
-
-
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[7]
-
-Package natbib Warning: Citation `terrazone2025' on page 8 undefined on input l
-ine 118.
-
-
-Package natbib Warning: Citation `techtarget2023' on page 8 undefined on input 
-line 118.
-
-
-Package natbib Warning: Citation `diva2015' on page 8 undefined on input line 1
-18.
-
-
-Package natbib Warning: Citation `qualcomm2016' on page 8 undefined on input li
-ne 118.
-
-
-Package natbib Warning: Citation `techtarget2023' on page 8 undefined on input 
-line 120.
-
-
-Package natbib Warning: Citation `scirp2015' on page 8 undefined on input line 
-120.
-
-
-Package natbib Warning: Citation `diva2015' on page 8 undefined on input line 1
-20.
-
-
-Package natbib Warning: Citation `diva2015' on page 8 undefined on input line 1
-22.
-
-
-Package natbib Warning: Citation `maister2024' on page 8 undefined on input lin
-e 122.
-
-
-Package natbib Warning: Citation `maister2024' on page 8 undefined on input lin
-e 122.
-
-
-Package natbib Warning: Citation `scirp2015' on page 8 undefined on input line 
-124.
-
-
-Package natbib Warning: Citation `traffic2009' on page 8 undefined on input lin
-e 124.
-
-
-Package natbib Warning: Citation `springer2007' on page 8 undefined on input li
-ne 124.
-
-
-Package natbib Warning: Citation `traffic2009' on page 8 undefined on input lin
-e 124.
-
-
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[8]
-
-Package natbib Warning: Citation `sciencedirect2006' on page 9 undefined on inp
-ut line 126.
-
-
-Package natbib Warning: Citation `springer2007' on page 9 undefined on input li
-ne 126.
-
-
-Package natbib Warning: Citation `uwaterloo2015' on page 9 undefined on input l
-ine 130.
-
-
-Package natbib Warning: Citation `cambridge2015' on page 9 undefined on input l
-ine 130.
-
-
-Package natbib Warning: Citation `uwaterloo2015' on page 9 undefined on input l
-ine 130.
-
-
-Package natbib Warning: Citation `uwaterloo2015' on page 9 undefined on input l
-ine 132.
-
-
-Package natbib Warning: Citation `ieee2022' on page 9 undefined on input line 1
-32.
-
-
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[9]
-
-Package natbib Warning: Citation `cambridge2015' on page 10 undefined on input 
-line 134.
-
-
-Package natbib Warning: Citation `tum2015' on page 10 undefined on input line 1
-34.
-
-
-Package natbib Warning: Citation `tum2015' on page 10 undefined on input line 1
-34.
-
-
-Package natbib Warning: Citation `cambridge2015' on page 10 undefined on input 
-line 134.
-
-
-Package natbib Warning: Citation `tum2015' on page 10 undefined on input line 1
-34.
-
-
-Package natbib Warning: Citation `sciencedirect2022' on page 10 undefined on in
-put line 136.
-
-
-Package natbib Warning: Citation `uwaterloo2015' on page 10 undefined on input 
-line 136.
-
-
-Package natbib Warning: Citation `uwaterloo2015' on page 10 undefined on input 
-line 138.
-
-
-Overfull \hbox (2.87305pt too wide) in paragraph at lines 138--139
-[]\TU/Arial(0)/m/n/10.95 Trust man-age-ment sys-tems rep-re-sent an-other crit-i
--cal com-po-nent in crowd-sourced stream-
- []
-
-) (./Chapters/StateOfTheArt.tex
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[10]
 Chapter 3.
-
-Package natbib Warning: Citation `dacast2025' on page 11 undefined on input lin
-e 17.
-
-
-Package natbib Warning: Citation `dacast2025' on page 11 undefined on input lin
-e 19.
-
-
-Package natbib Warning: Citation `dev2024' on page 11 undefined on input line 1
-9.
-
-
-Overfull \hbox (7.84923pt too wide) in paragraph at lines 19--20
-\TU/Arial(0)/m/n/10.95 DASH de-liv-ery mech-a-nisms si-mul-ta-ne-ously [\TU/Ari
-al(0)/b/n/10.95 ? \TU/Arial(0)/m/n/10.95 ]. This uni-fi-ca-tion ef-fort ex-tends
- to WebRTC-
- []
-
-
-Package natbib Warning: Citation `maister2024' on page 11 undefined on input li
-ne 21.
-
-
-Package natbib Warning: Citation `sciencedirect2022prediction' on page 11 undef
-ined on input line 23.
-
-
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[11
-
-]
-
-Package natbib Warning: Citation `qualcomm2016' on page 12 undefined on input l
-ine 27.
-
-
-Package natbib Warning: Citation `maister2024' on page 12 undefined on input li
-ne 27.
-
-
-Package natbib Warning: Citation `qualcomm2016' on page 12 undefined on input l
-ine 29.
-
-
-Package natbib Warning: Citation `arxiv2022' on page 12 undefined on input line
- 31.
-
-
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[12]
-
-Package natbib Warning: Citation `maister2024' on page 13 undefined on input li
-ne 33.
-
-
-Package natbib Warning: Citation `sciencedirect2022blockchain' on page 13 undef
-ined on input line 37.
-
-
-Overfull \hbox (1.96825pt too wide) in paragraph at lines 37--38
-\TU/Arial(0)/m/n/10.95 must bal-ance trans-parency re-quire-ments with pri-vacy pro-tec-tion needs. Blockchain-based
- []
-
-
-Overfull \hbox (26.30391pt too wide) in paragraph at lines 39--40
-\TU/Arial(0)/m/n/10.95 chal-lenges re-lated to trans-ac-tion la-tency and com-pu
--ta-tional over-head that tra-di-tional blockchain
- []
-
-
-Package natbib Warning: Citation `sciencedirect2024' on page 13 undefined on in
-put line 41.
-
-
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[13]
-
-Package natbib Warning: Citation `uwaterloo2015' on page 14 undefined on input 
-line 43.
-
-
-Package natbib Warning: Citation `sciencedirect2021' on page 14 undefined on in
-put line 43.
-
-
-Package natbib Warning: Citation `dacast2025edge' on page 14 undefined on input
- line 47.
-
-
-Overfull \hbox (6.37862pt too wide) in paragraph at lines 47--48
-\TU/Arial(0)/m/n/10.95 tra-di-tional cloud-edge hi-er-ar-chies to in-cor-po-rate
- peer-to-peer and crowd-sourced re-sources.
- []
-
-
-Package natbib Warning: Citation `sciencedirect2019' on page 14 undefined on in
-put line 49.
-
-
-Package natbib Warning: Citation `numberanalytics2025' on page 14 undefined on 
-input line 49.
-
-
-Overfull \hbox (1.06052pt too wide) in paragraph at lines 49--50
-[]\TU/Arial(0)/m/n/10.95 Dy-namic ser-vice mi-gra-tion mech-a-nisms rep-re-sent a sig-nif-i-cant ad-vance-ment in dis-tributed
- []
-
-
-Package natbib Warning: Citation `arxiv2021' on page 14 undefined on input line
- 51.
-
-
-Overfull \hbox (6.8949pt too wide) in paragraph at lines 51--52
-\TU/Arial(0)/m/n/10.95 works while main-tain-ing quality-of-service guar-an-tees
- [\TU/Arial(0)/b/n/10.95 ? \TU/Arial(0)/m/n/10.95 ]. These col-lab-o-ra-tive ap-
-proaches
- []
-
-
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[14]
-
-Package natbib Warning: Citation `wikipedia2014' on page 15 undefined on input 
-line 53.
-
-
-Package natbib Warning: Citation `resilio2023' on page 15 undefined on input li
-ne 55.
-
 ) (./Chapters/DesignAndImplementation.tex
 
 
@@ -2396,9 +1896,23 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[15]
+[7
+
+]
 Chapter 4.
-<Figures/DesignAndImplementation/system.png, id=360, 1347.0325pt x 1248.665pt>
+
+Package natbib Warning: Citation `jung2017rust' on page 8 undefined on input li
+ne 14.
+
+
+Package natbib Warning: Citation `matsakis2014rust' on page 8 undefined on inpu
+t line 14.
+
+
+Package natbib Warning: Citation `sharma2020comparison' on page 8 undefined on 
+input line 14.
+
+<Figures/DesignAndImplementation/system.png, id=324, 1347.0325pt x 1248.665pt>
 File: Figures/DesignAndImplementation/system.png Graphic file (type png)
 <use Figures/DesignAndImplementation/system.png>
 Package luatex.def Info: Figures/DesignAndImplementation/system.png  used on in
@@ -2409,6 +1923,18 @@ LaTeX Font Warning: Font shape `TU/Arial(0)/m/sc' undefined
 (Font)              using `TU/Arial(0)/m/n' instead on input line 21.
 
 
+Overfull \hbox (0.75452pt too wide) in paragraph at lines 26--27
+\TU/Arial(0)/m/n/10.95 com-po-nents. The  [][]Source Stream Han-dler[][] pro-ces
+ses the in-com-ing en-coded video stream,
+ []
+
+
+Overfull \hbox (1.87492pt too wide) in paragraph at lines 26--27
+\TU/Arial(0)/m/n/10.95 while the Net-work Sched-uler Frame-work man-ages the sch
+edul-ing of multi-channel stream-
+ []
+
+
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2417,11 +1943,11 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[16
+[8
 
 <./Figures/DesignAndImplementation/system.png>]
 LaTeX Font Info:    Font shape `TU/lmtt/bx/n' in size <9> not available
-(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 37.
+(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 46.
 
 
 
@@ -2431,16 +1957,10 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[17]
+[9]
+Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
+put line 79.
 
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[18]) (./Chapters/Evaluation.tex
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2449,7 +1969,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[19]
+[10]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2458,7 +1978,16 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[20]
+[11]) (./Chapters/Evaluation.tex
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[12]
 Chapter 5.
 ) (./Chapters/Conclusion.tex
 
@@ -2469,7 +1998,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[21
+[13
 
 ]
 Chapter 6.
@@ -2486,7 +2015,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[22
+[14
 
 ]
 Underfull \hbox (badness 5147) in paragraph at lines 44--44
@@ -2520,18 +2049,9 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[23
+[15
 
-]) (./Appendices/Appendix.tex
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[24])
+]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2540,7 +2060,25 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[25
+[16]) (./Appendices/Appendix.tex
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[17])
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[18
 
 ]
 
@@ -2561,26 +2099,26 @@ L3 programming layer <2025-01-18>
 LaTeX Font Warning: Some font shapes were not available, defaults substituted.
 
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: A50A2888E330C17FFFAB485E4DDC6C72;6331.
+(rerunfilecheck)             Checksum: 89992DDD491A7C2A7CEE7098D7FFE070;3979.
 Package rerunfilecheck Info: File `main.brf' has not changed.
-(rerunfilecheck)             Checksum: 549C6CD1D472E303D504DCE260A682A7;715.
+(rerunfilecheck)             Checksum: 36698E4B6FFDE5379CD87ED37DB4B3F8;1396.
 )
 
 Here is how much of LuaTeX's memory you used:
- 47907 strings out of 475506
+ 48249 strings out of 475506
  125126,1977958 words of node,token memory allocated
- 1068 words of node memory still in use:
-   7 hlist, 2 vlist, 2 rule, 5 glue, 4 kern, 1 glyph, 92 attribute, 96 glue_spec
-, 48 attribute_list, 3 write, 12 pdf_action nodes
-   avail lists: 1:2,2:2686,3:430,4:1006,5:408,6:83,7:7997,8:143,9:2060,10:20,11:
-836
- 69501 multiletter control sequences out of 65536+600000
+ 1086 words of node memory still in use:
+   7 hlist, 2 vlist, 2 rule, 5 glue, 4 kern, 1 glyph, 98 attribute, 96 glue_spec
+, 51 attribute_list, 3 write, 12 pdf_action nodes
+   avail lists: 1:2,2:2113,3:430,4:610,5:303,6:68,7:7997,8:143,9:1310,10:20,11:8
+04
+ 69837 multiletter control sequences out of 65536+600000
  109 fonts using 9294455 bytes
- 108i,19n,125p,7880b,1806s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 108i,19n,125p,7880b,2738s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/share/texmf-dist/fonts/opentype/public/lm/lmmono9-regular.otf></usr/share/
 texmf-dist/fonts/opentype/public/lm/lmmonolt10-bold.otf></usr/share/texmf-dist/f
-onts/opentype/public/lm/lmmono10-regular.otf>{/usr/share/texmf-dist/fonts/enc/dv
-ips/base/8r.enc}</usr/share/fonts/TTF/Arialbd.TTF></usr/share/fonts/TTF/Ariali.T
+onts/opentype/public/lm/lmmono10-regular.otf></usr/share/fonts/TTF/Arialbd.TTF>{
+/usr/share/texmf-dist/fonts/enc/dvips/base/8r.enc}</usr/share/fonts/TTF/Ariali.T
 TF></usr/share/fonts/TTF/Arial.TTF></usr/share/texmf-dist/fonts/type1/public/ams
 fonts/cm/cmex10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10
 .pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/share
@@ -2588,10 +2126,10 @@ fonts/cm/cmex10.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10
 ts/type1/public/mathpazo/fplmr.pfb></usr/share/texmf-dist/fonts/type1/public/mat
 hpazo/fplmri.pfb></usr/share/texmf-dist/fonts/type1/urw/palatino/uplr8a.pfb></us
 r/share/texmf-dist/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on main.pdf (32 pages, 372470 bytes).
+Output written on main.pdf (25 pages, 359272 bytes).
 
-PDF statistics: 551 PDF objects out of 1000 (max. 8388607)
- 443 compressed objects within 5 object streams
- 116 named destinations out of 1000 (max. 131072)
- 264 words of extra memory for PDF output out of 10000 (max. 100000000)
+PDF statistics: 531 PDF objects out of 1000 (max. 8388607)
+ 435 compressed objects within 5 object streams
+ 112 named destinations out of 1000 (max. 131072)
+ 224 words of extra memory for PDF output out of 10000 (max. 100000000)
 

@@ -25,6 +25,7 @@ scrape_configs:
     # metrics_path defaults to '/metrics'
     # scheme defaults to 'http'.
 
+    fallback_scrape_protocol: "PrometheusText1.0.0"
     static_configs:
       - targets: ["172.22.0.1:9186"]
       - targets: ["172.22.0.102:9186"]

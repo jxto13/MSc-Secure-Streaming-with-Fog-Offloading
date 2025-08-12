@@ -174,8 +174,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     MATRIX_BUFFER
         .set(Arc::new(MatrixHistory::new(
-            64,
-            Duration::from_millis(CONFIG.get().unwrap().retransmission.deadline),
+            CONFIG.get().unwrap().settings.buffer_size,
         )))
         .expect("Failed to set MATRIX_BUFFER");
 
@@ -376,15 +375,13 @@ pub struct MatrixHistory {
     matrices: Vec<RwLock<Option<IndexedMatrix>>>,
     capacity: usize,
     latest_index: RwLock<Option<usize>>,
-    deadline: Duration,
 }
 impl MatrixHistory {
-    pub fn new(capacity: usize, deadline: Duration) -> Self {
+    pub fn new(capacity: usize) -> Self {
         MatrixHistory {
             matrices: (0..capacity).map(|_| RwLock::new(None)).collect(),
             capacity,
             latest_index: RwLock::new(None),
-            deadline,
         }
     }
 

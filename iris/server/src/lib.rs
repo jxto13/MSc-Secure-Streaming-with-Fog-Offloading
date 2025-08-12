@@ -73,7 +73,6 @@ pub struct Retransmission {
     pub wifi_unicast: bool,
     pub unicast_bitrate: usize,
     pub interval: usize,
-    pub deadline: u64,
     pub port: usize,
 }
 
@@ -94,6 +93,7 @@ pub struct Prometheus {
 #[derive(Deserialize, Debug)]
 pub struct Settings {
     pub timeout_clients: u64,
+    pub buffer_size: usize,
     pub client_reporting_interval: u64,
     pub client_sliding_window: u64,
 }

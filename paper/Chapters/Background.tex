@@ -11,129 +11,94 @@
 % For referencing this chapter elsewhere, use \ref{ChapterTemplate}
 \label{BackgroundWork}
 
-The emergence of live streaming as a dominant force in digital communication has fundamentally transformed how multimedia content reaches end users, creating unprecedented demands on network infrastructure while simultaneously exposing critical limitations in traditional delivery mechanisms, this occurs within a broader context of exponential growth in mobile data consumption, where video content increasingly dominates internet traffic patterns and challenges existing approaches to bandwidth management and quality assurance.
+The rapid emergence of live streaming as a dominant form of digital communication has reshaped the processes through which multimedia content is delivered to end users, compelling network infrastructures to accommodate unprecedented levels of performance demand while simultaneously exposing the structural and operational limitations embedded within traditional delivery mechanisms. Because mobile data consumption continues to rise at an exponential rate, and video content increasingly constitutes the majority of global internet traffic, these limitations have become more pronounced, placing additional strain on bandwidth allocation strategies and revealing the inadequacy of conventional quality of service management approaches in sustaining consistent delivery under high-load conditions. This convergence of technological evolution and user demand has created an environment in which established systems are no longer capable of meeting expectations for reliability, latency, and scalability without significant adaptation or innovation.
 
-
-\subsection{Two-Dimensional Product Reed–Solomon FEC for Secure Livestreaming}
+\subsection{Two-Dimensional Product Reed–Solomon FEC}
 \label{sec:2d_fec}
 
-Two-dimensional (2-D) \textit{product} Forward Error Correction (FEC) was introduced in the broadcast community to overcome the limitations of one-dimensional parity schemes when transporting real-time video over best-effort IP networks\,\cite{prompeg,smpte2022}.  
-Incoming RTP/UDP packets are first buffered and then written \emph{row-wise} into a rectangular matrix of \(D\) rows and \(L\) columns; an \((n_{\mathrm r},k_{\mathrm r})\) Reed–Solomon (RS) code is applied independently to each row, while an \((n_{\mathrm c},k_{\mathrm c})\) RS code protects every column.  
-The resulting \emph{product code} delivers two orthogonal layers of redundancy, enabling recovery from both random single-packet losses (handled efficiently by the row code) and long burst losses that cut across multiple consecutive packets (reconstructed by the column code)\,\cite{rfc6865,fec_video_study}.  
+Two-dimensional (2-D) \emph{product} Forward Error Correction (FEC) was developed to overcome the limitations of one-dimensional parity schemes in the transport of real-time video over IP networks\,\cite{prompeg,smpte2022}. In this approach, incoming data is first buffered and placed \emph{row-major order} into a rectangular matrix of \(D\) rows and \(L\) columns, \((n_{\mathrm r},k_{\mathrm r})\) Reed--Solomon (RS) code is then applied independently to each row, while an \((n_{\mathrm c},k_{\mathrm c})\) RS code is applied to each column resulting in a \emph{product code} offering two layers of redundancy: row codes provide efficient correction for random single-packet losses, while column codes are particularly effective against long burst losses that span multiple consecutive packets\,\cite{rfc6865,fec_video_study}.
 
-\paragraph{Reed–Solomon Encoding Revisited.}
-For completeness, recall that an \(\mathrm{RS}(n,k)\) code over the Galois field \(\mathrm{GF}(2^{m})\) treats each packet as a symbol of \(m\) bits.  
-Let the source message be represented by the polynomial
+\paragraph{Reed--Solomon Encoding.}
+An \(\mathrm{RS}(n,k)\) code over \(\mathrm{GF}(2^{m})\) treats each packet as a symbol of \(m\) bits. Let the source message be represented by  
 \[
-M(x)=\sum_{i=0}^{k-1} m_i x^{k-1-i}\in\mathrm{GF}(2^{m})[x],
+M(x) = \sum_{i=0}^{k-1} m_i x^{k-1-i} \in \mathrm{GF}(2^{m})[x],
 \]
 where the coefficients \(m_i\) correspond to data symbols.  
-Systematic RS encoding appends \(n-k\) parity symbols obtained by evaluating \(M(x)\) at \(n-k\) distinct non-zero field elements \(\{\alpha_0,\dots,\alpha_{n-k-1}\}\):
+
+In systematic encoding, \(n-k\) parity symbols are obtained by evaluating \(M(x)\) at \(n-k\) distinct non-zero field elements \(\{\alpha_0,\dots,\alpha_{n-k-1}\}\):
 \[
-p_j = M(\alpha_j), \qquad 0\le j < n-k.
+p_j = M(\alpha_j), \qquad 0 \le j < n-k.
 \]
-The transmitted codeword is therefore
+The transmitted codeword is  
 \begin{equation}
-	C(x)=M(x)\,x^{n-k}+P(x),\qquad 
-	P(x)=\sum_{j=0}^{n-k-1} p_j x^{n-k-1-j}, 
+	C(x) = M(x)\,x^{n-k} + P(x), \qquad
+	P(x) = \sum_{j=0}^{n-k-1} p_j x^{n-k-1-j},
 	\label{eq:rs_codeword}
 \end{equation}
-which inherits the \emph{maximum-distance-separable} (MDS) property: any \(k\) out of the \(n\) symbols suffice to reconstruct the original message via polynomial interpolation\,\cite{rs_intro}.  
-Decoding typically relies on the Berlekamp–Massey or Euclidean algorithms to locate and correct up to \(\lfloor\frac{n-k}{2}\rfloor\) erroneous symbols.
+which inherits the \emph{maximum-distance-separable} (MDS) property: any \(k\) of the \(n\) symbols are sufficient to reconstruct the original message via polynomial interpolation\,\cite{rs_intro}.  
+In practice, decoding often uses the Berlekamp--Massey or Euclidean algorithms to locate and correct up to \(\lfloor (n-k)/2 \rfloor\) erroneous symbols.
 
 \paragraph{Constructing the Product Code.}
-Applying \(\mathrm{RS}(n_{\mathrm r},k_{\mathrm r})\) row-wise and \(\mathrm{RS}(n_{\mathrm c},k_{\mathrm c})\) column-wise yields a matrix of total size
+Applying \(\mathrm{RS}(n_{\mathrm r},k_{\mathrm r})\) row-wise and \(\mathrm{RS}(n_{\mathrm c},k_{\mathrm c})\) column-wise produces a matrix of  
 \[
-N = n_{\mathrm r}\,n_{\mathrm c}= 
-(D + r_{\mathrm r})(L + r_{\mathrm c}),
+N = n_{\mathrm r} \, n_{\mathrm c} = (D + r_{\mathrm r})(L + r_{\mathrm c})
 \]
-where \(r_{\mathrm r}\!=\!n_{\mathrm r}-k_{\mathrm r}\) and \(r_{\mathrm c}\!=\!n_{\mathrm c}-k_{\mathrm c}\) are the numbers of parity packets per row and column, respectively.  
-The aggregate redundancy ratio is therefore
+total packets, where \(r_{\mathrm r} = n_{\mathrm r} - k_{\mathrm r}\) and \(r_{\mathrm c} = n_{\mathrm c} - k_{\mathrm c}\) denote the parity symbols per row and column, respectively.  
+
+The aggregate redundancy ratio is  
 \[
-\eta = \frac{N - D\,L}{D\,L} = 
-\frac{r_{\mathrm r}}{k_{\mathrm r}} + 
-\frac{r_{\mathrm c}}{k_{\mathrm c}} + 
-\frac{r_{\mathrm r}\,r_{\mathrm c}}{k_{\mathrm r}\,k_{\mathrm c}},
+\eta = \frac{N - D\,L}{D\,L}
+= \frac{r_{\mathrm r}}{k_{\mathrm r}}
++ \frac{r_{\mathrm c}}{k_{\mathrm c}}
++ \frac{r_{\mathrm r} \, r_{\mathrm c}}{k_{\mathrm r} \, k_{\mathrm c}},
 \]
-highlighting the cubic overhead term introduced by the parity–intersection cells at the bottom-right of the matrix.  
-While this overhead (commonly 20–30 \%) would be prohibitive for file transfer, it is acceptable for premium low-latency video services where retransmissions are either impossible or too expensive\,\cite{limit_fec,huawei_afec}.
+where the third term represents the \emph{intersection overhead} caused by the parity--parity cells in the bottom-right of the matrix.  
 
-\paragraph{Bandwidth Overhead Analysis and Trade-offs.}
-The **bandwidth penalty** imposed by 2-D product FEC represents a critical design consideration in resource-constrained fog environments. **For a typical Pro-MPEG configuration employing a 25×4 matrix protecting 100 video packets, the system requires transmission of 129 packets total (100 original + 25 row-FEC + 4 column-FEC), resulting in a constant 29\% bandwidth overhead regardless of actual error conditions**\,\cite{limit_fec}. This overhead remains **fixed and proactive**, meaning the additional bandwidth consumption persists even during error-free transmission periods\,\cite{fec_overhead_study}.
 
-**Mathematical Framework for 2-D FEC Overhead.** The aggregate redundancy for a 2-D product code can be precisely quantified. Given a data matrix of dimensions \(D \times L\) with row-wise Reed–Solomon \(\mathrm{RS}(n_{\mathrm r}, k_{\mathrm r})\) and column-wise \(\mathrm{RS}(n_{\mathrm c}, k_{\mathrm c})\) codes, the **total overhead factor** becomes:
+\paragraph{Bandwidth Overhead Analysis.}
+The bandwidth penalty imposed by 2-D product FEC is constant and proactive, meaning that the additional packets are transmitted regardless of whether errors actually occur\,\cite{fec_overhead_study}.  
+For example, a typical Pro-MPEG configuration with a \(25 \times 4\) data matrix (100 video packets) plus 25 row-parity packets and 4 column-parity packets requires transmission of 129 total packets, giving a constant overhead of  
 \[
-\eta = \frac{r_{\mathrm r}}{k_{\mathrm r}} + \frac{r_{\mathrm c}}{k_{\mathrm c}} + \frac{r_{\mathrm r} \cdot r_{\mathrm c}}{k_{\mathrm r} \cdot k_{\mathrm c}},
+\frac{129 - 100}{100} = 29\%.
 \]
-where \(r_{\mathrm r} = n_{\mathrm r} - k_{\mathrm r}\) and \(r_{\mathrm c} = n_{\mathrm c} - k_{\mathrm c}\) represent the parity symbols per row and column respectively\,\cite{2d_fec_analysis}. **The third term represents the critical intersection overhead**: for a \(20 \times 5\) matrix with \(25\%\) row protection and \(20\%\) column protection, this intersection contributes an additional \(5\%\) overhead beyond the linear sum, yielding \(\eta = 0.25 + 0.20 + 0.05 = 0.50\) or **50\% total bandwidth expansion**\,\cite{2d_fec_bounds}.
-
-**Error Correction Efficiency versus Overhead Trade-off.** The **theoretical error correction capability** of a 2-D product code follows the bound:
+This value remains fixed across all network conditions. Using the general formula, consider a \(20 \times 5\) matrix with 25\% row protection (\(r_{\mathrm r}/k_{\mathrm r} = 0.25\)) and 20\% column protection (\(r_{\mathrm c}/k_{\mathrm c} = 0.20\)).  
+The intersection term contributes \(0.25 \times 0.20 = 0.05\), so the total overhead is  
 \[
-P_{\mathrm{correctable}} \leq \min\left\{\binom{n_{\mathrm r}}{t_{\mathrm r}}, \binom{n_{\mathrm c}}{t_{\mathrm c}}\right\} \cdot P_{\mathrm{random}}^{t_{\mathrm r} + t_{\mathrm c}},
+\eta = 0.25 + 0.20 + 0.05 = 0.50,
 \]
-where \(t_{\mathrm r} = \lfloor r_{\mathrm r}/2 \rfloor\) and \(t_{\mathrm c} = \lfloor r_{\mathrm c}/2 \rfloor\) are the maximum correctable errors per dimension, and \(P_{\mathrm{random}}\) is the underlying packet loss probability\,\cite{rs_error_bounds}. **However, practical performance degrades significantly under burst loss conditions**, with **residual packet loss rates** following the approximation:
+corresponding to a 50\% bandwidth increase\,\cite{2d_fec_bounds}. While this overhead would be excessive for file transfer, it is acceptable in low-latency video services where retransmissions are impractical or costly\,\cite{limit_fec,huawei_afec}.
+
+\paragraph{Error-Correction Efficiency.}
+The theoretical maximum correctable error probability for a product code can be bounded as\,\cite{rs_error_bounds}:
 \[
-\mathrm{RPLR}_{2\mathrm{D}} \approx P_{\mathrm{loss}} \cdot \left(1 - \prod_{i=1}^{D} \prod_{j=1}^{L} (1-P_{\mathrm{deadlock}}^{(i,j)})\right),
+P_{\mathrm{correctable}} \leq \min \left\{ \binom{n_{\mathrm r}}{t_{\mathrm r}}, \, \binom{n_{\mathrm c}}{t_{\mathrm c}} \right\} \cdot P_{\mathrm{random}}^{t_{\mathrm r} + t_{\mathrm c}},
 \]
-where \(P_{\mathrm{deadlock}}^{(i,j)}\) represents the probability of **uncorrectable error patterns** (deadlock configurations) at matrix position \((i,j)\)\,\cite{2d_fec_bounds}. **For a \(10 \times 10\) matrix, deadlock configurations constitute 1.23\% of all 6-loss patterns but escalate to 27.6\% for 12-loss scenarios**, demonstrating the **non-linear degradation** of 2-D FEC performance\,\cite{2d_fec_bounds}.
+where \(t_{\mathrm r} = \lfloor r_{\mathrm r} / 2 \rfloor\) and \(t_{\mathrm c} = \lfloor r_{\mathrm c} / 2 \rfloor\) are the per-dimension correction limits.  
+In burst-loss scenarios, residual packet loss rates follow approximately
+\[
+\mathrm{RPLR}_{2\mathrm{D}} \approx P_{\mathrm{loss}} \cdot \left( 1 - \prod_{i=1}^D \prod_{j=1}^L \big(1 - P_{\mathrm{deadlock}}^{(i,j)}\big) \right),
+\]
+where \(P_{\mathrm{deadlock}}^{(i,j)}\) is the probability that the loss pattern at \((i,j)\) is uncorrectable.  
+For a \(10 \times 10\) matrix, deadlock configurations make up just 1.23\% of all 6-loss patterns but grow to 27.6\% for 12-loss patterns, showing the non-linear degradation of 2-D FEC in high-loss conditions\,\cite{2d_fec_bounds}.
 
-**Overhead Efficiency Comparison.** Compared to alternative FEC schemes, **2-D Reed–Solomon codes exhibit superior overhead efficiency for moderate protection levels but suffer from quadratic complexity scaling**. **For equivalent \(\approx 4\%\) overhead**, a Reed–Solomon \(\mathrm{RS}(169,163)\) with interleaving requires **44\% additional overhead** to match the protection level of rateless Raptor codes against 2\% packet loss\,\cite{raptor_vs_rs}. Furthermore, **the computational overhead grows as \(\mathcal{O}(k^2)\) for Reed–Solomon decoding**, where practical implementations show **2× to 10× higher processing requirements** compared to Raptor codes when \(k < 250\)\,\cite{raptor_vs_rs}. **This computational penalty directly translates to increased power consumption and processing latency** in resource-constrained fog nodes.
+\paragraph{Overhead Efficiency Comparison.}
+Compared to other FEC methods, 2-D Reed--Solomon offers superior bandwidth efficiency for moderate protection levels, but at the cost of quadratic computational scaling.  
+For equivalent \(\approx 4\%\) overhead, an \(\mathrm{RS}(169,163)\) code with interleaving requires 44\% more bandwidth than Raptor codes to achieve the same resilience at 2\% packet loss\,\cite{raptor_vs_rs}.  
+Moreover, RS decoding complexity grows as \(\mathcal{O}(k^2)\), and in practice, it demands 2--10$\times$ more processing than Raptor codes when \(k < 250\).  
+In resource-constrained fog nodes, this computational load translates directly into higher power consumption and increased processing latency.
 
-**Practical Overhead Implications for Fog Deployments.** The **economic impact** of constant FEC overhead becomes particularly pronounced in **weather-sensitive or expensive backhaul connections**. When combined with typical **20\% bit-rate guard bands**, the total transmission overhead can reach **50\% above the base video rate**\,\cite{limit_fec}. **This bandwidth penalty directly translates to increased network congestion, higher operational costs, and potential service degradation** for competing traffic flows\,\cite{webrtc_fec}. **For a 5 Mbps livestream with 30\% 2-D FEC overhead, the effective bandwidth requirement becomes 6.5 Mbps**, representing a **\$1,500-3,000 annual cost increase** for premium satellite connectivity\,\cite{limit_fec}. Consequently, **adaptive FEC control mechanisms that dynamically adjust overhead based on real-time loss statistics** represent a crucial optimization, potentially reducing unnecessary bandwidth consumption by **15-25\%** during favorable network conditions while maintaining protection during degraded periods\,\cite{fec_scalable_video}.
+\paragraph{Practical Implications for Fog Deployments.}
+In environments with costly or capacity-limited links the economic impact of constant FEC overhead is significant.  
+When combined with a typical 20\% bitrate guard band, a 30\% 2-D FEC overhead can push the total transmission rate to 50\% above the base stream\,\cite{limit_fec}.  
+For instance, a 5~Mbps stream with 30\% overhead requires 6.5~Mbps of link capacity, representing an annual cost increase of \$1,500--3,000 for premium satellite service.  
+Adaptive FEC strategies, which adjust overhead dynamically in response to real-time loss metrics, can reduce bandwidth waste by 15--25\% during favorable conditions while still offering robust protection during loss bursts\,\cite{fec_scalable_video}.
 
 \paragraph{Latency and Buffering Trade-offs.}
-Because the encoder must accumulate an entire \(D\times L\) matrix before the final column parity packets become available, the scheme incurs a buffering delay of
+Since the encoder must collect an entire \(D \times L\) matrix before column parities can be sent, the scheme incurs a buffering delay of  
 \[
 T_{\mathrm{FEC}} \approx \frac{(L - 1) + (D - 1)}{R_{\mathrm{pkt}}},
 \]
 where \(R_{\mathrm{pkt}}\) is the packet emission rate.  
-Selecting small column depths (\(L\le5\)) mitigates this latency while still protecting against common burst-loss patterns observed in Wi-Fi and 5G links\,\cite{smpte2022,fec_video_study}.  
-Adaptive implementations running on fog nodes can further reduce delay by dynamically shrinking or expanding the matrix dimensions in response to real-time loss statistics\,\cite{huawei_afec,rs_prod_codes}.
+Smaller column depths (\(L \le 5\)) reduce this delay while still addressing typical burst-loss patterns in Wi-Fi links \cite{smpte2022,fec_video_study}.  
 
-\paragraph{Recovery Process.}
-At the receiver, decoding proceeds in two passes:
-\begin{enumerate}
-	\item After each row is populated, the row RS decoder corrects sporadic single-packet erasures.
-	\item Once the full matrix has been received, any remaining gap clusters—typically contiguous bursts—are corrected by the column RS decoder.
-\end{enumerate}
-If both passes fail to reconstruct all missing packets (e.g., losses exceed the RS distance), the residual erasure set triggers selective retransmissions when permitted by the application’s latency budget.
-
-In summary, 2-D product RS codes constitute a powerful yet tunable defence against heterogeneous loss patterns in secure fog-offloaded livestreaming pipelines, achieving near-optimal protection under strict end-to-end latency constraints while maintaining cryptographic payload integrity.
-
-
-
-
-\section{Evolution of Streaming Technologies and Network Infrastructure}
-
-Modern live streaming architectures have evolved through successive generations of protocols, each addressing specific technical challenges while introducing new complexities. The foundational protocol landscape encompasses several key technologies that collectively define contemporary streaming capabilities \cite{dacast2025}. HTTP Live Streaming (HLS), originally developed by Apple, has established dominance through its compatibility with Content Delivery Networks and adaptive bitrate streaming mechanisms, enabling efficient content distribution through segmented delivery approaches that divide video streams into discrete chunks typically ranging from two to ten seconds \cite{dacast2025,getstream2025}. This segmentation strategy facilitates efficient caching mechanisms across distributed network infrastructures while supporting dynamic quality adaptation based on real-time network conditions.
-
-The complementary role of Real-Time Messaging Protocol (RTMP) demonstrates the layered complexity of modern streaming architectures, where different protocols serve distinct functions within the overall delivery pipeline \cite{dyte2024}. RTMP's persistent connection model provides reliable stream ingestion capabilities with latency characteristics ranging from two to five seconds, making it particularly suitable for encoder-to-server transmission despite potential congestion control limitations inherent in TCP-based communication \cite{dacast2025,dyte2024}. However, the tension between reliability and latency becomes apparent when examining WebRTC's alternative approach, which achieves sub-second latency through peer-to-peer communication mechanisms while sacrificing the scalability advantages of traditional broadcast architectures \cite{dacast2025,getstream2025}.
-
-The emergence of hybrid streaming architectures represents a significant advancement in addressing these trade-offs, combining multiple protocols to optimize different aspects of the streaming pipeline \cite{getstream2025}. Contemporary platforms increasingly adopt RTMP for reliable ingestion, automatic transcoding to HLS or Dynamic Adaptive Streaming over HTTP (DASH) for scalable distribution, and WebRTC for interactive features, with real-time protocol switching based on device capabilities and network conditions \cite{getstream2025}. This multi-protocol approach reflects the inherent complexity of serving diverse user bases across heterogeneous network environments while maintaining consistent quality of experience.
-
-The integration of edge computing with traditional Content Delivery Network frameworks creates hybrid architectures that address fundamental limitations in both centralized and distributed content delivery approaches \cite{dacast2025edge,cachefly2024}. Edge computing extends cloud capabilities to network edges, enabling single-digit millisecond delivery times through geographically distributed processing resources while reducing computational burden on centralized infrastructure \cite{cachefly2024}. These systems dynamically allocate resources based on demand patterns, switching between edge and cloud processing as network conditions evolve, thereby creating more resilient and responsive streaming architectures \cite{fastpix2024,cachefly2024}.
-
-\section{Forward Error Correction and Wireless Communication Challenges}
-
-The unreliable nature of wireless communication channels necessitates sophisticated error recovery mechanisms that operate across multiple network layers, with Application Layer Forward Error Correction emerging as a critical technology for maintaining stream quality in environments characterized by packet loss and transmission errors \cite{terrazone2025,techtarget2023}. Unlike traditional physical-layer FEC approaches, application-layer mechanisms provide flexible and adaptive error recovery specifically designed for streaming applications, adding redundant information to video streams that enables receivers to reconstruct lost packets without requiring retransmission \cite{diva2015,qualcomm2016}.
-
-The mathematical foundations of these error correction schemes reveal both their capabilities and limitations when applied to real-world streaming scenarios. Reed-Solomon codes form the basis of many AL-FEC implementations, offering strong error correction capabilities for block-based data transmission while maintaining reasonable computational overhead \cite{techtarget2023,scirp2015}. However, fixed redundancy levels in traditional Reed-Solomon implementations demonstrate poor adaptation to varying network conditions, leading to either insufficient protection during periods of high loss or excessive bandwidth consumption during stable transmission periods \cite{diva2015}.
-
-Adaptive FEC mechanisms address these limitations through dynamic adjustment of parity packet quantities based on observed network performance, with Proportional and Proportional-Integral controllers significantly reducing discarded video blocks compared to simple on-off schemes \cite{diva2015,maister2024}. The implementation of these adaptive mechanisms reveals complex trade-offs between computational complexity, latency constraints, and error recovery effectiveness, particularly in real-time streaming applications where processing delays must remain below perceptible thresholds \cite{maister2024}.
-
-The bursty error characteristics of wireless networks introduce additional complexity that traditional error correction schemes struggle to address effectively. Packet interleaving addresses these challenges by spreading potential losses over time, converting burst errors into isolated losses that prove more easily correctable through standard FEC techniques \cite{scirp2015,traffic2009,springer2007}. Block interleaving arrangements organize packets into matrices, filling by rows and transmitting by columns, effectively converting burst losses of length B into smaller bursts of length B/n, where n represents the interleaving depth \cite{traffic2009}. The optimization of interleaving parameters requires careful consideration of network conditions, application requirements, and the fundamental trade-off between buffering delay and error recovery capability.
-
-Advanced interleaving techniques incorporate content-aware approaches that consider the relative importance of different video data elements during transmission sequence organization \cite{sciencedirect2006,springer2007}. These methods can improve subjective video quality without requiring additional bandwidth by prioritizing critical video elements, though they introduce implementation complexity that may not be suitable for all deployment scenarios. The effectiveness of content-aware interleaving depends heavily on accurate characterization of video content importance, which varies significantly across different types of multimedia applications and user interaction patterns.
-
-\section{Mobile Crowdsourcing Security and Trust Management}
-
-The paradigm shift toward crowdsourced network resources introduces fundamental security challenges that traditional centralized systems do not encounter, requiring novel approaches to authentication, authorization, and trust management in distributed computing environments \cite{uwaterloo2015,cambridge2015}. Mobile Crowdsourcing Networks comprise service providers, end users, sensing crowds, and computing crowds working collaboratively to accomplish distributed tasks, creating architectural complexity that extends beyond traditional client-server models \cite{uwaterloo2015}. The distributed nature of these networks eliminates centralized authority structures that typically provide security guarantees, while human involvement introduces privacy concerns around location information and personal data that automated systems can more easily protect.
-
-Privacy threats in crowdsourcing environments arise from both data exposure and task distribution mechanisms, where sensed data may contain implicit location information revealing user movement patterns, while task content may expose sensitive business or personal information to untrusted participants \cite{uwaterloo2015,ieee2022}. Location leakage represents a persistent concern because adversaries can infer user behavior and whereabouts from movement traces, creating privacy vulnerabilities that extend beyond the immediate crowdsourcing application to broader personal security risks. The challenge intensifies in live streaming applications where location-based content recommendation and geographic load balancing may require explicit location sharing among participants.
-
-Device-to-Device communication security presents unique vulnerabilities that traditional network security models do not adequately address \cite{cambridge2015,tum2015}. The absence of centralized authority such as access points or base stations forces resource-constrained end devices to handle authentication functions typically managed by centralized entities, creating computational and security challenges \cite{tum2015}. GPS spoofing attacks can provide false location data leading to incorrect spectrum allocation and significant system performance degradation, while the broadcast nature of device discovery makes D2D networks particularly vulnerable to location tracking and privacy violations \cite{cambridge2015,tum2015}.
-
-Contemporary security frameworks have developed sophisticated approaches to address these challenges through blockchain-based crowdsourcing models that provide transparent and tamper-resistant task assignment and result verification mechanisms \cite{sciencedirect2022}. These systems utilize smart contracts to automate payment distribution and quality assessment while maintaining participant anonymity, though they introduce computational overhead and energy consumption that may not be suitable for resource-constrained mobile devices. Privacy-preserving task recommendation systems employ attribute-based encryption to protect both task content and participant preferences, enabling fine-grained access control without revealing sensitive information to service providers or other participants \cite{uwaterloo2015}.
-
-Trust management systems represent another critical component in crowdsourced streaming architectures, utilizing reputation mechanisms to evaluate participant reliability and detect malicious behavior \cite{uwaterloo2015}. These systems combine behavioral analysis, result verification, and peer assessment to maintain service quality while encouraging honest participation, though they must balance between strict security requirements and the need to maintain sufficient participant pools for effective crowdsourcing functionality.
 

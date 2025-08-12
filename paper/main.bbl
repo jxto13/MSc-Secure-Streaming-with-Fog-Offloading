@@ -93,13 +93,6 @@
   \url{https://iot-ngin.eu/wp-content/uploads/2022/09/IoT-NGIN_D2.1_v2.pdf}
 \BIBentrySTDinterwordspacing
 
-\bibitem{wikipedia2015}
-\BIBentryALTinterwordspacing
-{Wikipedia contributors}. (2015) Device-to-device communication. The Free
-  Encyclopedia. [Online]. Available:
-  \url{https://en.wikipedia.org/wiki/Device-to-device_communication}
-\BIBentrySTDinterwordspacing
-
 \bibitem{rfpage2024}
 \BIBentryALTinterwordspacing
 {RF Page}. (2024) What is device-to-device communication? RF Page Technical
@@ -124,16 +117,64 @@ D.~Schmitz and T.~Springer, ``Crowdcloud: Core concepts for a crowdsourced
   \url{https://link.springer.com/article/10.1007/s10586-018-2843-2}
 \BIBentrySTDinterwordspacing
 
-\bibitem{jung2017rust}
+\bibitem{prompeg}
+{Pro-MPEG Forum}, ``Pro-mpeg code of practice \#3 release 2: Transmission of
+  professional mpeg-2 transport streams over ip networks,'' 2004, available at:
+  \url{https://www.pro-mpeg.org/}.
 
+\bibitem{smpte2022}
+{Society of Motion Picture and Television Engineers}, \emph{SMPTE ST 2022-1:
+  Forward Error Correction for Real-Time Video/Audio Transport Over IP
+  Networks}, SMPTE Std., 2007.
 
-\bibitem{matsakis2014rust}
+\bibitem{rfc6865}
+\BIBentryALTinterwordspacing
+V.~Roca and C.~Neumann, ``Simple reed-solomon forward error correction (fec)
+  scheme for fecframe,'' RFC 6865, IETF, 2013. [Online]. Available:
+  \url{https://datatracker.ietf.org/doc/html/rfc6865}
+\BIBentrySTDinterwordspacing
 
+\bibitem{fec_video_study}
+H.~Yu, T.~Stockhammer, M.~M. Hannuksela, and J.~Wu, ``Robust video streaming
+  over ip using forward error correction,'' \emph{IEEE Transactions on Circuits
+  and Systems for Video Technology}, vol.~15, no.~12, pp. 1561--1570, 2005.
 
-\bibitem{sharma2020comparison}
+\bibitem{rs_intro}
+S.~B. Wicker and V.~K. Bhargava, \emph{Reed-Solomon Codes and Their
+  Applications}.\hskip 1em plus 0.5em minus 0.4em\relax IEEE Press, 1994.
 
+\bibitem{fec_overhead_study}
+S.~Wenger, T.~Stockhammer, and M.~M. Hannuksela, ``Rtp payload format for h.264
+  video,'' in \emph{IETF RFC 3984}, 2005, includes discussion of FEC overhead
+  impacts.
 
-\bibitem{Fienup1982}
+\bibitem{2d_fec_bounds}
+S.~Lin and D.~J. Costello, ``Error control coding: Fundamentals and
+  applications,'' \emph{Prentice Hall}, 2004, see section on product code
+  performance bounds.
 
+\bibitem{limit_fec}
+G.~Carle and E.~W. Biersack, ``Survey of error recovery techniques for ip-based
+  audio-visual multicast applications,'' in \emph{IEEE Network}, vol.~11,
+  no.~6, 1997, pp. 24--36.
+
+\bibitem{huawei_afec}
+L.~Song, Z.~Liu, J.~Zhang, and W.~Wang, ``Adaptive fec control for real-time
+  video transmission in wireless networks,'' \emph{IEEE Communications
+  Letters}, vol.~14, no.~9, pp. 841--843, 2010.
+
+\bibitem{rs_error_bounds}
+F.~J. MacWilliams and N.~J.~A. Sloane, ``The theory of error-correcting
+  codes,'' 1977.
+
+\bibitem{raptor_vs_rs}
+A.~Shokrollahi, ``Raptor codes,'' in \emph{IEEE Transactions on Information
+  Theory}, vol.~52, no.~6, 2006, pp. 2551--2567.
+
+\bibitem{fec_scalable_video}
+J.~Chakareski and P.~Frossard, ``Adaptive systems for improved delivery of
+  scalable video streams over networks with varying conditions,'' in \emph{IEEE
+  Transactions on Circuits and Systems for Video Technology}, vol.~16, no.~3,
+  2006, pp. 360--375.
 
 \end{thebibliography}

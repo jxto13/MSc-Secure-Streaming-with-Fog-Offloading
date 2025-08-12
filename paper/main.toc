@@ -18,34 +18,31 @@
 \vspace {0.3cm}
 \contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
 \contentsline {chapter}{\numberline {2}Background Work}{3}{chapter.2}%
-\contentsline {subsection}{\numberline {2.0.1}Two-Dimensional Product Reed–Solomon FEC for Secure Livestreaming}{3}{subsection.2.0.1}%
-\contentsline {paragraph}{Reed–Solomon Encoding Revisited.}{3}{paragraph*.3}%
+\contentsline {subsection}{\numberline {2.0.1}Two-Dimensional Product Reed–Solomon FEC}{3}{subsection.2.0.1}%
+\contentsline {paragraph}{Reed--Solomon Encoding.}{3}{paragraph*.3}%
 \contentsline {paragraph}{Constructing the Product Code.}{4}{paragraph*.4}%
-\contentsline {paragraph}{Bandwidth Overhead Analysis and Trade-offs.}{4}{paragraph*.5}%
-\contentsline {paragraph}{Latency and Buffering Trade-offs.}{6}{paragraph*.6}%
-\contentsline {paragraph}{Recovery Process.}{6}{paragraph*.7}%
-\contentsline {section}{\numberline {2.1}Evolution of Streaming Technologies and Network Infrastructure}{7}{section.2.1}%
-\contentsline {section}{\numberline {2.2}Forward Error Correction and Wireless Communication Challenges}{8}{section.2.2}%
-\contentsline {section}{\numberline {2.3}Mobile Crowdsourcing Security and Trust Management}{9}{section.2.3}%
-\contentsline {chapter}{\numberline {3}State of the Art}{11}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Advanced Protocol Development and Intelligent Adaptation}{11}{section.3.1}%
-\contentsline {section}{\numberline {3.2}Next-Generation Error Correction and Network Resilience}{12}{section.3.2}%
-\contentsline {section}{\numberline {3.3}Secure Distributed Computing and Blockchain Integration}{13}{section.3.3}%
-\contentsline {section}{\numberline {3.4}Intelligent Edge Computing and Resource Orchestration}{14}{section.3.4}%
-\contentsline {chapter}{\numberline {4}Design and Implementation}{16}{chapter.4}%
-\contentsline {section}{\numberline {4.1}System Architecture}{16}{section.4.1}%
-\contentsline {section}{\numberline {4.2}Client}{17}{section.4.2}%
-\contentsline {subsection}{\numberline {4.2.1}Android Application}{17}{subsection.4.2.1}%
-\contentsline {subsection}{\numberline {4.2.2}Decoder}{17}{subsection.4.2.2}%
-\contentsline {subsection}{\numberline {4.2.3}Reporting Sink}{18}{subsection.4.2.3}%
-\contentsline {subsection}{\numberline {4.2.4}Android Rust Linker}{18}{subsection.4.2.4}%
-\contentsline {subsection}{\numberline {4.2.5}P2P discovery and connection}{18}{subsection.4.2.5}%
-\contentsline {subsection}{\numberline {4.2.6}Mesh Networking}{19}{subsection.4.2.6}%
-\contentsline {subsection}{\numberline {4.2.7}Retransmission Manager}{19}{subsection.4.2.7}%
-\contentsline {chapter}{\numberline {5}Evaluation}{21}{chapter.5}%
-\contentsline {chapter}{\numberline {6}Conclusion}{22}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Summary}{22}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Future Work}{22}{section.6.2}%
+\contentsline {paragraph}{Bandwidth Overhead Analysis.}{4}{paragraph*.5}%
+\contentsline {paragraph}{Error-Correction Efficiency.}{5}{paragraph*.6}%
+\contentsline {paragraph}{Overhead Efficiency Comparison.}{5}{paragraph*.7}%
+\contentsline {paragraph}{Practical Implications for Fog Deployments.}{5}{paragraph*.8}%
+\contentsline {paragraph}{Latency and Buffering Trade-offs.}{6}{paragraph*.9}%
+\contentsline {chapter}{\numberline {3}State of the Art}{7}{chapter.3}%
+\contentsline {chapter}{\numberline {4}Design and Implementation}{8}{chapter.4}%
+\contentsline {section}{\numberline {4.1}System Architecture}{8}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Streaming Server}{8}{subsection.4.1.1}%
+\contentsline {subsubsection}{\numberline {4.1.1.1}Source Stream Handler}{9}{subsubsection.4.1.1.1}%
+\contentsline {section}{\numberline {4.2}Client}{9}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Android Application}{9}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Decoder}{9}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Reporting Sink}{10}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}Android Rust Linker}{10}{subsection.4.2.4}%
+\contentsline {subsection}{\numberline {4.2.5}P2P discovery and connection}{11}{subsection.4.2.5}%
+\contentsline {subsection}{\numberline {4.2.6}Mesh Networking}{11}{subsection.4.2.6}%
+\contentsline {subsection}{\numberline {4.2.7}Retransmission Manager}{12}{subsection.4.2.7}%
+\contentsline {chapter}{\numberline {5}Evaluation}{13}{chapter.5}%
+\contentsline {chapter}{\numberline {6}Conclusion}{14}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Summary}{14}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Future Work}{14}{section.6.2}%
 \vspace {0.5cm}
-\contentsline {chapter}{Bibliography}{22}{dummy.6}%
+\contentsline {chapter}{Bibliography}{14}{dummy.6}%
 \contentsfinish 

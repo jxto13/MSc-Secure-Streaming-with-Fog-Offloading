@@ -21,6 +21,15 @@ This chapter presents the detailed design and implementation of the system, buil
 	\captionof{figure}{\label{fig:}Sytem Overall Architecture}
 \end{figure}
 
+\subsection{Streaming Server}
+
+A streaming server manages a single access point and integrates several specialized components. The ~\nameref{sec:source stream handler}  processes the incoming encoded video stream, while the Network Scheduler Framework manages the scheduling of multi-channel streaming and retransmissions. A reinforcement learning module dynamically adapts parameters based on network conditions to optimize performance. The Security and Membership Manager provides Security-as-a-Service by encrypting the streams and managing authentication and authorization, including support for secure tokens used in edge cloud environments.
+
+
+
+\subsubsection{Source Stream Handler}
+\label{sec:source stream handler}
+
 \section{Client}
 
 \subsection{Android Application}
@@ -55,6 +64,39 @@ struct MatrixTracker {
 	packet_loss_percentage: f64,
 }
 \end{lstlisting}
+
+
+
+
+% State:
+%   - loss_bin: discrete bin of observed packet loss rate (0: excellent, 1: good, ..., 4: bad)
+% Action:
+%   - FecDataAction:
+%       - fec_row: Direction (Increase, Decrease, NoChange)
+%       - fec_col: Direction (Increase, Decrease, NoChange)
+
+\begin{algorithm}
+	\caption{Q-Learning for Adaptive FEC}
+	\begin{algorithmic}[1]
+		\State \textbf{State $s$:} loss\_bin (discretized packet loss rate)
+		\State \textbf{Action $a$:} FecDataAction \{fec\_row: Direction, fec\_col: Direction\}
+		\State Initialize $Q(s, a)$ arbitrarily for all $s, a$
+		\State Set learning rate $\alpha$, discount factor $\gamma$, exploration rate $\epsilon$
+		\For{each episode}
+		\State Observe current state $s = \text{loss\_bin}$
+		\If{random number $< \epsilon$}
+		\State Choose random action $a$ (random Direction for fec\_row and fec\_col)
+		\Else
+		\State $a \gets \arg\max_{a'} Q(s, a')$
+		\EndIf
+		\State Apply action $a$ (adjust FEC row/col redundancy according to $a$)
+		\State Observe reward $r$ and next state $s'$
+		\State $Q(s, a) \gets Q(s, a) + \alpha \left[ r + \gamma \max_{a'} Q(s', a') - Q(s, a) \right]$
+		\State $s \gets s'$
+		\EndFor
+	\end{algorithmic}
+\end{algorithm}
+
 
 
 \subsection{Reporting Sink}
