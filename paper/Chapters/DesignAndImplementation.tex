@@ -17,56 +17,33 @@ This chapter presents the detailed design and implementation of the system, buil
 
 \begin{figure}
 	\centering
-	\includegraphics[width=.75\linewidth]{DesignAndImplementation/system.png}
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/system.png}
 	\captionof{figure}{\label{fig:}Sytem Overall Architecture}
 \end{figure}
 
+%% ----------------------------------------------------------------------------------------------------------%%
 \subsection{Streaming Server}
-
+%% ----------------------------------------------------------------------------------------------------------%%
+\begin{figure}
+	\centering
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/streaming_server.png}
+	\captionof{figure}{\label{fig:}Streaming Server Diagram}
+\end{figure}
 A streaming server manages a single access point and integrates several specialized components. The ~\nameref{sec:source stream handler}  processes the incoming encoded video stream, while the Network Scheduler Framework manages the scheduling of multi-channel streaming and retransmissions. A reinforcement learning module dynamically adapts parameters based on network conditions to optimize performance. The Security and Membership Manager provides Security-as-a-Service by encrypting the streams and managing authentication and authorization, including support for secure tokens used in edge cloud environments.
-
-
 
 \subsubsection{Source Stream Handler}
 \label{sec:source stream handler}
 
-\section{Client}
+\begin{figure}
+	\centering
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/matrix_layout.png}
+	\captionof{figure}{\label{fig:}Data Layout}
+\end{figure}
 
-\subsection{Android Application}
+\paragraph{Packet interleave \& transmission ordering}
 
-The android application uses all the android interfaces for the wifi aware api and media codec, we create a custom data source that enables the use of a file descriptor, and all p2p connections are handled in java allowing the disable of the functionality for privace uses and control.
-
-\subsection{Decoder}
-
-The decoder uses multiple channels to receive and send data pacets, its main function is the verifiying, decoding and reconstruction packets, also it creates the client reports based on current buffer.
-
-The decoder can receive multiple types of packets, all are encapsulated in a PacketWrapper, the types can be TransmissionPacket, RetransmissionPacket and inside the last one it can be an XorPacket or a normal TransmissionPacket. As described before the data comes in matrixes, so we need to track the matrix and current encryption key for that current matrix.
-
-\begin{lstlisting}[language=Rust, style=boxed, basicstyle=\ttfamily\footnotesize]
-struct MatrixTracker {
-	/// Index of the matrix.
-	matrix_index: u32,
-	/// Number of columns in the matrix.
-	cols: u32,
-	/// Number of rows in the matrix.
-	rows: u32,
-	/// Number of columns for Forward Error Correction.
-	cols_fec: u32,
-	/// Number of rows for Forward Error Correction.
-	rows_fec: u32,
-	/// Matrix to store the packets.
-	matrix_packets: Matrix<Option<TransmissionPacket>>,
-	/// Session key to decrypt the matrix.
-	session_key: Option<SessionKey>,
-	/// Bitmap to track the presence of packets.
-	bitmap: Vec<u8>,
-	/// Packet loss percentage for this matrix.
-	packet_loss_percentage: f64,
-}
-\end{lstlisting}
-
-
-
+\subsubsection{Reinforcement Learning}
+\label{sec:adjustable forward error correction}
 
 % State:
 %   - loss_bin: discrete bin of observed packet loss rate (0: excellent, 1: good, ..., 4: bad)
@@ -98,22 +75,82 @@ struct MatrixTracker {
 \end{algorithm}
 
 
+\subsubsection{Network Scheduler Framework}
+\label{sec:network scheduler framework}
 
-\subsection{Reporting Sink}
+\subsubsection{Report Sink}
+\label{sec:report sink}
 
 The reporting sink is used to send compress bitmap reports with metrics to the server, the reports have a signature to authentic the message and counter to avoid replay attacks. The report is serialized and compressed using gzip. 
- 
-\subsection{Android Rust Linker}
 
-The android rust linker is a module that bridges the client abstract client library with the android jni, this enables automatic compilation and linking using org.mozilla.rust-android-gradle.rust-android, when the aarch64-linux-android toolchains are installed in the local computer, using this android library makes it automatic to integrate the code in the android application.
+%% ----------------------------------------------------------------------------------------------------------%%
+\subsection{Client Library}
+%% ----------------------------------------------------------------------------------------------------------%%
+\begin{figure}
+	\centering
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/edge_client.png}
+	\captionof{figure}{\label{fig:}Edge Client Diagram}
+\end{figure}
 
-The use of the jni is expensive, so we only call it when necessary and never to move a lot of data, we use it to starting the logging to adb logcat, starting and stoping the client, get metrics from the client, add and remove sockets dynamicly and managing threads. All decoded data from the client is passed to the java using a file descripter.
 
-\subsection{P2P discovery and connection}
+\subsubsection{Decoder}
+\label{sec:decoder}
 
-The wifi aware implementation in android has hardware limitations, as described in the chapter 2, this requires special logic when discovering clients, because we want a full decentrilized p2p network, every devices needs to be simultinisly a subscriber and a publisher, this implicates when two devices are in range of eatchouther they will as find the publisher as a subscriber creating a race condition, to solve this during the discovery phase, the wifi aware as metadata exchange capabilities (200bytes? non reliable delivery or order), we use that to exchange devices capabilites, every device implementation as diferent hardware, for example the google pixel 6 has only 1 interface and 8 nan data paths, where the google pixel 7a has 2 interfaces and 8 nan data paths, this results in that the google pixel 7a can be connected to 2 diferent devices at the same time, the metadata exchange gives the two devices trying to connect a role based on available resources, in last resort the lower uuid is chosen, making a predictable choice. When two devices create a succeful connection it creats a interface for that p2p link, the android java exposes a quick way to create a socket between the peers, but for our implementation, we use the jni interface to pass the ipv6 link local address with the corresponding scope id to the rust linker library, there we add the interface to our implementation of the mesh networking, that discovers and relays packets to all connected peers.
+\begin{figure}
+	\centering
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/erasure_packet.png}
+	\captionof{figure}{\label{fig:}Erasure Packet Flow}
+\end{figure}
 
-\subsection{Mesh Networking}
+
+
+\subsubsection{Retransmission Manager}
+\label{sec:retransmission manager}
+
+Restransmission manager is run in a sperate thread avoiding blocking the decoder that need to maintain a constant performance requirement, the manager needs to have access to the current data in the buffer but to avoid dead locks and performance issues of always requiring a lock in the data, a cache buffer is used in the manager with a periodic sync with a limit size, so when theres a report sent to the servers a channel connected from the decoder to the manager gets all the current buffer from decoder and compares with the cache and only updates matrixes that where changed, avoiding retransmission in the mesh network not necessary. Then the manager as a main loop that reads all the request from the mesh network send to him, checks the cache if it has the packet creates a response with the correct type defined in the protofile and sends the reponse to the mesh, when a clients receives the reponse it creates the correct type that the decoder is expected to receives and sends to the data channel. 
+
+%% ----------------------------------------------------------------------------------------------------------%%
+\subsection{Security}
+%% ----------------------------------------------------------------------------------------------------------%%
+
+\subsubsection{Thread Model}
+\label{sec:thread model}
+\subsubsection{Authentication, authorization and trust model}
+\label{sec:authentication, authorization and trust model}
+\subsubsection{Forward secrecy and stream integrity}
+\label{sec:forward secrecy and stream integrity}
+\subsubsection{Double signature schema}
+\label{sec:double signature schema}
+
+%% ----------------------------------------------------------------------------------------------------------%%
+\section{Mobile edge cloud offloading}
+%% ----------------------------------------------------------------------------------------------------------%%
+
+\subsubsection{Wifi Aware}
+\label{sec:wifi aware}
+
+Wi-Fi Aware, standardized under the Neighbor Awareness Networking (NAN) protocol by the Wi-Fi Alliance, represents a significant evolution in wireless networking, shifting the paradigm from infrastructure-dependent communication to direct, context-driven device-to-device interaction. Built on top of the IEEE 802.11 MAC/PHY framework, Wi-Fi Aware enables continuous discovery and service exchange between devices without prior association with an access point or on cellular infrastructure. This is accomplished through synchronized communication windows, highly efficient service advertisement mechanisms, and a robust scheduling system designed to optimize radio resource usage in dense environments. Devices engaging in NAN operations are capable of discovering each other and negotiating data connections based on service requirements, proximity, and availability, while maintaining an energy profile suitable for mobile and IoT deployments.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/nan_phy.png}
+	\captionof{figure}{\label{fig:}Nan physical layer representation}
+\end{figure}
+
+At the heart of NAN is its cluster-based architecture, in which a NAN Cluster is formed by devices synchronized to the same Discovery Window (DW) schedule. Clusters are identified by a NAN Cluster ID and can merge when overlapping networks are detected, ensuring operational efficiency and scalability. Synchronization is achieved through NAN Synchronization Beacons, which are transmitted by elected Master Devices within each cluster. Master election relies on a deterministic process based on Master Preference and Anchor Master Rank, ensuring fairness and adaptability to network topology changes. The synchronization mechanism not only aligns device activity for discovery but also reduces channel contention and power consumption by ensuring that all participating devices operate in well-defined active periods.
+
+The NAN service discovery model employs a publish-subscribe paradigm, where devices announce services through Service Descriptor Attributes (SDA) containing a Service ID, which is derived from the SHA-256 hash of a UTF-8 encoded Service Name. Service discovery can occur in two primary modes: Synchronized Discovery (SD), which takes place within DWs, and Unsynchronized Discovery (USD), which allows asynchronous service advertisement outside scheduled windows for reduced discovery latency. To improve efficiency, devices implement Matching Filters (MF) and Bloom Filters that reduce processing load and airtime usage by allowing fast matching of relevant services without parsing unnecessary data. Furthermore, Further Service Discovery (FSD) is supported through the Generic Advertisement Service (GAS), enabling richer service data retrieval before initiating a data path.
+
+Once a service match is established, NAN devices negotiate NAN Data Paths (NDPs) using a pre-existing NAN Device Link (NDL). NDLs are defined by Common Resource Blocks (CRBs), which are contiguous radio slots outside DWs that are mutually agreed upon between devices for data exchange. The specification also defines NAN Data Clusters (NDCs), which consist of multiple devices sharing a common NDC Schedule. This scheduling framework ensures that multiple NDLs can coexist with minimal interference while supporting service-specific bandwidth allocation. NDP setup can be conducted with or without ND-TKSA (NAN Data Pairwise Security Association), depending on whether encryption and authentication are required.
+
+Beyond discovery and data transport, Wi-Fi Aware integrates NAN Ranging capabilities that leverage IEEE 802.11 Fine Timing Measurement (FTM) to calculate inter-device distances. This capability can be invoked explicitly by an application or automatically during discovery, enabling applications that rely on proximity estimation, such as indoor navigation, spatially targeted content delivery, and collaborative robotics. The ranging process is tightly integrated into the NAN scheduling framework, reserving time slots for round-trip time exchanges without disrupting service discovery or ongoing data communication.
+
+Security within NAN is handled at multiple levels to ensure confidentiality, integrity, and privacy. Service discovery privacy is enforced through Secure Service IDs, which mask the actual service identifiers using shared security credentials. Data communication security adopts WPA3-equivalent cryptographic standards, with AES-GCMP-256 among the supported cipher suites. Key management is facilitated by NAN Key Descriptor Elements (KDEs) and Security Context Identifiers (SCIDs), supporting both pairwise and group encryption models. Furthermore, NAN supports NAN Pairing mechanisms, which can be bootstrapped through NFC-triggered handshakes or password-based authentication, enabling secure spontaneous connections between previously unknown devices.
+
+By combining deterministic synchronization, flexible service discovery, efficient scheduling, integrated ranging, and robust security, Wi-Fi Aware establishes a versatile framework suitable for diverse application domains. In consumer environments, it enables spontaneous peer-to-peer file sharing, multiplayer gaming, and social discovery without network configuration overhead. In industrial and enterprise contexts, its deterministic availability and secure proximity-based communication make it a powerful enabler for mission-critical IoT applications, asset tracking, and collaborative systems. The modularity of the architecture ensures that it can be deployed in constrained embedded systems as well as high-performance mobile platforms, making it an adaptable and future-ready protocol for pervasive connectivity.
+
+\subsubsection{Mesh Networking}
+\label{sec:mesh networking}
 
 The mesh networking is a module inside the client library, by default the client starts without the mesh networking, this is by design and allows to be moduler and avoids creating resources where the offloading is not possible or required. The mesh is using a unstructed non fully connected mesh topology, because of the preview hardware constrains we talked in the previous chapter, to combate this constrains every packet in the mesh has a TTL, when we receive a new packet verify the ttl and if is different than 0, we process the packet and relay to all interfaces excepet the one we received, this avoids loops and follows the pattern of flooding a network, along side we added an heartbeat mechanism to keep interface active, by default android kills p2p links when theres no activities after 60 seconds.
 
@@ -121,6 +158,40 @@ The mesh uses a tokio runtime to schedule and run periodic taks, as well detect 
 
 All the request and response are flooded to the network, so even before a client requested a matrix it can be already in the mesh, making low latency. 
 
-\subsection{Retransmission Manager}
 
-Restransmission manager is run in a sperate thread avoiding blocking the decoder that need to maintain a constant performance requirement, the manager needs to have access to the current data in the buffer but to avoid dead locks and performance issues of always requiring a lock in the data, a cache buffer is used in the manager with a periodic sync with a limit size, so when theres a report sent to the servers a channel connected from the decoder to the manager gets all the current buffer from decoder and compares with the cache and only updates matrixes that where changed, avoiding retransmission in the mesh network not necessary. Then the manager as a main loop that reads all the request from the mesh network send to him, checks the cache if it has the packet creates a response with the correct type defined in the protofile and sends the reponse to the mesh, when a clients receives the reponse it creates the correct type that the decoder is expected to receives and sends to the data channel. 
+\begin{figure}
+	\centering
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/mesh_p2p.png}
+	\captionof{figure}{\label{fig:}Android application Diagram}
+\end{figure}
+
+
+%% ----------------------------------------------------------------------------------------------------------%%
+\section{Frontend implementation}
+%% ----------------------------------------------------------------------------------------------------------%%
+
+\subsubsection{Android Frontend}
+\label{sec:android frontend}
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/android_application.png}
+	\captionof{figure}{\label{fig:}Android application Diagram}
+\end{figure}
+
+
+\paragraph{Android Rust Linker}
+\label{sec:android rust linker}
+
+The android rust linker is a module that bridges the client abstract client library with the android jni, this enables automatic compilation and linking using org.mozilla.rust-android-gradle.rust-android, when the aarch64-linux-android toolchains are installed in the local computer, using this android library makes it automatic to integrate the code in the android application.
+
+The use of the jni is expensive, so we only call it when necessary and never to move a lot of data, we use it to starting the logging to adb logcat, starting and stoping the client, get metrics from the client, add and remove sockets dynamicly and managing threads. All decoded data from the client is passed to the java using a file descripter.
+
+\paragraph{P2P discovery and connection}
+\label{sec:p2p discovery and connection}
+
+The wifi aware implementation in android has hardware limitations, as described in the chapter 2, this requires special logic when discovering clients, because we want a full decentrilized p2p network, every devices needs to be simultinisly a subscriber and a publisher, this implicates when two devices are in range of eatchouther they will as find the publisher as a subscriber creating a race condition, to solve this during the discovery phase, the wifi aware as metadata exchange capabilities (200bytes? non reliable delivery or order), we use that to exchange devices capabilites, every device implementation as diferent hardware, for example the google pixel 6 has only 1 interface and 8 nan data paths, where the google pixel 7a has 2 interfaces and 8 nan data paths, this results in that the google pixel 7a can be connected to 2 diferent devices at the same time, the metadata exchange gives the two devices trying to connect a role based on available resources, in last resort the lower uuid is chosen, making a predictable choice. When two devices create a succeful connection it creats a interface for that p2p link, the android java exposes a quick way to create a socket between the peers, but for our implementation, we use the jni interface to pass the ipv6 link local address with the corresponding scope id to the rust linker library, there we add the interface to our implementation of the mesh networking, that discovers and relays packets to all connected peers.
+
+\subsubsection{Linux Frontend}
+
+\subsubsection{Headless Frontend}
