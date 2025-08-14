@@ -2,18 +2,67 @@
 
 % Main chapter title
 %\chapter[toc version]{doc version}
-\chapter{Design and Implementation}
 
+\chapter{Design and Implementation}
+\label{Design and Implementation}
 % Short version of the title for the header
 %\chaptermark{version for header}
 
 % Chapter Label
 % For referencing this chapter elsewhere, use \ref{ChapterTemplate}
-\label{DesignAndImplementation}
 
-This chapter presents the detailed design and implementation of the system, building upon the system requirements and architectural principles established in Chapter~\ref{Introduction}. To address the challenges identified in the literature review (Chapter~\ref{State of the Art}), a secure livestreaming framework with fog offloading capabilities was developed leveraging the Rust programming language, chosen for its memory safety and concurrency guarantees, which reduces common vulnerabilities such as buffer overflows and data race conditions \cite{jung2017rust, matsakis2014rust}. In comparison to C++, Rust’s ownership model and strict compile-time checks help prevent undefined behavior and improve reliability in complex, high-performance systems \cite{sharma2020comparison}, also all code used in this implementation adheres strictly to safe Rust, avoiding the use of \texttt{unsafe} blocks entirely to maintain guarantees of safety.
+This chapter proposes a complete solution for the livestreaming system. It defines the system’s requirements, architecture, and core components, establishing a clear path for development and implementation. The design prioritizes efficient data delivery over unreliable networks and applies modern technologies to ensure reliability, scalability, and ease of use. 
+
+\section{Requirements}
+\label{sec:requirements}
+
+This chapter defines the functional and non-functional requirements, presents the architecture, and explains how each component operates, it classifies the requirements into functional and non-functional categories; Functional requirements describe the system’s features and behaviors, while non-functional requirements set quality criteria and constraints that ensure reliability, efficiency, and usability. 
+
+\begin{center}
+	\begin{tabular}{|p{2.2cm}|p{11.cm}|}
+		\hline
+		\multicolumn{2}{|c|}{\textbf{Functional Requirements}} \\
+		\hline
+		FR1 & The client and server must establish an authenticated, integrity-protected session \\
+		\hline
+		FR2 & Media frames and control messages must be transmitted with confidentiality and integrity; endpoints must decrypt and verify authenticity. \\
+		\hline
+		FR3 & The system must detect lost packets/segments and support retransmission within configurable timeouts, preserving ordering on reassembly. \\
+		\hline
+		FR4 & The server must support forwarding or offloading streams to alternative paths or edge nodes to reduce end-to-end latency when beneficial. \\
+		\hline
+		FR7 & The server must manage session lifecycle, track active clients, and enforce permissions and quotas. \\
+		\hline
+		FR8 & The system must expose metrics (throughput, loss, retransmissions, latency) and logs to enable monitoring and debugging. \\
+		\hline
+		FR9 & Both sides must report errors and support graceful fallback behaviors. \\
+		\hline
+		FR10 & Provide programmatic test hooks and example runners to exercise session establishment, streaming, loss simulation, and retransmission flows. \\
+		\hline
+	\end{tabular}
+\end{center}
+
+\begin{center}
+	\begin{tabular}{|p{2.2cm}|p{11.5cm}|}
+		\hline
+		\multicolumn{2}{|c|}{\textbf{Non-Functional Requirements}} \\
+		\hline
+		NFR3 & Retransmission policy must be defined with bounded recovery latency. \\
+		\hline
+		NFR4 & All control and media channels must be authenticated and encrypted; keys must follow a secure lifecycle (generation, rotation, revocation). \\
+		\hline
+		NFR5 & Protocols must support version negotiation and preserve backward compatibility. \\
+		\hline
+		NFR7 & Client library must operate on constrained devices.\\
+		\hline
+	\end{tabular}
+\end{center}
+
 
 \section{System Architecture}
+
+This chapter presents the detailed design and implementation of the system, building upon the system requirements and architectural principles established in the ~\nameref{sec:requirements} Section. To address the challenges identified in the literature review (Chapter~\ref{State of the Art}), a secure livestreaming framework with fog offloading capabilities was developed leveraging the Rust programming language, chosen for its memory safety and concurrency guarantees, which reduces common vulnerabilities such as buffer overflows and data race conditions \cite{jung2017rust, matsakis2014rust}. In comparison to C++, Rust’s ownership model and strict compile-time checks help prevent undefined behavior and improve reliability in complex, high-performance systems \cite{sharma2020comparison}, also all code used in this implementation adheres strictly to safe Rust, avoiding the use of \texttt{unsafe} blocks entirely to maintain guarantees of safety and reliability.
+
 
 \begin{figure}
 	\centering
@@ -24,12 +73,15 @@ This chapter presents the detailed design and implementation of the system, buil
 %% ----------------------------------------------------------------------------------------------------------%%
 \subsection{Streaming Server}
 %% ----------------------------------------------------------------------------------------------------------%%
+
+
+A streaming server functions through one access point and coordinates a set of specialized subsystems; ~\nameref{sec:source stream handler} receives and processes the encoded video feed, preparing it for distribution; ~\nameref{sec:network scheduler framework} oversees how multiple channels are streamed simultaneously and how lost data is retransmitted; An embedded ~\nameref{sec:reinforcement learning} that continually fine-tunes operational parameters in response to current network conditions, aiming to maximize efficiency and stability; ~\nameref{sec:membership manager} encrypts transmissions, enforces authentication and manages authorization policies.
+
 \begin{figure}
 	\centering
 	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/streaming_server.png}
 	\captionof{figure}{\label{fig:}Streaming Server Diagram}
 \end{figure}
-A streaming server manages a single access point and integrates several specialized components. The ~\nameref{sec:source stream handler}  processes the incoming encoded video stream, while the Network Scheduler Framework manages the scheduling of multi-channel streaming and retransmissions. A reinforcement learning module dynamically adapts parameters based on network conditions to optimize performance. The Security and Membership Manager provides Security-as-a-Service by encrypting the streams and managing authentication and authorization, including support for secure tokens used in edge cloud environments.
 
 \subsubsection{Source Stream Handler}
 \label{sec:source stream handler}
@@ -43,7 +95,7 @@ A streaming server manages a single access point and integrates several speciali
 \paragraph{Packet interleave \& transmission ordering}
 
 \subsubsection{Reinforcement Learning}
-\label{sec:adjustable forward error correction}
+\label{sec:reinforcement learning}
 
 % State:
 %   - loss_bin: discrete bin of observed packet loss rate (0: excellent, 1: good, ..., 4: bad)
@@ -83,9 +135,17 @@ A streaming server manages a single access point and integrates several speciali
 
 The reporting sink is used to send compress bitmap reports with metrics to the server, the reports have a signature to authentic the message and counter to avoid replay attacks. The report is serialized and compressed using gzip. 
 
+\subsubsection{Membership Manager}
+\label{sec:membership manager}
+
+
+
 %% ----------------------------------------------------------------------------------------------------------%%
 \subsection{Client Library}
 %% ----------------------------------------------------------------------------------------------------------%%
+
+The Client Library operates through interconnected modules that manage reception, decoding, retransmission, and secure communication. Static global data, client session management, and a gRPC channel form the high-level control layer; within the receiver subsystem, dedicated threads handle WiFi multicast and unicast streams, each paired with a bandwidth monitor to track link performance, incoming data flows into the decoder which prepares it to be send to the prefired frontend implementation, and also into the ~\nameref{sec:retransmission manager}, which caches content and issues retransmission requests when needed; a secure connection handler within the Tokio runtime ensures encrypted and authenticated communication; client receivers manage incoming responses and maintain synchronization with WiFi links and WiFi Aware data paths, enabling efficient interaction with both WiFi access points and peer devices.
+
 \begin{figure}
 	\centering
 	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/edge_client.png}
@@ -93,8 +153,161 @@ The reporting sink is used to send compress bitmap reports with metrics to the s
 \end{figure}
 
 
+
 \subsubsection{Decoder}
 \label{sec:decoder}
+
+The decoder is responsible for reliably validating, reconstructing, and decrypting video data packets in real time, these operations, as described in Algorithm ~\ref{alg:decoder}, which continuously listens for both periodic tick events and incoming data packets. Tick events trigger two main actions: reporting the current buffer state and metrics to the retransmission manager and server, but also decoding buffered data to the application layer. The buffer is a queue of \texttt{MatrixTracker} objects, each representing a matrix of packets corresponding to multiple segments of the video stream, this design allows the decoder to efficiently handle out-of-order arrivals and retransmissions so when a data packet arrives, the decoder first attempts to deserialize the binary data to an PacketType, after the type is known and corrected decoded then validates the packet’s authenticity using ECDSA signature, this process ensures that only legitimate packets are processed, maintaining the integrity of the stream. \texttt{TransmissionPacket} objects are the primary data units, while \texttt{RetransmissionPacket} objects serve for error recovery and may contain either a normal transmission or an XOR packet for lightweight forward error correction, the handling and validation of these packets are detailed in Algorithm~\ref{alg:matrixtracker}, where each packet is mapped to its correct position in the matrix, and the bitmap is updated to reflect its presence.
+
+\texttt{MatrixTracker} objects play a crucial role in error correction. They manage a two-dimensional grid of packets, including both data and FEC (Forward Error Correction) packets. The decoder leverages Reed-Solomon erasure coding to reconstruct missing packets, iterating over rows and columns to recover lost data whenever enough FEC shards are available. XOR packets provide an additional mechanism for recovering missing data when all but one packet in a set are present. This robust approach to error correction is essential for maintaining stream quality in unreliable network environments.
+
+Security is further enhanced through careful key management and rotation, as outlined in Algorithm~\ref{alg:keyrotation}. The decoder maintains both a current and a next session key, using them to decrypt video data and periodically rotating them at defined epochs. Key rotation is triggered when a matrix index matches the epoch interval, at which point the decoder securely updates its keys by decrypting special packets and, if necessary, requesting new keys from the server via gRPC. This mechanism ensures that the confidentiality of the stream is preserved even if a key is compromised.
+
+Once a matrix is deemed ready for decoding, the decoder removes FEC rows and columns and proceeds to depad and decrypt each packet using the appropriate session key. If decryption fails, the decoder requests updated keys from the server and retries, ensuring resilience against key synchronization issues. The decrypted data is then validated for integrity using ECDSA signatures before being delivered to the application layer for playback or further processing, as described in Algorithm~\ref{alg:decodeapp}.
+
+Throughout its operation, the decoder periodically reports metrics and buffer state, including packet loss rates and retransmission counters, to facilitate adaptive streaming and efficient error recovery. These reports are signed with the client’s private key to prevent tampering. The decoder’s design also incorporates concurrency primitives such as atomic flags and read-write locks to ensure thread-safe operation in a multi-threaded environment.
+
+In summary, the decoder integrates advanced techniques from networking, cryptography, and error correction to provide secure, reliable, and efficient video streaming. Its algorithms for packet handling, matrix reconstruction, key management, and application layer delivery work together to ensure both the security and quality of the streaming experience, even in the face of network unreliability and potential security threats.
+
+\begin{algorithm}
+	\caption{Decoder Main Loop (State-Action Reference)}
+	\label{alg:decoder-main-loop}
+	\begin{algorithmic}[1]
+		\State \textbf{State:} buffer $\gets$ empty queue of MatrixTrackers
+		\State \textbf{State:} session configuration and keys loaded
+		\State \textbf{State:} tick timer set for reporting and decoding
+		\While{not shutdown}
+		\If{tick event}
+		\If{tick is for reporting}
+		\State{Send buffer snapshot to retransmission manager}
+		\For{each matrix in buffer except last}
+		\If{bitmap changed since last report}
+		\State{Add matrix to report}
+		\EndIf
+		\EndFor
+		\If{any reports}
+		\State{Sign and send client report}
+		\EndIf
+		\ElsIf{tick is for decoding to app}
+		\For{each matrix in buffer except last}
+		\State{Reconstruct matrix with FEC}
+		\State{Calculate packet loss}
+		\State{Decode matrix to application layer}
+		\EndFor
+		\EndIf
+		\EndIf
+		\If{data received from channel}
+		\State{Decode PacketWrapper}
+		\If{TransmissionPacket}
+		\State{Validate signature}
+		\If{valid}
+		\State{Process packet (add to buffer, handle key rotation)}
+		\EndIf
+		\ElsIf{RetransmissionPacket}
+		\If{XorPacket}
+		\State{Validate signature}
+		\If{valid}
+		\State{Process XOR packet (recover missing data)}
+		\EndIf
+		\ElsIf{TransmissionPacket}
+		\State{Validate signature}
+		\If{valid}
+		\State{Add retransmission packet to buffer}
+		\EndIf
+		\EndIf
+		\EndIf
+		\State{Update retransmission counters as needed}
+		\EndIf
+		\EndWhile
+	\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+	\caption{MatrixTracker Packet Handling}
+	\begin{algorithmic}[1]
+		\Function{add\_packet}{packet}
+		\State Compute row and column from packet index
+		\If{packet already exists at (row, col)}
+		\State \Return
+		\EndIf
+		\State Add packet to matrix at (row, col)
+		\State Update bitmap
+		\State Recalculate packet loss
+		\EndFunction
+		
+		\Function{reconstruct\_matrix}{ec\_client\_key}
+		\Repeat
+		\For{each row}
+		\State Collect original and recovery shards
+		\If{enough shards}
+		\State Reed-Solomon decode row
+		\For{each recovered packet}
+		\State Sign and add to matrix
+		\EndFor
+		\EndIf
+		\EndFor
+		\For{each column}
+		\State Collect original and recovery shards
+		\If{enough shards}
+		\State Reed-Solomon decode column
+		\For{each recovered packet}
+		\State Sign and add to matrix
+		\EndFor
+		\EndIf
+		\EndFor
+		\Until{no new packets added}
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Decoding to Application Layer}
+	\begin{algorithmic}[1]
+		\Function{decode\_to\_app\_layer}{tracker}
+		\State Remove FEC rows and columns from matrix
+		\For{each packet in matrix}
+		\State Depad payload
+		\State Select decryption key (handle key update if needed)
+		\State Decrypt payload
+		\If{decryption fails and not retried}
+		\State Request updated keys from server
+		\State Retry decryption
+		\EndIf
+		\If{decryption succeeds}
+		\State Decode VideoData
+		\State Validate signature
+		\If{valid}
+		\State Send decoded data to application layer
+		\EndIf
+		\EndIf
+		\EndFor
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Key Rotation Logic}
+	\begin{algorithmic}
+		\Function{check\_key\_rotation}{matrix, packet, current\_key, next\_key, session}
+		\If{matrix index is multiple of epoch}
+		\If{next\_key is set}
+		\State Decrypt payload with next\_key
+		\State Decode VideoData to get new next\_key
+		\State Rotate keys: current\_key = next\_key, next\_key = new\_next\_key
+		\Else
+		\State Log error
+		\EndIf
+		\EndIf
+		\EndFunction
+		
+		\Function{rotate\_key}{current\_key, next\_key, new\_key}
+		\State current\_key = next\_key
+		\State next\_key = new\_key
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
 
 \begin{figure}
 	\centering
@@ -113,14 +326,38 @@ Restransmission manager is run in a sperate thread avoiding blocking the decoder
 \subsection{Security}
 %% ----------------------------------------------------------------------------------------------------------%%
 
-\subsubsection{Thread Model}
-\label{sec:thread model}
-\subsubsection{Authentication, authorization and trust model}
-\label{sec:authentication, authorization and trust model}
-\subsubsection{Forward secrecy and stream integrity}
-\label{sec:forward secrecy and stream integrity}
-\subsubsection{Double signature schema}
-\label{sec:double signature schema}
+\subsubsection{Threat Model}
+\label{sec:threat_model}
+The system ingests an MPEG-TS stream from a trusted external encoder, forms a two-dimensional matrix, applies Reed–Solomon codes by row and by column, and disseminates packets to clients via fog offloading. A private Certification Authority (CA) signs the server certificate at bootstrap and later signs client certificates over an authenticated channel. The server encrypts each payload with a symmetric key that rotates after a fixed number of matrices and signs the payload; clients may add a separate hop signature during mesh retransmission, but the server’s payload signature remains authoritative.
+
+The analysis considers confidentiality of live content and metadata, secrecy of symmetric epoch keys, secrecy of private keys held by the CA, server, and clients, correctness of FEC matrices, and integrity and freshness of client reports. The primary trust boundaries lie between encoder and server, inside the server’s matrix/FEC pipeline, across the CA issuance path, and across the gRPC/TLS channels to clients and fog nodes.
+
+The adversary can eavesdrop, drop, delay, reorder, replay, and inject packets on any network segment; can operate malicious fog nodes or clients; can attempt TLS downgrades and impersonation; and can compromise endpoints after deployment. The adversary cannot break standard cryptographic primitives within their security margins. Physical attacks and compromise of the CA root are out of scope. The system aims to provide confidentiality in transit, end-to-end origin authentication for data packets, integrity for reports, replay resistance within defined windows, and availability under loss patterns mitigated by FEC.
+
+\subsubsection{Authentication, Authorization, and Trust Model}
+\label{sec:authz_trust_model}
+Trust anchors in a private CA whose public key ships with the client. On startup, the server generates an elliptic-curve keypair, submits a CSR to the CA, and serves with the signed certificate. A client establishes gRPC over TLS to a server it authenticates against the CA, then generates its own keypair, submits a CSR over the authenticated channel, and receives a client certificate. Subsequent requests can bind device or account identity to the client certificate, which enables authorization at RPC boundaries and at the reporting sink.
+
+The server signs the application payload so recipients can validate origin independently of transport termination at fog nodes. The client signs periodic reports that carry a monotonic counter; the server enforces counter monotonicity and certificate-based identity to prevent replay and forgery. Authorization follows from certificate attributes and server-side policy that maps identities to stream entitlements, rate limits, or retransmission privileges. Revocation proceeds by short certificate lifetimes and server-maintained deny lists checked at handshake and at report verification. Auditability follows from logging of issued certificates, signature verification outcomes, and counter violations.
+
+\begin{figure}
+	\centering
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/http_tls.png}
+	\captionof{figure}{\label{fig:}TLS Hand shack}
+\end{figure}
+
+\subsubsection{Forward Secrecy and Stream Integrity}
+\label{sec:forward_secrecy_stream_integrity}
+Transport-level forward secrecy follows from ephemeral key exchange in TLS, which ensures that disclosure of the server’s certificate key does not reveal past session keys. Application-level keys rotate after a fixed number of matrices, which limits the exposure window if an attacker later extracts process memory on the server or a client. Rotation semantics require that endpoints retain only the current epoch and the immediately previous epoch to tolerate reordering, and that expired epoch keys be erased on rotation.
+
+Stream integrity is layered. Authenticated encryption of the payload provides per-packet integrity and non-malleability. The detached server signature over the payload binds ciphertext to the server identity and to the current epoch, which prevents cross-stream splicing and tampering by intermediary fog nodes. Structural checks on matrix coordinates, row and column indices, and FEC relations detect malformed or adversarially crafted symbols. The receiver rejects packets that fail signature verification, fail authenticated decryption, violate epoch acceptance windows, or contradict parity relationships implied by Reed–Solomon coding.
+
+\subsubsection{Double Signature Schema}
+\label{sec:double_signature_schema}
+Two signatures carry distinct guarantees. The server produces a payload signature that authenticates the content end-to-end and that remains stable across mesh hops and offloading. A client that retransmits within the mesh may attach a second, hop-level signature that authenticates the forwarding act and enables accountability, rate limiting, or misbehavior detection inside the mesh. Verification proceeds by first validating the server’s payload signature against the CA-backed certificate chain and only then interpreting any hop-level signature for local policy decisions.
+
+This separation confines authority: only the server can originate valid content, while any client can be held accountable for forwarding behavior without possessing the power to forge content. If a client key leaks, attackers can generate new hop signatures but cannot forge server-authenticated payloads. If the server’s application key for encryption leaks, the rotation policy bounds damage to the affected epochs, and prior epochs remain confidential; if the server’s signing key leaks, new payloads can be forged, so detection relies on rapid revocation and re-issuance, while archived signatures remain attributable but no longer trustworthy for freshness. Residual risks include denial-of-service via signature flooding, misuse of the private CA, clock drift that weakens freshness checks on reports, and implementation bugs in deterministic serialization of signed data. These risks are operational and are addressed by rate limits, certificate lifecycle management, time synchronization, and rigorous testing of signing and verification code paths.
+
 
 %% ----------------------------------------------------------------------------------------------------------%%
 \section{Mobile edge cloud offloading}
@@ -148,6 +385,11 @@ Beyond discovery and data transport, Wi-Fi Aware integrates NAN Ranging capabili
 Security within NAN is handled at multiple levels to ensure confidentiality, integrity, and privacy. Service discovery privacy is enforced through Secure Service IDs, which mask the actual service identifiers using shared security credentials. Data communication security adopts WPA3-equivalent cryptographic standards, with AES-GCMP-256 among the supported cipher suites. Key management is facilitated by NAN Key Descriptor Elements (KDEs) and Security Context Identifiers (SCIDs), supporting both pairwise and group encryption models. Furthermore, NAN supports NAN Pairing mechanisms, which can be bootstrapped through NFC-triggered handshakes or password-based authentication, enabling secure spontaneous connections between previously unknown devices.
 
 By combining deterministic synchronization, flexible service discovery, efficient scheduling, integrated ranging, and robust security, Wi-Fi Aware establishes a versatile framework suitable for diverse application domains. In consumer environments, it enables spontaneous peer-to-peer file sharing, multiplayer gaming, and social discovery without network configuration overhead. In industrial and enterprise contexts, its deterministic availability and secure proximity-based communication make it a powerful enabler for mission-critical IoT applications, asset tracking, and collaborative systems. The modularity of the architecture ensures that it can be deployed in constrained embedded systems as well as high-performance mobile platforms, making it an adaptable and future-ready protocol for pervasive connectivity.
+
+\paragraph{Android Implementation}
+\label{sec:p2p discovery and connection}
+
+The wifi aware implementation in android has hardware limitations, as described in the chapter 2, this requires special logic when discovering clients, because we want a full decentrilized p2p network, every devices needs to be simultinisly a subscriber and a publisher, this implicates when two devices are in range of eatchouther they will as find the publisher as a subscriber creating a race condition, to solve this during the discovery phase, the wifi aware as metadata exchange capabilities (200bytes? non reliable delivery or order), we use that to exchange devices capabilites, every device implementation as diferent hardware, for example the google pixel 6 has only 1 interface and 8 nan data paths, where the google pixel 7a has 2 interfaces and 8 nan data paths, this results in that the google pixel 7a can be connected to 2 diferent devices at the same time, the metadata exchange gives the two devices trying to connect a role based on available resources, in last resort the lower uuid is chosen, making a predictable choice. When two devices create a succeful connection it creats a interface for that p2p link, the android java exposes a quick way to create a socket between the peers, but for our implementation, we use the jni interface to pass the ipv6 link local address with the corresponding scope id to the rust linker library, there we add the interface to our implementation of the mesh networking, that discovers and relays packets to all connected peers.
 
 \subsubsection{Mesh Networking}
 \label{sec:mesh networking}
@@ -187,10 +429,7 @@ The android rust linker is a module that bridges the client abstract client libr
 
 The use of the jni is expensive, so we only call it when necessary and never to move a lot of data, we use it to starting the logging to adb logcat, starting and stoping the client, get metrics from the client, add and remove sockets dynamicly and managing threads. All decoded data from the client is passed to the java using a file descripter.
 
-\paragraph{P2P discovery and connection}
-\label{sec:p2p discovery and connection}
 
-The wifi aware implementation in android has hardware limitations, as described in the chapter 2, this requires special logic when discovering clients, because we want a full decentrilized p2p network, every devices needs to be simultinisly a subscriber and a publisher, this implicates when two devices are in range of eatchouther they will as find the publisher as a subscriber creating a race condition, to solve this during the discovery phase, the wifi aware as metadata exchange capabilities (200bytes? non reliable delivery or order), we use that to exchange devices capabilites, every device implementation as diferent hardware, for example the google pixel 6 has only 1 interface and 8 nan data paths, where the google pixel 7a has 2 interfaces and 8 nan data paths, this results in that the google pixel 7a can be connected to 2 diferent devices at the same time, the metadata exchange gives the two devices trying to connect a role based on available resources, in last resort the lower uuid is chosen, making a predictable choice. When two devices create a succeful connection it creats a interface for that p2p link, the android java exposes a quick way to create a socket between the peers, but for our implementation, we use the jni interface to pass the ipv6 link local address with the corresponding scope id to the rust linker library, there we add the interface to our implementation of the mesh networking, that discovers and relays packets to all connected peers.
 
 \subsubsection{Linux Frontend}
 
