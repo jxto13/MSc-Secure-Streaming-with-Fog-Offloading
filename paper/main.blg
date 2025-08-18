@@ -11,9 +11,13 @@ Reallocating 'wiz_functions' (item size: 4) to 6000 items.
 Reallocating 'singl_function' (item size: 4) to 100 items.
 Database file #1: Bibliography.bib
 Warning--entry type for "abiresearch2025" isn't style-file defined
---line 41 of file Bibliography.bib
+--line 157 of file Bibliography.bib
 Warning--entry type for "newscast2025" isn't style-file defined
---line 81 of file Bibliography.bib
+--line 197 of file Bibliography.bib
+Warning--I didn't find a database entry for "rescorla2021quic"
+Warning--I didn't find a database entry for "holmer2022media"
+Warning--I didn't find a database entry for "huang2024"
+Warning--I didn't find a database entry for "zhou2024"
 Warning--I didn't find a database entry for "jung2017rust"
 Warning--I didn't find a database entry for "matsakis2014rust"
 Warning--I didn't find a database entry for "sharma2020comparison"
@@ -23,45 +27,45 @@ Warning--I didn't find a database entry for "sharma2020comparison"
 Warning--empty journal in rs_error_bounds
 
 Done.
-You've used 25 entries,
+You've used 40 entries,
             4087 wiz_defined-function locations,
-            973 strings with 11877 characters,
-and the built_in function-call counts, 14565 in all, are:
-= -- 1252
-> -- 245
-< -- 81
-+ -- 138
-- -- 49
-* -- 652
-:= -- 2482
-add.period$ -- 53
-call.type$ -- 25
-change.case$ -- 35
-chr.to.int$ -- 186
-cite$ -- 26
-duplicate$ -- 1071
-empty$ -- 1180
-format.name$ -- 54
-if$ -- 3280
+            1054 strings with 14491 characters,
+and the built_in function-call counts, 22013 in all, are:
+= -- 1846
+> -- 396
+< -- 102
++ -- 213
+- -- 81
+* -- 948
+:= -- 3722
+add.period$ -- 82
+call.type$ -- 40
+change.case$ -- 53
+chr.to.int$ -- 237
+cite$ -- 41
+duplicate$ -- 1669
+empty$ -- 1887
+format.name$ -- 92
+if$ -- 4992
 int.to.chr$ -- 0
-int.to.str$ -- 25
-missing$ -- 217
-newline$ -- 126
-num.names$ -- 25
-pop$ -- 497
+int.to.str$ -- 40
+missing$ -- 348
+newline$ -- 173
+num.names$ -- 40
+pop$ -- 825
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 1145
+skip$ -- 1737
 stack$ -- 0
-substring$ -- 493
-swap$ -- 805
-text.length$ -- 19
+substring$ -- 634
+swap$ -- 1199
+text.length$ -- 23
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 25
+type$ -- 40
 warning$ -- 1
-while$ -- 53
-width$ -- 27
-write$ -- 290
-(There were 6 warnings)
+while$ -- 80
+width$ -- 42
+write$ -- 422
+(There were 10 warnings)

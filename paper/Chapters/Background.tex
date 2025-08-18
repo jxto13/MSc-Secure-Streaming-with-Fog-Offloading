@@ -3,103 +3,66 @@
 % Main chapter title
 %\chapter[toc version]{doc version}
 \chapter{Background Work}
+\label{BackgroundWork}
 
 % Short version of the title for the header
 %\chaptermark{version for header}
 
-% Chapter Label
-% For referencing this chapter elsewhere, use \ref{ChapterTemplate}
-\label{BackgroundWork}
+This chapter explains the evolution of live streaming architectures, the security mechanisms employed in real-time and segment-based delivery, the foundations of fog computing, cryptographic considerations for edge environments, and the role of reinforcement learning in adaptive streaming, concluding with an analysis of quality of experience (QoE) factors under latency constraints. By examining these areas together, the section establishes the technological context and prepares the ground for the detailed review of state-of-the-art solutions in the next chapter.
+
+\subsection{Evolution of Live Streaming Architectures}
+
+The evolution of live streaming architectures is marked by a series of technical shifts aimed at scaling delivery, supporting device diversity, and reducing latency. In the earliest models, live video distribution was centralized: services like RealPlayer \cite{realplayer} and QuickTime \cite{hoakley2024quicktime} relied on direct client–server connections, resulting in rapidly escalating bandwidth and computation demands on the origin server as audience sizes grew. These single-point bottlenecks restricted adoption and strained infrastructure whenever viewership grew, so the industry introduced Content Delivery Networks (CDNs) that distributed cache and edge servers across geographic regions. CDNs reduced backbone congestion and improved delivery by serving content from nodes closer to users, but the pipeline—ingest, transcoding, packaging, and distribution—remained centered in the cloud. Each stage introduced delay, with transcoding alone adding 1–10 seconds \cite{BoxCastTeam2021latency} because it generated multiple renditions of the stream for varying devices and network conditions.
+
+During this stage, streaming protocols began to diverge in how they packaged media, Apple’s HTTP Live Streaming (HLS) emerged as one of the most widely adopted approaches, relying on the MPEG-2 Transport Stream (MPEG-TS) format to segment audio and video into small \textit{ts} files, originally developed for broadcast television, MPEG-TS offered strong advantages such as robust synchronization of live streams, resilience against transmission errors through fixed-size packets and correction mechanisms, and efficient multiplexing of multiple video, audio, or metadata streams, which made it well suited for internet delivery under fluctuating network conditions. While MPEG-TS introduces some overhead in segmenting and is less efficient than newer formats such as fragmented MP4 \textit{fMP4} for certain advanced features, it remains the main choice of live streaming when reliability, error tolerance, real-time delivery, and device interoperability are critical, its suitability for UDP, multicast, and broadcast scenarios, plus its support for broadcast-grade features like EPG and conditional access, further justify its selection for projects where robust, scalable live streaming is the primary requirement.
+
+In parallel, the MPEG-DASH standard emerged, using \textit{fMP4} containers which promote flexibility, lower latency, and more seamless adaptive bitrate switching, this divergence forced content distributors to maintain separate media packages for HLS (MPEG-TS) and DASH (fMP4), resulting in increased storage and operational cost. Recognizing these inefficiencies, the industry unified around the Common Media Application Format (CMAF), which standardized delivery on fragmented MP4 for both HLS and DASH. CMAF eliminated the need to create and store redundant content versions, improved random access with smaller, independent “chunks,” and enabled innovations like chunked transfer and partial segment delivery. These advancements underpin low-latency protocols such as Low-Latency DASH (LL-DASH) and Low-Latency HLS (LL-HLS), which push out video in small, real-time fragments, achieving glass-to-glass latency as low as 2–3 seconds—an essential requirement for interactive and live event streaming.
+
+Thus, the transition from centralized models to distributed CDNs, the move from MPEG-TS and MPEG-DASH to unified CMAF containers, and the embrace of chunked, low-latency streaming reflects the industry’s ongoing pursuit of efficiency, interoperability, and minimal latency for live streaming experiences—with MPEG-TS remaining a justified and strategic choice for robust and broadcast-aligned live delivery.
+
+\subsection{Security Mechanisms in Live Streaming}
+
+Securing live streaming content requires approaches that balance low latency, device compatibility, user privacy, and monetization. Unlike on-demand video, where files can be encrypted in advance and delivered without strict timing constraints, live and interactive streaming must be protected while content is generated and transmitted in real time. This demands lightweight and scalable encryption methods that resist active attacks while keeping delays minimal.
+
+Two delivery models dominate live streaming, and each has distinct security requirements. The first is packet-based transport, used in interactive and professional workflows such as video conferencing, remote production, and live broadcast contribution. The second is segment-based delivery, common in large-scale internet streaming services, where content is divided into small files and distributed over HTTP.
+
+In packet-based systems, the Secure Real-Time Transport Protocol (SRTP) is the standard. SRTP secures streams at the packet level by applying the Advanced Encryption Standard (AES), a widely adopted block cipher standardized by NIST \cite{daemen2002design}, to every Real-time Transport Protocol (RTP) packet. It guarantees confidentiality and integrity while maintaining the timing requirements of real-time communication. Session keys are negotiated dynamically through protocols such as Datagram Transport Layer Security for SRTP (DTLS-SRTP) \cite{lennox2010dtls} or ZRTP \cite{zimmermann2006zrtp}, which provide secrecy, forward secrecy through frequent key changes, and replay protection. Because SRTP encrypts each packet independently, it remains robust under network conditions where packet loss and reordering are common. Importantly, the computational overhead is usually below 10\%, which allows end-to-end delays of less than one second, a requirement for interactive use cases \cite{perkins2003srtp}.
+
+Segment-based streaming systems rely on file-level protection. Media is divided into discrete chunks and encrypted according to the Common Encryption (CENC) standard, defined in the ISO Base Media File Format (ISO/IEC 23001-7) \cite{iso23001cenc}. CENC specifies how AES is applied in counter (AES-CTR) or cipher block chaining (AES-CBC) mode, sometimes using subsample encryption to protect only parts of the media while reducing computational load. This design allows a single encrypted package to be playable across different Digital Rights Management (DRM) systems without re-encrypting the content.
+
+DRM frameworks such as Google Widevine \cite{widevine2019overview}, Microsoft PlayReady \cite{microsoft2018playready}, and Apple FairPlay \cite{apple2016fairplay} handle license distribution and key management in segment-based workflows. In browsers and apps, the Encrypted Media Extensions (EME) API standardizes the interaction between the player and DRM. When a user requests playback, the client obtains a license from a server, which can enforce policies like playback windows, device limits, or concurrency controls. While this model enables flexible monetization, the license acquisition process introduces extra network exchanges that can increase startup latency or cause playback stalls if responses are delayed.
+
+Caching efficiency is another key factor. Since encrypted segments remain unchanged, they are well suited for distribution through Content Delivery Networks (CDNs). However, techniques such as per-user keys, frequent key rotation, or forensic watermarking for anti-piracy purposes reduce cache hit rates by generating many content variants. To counter threats, providers also adopt complementary methods, including HTTPS transport to prevent interception, token-based access control to authorize users, and forensic watermarking to trace redistribution.
+
+The choice of security mechanisms reflects the trade-off between scalability and secrecy. Interactive systems prioritize packet-level protection with minimal latency, while large-scale entertainment platforms favor segment-based approaches that integrate with CDN caching and DRM frameworks. The overarching objective is to deliver resilient protection without weakening the real-time and adaptive qualities that define modern streaming platforms.
+
+\subsection{Fog Computing and Its Relevance to Streaming}
+
+Fog computing represents an architectural paradigm that extends the capabilities of centralized cloud platforms by distributing computation, storage, and control functions closer to end users—namely, within or near access networks at the “edge” of the network. According to the OpenFog Consortium (IEEE 1934), fog computing is defined as a hierarchical system comprising multiple layers of interconnected nodes situated between traditional cloud data centers and Internet of Things (IoT) endpoints. Complementing this, the European Telecommunications Standards Institute (ETSI) Multi-access Edge Computing (MEC) framework specifies a standardized architecture and APIs for deploying and managing applications directly on edge nodes, supporting fine-grained traffic steering, real-time mobility management, and dynamic resource allocation \cite{etsi2025}.
+
+In the context of live streaming, fog nodes serve vital roles that alleviate load on centralized cloud infrastructure and improve user experience. By offloading computationally intensive tasks—such as transcoding streams into multiple bitrate representations, formatting media into adaptive streaming protocols like DASH or HLS, or caching frequently accessed content—fog computing minimizes the need for round-trips to distant data centers. This local processing and caching reduce network backhaul usage, lower startup delays, and mitigate playback interruptions caused by congestion or packet loss in the core network.
+
+However, the deployment of fog architectures introduces new operational challenges. Fog nodes exhibit considerable heterogeneity in hardware capability, ranging from powerful micro data centers to resource-constrained embedded devices. The availability of computing, memory, and storage resources may fluctuate dynamically due to competing local demands or energy constraints, complicating scheduling and load balancing decisions. Furthermore, the distributed and often physically accessible nature of edge nodes increases their exposure to security threats such as tampering, unauthorized access, or firmware attacks, necessitating robust hardware security measures, secure boot processes, and continual integrity verification.
+
+Security is further complicated by the necessity to maintain user privacy, enforce digital rights, and protect content confidentiality across multiple, potentially less-trusted edge environments. Implementing strong cryptographic protections and key management schemes at the fog layer demands careful balancing between computational overhead and latency impact. Overall, fog computing represents a promising but complex frontier in live streaming architectures, offering the potential to significantly enhance scalability and responsiveness, provided that its unique security and operational risks are thoroughly addressed.
+
+\subsection{Cryptographic Considerations at the Edge}
+
+The choice and efficiency of cryptographic primitives are critical factors that directly impact latency budgets in live streaming environments, especially at the edge where computational resources and power efficiency can be limited. AES-GCM (Advanced Encryption Standard in Galois/Counter Mode) stands as the dominant Authenticated Encryption with Associated Data (AEAD) scheme due to its widespread adoption in key internet security protocols such as TLS 1.3, QUIC, and Secure Real-time Transport Protocol (SRTP). On modern x86 processors equipped with AES-NI hardware acceleration, AES-GCM can achieve throughput of several gigabits per second per core, with minimal latency overhead. However, performance significantly degrades on many low-power ARM-based edge devices and embedded systems that often lack such acceleration, creating a potential bottleneck in encrypted media processing \cite{bernstein2008chacha20,langley2016quic}.
+
+Beyond the core encryption algorithms, effective key management on fog and edge nodes is paramount. Lightweight and scalable strategies—such as per-session keys, time-window-based rekeying, or hierarchical key derivation—help balance strong confidentiality guarantees against the computational and operational overhead of frequent key rotation. More advanced cryptographic mechanisms, including broadcast encryption and proxy re-encryption, enable fog nodes to enforce fine-grained access control policies locally, without exposing master or root keys. These schemes support flexible content protection in decentralized environments by enabling dynamic user authorization and secure content sharing directly at the edge. However, implementing such solutions often requires intricate integration with Digital Rights Management (DRM) frameworks and license servers, and they remain rare in large-scale production deployments due to their complexity and interoperability challenges.
 
 
+\subsection{Privacy and Data Protection in Edge Streaming}
+
+The expansion of edge and fog computing in live streaming architectures brings forth distinctive challenges related to privacy and data protection. By processing and caching media content closer to end users—often within localized access networks or shared infrastructures—edge deployments increase the risk of exposing sensitive user data and content metadata to a wider array of potential threats, including malicious insiders, compromised devices, or untrusted edge operators.
+
+Unlike traditional centralized cloud environments, which benefit from well-established perimeter security and stringent access controls, edge nodes typically operate in more distributed, heterogeneous, and sometimes less physically secure contexts. This environment necessitates the deployment of robust privacy-preserving mechanisms to protect personally identifiable information (PII), content consumption details, and critical cryptographic keys used for securing media streams.
+
+Effective and secure key management is another critical area. Distributed key provisioning at the edge must ensure that cryptographic keys are never exposed, even on devices potentially controlled by untrusted parties. Hardware-based Trusted Execution Environments (TEEs) and hardware security modules (HSMs) incorporated within edge nodes provide isolated and secure platforms for key handling, which can be further reinforced through remote attestation protocols to verify the integrity of the executing environment.
+
+Edge streaming solutions must adhere to applicable data protection regulations, like the General Data Protection Regulation (GDPR), which impose strict rules on data collection transparency, user consent, and data sovereignty.
 
 
-\subsection{Two-Dimensional Product Reed–Solomon FEC}
-\label{sec:2d_fec}
-
-Two-dimensional (2-D) \emph{product} Forward Error Correction (FEC) was developed to overcome the limitations of one-dimensional parity schemes in the transport of real-time video over IP networks\,\cite{prompeg,smpte2022}. In this approach, incoming data is first buffered and placed \emph{row-major order} into a rectangular matrix of \(D\) rows and \(L\) columns, \((n_{\mathrm r},k_{\mathrm r})\) Reed--Solomon (RS) code is then applied independently to each row, while an \((n_{\mathrm c},k_{\mathrm c})\) RS code is applied to each column resulting in a \emph{product code} offering two layers of redundancy: row codes provide efficient correction for random single-packet losses, while column codes are particularly effective against long burst losses that span multiple consecutive packets\,\cite{rfc6865,fec_video_study}.
-
-\paragraph{Reed--Solomon Encoding.}
-An \(\mathrm{RS}(n,k)\) code over \(\mathrm{GF}(2^{m})\) treats each packet as a symbol of \(m\) bits. Let the source message be represented by  
-\[
-M(x) = \sum_{i=0}^{k-1} m_i x^{k-1-i} \in \mathrm{GF}(2^{m})[x],
-\]
-where the coefficients \(m_i\) correspond to data symbols.  
-
-In systematic encoding, \(n-k\) parity symbols are obtained by evaluating \(M(x)\) at \(n-k\) distinct non-zero field elements \(\{\alpha_0,\dots,\alpha_{n-k-1}\}\):
-\[
-p_j = M(\alpha_j), \qquad 0 \le j < n-k.
-\]
-The transmitted codeword is  
-\begin{equation}
-	C(x) = M(x)\,x^{n-k} + P(x), \qquad
-	P(x) = \sum_{j=0}^{n-k-1} p_j x^{n-k-1-j},
-	\label{eq:rs_codeword}
-\end{equation}
-which inherits the \emph{maximum-distance-separable} (MDS) property: any \(k\) of the \(n\) symbols are sufficient to reconstruct the original message via polynomial interpolation\,\cite{rs_intro}.  
-In practice, decoding often uses the Berlekamp--Massey or Euclidean algorithms to locate and correct up to \(\lfloor (n-k)/2 \rfloor\) erroneous symbols.
-
-\paragraph{Constructing the Product Code.}
-Applying \(\mathrm{RS}(n_{\mathrm r},k_{\mathrm r})\) row-wise and \(\mathrm{RS}(n_{\mathrm c},k_{\mathrm c})\) column-wise produces a matrix of  
-\[
-N = n_{\mathrm r} \, n_{\mathrm c} = (D + r_{\mathrm r})(L + r_{\mathrm c})
-\]
-total packets, where \(r_{\mathrm r} = n_{\mathrm r} - k_{\mathrm r}\) and \(r_{\mathrm c} = n_{\mathrm c} - k_{\mathrm c}\) denote the parity symbols per row and column, respectively.  
-
-The aggregate redundancy ratio is  
-\[
-\eta = \frac{N - D\,L}{D\,L}
-= \frac{r_{\mathrm r}}{k_{\mathrm r}}
-+ \frac{r_{\mathrm c}}{k_{\mathrm c}}
-+ \frac{r_{\mathrm r} \, r_{\mathrm c}}{k_{\mathrm r} \, k_{\mathrm c}},
-\]
-where the third term represents the \emph{intersection overhead} caused by the parity--parity cells in the bottom-right of the matrix.  
-
-
-\paragraph{Bandwidth Overhead Analysis.}
-The bandwidth penalty imposed by 2-D product FEC is constant and proactive, meaning that the additional packets are transmitted regardless of whether errors actually occur\,\cite{fec_overhead_study}.  
-For example, a typical Pro-MPEG configuration with a \(25 \times 4\) data matrix (100 video packets) plus 25 row-parity packets and 4 column-parity packets requires transmission of 129 total packets, giving a constant overhead of  
-\[
-\frac{129 - 100}{100} = 29\%.
-\]
-This value remains fixed across all network conditions. Using the general formula, consider a \(20 \times 5\) matrix with 25\% row protection (\(r_{\mathrm r}/k_{\mathrm r} = 0.25\)) and 20\% column protection (\(r_{\mathrm c}/k_{\mathrm c} = 0.20\)).  
-The intersection term contributes \(0.25 \times 0.20 = 0.05\), so the total overhead is  
-\[
-\eta = 0.25 + 0.20 + 0.05 = 0.50,
-\]
-corresponding to a 50\% bandwidth increase\,\cite{2d_fec_bounds}. While this overhead would be excessive for file transfer, it is acceptable in low-latency video services where retransmissions are impractical or costly\,\cite{limit_fec,huawei_afec}.
-
-\paragraph{Error-Correction Efficiency.}
-The theoretical maximum correctable error probability for a product code can be bounded as\,\cite{rs_error_bounds}:
-\[
-P_{\mathrm{correctable}} \leq \min \left\{ \binom{n_{\mathrm r}}{t_{\mathrm r}}, \, \binom{n_{\mathrm c}}{t_{\mathrm c}} \right\} \cdot P_{\mathrm{random}}^{t_{\mathrm r} + t_{\mathrm c}},
-\]
-where \(t_{\mathrm r} = \lfloor r_{\mathrm r} / 2 \rfloor\) and \(t_{\mathrm c} = \lfloor r_{\mathrm c} / 2 \rfloor\) are the per-dimension correction limits.  
-In burst-loss scenarios, residual packet loss rates follow approximately
-\[
-\mathrm{RPLR}_{2\mathrm{D}} \approx P_{\mathrm{loss}} \cdot \left( 1 - \prod_{i=1}^D \prod_{j=1}^L \big(1 - P_{\mathrm{deadlock}}^{(i,j)}\big) \right),
-\]
-where \(P_{\mathrm{deadlock}}^{(i,j)}\) is the probability that the loss pattern at \((i,j)\) is unrecoverable.  
-For a \(10 \times 10\) matrix, deadlock configurations make up just 1.23\% of all 6-loss patterns but grow to 27.6\% for 12-loss patterns, showing the non-linear degradation of 2-D FEC in high-loss condition's\cite{2d_fec_bounds}.
-
-\paragraph{Overhead Efficiency Comparison.}
-Compared to other FEC methods, 2-D Reed--Solomon offers superior bandwidth efficiency for moderate protection levels, but at the cost of quadratic computational scaling.  
-For equivalent \(\approx 4\%\) overhead, an \(\mathrm{RS}(169,163)\) code with interleaving requires 44\% more bandwidth than Raptor codes to achieve the same resilience at 2\% packet loss\cite{raptor_vs_rs}.  
-Moreover, RS decoding complexity grows as \(\mathcal{O}(k^2)\), and in practice, it demands 2--10$\times$ more processing than Raptor codes when \(k < 250\).  
-In resource-constrained fog nodes, this computational load translates directly into higher power consumption and increased processing latency.
-
-\paragraph{Practical Implications for Fog Deployments.}
-In environments with costly or capacity-limited links the economic impact of constant FEC overhead is significant.  
-When combined with a typical 20\% bitrate guard band, a 30\% 2-D FEC overhead can push the total transmission rate to 50\% above the base stream\,\cite{limit_fec}.  
-For instance, a 5~Mbps stream with 30\% overhead requires 6.5~Mbps of link capacity, representing an annual cost increase of \$1,500--3,000 for premium satellite service.  
-Adaptive FEC strategies, which adjust overhead dynamically in response to real-time loss metrics, can reduce bandwidth waste by 15--25\% during favorable conditions while still offering robust protection during loss bursts\,\cite{fec_scalable_video}.
-
-\paragraph{Latency and Buffering Trade-offs.}
-Since the encoder must collect an entire \(D \times L\) matrix before column parities can be sent, the scheme incurs a buffering delay of  
-\[
-T_{\mathrm{FEC}} \approx \frac{(L - 1) + (D - 1)}{R_{\mathrm{pkt}}},
-\]
-where \(R_{\mathrm{pkt}}\) is the packet emission rate.  
-Smaller column depths (\(L \le 5\)) reduce this delay while still addressing typical burst-loss patterns in Wi-Fi links \cite{smpte2022,fec_video_study}.  
-
+\subsection{Reinforcement Learning for Adaptive Streaming}
 

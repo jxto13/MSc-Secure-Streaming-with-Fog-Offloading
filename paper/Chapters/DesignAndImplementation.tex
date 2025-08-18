@@ -16,10 +16,32 @@ This chapter proposes a complete solution for the livestreaming system. It defin
 \section{Requirements}
 \label{sec:requirements}
 
-This chapter defines the functional and non-functional requirements, presents the architecture, and explains how each component operates, it classifies the requirements into functional and non-functional categories; Functional requirements describe the system’s features and behaviors, while non-functional requirements set quality criteria and constraints that ensure reliability, efficiency, and usability. 
+This chapter defines the functional and non-functional requirements, presents the architecture, and explains how each component operates, it classifies the requirements into functional and non-functional categories; 
+
+\begin{description}
+	\item[] \textbf{Functional} requirements articulate the concrete capabilities that a system must implement in order to fulfill its intended purpose. They describe the explicit services to be delivered, the behaviors expected under different conditions, and the features that enable users or other systems to interact with it effectively.
+	\item[] \textbf{Non-functional} requirements, in contrast, define the quality attributes and operational constraints that shape how these functions are executed. Rather than describing individual features, they establish criteria for system performance, scalability, reliability, security, and usability. These requirements determine the efficiency and robustness of the overall design, ensuring that functional behaviors occur within acceptable bounds of latency, throughput, resource consumption, and resilience. 
+\end{description}
+  
 
 \begin{center}
-	\begin{tabular}{|p{2.2cm}|p{11.cm}|}
+	\begin{tabular}{|p{2.2cm}|p{11.5cm}|}
+		\hline
+		\multicolumn{2}{|c|}{\textbf{Non-Functional Requirements}} \\
+		\hline
+		NFR1 & Retransmission policy must be defined with bounded recovery latency. \\
+		\hline
+		NFR2 & All control and media channels must be authenticated and encrypted; keys must follow a secure lifecycle (generation, rotation, revocation). \\
+		\hline
+		NFR3 & Protocols must support version negotiation and preserve backward compatibility. \\
+		\hline
+		NFR4 & Client library must operate on constrained devices.\\
+		\hline
+	\end{tabular}
+\end{center}
+
+\begin{center}
+	\begin{tabular}{|p{2.2cm}|p{11.5cm}|}
 		\hline
 		\multicolumn{2}{|c|}{\textbf{Functional Requirements}} \\
 		\hline
@@ -31,32 +53,18 @@ This chapter defines the functional and non-functional requirements, presents th
 		\hline
 		FR4 & The server must support forwarding or offloading streams to alternative paths or edge nodes to reduce end-to-end latency when beneficial. \\
 		\hline
-		FR7 & The server must manage session lifecycle, track active clients, and enforce permissions and quotas. \\
+		FR5 & The server must manage session lifecycle, track active clients, and enforce permissions and quotas. \\
 		\hline
-		FR8 & The system must expose metrics (throughput, loss, retransmissions, latency) and logs to enable monitoring and debugging. \\
+		FR6 & The system must expose metrics (throughput, loss, retransmissions, latency) and logs to enable monitoring and debugging. \\
 		\hline
-		FR9 & Both sides must report errors and support graceful fallback behaviors. \\
+		FR7 & Both sides must report errors and support graceful fallback behaviors. \\
 		\hline
-		FR10 & Provide programmatic test hooks and example runners to exercise session establishment, streaming, loss simulation, and retransmission flows. \\
+		FR8 & Provide programmatic test hooks and example runners to exercise session establishment, streaming, loss simulation, and retransmission flows. \\
 		\hline
 	\end{tabular}
 \end{center}
 
-\begin{center}
-	\begin{tabular}{|p{2.2cm}|p{11.5cm}|}
-		\hline
-		\multicolumn{2}{|c|}{\textbf{Non-Functional Requirements}} \\
-		\hline
-		NFR3 & Retransmission policy must be defined with bounded recovery latency. \\
-		\hline
-		NFR4 & All control and media channels must be authenticated and encrypted; keys must follow a secure lifecycle (generation, rotation, revocation). \\
-		\hline
-		NFR5 & Protocols must support version negotiation and preserve backward compatibility. \\
-		\hline
-		NFR7 & Client library must operate on constrained devices.\\
-		\hline
-	\end{tabular}
-\end{center}
+
 
 
 \section{System Architecture}
@@ -67,15 +75,14 @@ This chapter presents the detailed design and implementation of the system, buil
 \begin{figure}
 	\centering
 	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/system.png}
-	\captionof{figure}{\label{fig:}Sytem Overall Architecture}
+	\captionof{figure}{\label{fig:system}Sytem Overall Architecture}
 \end{figure}
 
 %% ----------------------------------------------------------------------------------------------------------%%
 \subsection{Streaming Server}
 %% ----------------------------------------------------------------------------------------------------------%%
 
-
-A streaming server functions through one access point and coordinates a set of specialized subsystems; ~\nameref{sec:source stream handler} receives and processes the encoded video feed, preparing it for distribution; ~\nameref{sec:network scheduler framework} oversees how multiple channels are streamed simultaneously and how lost data is retransmitted; An embedded ~\nameref{sec:reinforcement learning} that continually fine-tunes operational parameters in response to current network conditions, aiming to maximize efficiency and stability; ~\nameref{sec:membership manager} encrypts transmissions, enforces authentication and manages authorization policies.
+A streaming server functions through one access point and coordinates a set of subsystems (see Figure \ref{fig:system}); \textbf{~\nameref{sec:source stream handler}} receives and processes the encoded video feed, preparing it for distribution; \textbf{~\nameref{sec:network scheduler framework}} oversees how multiple channels are streamed simultaneously and how lost data is retransmitted; An embedded \textbf{~\nameref{sec:reinforcement learning}} continually fine-tunes operational parameters in response to current network conditions, aiming to maximize efficiency and stability; \textbf{~\nameref{sec:membership manager}} manages user and device identities, enforces authentication to verify participants, controls authorization policies for access to streams and resources, and handles group membership, ensuring only authorized participants can join or interact with the system; \textbf{Crypto/Key Store} handles all cryptographic operations, including data encryption, authentication, and authorization enforcement, ensuring the confidentiality, integrity, and privacy of the streaming system.
 
 \begin{figure}
 	\centering
@@ -85,6 +92,97 @@ A streaming server functions through one access point and coordinates a set of s
 
 \subsubsection{Source Stream Handler}
 \label{sec:source stream handler}
+
+
+
+\paragraph{Two-Dimensional Product Reed–Solomon FEC}
+\label{sec:2d_fec}
+
+Two-dimensional (2-D) \emph{product} Forward Error Correction (FEC) was developed to overcome the limitations of one-dimensional parity schemes in the transport of real-time video over IP networks\,\cite{prompeg,smpte2022}. In this approach, incoming data is first buffered and placed \emph{row-major order} into a rectangular matrix of \(D\) rows and \(L\) columns, \((n_{\mathrm r},k_{\mathrm r})\) Reed--Solomon (RS) code is then applied independently to each row, while an \((n_{\mathrm c},k_{\mathrm c})\) RS code is applied to each column resulting in a \emph{product code} offering two layers of redundancy: row codes provide efficient correction for random single-packet losses, while column codes are particularly effective against long burst losses that span multiple consecutive packets\,\cite{rfc6865,fec_video_study}.
+
+\paragraph{Reed--Solomon Encoding.}
+An \(\mathrm{RS}(n,k)\) code over \(\mathrm{GF}(2^{m})\) treats each packet as a symbol of \(m\) bits. Let the source message be represented by  
+\[
+M(x) = \sum_{i=0}^{k-1} m_i x^{k-1-i} \in \mathrm{GF}(2^{m})[x],
+\]
+where the coefficients \(m_i\) correspond to data symbols.  
+
+In systematic encoding, \(n-k\) parity symbols are obtained by evaluating \(M(x)\) at \(n-k\) distinct non-zero field elements \(\{\alpha_0,\dots,\alpha_{n-k-1}\}\):
+\[
+p_j = M(\alpha_j), \qquad 0 \le j < n-k.
+\]
+The transmitted codeword is  
+\begin{equation}
+	C(x) = M(x)\,x^{n-k} + P(x), \qquad
+	P(x) = \sum_{j=0}^{n-k-1} p_j x^{n-k-1-j},
+	\label{eq:rs_codeword}
+\end{equation}
+which inherits the \emph{maximum-distance-separable} (MDS) property: any \(k\) of the \(n\) symbols are sufficient to reconstruct the original message via polynomial interpolation\,\cite{rs_intro}.  
+In practice, decoding often uses the Berlekamp--Massey or Euclidean algorithms to locate and correct up to \(\lfloor (n-k)/2 \rfloor\) erroneous symbols.
+
+\paragraph{Constructing the Product Code.}
+Applying \(\mathrm{RS}(n_{\mathrm r},k_{\mathrm r})\) row-wise and \(\mathrm{RS}(n_{\mathrm c},k_{\mathrm c})\) column-wise produces a matrix of  
+\[
+N = n_{\mathrm r} \, n_{\mathrm c} = (D + r_{\mathrm r})(L + r_{\mathrm c})
+\]
+total packets, where \(r_{\mathrm r} = n_{\mathrm r} - k_{\mathrm r}\) and \(r_{\mathrm c} = n_{\mathrm c} - k_{\mathrm c}\) denote the parity symbols per row and column, respectively.  
+
+The aggregate redundancy ratio is  
+\[
+\eta = \frac{N - D\,L}{D\,L}
+= \frac{r_{\mathrm r}}{k_{\mathrm r}}
++ \frac{r_{\mathrm c}}{k_{\mathrm c}}
++ \frac{r_{\mathrm r} \, r_{\mathrm c}}{k_{\mathrm r} \, k_{\mathrm c}},
+\]
+where the third term represents the \emph{intersection overhead} caused by the parity--parity cells in the bottom-right of the matrix.  
+
+
+\paragraph{Bandwidth Overhead Analysis.}
+The bandwidth penalty imposed by 2-D product FEC is constant and proactive, meaning that the additional packets are transmitted regardless of whether errors actually occur\,\cite{fec_overhead_study}.  
+For example, a typical Pro-MPEG configuration with a \(25 \times 4\) data matrix (100 video packets) plus 25 row-parity packets and 4 column-parity packets requires transmission of 129 total packets, giving a constant overhead of  
+\[
+\frac{129 - 100}{100} = 29\%.
+\]
+This value remains fixed across all network conditions. Using the general formula, consider a \(20 \times 5\) matrix with 25\% row protection (\(r_{\mathrm r}/k_{\mathrm r} = 0.25\)) and 20\% column protection (\(r_{\mathrm c}/k_{\mathrm c} = 0.20\)).  
+The intersection term contributes \(0.25 \times 0.20 = 0.05\), so the total overhead is  
+\[
+\eta = 0.25 + 0.20 + 0.05 = 0.50,
+\]
+corresponding to a 50\% bandwidth increase\,\cite{2d_fec_bounds}. While this overhead would be excessive for file transfer, it is acceptable in low-latency video services where retransmissions are impractical or costly\,\cite{limit_fec,huawei_afec}.
+
+\paragraph{Error-Correction Efficiency.}
+The theoretical maximum correctable error probability for a product code can be bounded as\,\cite{rs_error_bounds}:
+\[
+P_{\mathrm{correctable}} \leq \min \left\{ \binom{n_{\mathrm r}}{t_{\mathrm r}}, \, \binom{n_{\mathrm c}}{t_{\mathrm c}} \right\} \cdot P_{\mathrm{random}}^{t_{\mathrm r} + t_{\mathrm c}},
+\]
+where \(t_{\mathrm r} = \lfloor r_{\mathrm r} / 2 \rfloor\) and \(t_{\mathrm c} = \lfloor r_{\mathrm c} / 2 \rfloor\) are the per-dimension correction limits.  
+In burst-loss scenarios, residual packet loss rates follow approximately
+\[
+\mathrm{RPLR}_{2\mathrm{D}} \approx P_{\mathrm{loss}} \cdot \left( 1 - \prod_{i=1}^D \prod_{j=1}^L \big(1 - P_{\mathrm{deadlock}}^{(i,j)}\big) \right),
+\]
+where \(P_{\mathrm{deadlock}}^{(i,j)}\) is the probability that the loss pattern at \((i,j)\) is unrecoverable.  
+For a \(10 \times 10\) matrix, deadlock configurations make up just 1.23\% of all 6-loss patterns but grow to 27.6\% for 12-loss patterns, showing the non-linear degradation of 2-D FEC in high-loss condition's\cite{2d_fec_bounds}.
+
+\paragraph{Overhead Efficiency Comparison.}
+Compared to other FEC methods, 2-D Reed--Solomon offers superior bandwidth efficiency for moderate protection levels, but at the cost of quadratic computational scaling.  
+For equivalent \(\approx 4\%\) overhead, an \(\mathrm{RS}(169,163)\) code with interleaving requires 44\% more bandwidth than Raptor codes to achieve the same resilience at 2\% packet loss\cite{raptor_vs_rs}.  
+Moreover, RS decoding complexity grows as \(\mathcal{O}(k^2)\), and in practice, it demands 2--10$\times$ more processing than Raptor codes when \(k < 250\).  
+In resource-constrained fog nodes, this computational load translates directly into higher power consumption and increased processing latency.
+
+\paragraph{Practical Implications for Fog Deployments.}
+In environments with costly or capacity-limited links the economic impact of constant FEC overhead is significant.  
+When combined with a typical 20\% bitrate guard band, a 30\% 2-D FEC overhead can push the total transmission rate to 50\% above the base stream\,\cite{limit_fec}.  
+For instance, a 5~Mbps stream with 30\% overhead requires 6.5~Mbps of link capacity, representing an annual cost increase of \$1,500--3,000 for premium satellite service.  
+Adaptive FEC strategies, which adjust overhead dynamically in response to real-time loss metrics, can reduce bandwidth waste by 15--25\% during favorable conditions while still offering robust protection during loss bursts\,\cite{fec_scalable_video}.
+
+\paragraph{Latency and Buffering Trade-offs.}
+Since the encoder must collect an entire \(D \times L\) matrix before column parities can be sent, the scheme incurs a buffering delay of  
+\[
+T_{\mathrm{FEC}} \approx \frac{(L - 1) + (D - 1)}{R_{\mathrm{pkt}}},
+\]
+where \(R_{\mathrm{pkt}}\) is the packet emission rate.  
+Smaller column depths (\(L \le 5\)) reduce this delay while still addressing typical burst-loss patterns in Wi-Fi links \cite{smpte2022,fec_video_study}.  
+
 
 \begin{figure}
 	\centering
@@ -96,6 +194,14 @@ A streaming server functions through one access point and coordinates a set of s
 
 \subsubsection{Reinforcement Learning}
 \label{sec:reinforcement learning}
+
+Adaptive video streaming and error control mechanisms must operate efficiently in highly dynamic network environments, where conditions such as bandwidth, latency, packet loss, and jitter fluctuate unpredictably. Traditional static configurations, such as fixed Forward Error Correction (FEC) ratios, often result in suboptimal performance: either wasting bandwidth by overprotecting streams during stable conditions or degrading video quality and reliability by underprotecting streams when network quality deteriorates.
+
+Reinforcement Learning (RL) offers a powerful, data-driven approach to overcome these limitations by enabling adaptive, context-aware decision-making. In this framework, RL agents actively learn optimal strategies through continuous interaction with the networking environment, receiving feedback based on performance outcomes. In live streaming scenarios, RL agents monitor real-time metrics including packet loss rates, jitter, network throughput, and buffer occupancy levels. Using this information, they dynamically adjust encoding parameters, bitrate selections, or FEC redundancy ratios to optimize delivery quality and efficiency.
+
+One of the most studied RL algorithms in this domain is Q-learning, a value-based method prized for its conceptual simplicity and applicability to online adaptation. Q-learning agents maintain a Q-table that maps observed network states to corresponding actions—such as selecting a particular FEC ratio or encoding bitrate—and iteratively update this table by comparing expected and actual rewards. Over time, this process converges toward policies that maximize overall Quality of Experience (QoE), characterized by fewer playback stalls, higher visual quality, and reduced latency, while minimizing unnecessary bandwidth overhead due to excessive redundancy.
+
+By transforming FEC and bitrate adaptation from static, heuristic configurations to intelligent, feedback-driven control systems, RL enables seamless, decentralized optimization without the need for centralized coordination or explicit network-side control. This flexibility is especially valuable in fog and edge streaming architectures, where heterogeneous network conditions and resource constraints demand continuous, localized adaptation. Moreover, reinforcement learning approaches are extensible, capable of integrating additional network and user context information to refine control policies further.
 
 % State:
 %   - loss_bin: discrete bin of observed packet loss rate (0: excellent, 1: good, ..., 4: bad)

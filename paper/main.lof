@@ -5,15 +5,15 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Sytem Overall Architecture}}{10}{figure.caption.10}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces Streaming Server Diagram}}{11}{figure.caption.11}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces Data Layout}}{11}{figure.caption.12}%
-\contentsline {figure}{\numberline {4.4}{\ignorespaces Edge Client Diagram}}{13}{figure.caption.14}%
-\contentsline {figure}{\numberline {4.5}{\ignorespaces Erasure Packet Flow}}{16}{figure.caption.15}%
-\contentsline {figure}{\numberline {4.6}{\ignorespaces TLS Hand shack}}{20}{figure.caption.16}%
-\contentsline {figure}{\numberline {4.7}{\ignorespaces Nan physical layer representation}}{22}{figure.caption.17}%
-\contentsline {figure}{\numberline {4.8}{\ignorespaces Android application Diagram}}{25}{figure.caption.19}%
-\contentsline {figure}{\numberline {4.9}{\ignorespaces Android application Diagram}}{25}{figure.caption.20}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Sytem Overall Architecture}}{18}{figure.caption.3}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Streaming Server Diagram}}{19}{figure.caption.4}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Data Layout}}{22}{figure.caption.13}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Edge Client Diagram}}{25}{figure.caption.15}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Erasure Packet Flow}}{26}{figure.caption.16}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces TLS Hand shack}}{31}{figure.caption.17}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Nan physical layer representation}}{33}{figure.caption.18}%
+\contentsline {figure}{\numberline {4.8}{\ignorespaces Android application Diagram}}{36}{figure.caption.20}%
+\contentsline {figure}{\numberline {4.9}{\ignorespaces Android application Diagram}}{37}{figure.caption.21}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \contentsfinish 

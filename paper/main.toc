@@ -18,54 +18,67 @@
 \vspace {0.3cm}
 \contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
 \contentsline {chapter}{\numberline {2}Background Work}{3}{chapter.2}%
-\contentsline {subsection}{\numberline {2.0.1}Two-Dimensional Product Reed–Solomon FEC}{3}{subsection.2.0.1}%
-\contentsline {paragraph}{Reed--Solomon Encoding.}{3}{paragraph*.3}%
-\contentsline {paragraph}{Constructing the Product Code.}{4}{paragraph*.4}%
-\contentsline {paragraph}{Bandwidth Overhead Analysis.}{4}{paragraph*.5}%
-\contentsline {paragraph}{Error-Correction Efficiency.}{4}{paragraph*.6}%
-\contentsline {paragraph}{Overhead Efficiency Comparison.}{5}{paragraph*.7}%
-\contentsline {paragraph}{Practical Implications for Fog Deployments.}{5}{paragraph*.8}%
-\contentsline {paragraph}{Latency and Buffering Trade-offs.}{5}{paragraph*.9}%
-\contentsline {chapter}{\numberline {3}State of the Art}{7}{chapter.3}%
-\contentsline {chapter}{\numberline {4}Design and Implementation}{8}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Requirements}{8}{section.4.1}%
-\contentsline {section}{\numberline {4.2}System Architecture}{9}{section.4.2}%
-\contentsline {subsection}{\numberline {4.2.1}Streaming Server}{10}{subsection.4.2.1}%
-\contentsline {subsubsection}{\numberline {4.2.1.1}Source Stream Handler}{11}{subsubsection.4.2.1.1}%
-\contentsline {paragraph}{Packet interleave \& transmission ordering}{11}{paragraph*.13}%
-\contentsline {subsubsection}{\numberline {4.2.1.2}Reinforcement Learning}{12}{subsubsection.4.2.1.2}%
-\contentsline {subsubsection}{\numberline {4.2.1.3}Network Scheduler Framework}{12}{subsubsection.4.2.1.3}%
-\contentsline {subsubsection}{\numberline {4.2.1.4}Report Sink}{12}{subsubsection.4.2.1.4}%
-\contentsline {subsubsection}{\numberline {4.2.1.5}Membership Manager}{12}{subsubsection.4.2.1.5}%
-\contentsline {subsection}{\numberline {4.2.2}Client Library}{12}{subsection.4.2.2}%
-\contentsline {subsubsection}{\numberline {4.2.2.1}Decoder}{13}{subsubsection.4.2.2.1}%
-\contentsline {subsubsection}{\numberline {4.2.2.2}Retransmission Manager}{17}{subsubsection.4.2.2.2}%
-\contentsline {subsection}{\numberline {4.2.3}Security}{18}{subsection.4.2.3}%
-\contentsline {subsubsection}{\numberline {4.2.3.1}Threat Model}{18}{subsubsection.4.2.3.1}%
-\contentsline {subsubsection}{\numberline {4.2.3.2}Authentication, Authorization, and Trust Model}{18}{subsubsection.4.2.3.2}%
-\contentsline {subsubsection}{\numberline {4.2.3.3}Forward Secrecy and Stream Integrity}{19}{subsubsection.4.2.3.3}%
-\contentsline {subsubsection}{\numberline {4.2.3.4}Double Signature Schema}{20}{subsubsection.4.2.3.4}%
-\contentsline {section}{\numberline {4.3}Mobile edge cloud offloading}{21}{section.4.3}%
-\contentsline {subsubsection}{\numberline {4.3.0.1}Wifi Aware}{21}{subsubsection.4.3.0.1}%
-\contentsline {paragraph}{Android Implementation}{23}{paragraph*.18}%
-\contentsline {subsubsection}{\numberline {4.3.0.2}Mesh Networking}{24}{subsubsection.4.3.0.2}%
-\contentsline {section}{\numberline {4.4}Frontend implementation}{25}{section.4.4}%
-\contentsline {subsubsection}{\numberline {4.4.0.1}Android Frontend}{25}{subsubsection.4.4.0.1}%
-\contentsline {paragraph}{Android Rust Linker}{26}{paragraph*.21}%
-\contentsline {subsubsection}{\numberline {4.4.0.2}Linux Frontend}{26}{subsubsection.4.4.0.2}%
-\contentsline {subsubsection}{\numberline {4.4.0.3}Headless Frontend}{26}{subsubsection.4.4.0.3}%
-\contentsline {chapter}{\numberline {5}Evaluation}{27}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Experimental setup and methodology}{27}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Comparative evaluation without edge-cloud}{27}{section.5.2}%
-\contentsline {subsection}{\numberline {5.2.1}Bandwidth usage}{27}{subsection.5.2.1}%
-\contentsline {subsection}{\numberline {5.2.2}Impact of the Reinforcement Learning Agent}{27}{subsection.5.2.2}%
-\contentsline {section}{\numberline {5.3}Comparative evaluation with edge-cloud}{27}{section.5.3}%
-\contentsline {subsection}{\numberline {5.3.1}Bandwidth usage}{27}{subsection.5.3.1}%
-\contentsline {subsection}{\numberline {5.3.2}Impact of the Reinforcement Learning Agent}{27}{subsection.5.3.2}%
-\contentsline {chapter}{\numberline {6}Conclusion}{28}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Summary}{28}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Future Work}{28}{section.6.2}%
+\contentsline {subsection}{\numberline {2.0.1}Evolution of Live Streaming Architectures}{3}{subsection.2.0.1}%
+\contentsline {subsection}{\numberline {2.0.2}Security Mechanisms in Live Streaming}{4}{subsection.2.0.2}%
+\contentsline {subsection}{\numberline {2.0.3}Fog Computing and Its Relevance to Streaming}{6}{subsection.2.0.3}%
+\contentsline {subsection}{\numberline {2.0.4}Cryptographic Considerations at the Edge}{7}{subsection.2.0.4}%
+\contentsline {subsection}{\numberline {2.0.5}Privacy and Data Protection in Edge Streaming}{8}{subsection.2.0.5}%
+\contentsline {subsection}{\numberline {2.0.6}Reinforcement Learning for Adaptive Streaming}{8}{subsection.2.0.6}%
+\contentsline {chapter}{\numberline {3}State of the Art}{9}{chapter.3}%
+\contentsline {subsection}{\numberline {3.0.1}Transport Protocols for Low-Latency Streaming}{9}{subsection.3.0.1}%
+\contentsline {subsection}{\numberline {3.0.2}QoE in Secure Low-Latency Pipelines}{10}{subsection.3.0.2}%
+\contentsline {subsection}{\numberline {3.0.3}Content Protection and DRM Integration}{11}{subsection.3.0.3}%
+\contentsline {subsection}{\numberline {3.0.4}Reference Architectures for Edge and Fog}{12}{subsection.3.0.4}%
+\contentsline {subsection}{\numberline {3.0.5}Fog and Edge Offloading in Live Streaming}{13}{subsection.3.0.5}%
+\contentsline {subsection}{\numberline {3.0.6}Reinforcement Learning in Adaptive Streaming}{14}{subsection.3.0.6}%
+\contentsline {subsection}{\numberline {3.0.7}Identified Research Gap}{15}{subsection.3.0.7}%
+\contentsline {chapter}{\numberline {4}Design and Implementation}{16}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Requirements}{16}{section.4.1}%
+\contentsline {section}{\numberline {4.2}System Architecture}{17}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Streaming Server}{18}{subsection.4.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.1.1}Source Stream Handler}{18}{subsubsection.4.2.1.1}%
+\contentsline {paragraph}{Two-Dimensional Product Reed–Solomon FEC}{18}{paragraph*.5}%
+\contentsline {paragraph}{Reed--Solomon Encoding.}{19}{paragraph*.6}%
+\contentsline {paragraph}{Constructing the Product Code.}{20}{paragraph*.7}%
+\contentsline {paragraph}{Bandwidth Overhead Analysis.}{20}{paragraph*.8}%
+\contentsline {paragraph}{Error-Correction Efficiency.}{21}{paragraph*.9}%
+\contentsline {paragraph}{Overhead Efficiency Comparison.}{21}{paragraph*.10}%
+\contentsline {paragraph}{Practical Implications for Fog Deployments.}{21}{paragraph*.11}%
+\contentsline {paragraph}{Latency and Buffering Trade-offs.}{22}{paragraph*.12}%
+\contentsline {paragraph}{Packet interleave \& transmission ordering}{22}{paragraph*.14}%
+\contentsline {subsubsection}{\numberline {4.2.1.2}Reinforcement Learning}{22}{subsubsection.4.2.1.2}%
+\contentsline {subsubsection}{\numberline {4.2.1.3}Network Scheduler Framework}{24}{subsubsection.4.2.1.3}%
+\contentsline {subsubsection}{\numberline {4.2.1.4}Report Sink}{24}{subsubsection.4.2.1.4}%
+\contentsline {subsubsection}{\numberline {4.2.1.5}Membership Manager}{24}{subsubsection.4.2.1.5}%
+\contentsline {subsection}{\numberline {4.2.2}Client Library}{24}{subsection.4.2.2}%
+\contentsline {subsubsection}{\numberline {4.2.2.1}Decoder}{24}{subsubsection.4.2.2.1}%
+\contentsline {subsubsection}{\numberline {4.2.2.2}Retransmission Manager}{28}{subsubsection.4.2.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Security}{29}{subsection.4.2.3}%
+\contentsline {subsubsection}{\numberline {4.2.3.1}Threat Model}{29}{subsubsection.4.2.3.1}%
+\contentsline {subsubsection}{\numberline {4.2.3.2}Authentication, Authorization, and Trust Model}{30}{subsubsection.4.2.3.2}%
+\contentsline {subsubsection}{\numberline {4.2.3.3}Forward Secrecy and Stream Integrity}{31}{subsubsection.4.2.3.3}%
+\contentsline {subsubsection}{\numberline {4.2.3.4}Double Signature Schema}{32}{subsubsection.4.2.3.4}%
+\contentsline {section}{\numberline {4.3}Mobile edge cloud offloading}{32}{section.4.3}%
+\contentsline {subsubsection}{\numberline {4.3.0.1}Wifi Aware}{32}{subsubsection.4.3.0.1}%
+\contentsline {paragraph}{Android Implementation}{35}{paragraph*.19}%
+\contentsline {subsubsection}{\numberline {4.3.0.2}Mesh Networking}{35}{subsubsection.4.3.0.2}%
+\contentsline {section}{\numberline {4.4}Frontend implementation}{37}{section.4.4}%
+\contentsline {subsubsection}{\numberline {4.4.0.1}Android Frontend}{37}{subsubsection.4.4.0.1}%
+\contentsline {paragraph}{Android Rust Linker}{37}{paragraph*.22}%
+\contentsline {subsubsection}{\numberline {4.4.0.2}Linux Frontend}{37}{subsubsection.4.4.0.2}%
+\contentsline {subsubsection}{\numberline {4.4.0.3}Headless Frontend}{37}{subsubsection.4.4.0.3}%
+\contentsline {chapter}{\numberline {5}Evaluation}{38}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Experimental setup and methodology}{38}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Comparative evaluation without edge-cloud}{38}{section.5.2}%
+\contentsline {subsection}{\numberline {5.2.1}Bandwidth usage}{38}{subsection.5.2.1}%
+\contentsline {subsection}{\numberline {5.2.2}Impact of the Reinforcement Learning Agent}{38}{subsection.5.2.2}%
+\contentsline {section}{\numberline {5.3}Comparative evaluation with edge-cloud}{38}{section.5.3}%
+\contentsline {subsection}{\numberline {5.3.1}Bandwidth usage}{38}{subsection.5.3.1}%
+\contentsline {subsection}{\numberline {5.3.2}Impact of the Reinforcement Learning Agent}{38}{subsection.5.3.2}%
+\contentsline {chapter}{\numberline {6}Conclusion}{39}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Summary}{39}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Future Work}{39}{section.6.2}%
 \vspace {0.5cm}
-\contentsline {chapter}{Bibliography}{28}{dummy.6}%
-\contentsline {section}{\numberline {.1}Protocol Buffers Specification}{32}{section.Alph0.1}%
+\contentsline {chapter}{Bibliography}{39}{dummy.6}%
+\contentsline {section}{\numberline {.1}Protocol Buffers Specification}{45}{section.Alph0.1}%
 \contentsfinish 
