@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.22.0 (MiKTeX 25.4) (format=lualatex 2025.7.5)  18 AUG 2025 22:56
+This is LuaHBTeX, Version 1.22.0 (MiKTeX 25.4) (format=lualatex 2025.7.5)  19 AUG 2025 20:04
  restricted system commands enabled.
 **main.tex
 (./main.tex
@@ -1712,12 +1712,12 @@ an be solved by adding a line like \setlength {\marginparwidth }{2cm} prior to
 loading the todonotes package. on input line 36.
 
 (./main.glsdefs)
-<Front/main.pdf, id=238, 597.5123pt x 845.04709pt>
+<Front/main.pdf, id=230, 597.5123pt x 845.04709pt>
 File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf>
 Package luatex.def Info: Front/main.pdf  used on input line 43.
 (luatex.def)             Requested size: 597.51083pt x 845.04503pt.
-<Front/main.pdf, id=240, page=1, 597.5123pt x 845.04709pt>
+<Front/main.pdf, id=232, page=1, 597.5123pt x 845.04709pt>
 File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf, page 1>
 Package luatex.def Info: Front/main.pdf , page1 used on input line 43.
@@ -1750,7 +1750,7 @@ File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf>
 Package luatex.def Info: Front/main.pdf  used on input line 45.
 (luatex.def)             Requested size: 597.51083pt x 845.04503pt.
-<Front/main.pdf, id=263, page=2, 597.5123pt x 845.04709pt>
+<Front/main.pdf, id=255, page=2, 597.5123pt x 845.04709pt>
 File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf, page 2>
 Package luatex.def Info: Front/main.pdf , page2 used on input line 45.
@@ -1886,27 +1886,27 @@ Overfull \hbox (6.08986pt too wide) detected at line 21
 
 
 Overfull \hbox (6.08986pt too wide) detected at line 22
- \TU/Arial(0)/m/n/10.95 4
+ \TU/Arial(0)/m/n/10.95 3
  []
 
 
 Overfull \hbox (6.08986pt too wide) detected at line 23
- \TU/Arial(0)/m/n/10.95 6
+ \TU/Arial(0)/m/n/10.95 4
  []
 
 
 Overfull \hbox (6.08986pt too wide) detected at line 24
- \TU/Arial(0)/m/n/10.95 7
+ \TU/Arial(0)/m/n/10.95 6
  []
 
 
 Overfull \hbox (6.08986pt too wide) detected at line 25
- \TU/Arial(0)/m/n/10.95 8
+ \TU/Arial(0)/m/n/10.95 7
  []
 
 
 Overfull \hbox (6.08986pt too wide) detected at line 26
- \TU/Arial(0)/m/n/10.95 8
+ \TU/Arial(0)/m/n/10.95 7
  []
 
 
@@ -2006,42 +2006,42 @@ Overfull \hbox (12.17972pt too wide) detected at line 54
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 55
- \TU/Arial(0)/m/n/10.95 28
+ \TU/Arial(0)/m/n/10.95 27
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 56
- \TU/Arial(0)/m/n/10.95 29
+ \TU/Arial(0)/m/n/10.95 27
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 57
- \TU/Arial(0)/m/n/10.95 29
+ \TU/Arial(0)/m/n/10.95 27
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 58
- \TU/Arial(0)/m/n/10.95 30
+ \TU/Arial(0)/m/n/10.95 28
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 59
- \TU/Arial(0)/m/n/10.95 31
+ \TU/Arial(0)/m/n/10.95 28
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 60
- \TU/Arial(0)/m/n/10.95 32
+ \TU/Arial(0)/m/n/10.95 30
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 61
- \TU/Arial(0)/m/n/10.95 32
+ \TU/Arial(0)/m/n/10.95 30
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 62
- \TU/Arial(0)/m/n/10.95 32
+ \TU/Arial(0)/m/n/10.95 30
  []
 
 
@@ -2058,92 +2058,82 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 
 ]
 Overfull \hbox (12.17972pt too wide) detected at line 64
- \TU/Arial(0)/m/n/10.95 35
+ \TU/Arial(0)/m/n/10.95 33
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 65
- \TU/Arial(0)/m/n/10.95 37
+ \TU/Arial(0)/m/n/10.95 34
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 66
- \TU/Arial(0)/m/n/10.95 37
+ \TU/Arial(0)/m/n/10.95 34
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 68
- \TU/Arial(0)/m/n/10.95 37
+ \TU/Arial(0)/m/n/10.95 36
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 69
- \TU/Arial(0)/m/n/10.95 37
+ \TU/Arial(0)/m/n/10.95 36
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 70
- \TU/Arial(0)/m/n/10.95 38
+ \TU/Arial(0)/m/n/10.95 36
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 71
- \TU/Arial(0)/m/n/10.95 38
+ \TU/Arial(0)/m/n/10.95 36
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 72
- \TU/Arial(0)/m/n/10.95 38
+ \TU/Arial(0)/m/n/10.95 36
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 73
- \TU/Arial(0)/m/n/10.95 38
+ \TU/Arial(0)/m/n/10.95 36
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 74
- \TU/Arial(0)/m/n/10.95 38
+ \TU/Arial(0)/m/n/10.95 36
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 75
- \TU/Arial(0)/m/n/10.95 38
+ \TU/Arial(0)/m/n/10.95 36
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 76
- \TU/Arial(0)/m/n/10.95 38
+ \TU/Arial(0)/m/n/10.95 37
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 77
- \TU/Arial(0)/m/n/10.95 38
+ \TU/Arial(0)/m/n/10.95 37
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 78
- \TU/Arial(0)/m/n/10.95 39
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 79
- \TU/Arial(0)/m/n/10.95 39
+ \TU/Arial(0)/m/n/10.95 37
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 80
- \TU/Arial(0)/m/n/10.95 39
+ \TU/Arial(0)/m/n/10.95 37
  []
 
 
-Overfull \hbox (12.17972pt too wide) detected at line 82
- \TU/Arial(0)/m/n/10.95 39
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 83
- \TU/Arial(0)/m/n/10.95 45
+Overfull \hbox (12.17972pt too wide) detected at line 81
+ \TU/Arial(0)/m/n/10.95 43
  []
 
 )
@@ -2190,22 +2180,22 @@ Overfull \hbox (12.17972pt too wide) detected at line 12
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 13
- \TU/Arial(0)/m/n/10.95 31
+ \TU/Arial(0)/m/n/10.95 29
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 14
- \TU/Arial(0)/m/n/10.95 33
+ \TU/Arial(0)/m/n/10.95 31
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 15
- \TU/Arial(0)/m/n/10.95 36
+ \TU/Arial(0)/m/n/10.95 34
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 16
- \TU/Arial(0)/m/n/10.95 37
+ \TU/Arial(0)/m/n/10.95 35
  []
 
 )
@@ -2251,10 +2241,6 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 [2]
 Chapter 2.
 
-Package hyperref Warning: Difference (2) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 13.
-
-
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2284,6 +2270,12 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [5]
+Overfull \hbox (6.21884pt too wide) in paragraph at lines 50--51
+\TU/Arial(0)/m/n/10.95 vi-ron-ments. Im-ple-ment-ing strong cryp-to-graphic pro-
+tec-tions and key man-age-ment schemes
+ []
+
+
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2293,19 +2285,13 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [6]
-Overfull \hbox (6.21884pt too wide) in paragraph at lines 47--48
-\TU/Arial(0)/m/n/10.95 vi-ron-ments. Im-ple-ment-ing strong cryp-to-graphic pro-
-tec-tions and key man-age-ment schemes
- []
-
-
-Overfull \hbox (10.26773pt too wide) in paragraph at lines 53--54
+Overfull \hbox (10.26773pt too wide) in paragraph at lines 56--57
 \TU/Arial(0)/m/n/10.95 is paramount. Lightweight and scal-able strate-gies—suc
 h as per-session keys, time-window-
  []
 
 
-Overfull \hbox (21.18326pt too wide) in paragraph at lines 53--54
+Overfull \hbox (21.18326pt too wide) in paragraph at lines 56--57
 \TU/Arial(0)/m/n/10.95 ad-vanced cryp-to-graphic mech-a-nisms, in-clud-ing broad
 -cast en-cryp-tion and proxy re-encryption,
  []
@@ -2320,7 +2306,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [7]
-Overfull \hbox (15.27159pt too wide) in paragraph at lines 60--61
+Overfull \hbox (15.27159pt too wide) in paragraph at lines 63--64
 []\TU/Arial(0)/m/n/10.95 Un-like tra-di-tional cen-tral-ized cloud en-vi-ron-men
 ts, which ben-e-fit from well-established perime-
  []
@@ -2472,7 +2458,7 @@ ut line 72.
 Package natbib Warning: Citation `sharma2020comparison' on page 17 undefined on
  input line 72.
 
-<Figures/DesignAndImplementation/system.png, id=574, 1347.0325pt x 1248.665pt>
+<Figures/DesignAndImplementation/system.png, id=563, 1347.0325pt x 1248.665pt>
 File: Figures/DesignAndImplementation/system.png Graphic file (type png)
 <use Figures/DesignAndImplementation/system.png>
 Package luatex.def Info: Figures/DesignAndImplementation/system.png  used on in
@@ -2488,7 +2474,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [17]
-<Figures/DesignAndImplementation/streaming_server.png, id=586, 1446.40375pt x 1
+<Figures/DesignAndImplementation/streaming_server.png, id=575, 1446.40375pt x 1
 677.26625pt>
 File: Figures/DesignAndImplementation/streaming_server.png Graphic file (type p
 ng)
@@ -2545,7 +2531,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [21]
-<Figures/DesignAndImplementation/matrix_layout.png, id=653, 1023.825pt x 522.95
+<Figures/DesignAndImplementation/matrix_layout.png, id=642, 1023.825pt x 522.95
 375pt>
 File: Figures/DesignAndImplementation/matrix_layout.png Graphic file (type png)
 
@@ -2575,7 +2561,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [23]
-<Figures/DesignAndImplementation/edge_client.png, id=670, 1381.16pt x 1335.9912
+<Figures/DesignAndImplementation/edge_client.png, id=659, 1381.16pt x 1335.9912
 6pt>
 File: Figures/DesignAndImplementation/edge_client.png Graphic file (type png)
 <use Figures/DesignAndImplementation/edge_client.png>
@@ -2623,13 +2609,13 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 LaTeX Warning: Reference `alg:decodeapp' on page 26 undefined on input line 272
 .
 
-<Figures/DesignAndImplementation/erasure_packet.png, id=682, 1777.64125pt x 106
+<Figures/DesignAndImplementation/erasure_packet.png, id=671, 1777.64125pt x 106
 9.9975pt>
 File: Figures/DesignAndImplementation/erasure_packet.png Graphic file (type png
 )
 <use Figures/DesignAndImplementation/erasure_packet.png>
 Package luatex.def Info: Figures/DesignAndImplementation/erasure_packet.png  us
-ed on input line 420.
+ed on input line 282.
 (luatex.def)             Requested size: 320.0935pt x 192.65654pt.
 
 
@@ -2650,6 +2636,13 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [27]
+<Figures/DesignAndImplementation/http_tls.png, id=681, 722.7pt x 1058.95625pt>
+File: Figures/DesignAndImplementation/http_tls.png Graphic file (type png)
+<use Figures/DesignAndImplementation/http_tls.png>
+Package luatex.def Info: Figures/DesignAndImplementation/http_tls.png  used on 
+input line 313.
+(luatex.def)             Requested size: 320.0935pt x 469.02844pt.
+
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2667,13 +2660,14 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[29]
-<Figures/DesignAndImplementation/http_tls.png, id=704, 722.7pt x 1058.95625pt>
-File: Figures/DesignAndImplementation/http_tls.png Graphic file (type png)
-<use Figures/DesignAndImplementation/http_tls.png>
-Package luatex.def Info: Figures/DesignAndImplementation/http_tls.png  used on 
-input line 451.
-(luatex.def)             Requested size: 320.0935pt x 469.02844pt.
+[29<./Figures/DesignAndImplementation/http_tls.png>]
+<Figures/DesignAndImplementation/nan_phy.png, id=691, 681.29532pt x 379.4175pt>
+
+File: Figures/DesignAndImplementation/nan_phy.png Graphic file (type png)
+<use Figures/DesignAndImplementation/nan_phy.png>
+Package luatex.def Info: Figures/DesignAndImplementation/nan_phy.png  used on i
+nput line 341.
+(luatex.def)             Requested size: 320.0935pt x 178.26256pt.
 
 
 
@@ -2692,12 +2686,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[31<./Figures/DesignAndImplementation/http_tls.png>]
-
-Package hyperref Warning: Difference (2) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 472.
-
-
+[31<./Figures/DesignAndImplementation/nan_phy.png>]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2707,13 +2696,11 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [32]
-<Figures/DesignAndImplementation/nan_phy.png, id=719, 681.29532pt x 379.4175pt>
+Overfull \hbox (3.84784pt too wide) in paragraph at lines 360--361
+[][]\TU/Arial(0)/b/n/10.95 An-droid Im-ple-men-ta-tion[] \TU/Arial(0)/m/n/10.95
+ An-droid’s Wi-Fi Aware im-ple-men-ta-tion ex-poses hard-ware con-
+ []
 
-File: Figures/DesignAndImplementation/nan_phy.png Graphic file (type png)
-<use Figures/DesignAndImplementation/nan_phy.png>
-Package luatex.def Info: Figures/DesignAndImplementation/nan_phy.png  used on i
-nput line 479.
-(luatex.def)             Requested size: 320.0935pt x 178.26256pt.
 
 
 
@@ -2723,46 +2710,34 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[33<./Figures/DesignAndImplementation/nan_phy.png>]
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[34]
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[35]
-<Figures/DesignAndImplementation/mesh_p2p.png, id=734, 563.10374pt x 553.06625p
+[33]
+<Figures/DesignAndImplementation/mesh_p2p.png, id=711, 563.10374pt x 553.06625p
 t>
 File: Figures/DesignAndImplementation/mesh_p2p.png Graphic file (type png)
 <use Figures/DesignAndImplementation/mesh_p2p.png>
 Package luatex.def Info: Figures/DesignAndImplementation/mesh_p2p.png  used on 
-input line 512.
+input line 375.
 (luatex.def)             Requested size: 320.0935pt x 314.39024pt.
 
 
 Package hyperref Warning: Difference (2) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 521.
+(hyperref)                than one, level fixed on input line 386.
 
-<Figures/DesignAndImplementation/android_application.png, id=735, 1167.36125pt 
+<Figures/DesignAndImplementation/android_application.png, id=712, 1167.36125pt 
 x 814.04124pt>
 File: Figures/DesignAndImplementation/android_application.png Graphic file (typ
 e png)
 <use Figures/DesignAndImplementation/android_application.png>
 Package luatex.def Info: Figures/DesignAndImplementation/android_application.pn
-g  used on input line 526.
+g  used on input line 391.
 (luatex.def)             Requested size: 320.0935pt x 223.20992pt.
 
+Overfull \hbox (3.37694pt too wide) in paragraph at lines 399--400
+\TU/Arial(0)/m/n/10.95 android plu-gin to au-to-mate com-pi-la-tion and link-ing
+, pro-vided that the aarch64-linux-android
+ []
+
+) (./Chapters/Evaluation.tex
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2771,8 +2746,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[36<./Figures/DesignAndImplementation/mesh_p2p.png>])
-(./Chapters/Evaluation.tex
+[34<./Figures/DesignAndImplementation/mesh_p2p.png>]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2781,7 +2755,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[37<./Figures/DesignAndImplementation/android_application.png>]
+[35<./Figures/DesignAndImplementation/android_application.png>]
 Chapter 5.
 ) (./Chapters/Conclusion.tex
 
@@ -2792,7 +2766,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[38
+[36
 
 ]
 Chapter 6.
@@ -2809,7 +2783,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[39
+[37
 
 ]
 Underfull \hbox (badness 5217) in paragraph at lines 44--44
@@ -2843,7 +2817,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[40
+[38
 
 ]
 
@@ -2854,7 +2828,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[41]
+[39]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2863,7 +2837,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[42]
+[40]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2872,7 +2846,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[43]) (./Appendices/Appendix.tex
+[41]) (./Appendices/Appendix.tex
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2881,7 +2855,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[44])
+[42])
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2890,7 +2864,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[45
+[43
 
 ]
 
@@ -2914,21 +2888,21 @@ LaTeX Warning: There were undefined references.
 LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: AB813DCCC3864C10532552879CE558E6;12484.
+(rerunfilecheck)             Checksum: C71931097CEB0CA5D07752F5E4BC36C9;11807.
 Package rerunfilecheck Info: File `main.brf' has not changed.
-(rerunfilecheck)             Checksum: 6512BCB2EA0D55C312C66690CF29ED5D;2321.
+(rerunfilecheck)             Checksum: 8F3DEFDF9E14B42E6CF957FA53732333;2223.
 )
 
 Here is how much of LuaTeX's memory you used:
- 48059 strings out of 470205
+ 48024 strings out of 470205
  125126,1648299 words of node,token memory allocated
  1158 words of node memory still in use:
    7 hlist, 2 vlist, 2 rule, 5 glue, 4 kern, 1 glyph, 110 attribute, 96 glue_spe
 c, 57 attribute_list, 3 write, 18 pdf_action nodes
-   avail lists: 1:2,2:5137,3:540,4:344,5:531,6:165,7:9432,8:143,9:924,10:22,11:8
+   avail lists: 1:2,2:2006,3:530,4:296,5:222,6:103,7:7992,8:143,9:924,10:20,11:8
 02
- 74858 multiletter control sequences out of 65536+600000
- 110 fonts using 17721823 bytes
+ 74831 multiletter control sequences out of 65536+600000
+ 109 fonts using 16984855 bytes
  108i,19n,105p,7880b,1286s stack positions out of 10000i,1000n,20000p,200000b,200000s
 {C:/Users/tiago/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}<c:/us
 ers/tiago/appdata/local/programs/miktex/fonts/opentype/public/lm/lmmono10-regula
@@ -2942,9 +2916,9 @@ ams/MiKTeX/fonts/type1/public/mathpazo/fplmr.pfb><C:/Users/tiago/AppData/Local/P
 rograms/MiKTeX/fonts/type1/public/mathpazo/fplmri.pfb><C:/Users/tiago/AppData/Lo
 cal/Programs/MiKTeX/fonts/type1/urw/palatino/uplr8a.pfb><C:/Users/tiago/AppData/
 Local/Programs/MiKTeX/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on main.pdf (54 pages, 1115084 bytes).
+Output written on main.pdf (52 pages, 1103484 bytes).
 
-PDF statistics: 927 PDF objects out of 1000 (max. 8388607)
- 186 named destinations out of 1000 (max. 131072)
- 480 words of extra memory for PDF output out of 10000 (max. 100000000)
+PDF statistics: 904 PDF objects out of 1000 (max. 8388607)
+ 178 named destinations out of 1000 (max. 131072)
+ 464 words of extra memory for PDF output out of 10000 (max. 100000000)
 

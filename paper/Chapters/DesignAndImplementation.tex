@@ -275,144 +275,6 @@ Throughout its operation, the decoder periodically reports metrics and buffer st
 
 In summary, the decoder integrates advanced techniques from networking, cryptography, and error correction to provide secure, reliable, and efficient video streaming. Its algorithms for packet handling, matrix reconstruction, key management, and application layer delivery work together to ensure both the security and quality of the streaming experience, even in the face of network unreliability and potential security threats.
 
-\begin{algorithm}
-	\caption{Decoder Main Loop (State-Action Reference)}
-	\label{alg:decoder-main-loop}
-	\begin{algorithmic}[1]
-		\State \textbf{State:} buffer $\gets$ empty queue of MatrixTrackers
-		\State \textbf{State:} session configuration and keys loaded
-		\State \textbf{State:} tick timer set for reporting and decoding
-		\While{not shutdown}
-		\If{tick event}
-		\If{tick is for reporting}
-		\State{Send buffer snapshot to retransmission manager}
-		\For{each matrix in buffer except last}
-		\If{bitmap changed since last report}
-		\State{Add matrix to report}
-		\EndIf
-		\EndFor
-		\If{any reports}
-		\State{Sign and send client report}
-		\EndIf
-		\ElsIf{tick is for decoding to app}
-		\For{each matrix in buffer except last}
-		\State{Reconstruct matrix with FEC}
-		\State{Calculate packet loss}
-		\State{Decode matrix to application layer}
-		\EndFor
-		\EndIf
-		\EndIf
-		\If{data received from channel}
-		\State{Decode PacketWrapper}
-		\If{TransmissionPacket}
-		\State{Validate signature}
-		\If{valid}
-		\State{Process packet (add to buffer, handle key rotation)}
-		\EndIf
-		\ElsIf{RetransmissionPacket}
-		\If{XorPacket}
-		\State{Validate signature}
-		\If{valid}
-		\State{Process XOR packet (recover missing data)}
-		\EndIf
-		\ElsIf{TransmissionPacket}
-		\State{Validate signature}
-		\If{valid}
-		\State{Add retransmission packet to buffer}
-		\EndIf
-		\EndIf
-		\EndIf
-		\State{Update retransmission counters as needed}
-		\EndIf
-		\EndWhile
-	\end{algorithmic}
-\end{algorithm}
-
-
-\begin{algorithm}
-	\caption{MatrixTracker Packet Handling}
-	\begin{algorithmic}[1]
-		\Function{add\_packet}{packet}
-		\State Compute row and column from packet index
-		\If{packet already exists at (row, col)}
-		\State \Return
-		\EndIf
-		\State Add packet to matrix at (row, col)
-		\State Update bitmap
-		\State Recalculate packet loss
-		\EndFunction
-		
-		\Function{reconstruct\_matrix}{ec\_client\_key}
-		\Repeat
-		\For{each row}
-		\State Collect original and recovery shards
-		\If{enough shards}
-		\State Reed-Solomon decode row
-		\For{each recovered packet}
-		\State Sign and add to matrix
-		\EndFor
-		\EndIf
-		\EndFor
-		\For{each column}
-		\State Collect original and recovery shards
-		\If{enough shards}
-		\State Reed-Solomon decode column
-		\For{each recovered packet}
-		\State Sign and add to matrix
-		\EndFor
-		\EndIf
-		\EndFor
-		\Until{no new packets added}
-		\EndFunction
-	\end{algorithmic}
-\end{algorithm}
-
-\begin{algorithm}
-	\caption{Decoding to Application Layer}
-	\begin{algorithmic}[1]
-		\Function{decode\_to\_app\_layer}{tracker}
-		\State Remove FEC rows and columns from matrix
-		\For{each packet in matrix}
-		\State Depad payload
-		\State Select decryption key (handle key update if needed)
-		\State Decrypt payload
-		\If{decryption fails and not retried}
-		\State Request updated keys from server
-		\State Retry decryption
-		\EndIf
-		\If{decryption succeeds}
-		\State Decode VideoData
-		\State Validate signature
-		\If{valid}
-		\State Send decoded data to application layer
-		\EndIf
-		\EndIf
-		\EndFor
-		\EndFunction
-	\end{algorithmic}
-\end{algorithm}
-
-\begin{algorithm}
-	\caption{Key Rotation Logic}
-	\begin{algorithmic}
-		\Function{check\_key\_rotation}{matrix, packet, current\_key, next\_key, session}
-		\If{matrix index is multiple of epoch}
-		\If{next\_key is set}
-		\State Decrypt payload with next\_key
-		\State Decode VideoData to get new next\_key
-		\State Rotate keys: current\_key = next\_key, next\_key = new\_next\_key
-		\Else
-		\State Log error
-		\EndIf
-		\EndIf
-		\EndFunction
-		
-		\Function{rotate\_key}{current\_key, next\_key, new\_key}
-		\State current\_key = next\_key
-		\State next\_key = new\_key
-		\EndFunction
-	\end{algorithmic}
-\end{algorithm}
 
 
 \begin{figure}
@@ -469,7 +331,7 @@ This separation confines authority: only the server can originate valid content,
 \section{Mobile edge cloud offloading}
 %% ----------------------------------------------------------------------------------------------------------%%
 
-\subsubsection{Wifi Aware}
+\subsection{Wifi Aware}
 \label{sec:wifi aware}
 
 Wi-Fi Aware, standardized under the Neighbor Awareness Networking (NAN) protocol by the Wi-Fi Alliance, represents a significant evolution in wireless networking, shifting the paradigm from infrastructure-dependent communication to direct, context-driven device-to-device interaction. Built on top of the IEEE 802.11 MAC/PHY framework, Wi-Fi Aware enables continuous discovery and service exchange between devices without prior association with an access point or on cellular infrastructure. This is accomplished through synchronized communication windows, highly efficient service advertisement mechanisms, and a robust scheduling system designed to optimize radio resource usage in dense environments. Devices engaging in NAN operations are capable of discovering each other and negotiating data connections based on service requirements, proximity, and availability, while maintaining an energy profile suitable for mobile and IoT deployments.
@@ -495,17 +357,18 @@ By combining deterministic synchronization, flexible service discovery, efficien
 \paragraph{Android Implementation}
 \label{sec:p2p discovery and connection}
 
-The wifi aware implementation in android has hardware limitations, as described in the chapter 2, this requires special logic when discovering clients, because we want a full decentrilized p2p network, every devices needs to be simultinisly a subscriber and a publisher, this implicates when two devices are in range of eatchouther they will as find the publisher as a subscriber creating a race condition, to solve this during the discovery phase, the wifi aware as metadata exchange capabilities (200bytes? non reliable delivery or order), we use that to exchange devices capabilites, every device implementation as diferent hardware, for example the google pixel 6 has only 1 interface and 8 nan data paths, where the google pixel 7a has 2 interfaces and 8 nan data paths, this results in that the google pixel 7a can be connected to 2 diferent devices at the same time, the metadata exchange gives the two devices trying to connect a role based on available resources, in last resort the lower uuid is chosen, making a predictable choice. When two devices create a succeful connection it creats a interface for that p2p link, the android java exposes a quick way to create a socket between the peers, but for our implementation, we use the jni interface to pass the ipv6 link local address with the corresponding scope id to the rust linker library, there we add the interface to our implementation of the mesh networking, that discovers and relays packets to all connected peers.
+Android’s Wi-Fi Aware implementation exposes hardware constraints that complicate the creation of a fully decentralized peer-to-peer network. Because each device must act as both subscriber and publisher, a race condition occurs when two devices come within range and simultaneously discover each other in both roles. To resolve this, the discovery phase leverages Wi-Fi Aware’s metadata exchange capability, which provides roughly 200 bytes of non-reliable, unordered data. Devices use this exchange to advertise their hardware characteristics. For example, the Google Pixel 6 supports a single interface with eight NAN data paths, while the Pixel 7a supports two interfaces with the same number of data paths, allowing it to maintain simultaneous links with two different peers. Based on the exchanged metadata, devices negotiate roles according to available resources. If no clear decision arises, the device with the lower UUID is selected, ensuring deterministic resolution.
 
-\subsubsection{Mesh Networking}
+Once a connection is established, Android creates an interface representing the P2P link. While the Java API allows rapid socket creation between peers, the implementation routes through JNI to pass the IPv6 link-local address and its scope ID into the Rust networking library. This library integrates the new interface into a custom mesh layer that maintains peer discovery and packet relaying across all active links.
+
+\subsection{Mesh Networking}
 \label{sec:mesh networking}
 
-The mesh networking is a module inside the client library, by default the client starts without the mesh networking, this is by design and allows to be moduler and avoids creating resources where the offloading is not possible or required. The mesh is using a unstructed non fully connected mesh topology, because of the preview hardware constrains we talked in the previous chapter, to combate this constrains every packet in the mesh has a TTL, when we receive a new packet verify the ttl and if is different than 0, we process the packet and relay to all interfaces excepet the one we received, this avoids loops and follows the pattern of flooding a network, along side we added an heartbeat mechanism to keep interface active, by default android kills p2p links when theres no activities after 60 seconds.
+The mesh networking module is embedded in the client library but remains disabled by default. This modular design avoids unnecessary resource allocation in scenarios where offloading is not required or feasible. The mesh operates on an unstructured, partially connected topology due to the hardware constraints described earlier. To mitigate these limitations, each packet carries a time-to-live value. Upon reception, the system checks the TTL, and if greater than zero, processes the packet and relays it to all interfaces except the one it arrived on. This mechanism prevents loops and implements a controlled flooding strategy. A heartbeat mechanism complements this process by maintaining active links, since Android terminates idle peer-to-peer connections after sixty seconds.
 
-The mesh uses a tokio runtime to schedule and run periodic taks, as well detect new packets in sockets, the integration with the clients occours using channels, avoiding any data sharing, dead locks or race conditions, because of the async nature of tokio we cant use a normal syncrones channel, so the use of the crate loole was needed, this crate bridges async with sync channels, enabling the connection between the client retransmission manager and mesh.
+The system relies on the Tokio runtime to schedule periodic tasks and handle socket packet detection. Client integration is achieved through channels, which eliminate data sharing issues and prevent deadlocks or race conditions. Because Tokio’s asynchronous model is incompatible with standard synchronous channels, the implementation uses the Loole crate to bridge asynchronous and synchronous communication, enabling coordination between the retransmission manager and the mesh.
 
-All the request and response are flooded to the network, so even before a client requested a matrix it can be already in the mesh, making low latency. 
-
+Requests and responses are propagated across the network through flooding. As a result, matrices may already exist in the mesh before a client issues a request, which reduces latency and improves responsiveness.
 
 \begin{figure}
 	\centering
@@ -517,6 +380,8 @@ All the request and response are flooded to the network, so even before a client
 %% ----------------------------------------------------------------------------------------------------------%%
 \section{Frontend implementation}
 %% ----------------------------------------------------------------------------------------------------------%%
+
+
 
 \subsubsection{Android Frontend}
 \label{sec:android frontend}
@@ -531,12 +396,6 @@ All the request and response are flooded to the network, so even before a client
 \paragraph{Android Rust Linker}
 \label{sec:android rust linker}
 
-The android rust linker is a module that bridges the client abstract client library with the android jni, this enables automatic compilation and linking using org.mozilla.rust-android-gradle.rust-android, when the aarch64-linux-android toolchains are installed in the local computer, using this android library makes it automatic to integrate the code in the android application.
+The Android Rust linker acts as the bridge between the abstract client library and the Android JNI. It leverages the org.mozilla.rust-android-gradle.rust-android plugin to automate compilation and linking, provided that the aarch64-linux-android toolchains are installed locally. This integration allows the client library to be embedded seamlessly into an Android application without manual configuration.
 
-The use of the jni is expensive, so we only call it when necessary and never to move a lot of data, we use it to starting the logging to adb logcat, starting and stoping the client, get metrics from the client, add and remove sockets dynamicly and managing threads. All decoded data from the client is passed to the java using a file descripter.
-
-
-
-\subsubsection{Linux Frontend}
-
-\subsubsection{Headless Frontend}
+Because JNI calls are costly, their use is minimized and never employed for transferring large amounts of data. Instead, JNI handles control operations such as starting and stopping the client, initializing logging to adb logcat, retrieving client metrics, dynamically adding or removing sockets, and managing threads. Decoded data from the client is not transferred directly through JNI but is instead passed to the Java layer using a file descriptor, which avoids overhead and preserves performance.
