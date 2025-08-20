@@ -11,16 +11,16 @@
 % Chapter Label
 % For referencing this chapter elsewhere, use \ref{ChapterTemplate}
 
-This chapter proposes a complete solution for the livestreaming system. It defines the system’s requirements, architecture, and core components, establishing a clear path for development and implementation. The design prioritizes efficient data delivery over unreliable networks and applies modern technologies to ensure reliability, scalability, and ease of use. 
+\quad In this chapter, we present the design and implementation of the proposed system. \textbf{\Cref{sec:requirements}} defines the requirements that guide the development and ensure the solution meets its intended objectives. \textbf{\Cref{sec:system architecture}} introduces the overall system architecture, detailing the core components and their interactions. \textbf{\Cref{sec:mobile edge cloud offloading}} discusses the mobile edge cloud offloading strategy, explaining how computation and streaming tasks are distributed to improve performance and reduce latency. Finally, \textbf{\Cref{sec:frontend implementation}} outlines the frontend implementation, describing the user-facing aspects of the system and how they integrate with the backend components.
 
 \section{Requirements}
 \label{sec:requirements}
 
-This chapter defines the functional and non-functional requirements, presents the architecture, and explains how each component operates, it classifies the requirements into functional and non-functional categories; 
+\quad This section defines requirements, it classifies the requirements into functional and non-functional categories; 
 
 \begin{description}
-	\item[] \textbf{Functional} requirements articulate the concrete capabilities that a system must implement in order to fulfill its intended purpose. They describe the explicit services to be delivered, the behaviors expected under different conditions, and the features that enable users or other systems to interact with it effectively.
-	\item[] \textbf{Non-functional} requirements, in contrast, define the quality attributes and operational constraints that shape how these functions are executed. Rather than describing individual features, they establish criteria for system performance, scalability, reliability, security, and usability. These requirements determine the efficiency and robustness of the overall design, ensuring that functional behaviors occur within acceptable bounds of latency, throughput, resource consumption, and resilience. 
+	\item \textbf{Functional} requirements articulate the concrete capabilities that a system must implement in order to fulfill its intended purpose. They describe the explicit services to be delivered, the behaviors expected under different conditions, and the features that enable users or other systems to interact with it effectively.
+	\item \textbf{Non-functional} requirements, in contrast, define the quality attributes and operational constraints that shape how these functions are executed. Rather than describing individual features, they establish criteria for system performance, scalability, reliability, security, and usability. These requirements determine the efficiency and robustness of the overall design, ensuring that functional behaviors occur within acceptable bounds of latency, throughput, resource consumption, and resilience. 
 \end{description}
   
 
@@ -64,12 +64,13 @@ This chapter defines the functional and non-functional requirements, presents th
 	\end{tabular}
 \end{center}
 
-
-
-
 \section{System Architecture}
+\label{sec:system architecture}
 
-This chapter presents the detailed design and implementation of the system, building upon the system requirements and architectural principles established in the ~\nameref{sec:requirements} Section. To address the challenges identified in the literature review (Chapter~\ref{State of the Art}), a secure livestreaming framework with fog offloading capabilities was developed leveraging the Rust programming language, chosen for its memory safety and concurrency guarantees, which reduces common vulnerabilities such as buffer overflows and data race conditions \cite{jung2017rust, matsakis2014rust}. In comparison to C++, Rust’s ownership model and strict compile-time checks help prevent undefined behavior and improve reliability in complex, high-performance systems \cite{sharma2020comparison}, also all code used in this implementation adheres strictly to safe Rust, avoiding the use of \texttt{unsafe} blocks entirely to maintain guarantees of safety and reliability.
+\quad This section presents the detailed design and implementation of the system, building upon the system requirements and architectural principles established in \textbf{~\Cref{sec:requirements}}. To address the challenges identified in the literature review in \textbf{~\Cref{State of the Art}}, a secure livestreaming framework with fog offloading capabilities was developed leveraging the Rust programming language, chosen for its memory safety and concurrency guarantees, which reduces common vulnerabilities such as buffer overflows and data race conditions \cite{jung2017rust, matsakis2014rust}. In comparison to C++, Rust’s ownership model and strict compile-time checks help prevent undefined behavior and improve reliability in complex, high-performance systems \cite{sharma2020comparison}, also all code used in this implementation adheres strictly to safe Rust, avoiding the use of \texttt{unsafe} blocks entirely to maintain guarantees of safety and reliability.
+
+\quad The overall architecture of the system is depicted in \textbf{\Cref{fig:system}}. Although the presentation is restricted to a single edge server to improve readability, the solution can scale horizontally as needed. The video is first captured from a local source and compressed into a streaming-ready format by a dedicated hardware or software encoder located near the source, or alternatively performed in the cloud, as indicated by the \textbf{\Cref{fig:system}}. The final encoded stream is then injected into edge streaming servers, each supporting one access points and deployable as micro-servers in a Docker-based container pool. The aggregation of these servers forms a cloudlet that reduces latency, particularly for packet retransmissions, while still allowing video encoding to be performed in the cloud if needed, although this introduces a higher offset between live action and the stream due to the added cloud round-trip latency.
+
 
 
 \begin{figure}
@@ -82,13 +83,16 @@ This chapter presents the detailed design and implementation of the system, buil
 \subsection{Streaming Server}
 %% ----------------------------------------------------------------------------------------------------------%%
 
-A streaming server functions through one access point and coordinates a set of subsystems (see Figure \ref{fig:system}); \textbf{~\nameref{sec:source stream handler}} receives and processes the encoded video feed, preparing it for distribution; \textbf{~\nameref{sec:network scheduler framework}} oversees how multiple channels are streamed simultaneously and how lost data is retransmitted; An embedded \textbf{~\nameref{sec:reinforcement learning}} continually fine-tunes operational parameters in response to current network conditions, aiming to maximize efficiency and stability; \textbf{~\nameref{sec:membership manager}} manages user and device identities, enforces authentication to verify participants, controls authorization policies for access to streams and resources, and handles group membership, ensuring only authorized participants can join or interact with the system; \textbf{Crypto/Key Store} handles all cryptographic operations, including data encryption, authentication, and authorization enforcement, ensuring the confidentiality, integrity, and privacy of the streaming system.
+\quad A streaming server coordinates a set of subsystems that manage data processing, scheduling, security, and concurrency (see \textbf{\Cref{fig:streaming server}}), with the figure illustrating the internal architecture and showing how independent modules are organized and interconnected to operate concurrently and ensure efficient, secure, and adaptive video delivery. These subsystems can be characterized as follows:
 
-\begin{figure}
-	\centering
-	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/streaming_server.png}
-	\captionof{figure}{\label{fig:}Streaming Server Diagram}
-\end{figure}
+\begin{description}
+	\item \textbf{\nameref{sec:source stream handler}} receives and processes the encoded video feed and prepares it for distribution.
+	\item \textbf{\nameref{sec:network scheduler framework}} oversees how multiple channels are streamed simultaneously and how lost data is retransmitted.
+	\item \textbf{\nameref{sec:reinforcement learning}} continually fine-tunes operational parameters in response to current network conditions, aiming to maximize efficiency and stability.
+	\item \textbf{\nameref{sec:membership manager}} manages user and device identities, enforces authentication to verify participants, controls authorization policies for access to streams and resources, and handles group membership, ensuring only authorized participants can join or interact with the system.
+	\item \textbf{Crypto/Key Store} handles all cryptographic operations, including data encryption, authentication, and authorization enforcement, ensuring the confidentiality, integrity, and privacy of the streaming system.
+\end{description}
+
 
 \subsubsection{Source Stream Handler}
 \label{sec:source stream handler}
@@ -136,6 +140,11 @@ The aggregate redundancy ratio is
 \]
 where the third term represents the \emph{intersection overhead} caused by the parity--parity cells in the bottom-right of the matrix.  
 
+\begin{figure}
+	\centering
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/matrix_layout.png}
+	\captionof{figure}{\label{fig:}Data Layout}
+\end{figure}
 
 \paragraph{Bandwidth Overhead Analysis.}
 The bandwidth penalty imposed by 2-D product FEC is constant and proactive, meaning that the additional packets are transmitted regardless of whether errors actually occur\,\cite{fec_overhead_study}.  
@@ -166,14 +175,17 @@ For a \(10 \times 10\) matrix, deadlock configurations make up just 1.23\% of al
 \paragraph{Overhead Efficiency Comparison.}
 Compared to other FEC methods, 2-D Reed--Solomon offers superior bandwidth efficiency for moderate protection levels, but at the cost of quadratic computational scaling.  
 For equivalent \(\approx 4\%\) overhead, an \(\mathrm{RS}(169,163)\) code with interleaving requires 44\% more bandwidth than Raptor codes to achieve the same resilience at 2\% packet loss\cite{raptor_vs_rs}.  
-Moreover, RS decoding complexity grows as \(\mathcal{O}(k^2)\), and in practice, it demands 2--10$\times$ more processing than Raptor codes when \(k < 250\).  
-In resource-constrained fog nodes, this computational load translates directly into higher power consumption and increased processing latency.
+Moreover, Reed–Solomon (RS) decoding complexity grows as 
+\(\mathcal{O}(k^2)\), where \(k\) denotes the number of source symbols. 
+In practice, RS decoding requires approximately \(2\text{--}10\times\) more 
+processing resources than Raptor codes when \(k < 250\)~\cite{shokrollahi2006raptor}.
+%In resource-constrained fog nodes, this computational load translates directly into higher power consumption and increased processing latency.
 
-\paragraph{Practical Implications for Fog Deployments.}
-In environments with costly or capacity-limited links the economic impact of constant FEC overhead is significant.  
-When combined with a typical 20\% bitrate guard band, a 30\% 2-D FEC overhead can push the total transmission rate to 50\% above the base stream\,\cite{limit_fec}.  
-For instance, a 5~Mbps stream with 30\% overhead requires 6.5~Mbps of link capacity, representing an annual cost increase of \$1,500--3,000 for premium satellite service.  
-Adaptive FEC strategies, which adjust overhead dynamically in response to real-time loss metrics, can reduce bandwidth waste by 15--25\% during favorable conditions while still offering robust protection during loss bursts\,\cite{fec_scalable_video}.
+%\paragraph{Practical Implications for Fog Deployments.}
+%In environments with costly or capacity-limited links the economic impact of constant FEC overhead is significant.  
+%When combined with a typical 20\% bitrate guard band, a 30\% 2-D FEC overhead can push the total transmission rate to 50\% above the base stream\,\cite{limit_fec}.  
+%For instance, a 5~Mbps stream with 30\% overhead requires 6.5~Mbps of link capacity, representing an annual cost increase of \$1,500--3,000 for premium satellite service.  
+%Adaptive FEC strategies, which adjust overhead dynamically in response to real-time loss metrics, can reduce bandwidth waste by 15--25\% during favorable conditions while still offering robust protection during loss bursts\,\cite{fec_scalable_video}.
 
 \paragraph{Latency and Buffering Trade-offs.}
 Since the encoder must collect an entire \(D \times L\) matrix before column parities can be sent, the scheme incurs a buffering delay of  
@@ -184,13 +196,33 @@ where \(R_{\mathrm{pkt}}\) is the packet emission rate.
 Smaller column depths (\(L \le 5\)) reduce this delay while still addressing typical burst-loss patterns in Wi-Fi links \cite{smpte2022,fec_video_study}.  
 
 
-\begin{figure}
-	\centering
-	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/matrix_layout.png}
-	\captionof{figure}{\label{fig:}Data Layout}
-\end{figure}
-
 \paragraph{Packet interleave \& transmission ordering}
+
+We adopted an adjustable interleaved scheme, shown in Fig.~3, that handles both bursty and random packet loss behavior to accommodate different loss patterns. In order to increase error correction efficiency, we transmit a transmission matrix by column and not by row; using the example in Fig.~3, where the matrix has 6 rows and 7 columns, the order in which the packets are sent is 
+\(\{0, 6, 12, 18, 24, 30, 1, 7, 13, 19, 25, 31, \dots\}\). 
+With this strategy we can spread packet loss across multiple rows, ensuring that consecutive dropped packets do not concentrate in a single codeword. For example, if four consecutive packets are lost, such as \(\{12, 13, 14, 15\}\), the loss is distributed across different rows and can be recovered through row parity. However, this approach alone does not handle random packet loss, which has been addressed by us through the introduction of column parity. If two packets in the same column are lost, for example \(\{6, 18\}\), column parity allows their recovery. By now, it should be clear that if we increase column parity then we are adding more protection against random packet loss, and adding more row parity will provide more protection for bursty packet loss. This balance enables the scheme to be tuned according to the predominant loss pattern in the network.
+
+From a mathematical perspective, let the transmission matrix be defined as \(M \in \mathbb{F}_q^{r \times c}\), where \(r\) represents the number of rows, \(c\) the number of columns, and \(\mathbb{F}_q\) the finite field over which coding is performed. For each row \(i\), we append \(p_r\) row parity packets computed as linear combinations:
+
+\[
+P_{r,i} = \sum_{j=1}^{c} \alpha_{i,j} M_{i,j}, \quad \alpha_{i,j} \in \mathbb{F}_q
+\]
+
+which ensures recovery from up to \(p_r\) burst errors along row \(i\). Similarly, for each column \(j\), we append \(p_c\) parity packets:
+
+\[
+P_{c,j} = \sum_{i=1}^{r} \beta_{i,j} M_{i,j}, \quad \beta_{i,j} \in \mathbb{F}_q
+\]
+
+allowing correction of up to \(p_c\) random losses distributed across the column. The probability of successful decoding can be expressed as
+
+\[
+P_{\text{success}} = 1 - P_{\text{loss}}(r,c,p_r,p_c),
+\]
+
+where \(P_{\text{loss}}\) is the probability that the number of erasures in any row exceeds \(p_r\) or in any column exceeds \(p_c\). For a channel modeled as a Gilbert–Elliot process, which captures both bursty and random losses, the expected packet loss burst length \(L_b\) influences the choice of \(p_r\), while the independent loss probability \(p\) guides the allocation of \(p_c\)~\cite{gilbert1960capacity,gallager1963ldpc}. 
+
+This approach follows established principles of product codes and erasure coding. By adjusting \(p_r\) and \(p_c\), the system operator can optimize the error correction overhead to match the loss distribution, as discussed in prior works on forward error correction for real-time multimedia streaming~\cite{lacan2005vandermonde,nonnenmacher1997parity}.
 
 \subsubsection{Reinforcement Learning}
 \label{sec:reinforcement learning}
@@ -236,6 +268,150 @@ By transforming FEC and bitrate adaptation from static, heuristic configurations
 \subsubsection{Network Scheduler Framework}
 \label{sec:network scheduler framework}
 
+The retransmission process in the secure streaming system operates as a tightly coordinated cycle, ensuring that every client receives all necessary packets despite network loss. At the core of this process, the server maintains a set of client sessions, each representing the state of an individual client, including their packet reception reports, bandwidth usage, and latency estimates. When a client sends a feedback report, the server updates its session data, recording which packets have been received and which are missing. This feedback forms the basis for constructing the network coding (NC) matrix, which provides a snapshot of packet reception status across all clients. Figure 1 illustrates the flow of feedback from clients to the server and the construction of the NC matrix.
+
+%\begin{figure}[h] \centering \includegraphics[width=0.8\textwidth]{nc_matrix_diagram.png} \caption{Clients send feedback reports to the server, which builds the NC matrix representing packet reception status.} \end{figure}
+
+The server generates the NC matrix by iterating through each client and extracting their latest reports. For every report, the server identifies the matrix index and appends the client’s bitmap—a vector indicating received and missing packets—as a new row in the corresponding matrix. Alongside the matrix, the server maintains a list of client identifiers and their IP addresses, associating each row with the client who provided it. This structure allows the server to analyze packet loss patterns and identify which packets are missing for which clients, forming the foundation for efficient retransmission strategies.
+
+Retransmission occurs in two distinct phases: multicast and unicast. During the multicast phase, the server targets all clients simultaneously, sending either individual packets or network-coded packets, such as XOR combinations. Network coding leverages the overlap in packet loss among clients, allowing the server to send a single coded packet that multiple clients can use to recover different missing packets. For example, if one client is missing packet A and another is missing packet B, the server can send A ⊕ B; each client can then use the coded packet and their existing data to recover the missing information. Figure 2 demonstrates how network coding enables efficient recovery for multiple clients using a single transmission.
+
+%\begin{figure}[h] \centering \includegraphics[width=0.7\textwidth]{network_coding_xor.png} \caption{Network coding: The server sends A ⊕ B, allowing Client 1 (who has A) to recover B and Client 2 (who has B) to recover A.} \end{figure}
+
+In the unicast phase, the server focuses on targeted retransmissions, sending specific packets directly to clients who need them. This phase is most effective when only a few clients are missing packets, as it avoids unnecessary bandwidth consumption. The server tracks which packets and actions have already been sent in each phase and round, using a combination of matrix identifiers and action types to prevent duplicate transmissions. Figure 3 shows the phase cycle, where the server alternates between multicast and unicast phases, advancing to the next phase after each round.
+
+%\begin{figure}[h] \centering \includegraphics[width=0.6\textwidth]{phase_cycle.png} \caption{Phase cycle: The server alternates between multicast and unicast phases, advancing after each round.} \end{figure}
+
+The selection of retransmission actions follows a greedy algorithm. The server analyzes the NC matrix to determine which packets are missing for the largest number of clients. It then prioritizes sending those packets or, when beneficial, network-coded combinations that help the most clients simultaneously. By sorting packets based on the number of clients missing them and evaluating the potential benefit of XOR actions, the server chooses up to five actions per round, always aiming to maximize recovery with minimal transmissions. Figure 4 visualizes the greedy selection process, where the server chooses the action that helps the most clients in each round.
+
+%\begin{figure}[h] \centering \includegraphics[width=0.7\textwidth]{greedy_selection.png} \caption{Greedy selection: The server chooses the action (packet or XOR) that helps the most clients in each round.} \end{figure}
+
+Bandwidth management plays a crucial role in maintaining system stability and fairness. Each client session includes a bandwidth manager that tracks the rate of unicast transmissions, ensuring that no client exceeds their allocated bitrate. For multicast transmissions, a separate manager monitors the aggregate bandwidth, preventing the server from overwhelming the network. These managers operate in real time, adjusting rates and enforcing limits based on current usage and configuration parameters. Figure 5 depicts the bandwidth managers for both unicast and multicast transmissions, showing how they enforce limits and prevent congestion.
+
+%\begin{figure}[h] \centering \includegraphics[width=0.8\textwidth]{bandwidth_managers.png} \caption{Bandwidth managers: Each client has a unicast bandwidth manager, and multicast transmissions are regulated by a separate manager.} \end{figure}
+
+Throughout the retransmission process, the server maintains a tight feedback loop, continuously updating client states, recalculating the NC matrix, and adapting its strategy to current network conditions. By combining detailed packet tracking, adaptive phase cycling, efficient network coding, and rigorous bandwidth management, the system delivers robust and scalable packet recovery. The server ensures that every client remains synchronized and receives the complete data stream, even in challenging network environments.
+
+\begin{algorithm}
+	\caption{Main Retransmission Manager Loop}
+	\begin{algorithmic}[1]
+		\State \textbf{Initialize} phase\_index $\gets$ 0
+		\State \textbf{Initialize} round $\gets$ 0
+		\While{true}
+		\State phase\_config $\gets$ phases[phase\_index]
+		\If{phase\_config.enabled = \textbf{false}}
+		\State \textbf{Call} advance\_phase()
+		\State \textbf{Continue}
+		\EndIf
+		\If{phase\_config.phase = Multicast}
+		\ForAll{matrix in client\_sessions}
+		\If{matrix is empty}
+		\State \textbf{Continue}
+		\EndIf
+		\State already\_sent $\gets$ actions sent for this matrix in this phase/round
+		\State sent\_packets $\gets$ \textbf{Call} compute\_retransmissions(matrix, already\_sent)
+		\ForAll{action in sent\_packets}
+		\State \textbf{Record} action as sent in packet\_states for this phase/round
+		\If{action is Packet(idx)}
+		\State \textbf{Call} handle\_transmission\_packet(idx, matrix)
+		\ElsIf{action is Xor(i, j)}
+		\State \textbf{Call} handle\_xor\_packet(i, j, matrix)
+		\EndIf
+		\EndFor
+		\EndFor
+		\ElsIf{phase\_config.phase = Unicast}
+		\ForAll{matrix in client\_sessions}
+		\If{matrix is empty}
+		\State \textbf{Continue}
+		\EndIf
+		\ForAll{client in matrix}
+		\State missing\_indices $\gets$ indices of packets missing for client
+		\If{missing\_indices is empty}
+		\State \textbf{Continue}
+		\EndIf
+		\ForAll{packet\_idx in missing\_indices}
+		\If{packet\_idx can be sent in this phase/round}
+		\State \textbf{Record} packet\_idx as sent in packet\_states for this phase/round
+		\State \textbf{Call} handle\_unicast\_packets\_for\_client(packet\_idx, client)
+		\EndIf
+		\EndFor
+		\EndFor
+		\EndFor
+		\EndIf
+		\State \textbf{Call} advance\_phase()
+		\EndWhile
+	\end{algorithmic}
+\end{algorithm}
+
+\begin{algorithm}
+	\caption{Algorithm Decision Logic (compute\_retransmissions)}
+	\begin{algorithmic}[1]
+		\Function{compute\_retransmissions}{network\_coding\_matrix, already\_sent}
+		\State num\_clients $\gets$ number of rows in network\_coding\_matrix
+		\State num\_packets $\gets$ number of columns in network\_coding\_matrix
+		\State sent\_packets $\gets$ empty list
+		\For{packet\_index $= 0$ \textbf{to} num\_packets $- 1$}
+		\State missing\_count[packet\_index] $\gets$ number of clients missing this packet
+		\EndFor
+		\State needed\_packets $\gets$ list of packet indices missing for at least one client and not in already\_sent
+		\If{needed\_packets is empty}
+		\State \Return sent\_packets
+		\EndIf
+		\State best\_xor $\gets$ None
+		\State best\_xor\_benefit $\gets$ 0
+		\For{i $= 0$ \textbf{to} num\_packets $- 1$}
+		\If{missing\_count[i] $= 0$}
+		\State \textbf{Continue}
+		\EndIf
+		\For{j $= i+1$ \textbf{to} num\_packets $- 1$}
+		\If{missing\_count[j] $= 0$ \textbf{or} Xor(i, j) in already\_sent}
+		\State \textbf{Continue}
+		\EndIf
+		\State xor\_benefit $\gets$ number of clients who have exactly one of i or j
+		\If{xor\_benefit $>$ best\_xor\_benefit}
+		\State best\_xor\_benefit $\gets$ xor\_benefit
+		\State best\_xor $\gets$ (i, j)
+		\EndIf
+		\EndFor
+		\EndFor
+		\State needed\_sorted $\gets$ needed\_packets sorted by missing\_count descending
+		\For{idx in first 5 of needed\_sorted}
+		\State \textbf{Add} Packet(idx) to sent\_packets
+		\EndFor
+		\If{best\_xor is not None \textbf{and} best\_xor\_benefit $>$ missing\_count of top needed\_packet}
+		\State \textbf{Remove} first Packet action from sent\_packets if present
+		\State \textbf{Insert} Xor(best\_xor) at front of sent\_packets
+		\EndIf
+		\State \Return sent\_packets
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+
+\begin{algorithm}
+	\caption{Generate Network Coding Matrix}
+	\begin{algorithmic}[1]
+		\Function{generate\_nc\_matrix}{}
+		\State \textbf{Initialize} nc\_matrixes as an empty map from matrix\_index to (matrix, client\_list)
+		\ForAll{client in clients}
+		\State client\_id $\gets$ client.client\_id
+		\State client\_data $\gets$ client.client\_data
+		\ForAll{report in client\_data.reports}
+		\State matrix\_index $\gets$ report.matrix\_index
+		\State bitmap $\gets$ report.bitmap
+		\If{matrix\_index not in nc\_matrixes}
+		\State \textbf{Insert} (empty matrix, empty client\_list) for matrix\_index into nc\_matrixes
+		\EndIf
+		\State \textbf{Append} bitmap as a new row to the matrix for matrix\_index in nc\_matrixes
+		\State \textbf{Append} (client\_id, client\_data.ip) to the client\_list for matrix\_index in nc\_matrixes
+		\EndFor
+		\EndFor
+		\State \Return nc\_matrixes
+		\EndFunction
+	\end{algorithmic}
+\end{algorithm}
+
+
 \subsubsection{Report Sink}
 \label{sec:report sink}
 
@@ -244,6 +420,11 @@ The reporting sink is used to send compress bitmap reports with metrics to the s
 \subsubsection{Membership Manager}
 \label{sec:membership manager}
 
+\begin{figure}
+	\centering
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/streaming_server.png}
+	\captionof{figure}{\label{fig:streaming server}Streaming Server Diagram}
+\end{figure}
 
 
 %% ----------------------------------------------------------------------------------------------------------%%
@@ -308,11 +489,6 @@ Trust anchors in a private CA whose public key ships with the client. On startup
 
 The server signs the application payload so recipients can validate origin independently of transport termination at fog nodes. The client signs periodic reports that carry a monotonic counter; the server enforces counter monotonicity and certificate-based identity to prevent replay and forgery. Authorization follows from certificate attributes and server-side policy that maps identities to stream entitlements, rate limits, or retransmission privileges. Revocation proceeds by short certificate lifetimes and server-maintained deny lists checked at handshake and at report verification. Auditability follows from logging of issued certificates, signature verification outcomes, and counter violations.
 
-\begin{figure}
-	\centering
-	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/http_tls.png}
-	\captionof{figure}{\label{fig:}TLS Hand shack}
-\end{figure}
 
 \subsubsection{Forward Secrecy and Stream Integrity}
 \label{sec:forward_secrecy_stream_integrity}
@@ -329,6 +505,7 @@ This separation confines authority: only the server can originate valid content,
 
 %% ----------------------------------------------------------------------------------------------------------%%
 \section{Mobile edge cloud offloading}
+\label{sec:mobile edge cloud offloading}
 %% ----------------------------------------------------------------------------------------------------------%%
 
 \subsection{Wifi Aware}
@@ -379,6 +556,7 @@ Requests and responses are propagated across the network through flooding. As a 
 
 %% ----------------------------------------------------------------------------------------------------------%%
 \section{Frontend implementation}
+\label{sec:frontend implementation}
 %% ----------------------------------------------------------------------------------------------------------%%
 
 

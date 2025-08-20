@@ -3,3 +3,57 @@
 \chapter*{Appendix} % Main appendix title
 
 \label{AppendixX} % Change X to a consecutive letter; for referencing this appendix elsewhere, use \ref{AppendixX}
+
+
+\section{Pseudocode Standard}
+\label{appendix:pseudocode-standard}
+
+\quad All pseudocode presented in this thesis follows the structured pseudocode style described in this appendix. This standard emphasizes clarity, problem-domain vocabulary, and completeness, ensuring that algorithms are described in a way that is independent of implementation details but precise enough for direct translation into code. The adopted standard is based on the guidelines provided by Dalbey~\cite{dalbey2003pseudocode}.
+
+\subsection*{Overview}
+\quad  Pseudocode is a form of structured English for describing algorithms. It allows designers to focus on algorithmic logic without being distracted by the syntax of a programming language. The pseudocode must be complete, describing the entire logic of an algorithm so that implementation becomes a straightforward translation. The vocabulary used in pseudocode should reflect the problem domain rather than the implementation domain.  
+
+\subsection*{Structured Constructs}
+The pseudocode notation is built around six primary constructs:  
+\begin{itemize}
+	\item \textbf{SEQUENCE}: linear progression of steps.  
+	\item \textbf{WHILE}: loop with a test at the beginning.  
+	\item \textbf{IF-THEN-ELSE}: binary decision structure.  
+	\item \textbf{REPEAT-UNTIL}: loop with a test at the bottom.  
+	\item \textbf{CASE}: multiway branching structure.  
+	\item \textbf{FOR}: counting loop for iteration.  
+\end{itemize}
+
+\quad It has been proven that SEQUENCE, WHILE, and IF-THEN-ELSE are sufficient to implement any algorithm, though the additional constructs simplify common patterns.  
+
+\subsection*{Formatting Guidelines}
+\quad Sequential control is represented by writing one action per line. Nested constructs must be clearly indented. Common keywords include:  
+\begin{itemize}
+	\item Input: \texttt{READ, OBTAIN, GET}  
+	\item Output: \texttt{PRINT, DISPLAY, SHOW}  
+	\item Compute: \texttt{COMPUTE, CALCULATE, DETERMINE}  
+	\item Initialize: \texttt{SET, INIT}  
+	\item Increment: \texttt{INCREMENT, BUMP}  
+\end{itemize}
+
+\quad Subprocedures are invoked using the keyword \texttt{CALL}, and exception handling is represented with \texttt{BEGIN}, \texttt{EXCEPTION}, and \texttt{END}.  
+
+\subsection*{Examples}
+The following example illustrates the recommended style:  
+
+\begin{verbatim}
+	SET moveCount to 1
+	FOR each row on the board
+	FOR each column on the board
+	IF gameBoard position (row, column) is occupied THEN
+	CALL findAdjacentTiles with row, column
+	INCREMENT moveCount
+	END IF
+	END FOR
+	END FOR
+\end{verbatim}
+
+This representation prioritizes readability, problem-domain vocabulary, and precision, while avoiding vague or incomplete expressions.  
+
+
+

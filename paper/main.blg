@@ -14,58 +14,51 @@ Warning--entry type for "abiresearch2025" isn't style-file defined
 --line 157 of file Bibliography.bib
 Warning--entry type for "newscast2025" isn't style-file defined
 --line 197 of file Bibliography.bib
-Warning--I didn't find a database entry for "rescorla2021quic"
-Warning--I didn't find a database entry for "holmer2022media"
-Warning--I didn't find a database entry for "huang2024"
-Warning--I didn't find a database entry for "zhou2024"
-Warning--I didn't find a database entry for "jung2017rust"
-Warning--I didn't find a database entry for "matsakis2014rust"
-Warning--I didn't find a database entry for "sharma2020comparison"
 -- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
 -- http://www.michaelshell.org/tex/ieeetran/bibtex/
 -- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
 Warning--empty journal in rs_error_bounds
 
 Done.
-You've used 40 entries,
+You've used 33 entries,
             4087 wiz_defined-function locations,
-            1054 strings with 14491 characters,
-and the built_in function-call counts, 22013 in all, are:
-= -- 1846
-> -- 396
-< -- 102
-+ -- 213
-- -- 81
-* -- 948
-:= -- 3722
-add.period$ -- 82
-call.type$ -- 40
-change.case$ -- 53
-chr.to.int$ -- 237
-cite$ -- 41
-duplicate$ -- 1669
-empty$ -- 1887
-format.name$ -- 92
-if$ -- 4992
+            1017 strings with 12897 characters,
+and the built_in function-call counts, 20515 in all, are:
+= -- 1759
+> -- 357
+< -- 139
++ -- 204
+- -- 65
+* -- 922
+:= -- 3381
+add.period$ -- 71
+call.type$ -- 33
+change.case$ -- 43
+chr.to.int$ -- 318
+cite$ -- 34
+duplicate$ -- 1496
+empty$ -- 1650
+format.name$ -- 74
+if$ -- 4678
 int.to.chr$ -- 0
-int.to.str$ -- 40
-missing$ -- 348
-newline$ -- 173
-num.names$ -- 40
-pop$ -- 825
+int.to.str$ -- 33
+missing$ -- 284
+newline$ -- 150
+num.names$ -- 33
+pop$ -- 638
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 1737
+skip$ -- 1616
 stack$ -- 0
-substring$ -- 634
-swap$ -- 1199
-text.length$ -- 23
+substring$ -- 814
+swap$ -- 1163
+text.length$ -- 33
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 40
+type$ -- 33
 warning$ -- 1
-while$ -- 80
-width$ -- 42
-write$ -- 422
-(There were 10 warnings)
+while$ -- 82
+width$ -- 35
+write$ -- 368
+(There were 3 warnings)

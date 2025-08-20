@@ -117,78 +117,20 @@ D.~Schmitz and T.~Springer, ``Crowdcloud: Core concepts for a crowdsourced
   \url{https://link.springer.com/article/10.1007/s10586-018-2843-2}
 \BIBentrySTDinterwordspacing
 
-\bibitem{realplayer}
-Joni, ``The history of realplayer at realnetworks,''
-  \url{https://blog.real.com/realplayer-history/}, Aug. 2016.
+\bibitem{jung2017rust}
+R.~Jung, J.-H. Jourdan, R.~Krebbers, and D.~Dreyer, ``Rustbelt: Securing the
+  foundations of the rust programming language,'' \emph{Proceedings of the ACM
+  on Programming Languages}, vol.~2, no. POPL, p.~66, 2018.
 
-\bibitem{hoakley2024quicktime}
-hoakley, ``A brief history of quicktime,''
-  \url{https://eclecticlight.co/2024/09/14/a-brief-history-of-quicktime/}, Sep.
-  2024.
+\bibitem{matsakis2014rust}
+N.~D. Matsakis and F.~S. Klock, ``The rust language,'' \emph{Ada Lett.},
+  vol.~34, no.~3, pp. 103--104, 2014.
 
-\bibitem{BoxCastTeam2021latency}
-B.~Team, ``Why your live stream lags: Intro to live streaming latency,''
-  \url{https://www.boxcast.com/blog/live-stream-video-latency}, Jan. 2021.
-
-\bibitem{daemen2002design}
-J.~Daemen and V.~Rijmen, \emph{The Design of Rijndael: AES -- The Advanced
-  Encryption Standard}.\hskip 1em plus 0.5em minus 0.4em\relax Springer, 2002.
-
-\bibitem{lennox2010dtls}
-J.~Lennox, D.~McGrew, and E.~Rescorla, ``Datagram transport layer security
-  (dtls) extension to establish keys for the secure real-time transport
-  protocol (srtp),'' in \emph{Proceedings of the 19th International Conference
-  on Computer Communications and Networks (ICCCN)}, 2010, pp. 1--6.
-
-\bibitem{zimmermann2006zrtp}
-P.~R. Zimmermann, A.~Johnston, and J.~Callas, ``Zrtp: Media path key agreement
-  for secure rtp,'' in \emph{Proceedings of the International Conference on
-  Voice over IP Security (VoIPsec)}, 2006.
-
-\bibitem{perkins2003srtp}
-C.~Perkins and D.~McGrew, ``Secure real-time transport protocol (srtp),'' in
-  \emph{Proceedings of the 12th IEEE International Conference on Network
-  Protocols (ICNP)}, 2003, pp. 1--10.
-
-\bibitem{iso23001cenc}
-{International Organization for Standardization}, ``Information technology —
-  mpeg systems technologies — part 7: Common encryption in iso base media
-  file format files,'' ISO/IEC, Tech. Rep. ISO/IEC 23001-7:2016, 2016.
-
-\bibitem{widevine2019overview}
-{Google}, ``Widevine drm architecture overview,''
-  \url{https://www.widevine.com/}, 2019, accessed: 2025-08-18.
-
-\bibitem{microsoft2018playready}
-{Microsoft Corporation}, ``Microsoft playready digital rights management,''
-  \url{https://www.microsoft.com/playready/}, 2018, accessed: 2025-08-18.
-
-\bibitem{apple2016fairplay}
-{Apple Inc.}, ``Fairplay streaming overview,''
-  \url{https://developer.apple.com/streaming/fps/}, 2016, accessed: 2025-08-18.
-
-\bibitem{etsi2025}
-{ETSI MEC}, \emph{Multi-access Edge Computing (MEC); Framework and Reference
-  Architecture}, European Telecommunications Standards Institute Std., 2025,
-  eTSI GS MEC 003 V3.1.1.
-
-\bibitem{bernstein2008chacha20}
-\BIBentryALTinterwordspacing
-D.~J. Bernstein, ``Chacha, a variant of salsa20,'' Workshop Record of SASC,
-  Tech. Rep., 2008. [Online]. Available:
-  \url{https://cr.yp.to/chacha/chacha-20080128.pdf}
-\BIBentrySTDinterwordspacing
-
-\bibitem{langley2016quic}
-A.~Langley, A.~Riddoch, A.~Wilk, A.~Vicente, D.~Krasic, F.~Zhang, Z.~Yang,
-  S.~Kaushik, R.~Swett, J.~Iyengar, and I.~Bailey, ``The quic transport
-  protocol: Design and internet-scale deployment,'' in \emph{Proceedings of the
-  ACM SIGCOMM}, 2016, pp. 183--196.
-
-\bibitem{bentaleb2025}
-A.~Bentaleb and et~al., ``A survey on low-latency adaptive video streaming:
-  State of the art and future directions,'' \emph{IEEE Communications Surveys
-  \& Tutorials}, 2025, to appear.
+\bibitem{sharma2020comparison}
+P.~Sharma, R.~Anand, and S.~Nand, ``A comparison of programming languages in
+  rosetta code,'' in \emph{2020 International Conference on Communication and
+  Signal Processing (ICCSP)}.\hskip 1em plus 0.5em minus 0.4em\relax IEEE,
+  2020, pp. 810--814.
 
 \bibitem{prompeg}
 {Pro-MPEG Forum}, ``Pro-mpeg code of practice \#3 release 2: Transmission of
@@ -244,10 +186,31 @@ F.~J. MacWilliams and N.~J.~A. Sloane, ``The theory of error-correcting
 A.~Shokrollahi, ``Raptor codes,'' in \emph{IEEE Transactions on Information
   Theory}, vol.~52, no.~6, 2006, pp. 2551--2567.
 
-\bibitem{fec_scalable_video}
-J.~Chakareski and P.~Frossard, ``Adaptive systems for improved delivery of
-  scalable video streams over networks with varying conditions,'' in \emph{IEEE
-  Transactions on Circuits and Systems for Video Technology}, vol.~16, no.~3,
-  2006, pp. 360--375.
+\bibitem{shokrollahi2006raptor}
+------, ``Raptor codes,'' \emph{IEEE Transactions on Information Theory},
+  vol.~52, no.~6, pp. 2551--2567, 2006.
+
+\bibitem{gilbert1960capacity}
+E.~N. Gilbert, ``Capacity of a burst-noise channel,'' \emph{Bell System
+  Technical Journal}, vol.~39, no.~5, pp. 1253--1265, 1960.
+
+\bibitem{gallager1963ldpc}
+R.~G. Gallager, \emph{Low-Density Parity-Check Codes}.\hskip 1em plus 0.5em
+  minus 0.4em\relax MIT Press, 1963.
+
+\bibitem{lacan2005vandermonde}
+J.~Lacan and J.~Fimes, ``Systematic mds erasure codes based on vandermonde
+  matrices,'' \emph{IEEE Communications Letters}, vol.~9, no.~5, pp. 465--467,
+  2005.
+
+\bibitem{nonnenmacher1997parity}
+J.~Nonnenmacher, E.~W. Biersack, and D.~Towsley, ``Parity-based loss recovery
+  for reliable multicast transmission,'' in \emph{Proceedings of the ACM
+  SIGCOMM}.\hskip 1em plus 0.5em minus 0.4em\relax ACM, 1997, pp. 349--359.
+
+\bibitem{dalbey2003pseudocode}
+J.~Dalbey, ``Pseudocode standard,''
+  \url{https://users.csc.calpoly.edu/~jdalbey/SWE/pdl_std.html}, 2003,
+  accessed: 2025-08-20.
 
 \end{thebibliography}
