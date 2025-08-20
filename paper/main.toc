@@ -27,14 +27,14 @@
 \contentsline {section}{\numberline {4.2}System Architecture}{7}{section.4.2}%
 \contentsline {subsection}{\numberline {4.2.1}Streaming Server}{8}{subsection.4.2.1}%
 \contentsline {subsubsection}{\numberline {4.2.1.1}Source Stream Handler}{9}{subsubsection.4.2.1.1}%
-\contentsline {paragraph}{Two-Dimensional Product Reed–Solomon FEC}{9}{paragraph*.4}%
-\contentsline {paragraph}{Reed--Solomon Encoding.}{9}{paragraph*.5}%
-\contentsline {paragraph}{Constructing the Product Code.}{10}{paragraph*.6}%
-\contentsline {paragraph}{Bandwidth Overhead Analysis.}{11}{paragraph*.8}%
-\contentsline {paragraph}{Error-Correction Efficiency.}{11}{paragraph*.9}%
-\contentsline {paragraph}{Overhead Efficiency Comparison.}{11}{paragraph*.10}%
-\contentsline {paragraph}{Latency and Buffering Trade-offs.}{12}{paragraph*.11}%
-\contentsline {paragraph}{Packet interleave \& transmission ordering}{12}{paragraph*.12}%
+\contentsline {paragraph}{Two-Dimensional Product Reed–Solomon FEC}{10}{paragraph*.6}%
+\contentsline {paragraph}{Reed--Solomon Encoding.}{10}{paragraph*.7}%
+\contentsline {paragraph}{Constructing the Product Code.}{11}{paragraph*.8}%
+\contentsline {paragraph}{Bandwidth Overhead Analysis.}{11}{paragraph*.9}%
+\contentsline {paragraph}{Error-Correction Efficiency.}{12}{paragraph*.10}%
+\contentsline {paragraph}{Overhead Efficiency Comparison.}{12}{paragraph*.11}%
+\contentsline {paragraph}{Latency and Buffering Trade-offs.}{12}{paragraph*.12}%
+\contentsline {paragraph}{Packet interleave \& transmission ordering}{12}{paragraph*.13}%
 \contentsline {subsubsection}{\numberline {4.2.1.2}Reinforcement Learning}{13}{subsubsection.4.2.1.2}%
 \contentsline {subsubsection}{\numberline {4.2.1.3}Network Scheduler Framework}{15}{subsubsection.4.2.1.3}%
 \contentsline {subsubsection}{\numberline {4.2.1.4}Report Sink}{16}{subsubsection.4.2.1.4}%
@@ -49,11 +49,11 @@
 \contentsline {subsubsection}{\numberline {4.2.3.4}Double Signature Schema}{24}{subsubsection.4.2.3.4}%
 \contentsline {section}{\numberline {4.3}Mobile edge cloud offloading}{25}{section.4.3}%
 \contentsline {subsection}{\numberline {4.3.1}Wifi Aware}{25}{subsection.4.3.1}%
-\contentsline {paragraph}{Android Implementation}{27}{paragraph*.17}%
+\contentsline {paragraph}{Android Implementation}{27}{paragraph*.19}%
 \contentsline {subsection}{\numberline {4.3.2}Mesh Networking}{28}{subsection.4.3.2}%
 \contentsline {section}{\numberline {4.4}Frontend implementation}{29}{section.4.4}%
 \contentsline {subsubsection}{\numberline {4.4.0.1}Android Frontend}{29}{subsubsection.4.4.0.1}%
-\contentsline {paragraph}{Android Rust Linker}{30}{paragraph*.20}%
+\contentsline {paragraph}{Android Rust Linker}{30}{paragraph*.22}%
 \contentsline {chapter}{\numberline {5}Evaluation}{31}{chapter.5}%
 \contentsline {section}{\numberline {5.1}Experimental setup and methodology}{31}{section.5.1}%
 \contentsline {section}{\numberline {5.2}Comparative evaluation without edge-cloud}{31}{section.5.2}%

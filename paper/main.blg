@@ -14,51 +14,55 @@ Warning--entry type for "abiresearch2025" isn't style-file defined
 --line 157 of file Bibliography.bib
 Warning--entry type for "newscast2025" isn't style-file defined
 --line 197 of file Bibliography.bib
+Repeated entry---line 1033 of file Bibliography.bib
+ : @misc{alvestrand2018rtc
+ :                        ,
+I'm skipping whatever remains of this entry
 -- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
 -- http://www.michaelshell.org/tex/ieeetran/bibtex/
 -- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
 Warning--empty journal in rs_error_bounds
 
 Done.
-You've used 33 entries,
+You've used 38 entries,
             4087 wiz_defined-function locations,
-            1017 strings with 12897 characters,
-and the built_in function-call counts, 20515 in all, are:
-= -- 1759
-> -- 357
+            1042 strings with 13720 characters,
+and the built_in function-call counts, 22558 in all, are:
+= -- 1939
+> -- 387
 < -- 139
-+ -- 204
-- -- 65
-* -- 922
-:= -- 3381
-add.period$ -- 71
-call.type$ -- 33
-change.case$ -- 43
++ -- 219
+- -- 72
+* -- 1005
+:= -- 3775
+add.period$ -- 80
+call.type$ -- 38
+change.case$ -- 49
 chr.to.int$ -- 318
-cite$ -- 34
-duplicate$ -- 1496
-empty$ -- 1650
-format.name$ -- 74
-if$ -- 4678
+cite$ -- 39
+duplicate$ -- 1667
+empty$ -- 1828
+format.name$ -- 82
+if$ -- 5126
 int.to.chr$ -- 0
-int.to.str$ -- 33
-missing$ -- 284
-newline$ -- 150
-num.names$ -- 33
-pop$ -- 638
+int.to.str$ -- 38
+missing$ -- 324
+newline$ -- 171
+num.names$ -- 37
+pop$ -- 736
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 1616
+skip$ -- 1775
 stack$ -- 0
-substring$ -- 814
-swap$ -- 1163
+substring$ -- 822
+swap$ -- 1267
 text.length$ -- 33
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 33
+type$ -- 38
 warning$ -- 1
-while$ -- 82
-width$ -- 35
-write$ -- 368
-(There were 3 warnings)
+while$ -- 86
+width$ -- 40
+write$ -- 419
+(There was 1 error message)

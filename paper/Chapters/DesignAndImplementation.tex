@@ -16,31 +16,18 @@
 \section{Requirements}
 \label{sec:requirements}
 
-\quad This section defines requirements, it classifies the requirements into functional and non-functional categories; 
+\quad This section defines the system requirements and classifies them into functional and non-functional categories:
 
 \begin{description}
-	\item \textbf{Functional} requirements articulate the concrete capabilities that a system must implement in order to fulfill its intended purpose. They describe the explicit services to be delivered, the behaviors expected under different conditions, and the features that enable users or other systems to interact with it effectively.
-	\item \textbf{Non-functional} requirements, in contrast, define the quality attributes and operational constraints that shape how these functions are executed. Rather than describing individual features, they establish criteria for system performance, scalability, reliability, security, and usability. These requirements determine the efficiency and robustness of the overall design, ensuring that functional behaviors occur within acceptable bounds of latency, throughput, resource consumption, and resilience. 
+	\item \textbf{Functional} requirements articulate the concrete capabilities that a system must implement in order to fulfill its intended purpose. They describe the explicit services to be delivered, the behaviors expected under different conditions, and the features that enable users or other systems to interact with it effectively. A detailed specification is presented in \textbf{\Cref{tab:functional-reqs}}
+	\item \textbf{Non-functional} requirements, in contrast, define the quality attributes and operational constraints that shape how these functions are executed. Rather than describing individual features, they establish criteria for system performance, scalability, reliability, security, and usability. These requirements determine the efficiency and robustness of the overall design, ensuring that functional behaviors occur within acceptable bounds of latency, throughput, resource consumption, and resilience.A detailed specification is presented in \textbf{\Cref{tab:nonfunctional-reqs}}
 \end{description}
-  
 
-\begin{center}
-	\begin{tabular}{|p{2.2cm}|p{11.5cm}|}
-		\hline
-		\multicolumn{2}{|c|}{\textbf{Non-Functional Requirements}} \\
-		\hline
-		NFR1 & Retransmission policy must be defined with bounded recovery latency. \\
-		\hline
-		NFR2 & All control and media channels must be authenticated and encrypted; keys must follow a secure lifecycle (generation, rotation, revocation). \\
-		\hline
-		NFR3 & Protocols must support version negotiation and preserve backward compatibility. \\
-		\hline
-		NFR4 & Client library must operate on constrained devices.\\
-		\hline
-	\end{tabular}
-\end{center}
+%\renewcommand{\arraystretch}{2} % vertical padding
+%\setlength{\tabcolsep}{8pt}       % horizontal padding
 
-\begin{center}
+\begin{table}[ht]
+	\centering
 	\begin{tabular}{|p{2.2cm}|p{11.5cm}|}
 		\hline
 		\multicolumn{2}{|c|}{\textbf{Functional Requirements}} \\
@@ -62,15 +49,36 @@
 		FR8 & Provide programmatic test hooks and example runners to exercise session establishment, streaming, loss simulation, and retransmission flows. \\
 		\hline
 	\end{tabular}
-\end{center}
+	\caption{Table of Functional Requirements}
+	\label{tab:functional-reqs}
+\end{table}
+
+\begin{table}[ht]
+	\centering
+	\begin{tabular}{|p{2.2cm}|p{11.5cm}|}
+		\hline
+		\multicolumn{2}{|c|}{\textbf{Non-Functional Requirements}} \\
+		\hline
+		NFR1 & Retransmission policy must be defined with bounded recovery latency. \\
+		\hline
+		NFR2 & All control and media channels must be authenticated and encrypted; keys must follow a secure lifecycle (generation, rotation, revocation). \\
+		\hline
+		NFR3 & Protocols must support version negotiation and preserve backward compatibility. \\
+		\hline
+		NFR4 & Client library must operate on constrained devices.\\
+		\hline
+	\end{tabular}
+	\caption{Table of Non-Functional Requirements}
+	\label{tab:nonfunctional-reqs}
+\end{table}
+
 
 \section{System Architecture}
 \label{sec:system architecture}
 
 \quad This section presents the detailed design and implementation of the system, building upon the system requirements and architectural principles established in \textbf{~\Cref{sec:requirements}}. To address the challenges identified in the literature review in \textbf{~\Cref{State of the Art}}, a secure livestreaming framework with fog offloading capabilities was developed leveraging the Rust programming language, chosen for its memory safety and concurrency guarantees, which reduces common vulnerabilities such as buffer overflows and data race conditions \cite{jung2017rust, matsakis2014rust}. In comparison to C++, Rust’s ownership model and strict compile-time checks help prevent undefined behavior and improve reliability in complex, high-performance systems \cite{sharma2020comparison}, also all code used in this implementation adheres strictly to safe Rust, avoiding the use of \texttt{unsafe} blocks entirely to maintain guarantees of safety and reliability.
 
-\quad The overall architecture of the system is depicted in \textbf{\Cref{fig:system}}. Although the presentation is restricted to a single edge server to improve readability, the solution can scale horizontally as needed. The video is first captured from a local source and compressed into a streaming-ready format by a dedicated hardware or software encoder located near the source, or alternatively performed in the cloud, as indicated by the \textbf{\Cref{fig:system}}. The final encoded stream is then injected into edge streaming servers, each supporting one access points and deployable as micro-servers in a Docker-based container pool. The aggregation of these servers forms a cloudlet that reduces latency, particularly for packet retransmissions, while still allowing video encoding to be performed in the cloud if needed, although this introduces a higher offset between live action and the stream due to the added cloud round-trip latency.
-
+\quad The overall architecture of the system is shown in \textbf{\Cref{fig:system}}. For clarity, the presentation uses a single edge server, but the solution scales horizontally because servers can run as micro-servers in a Docker-based container pool forming a secure cloudlet. Video is first captured from a local source and compressed into a streaming-ready format by a hardware or software encoder located near the source. Encoding can also be performed in the cloud, but this increases latency because of the round-trip delay. Once processed at the edge server, the encoded stream is injected into the designated access points and multicast to all connected clients over Wi-Fi 802.11. The system also supports an edge cloud with peer-to-peer links between clients, enabling cooperative data exchange so devices can request and forward missing segments.
 
 
 \begin{figure}
@@ -83,7 +91,9 @@
 \subsection{Streaming Server}
 %% ----------------------------------------------------------------------------------------------------------%%
 
-\quad A streaming server coordinates a set of subsystems that manage data processing, scheduling, security, and concurrency (see \textbf{\Cref{fig:streaming server}}), with the figure illustrating the internal architecture and showing how independent modules are organized and interconnected to operate concurrently and ensure efficient, secure, and adaptive video delivery. These subsystems can be characterized as follows:
+\quad A streaming server coordinates a set of subsystems that manage data processing, scheduling, security, and concurrency as illustrated in \textbf{\Cref{fig:streaming server}}, with the figure illustrating the internal architecture and showing how independent modules are organized and interconnected to operate concurrently and ensure efficient, secure, and adaptive video delivery. 
+
+\quad These subsystems can be characterized as follows:
 
 \begin{description}
 	\item \textbf{\nameref{sec:source stream handler}} receives and processes the encoded video feed and prepares it for distribution.
@@ -97,6 +107,9 @@
 \subsubsection{Source Stream Handler}
 \label{sec:source stream handler}
 
+\quad The \textbf{Source Stream Handler} module functions as the server’s ingress layer for media processing. The data flow begins with the creation of a \textit{Data Handler}, as shown in \textbf{\Cref{fig:streaming server}}, since input parsing and encoding are separated by clear abstractions, the system can support a range of protocols such as RTP~\cite{schulzrinne1996rtp}, SRT~\cite{srt2021}, WebRTC~\cite{alvestrand2018rtc}, or file-based as input sources. For this implementation, MPEG-TS~\cite{iso13818} was selected due to the benefits outlined in \textbf{\Cref{BackgroundWork}}. The Data Source buffers the incoming stream and arranges it into a two-dimensional matrix, shown in \textbf{\Cref{fig:data layout 2d}}, which is then passed to the encoder. The encoder employs Reed–Solomon (RS) erasure coding, chosen for its efficiency in correcting a small number of erasures with manageable computational cost, as demonstrated in \textbf{\Cref{BackgroundWork}}. Because UDP transmission over 802.11n exhibits bursty packet loss, particularly under multicast conditions \cite{80211n_loss}, the system proactively adds redundancy through erasure coding.
+
+\quad Representing packets in a two-dimensional matrix enables enables the construction of two-dimensional product RS codes, which provide redundancy along both rows and columns, as detailed in \textbf{\nameref{sec:2d_fec}}. Their use introduces constant bandwidth overhead, analyzed in \textbf{\nameref{sec:bandwidth overhead analysis}}, where protection levels directly translate into predictable redundancy percentages. Error-correction efficiency under both bursty and random loss patterns is quantified in \textbf{\nameref{sec:error correction efficiency}}, while computational and bandwidth efficiency compared to alternative codes is examined in \textbf{\nameref{sec:overhead efficiency comparison}}. Finally, buffering and latency implications are addressed in \textbf{\nameref{sec:latency buffering tradeoffs}}, and the adjustable interleaved transmission scheme that distributes losses across rows and columns is discussed in \textbf{\nameref{sec:packet interleave ordering}}.
 
 
 \paragraph{Two-Dimensional Product Reed–Solomon FEC}
@@ -106,15 +119,15 @@ Two-dimensional (2-D) \emph{product} Forward Error Correction (FEC) was develope
 
 \paragraph{Reed--Solomon Encoding.}
 An \(\mathrm{RS}(n,k)\) code over \(\mathrm{GF}(2^{m})\) treats each packet as a symbol of \(m\) bits. Let the source message be represented by  
-\[
-M(x) = \sum_{i=0}^{k-1} m_i x^{k-1-i} \in \mathrm{GF}(2^{m})[x],
-\]
+\begin{equation}
+	M(x) = \sum_{i=0}^{k-1} m_i x^{k-1-i} \in \mathrm{GF}(2^{m})[x],
+\end{equation}
 where the coefficients \(m_i\) correspond to data symbols.  
 
 In systematic encoding, \(n-k\) parity symbols are obtained by evaluating \(M(x)\) at \(n-k\) distinct non-zero field elements \(\{\alpha_0,\dots,\alpha_{n-k-1}\}\):
-\[
-p_j = M(\alpha_j), \qquad 0 \le j < n-k.
-\]
+\begin{equation}
+	p_j = M(\alpha_j), \qquad 0 \le j < n-k.
+\end{equation}
 The transmitted codeword is  
 \begin{equation}
 	C(x) = M(x)\,x^{n-k} + P(x), \qquad
@@ -126,103 +139,86 @@ In practice, decoding often uses the Berlekamp--Massey or Euclidean algorithms t
 
 \paragraph{Constructing the Product Code.}
 Applying \(\mathrm{RS}(n_{\mathrm r},k_{\mathrm r})\) row-wise and \(\mathrm{RS}(n_{\mathrm c},k_{\mathrm c})\) column-wise produces a matrix of  
-\[
-N = n_{\mathrm r} \, n_{\mathrm c} = (D + r_{\mathrm r})(L + r_{\mathrm c})
-\]
+\begin{equation}
+	N = n_{\mathrm r} \, n_{\mathrm c} = (D + r_{\mathrm r})(L + r_{\mathrm c})
+\end{equation}
 total packets, where \(r_{\mathrm r} = n_{\mathrm r} - k_{\mathrm r}\) and \(r_{\mathrm c} = n_{\mathrm c} - k_{\mathrm c}\) denote the parity symbols per row and column, respectively.  
 
 The aggregate redundancy ratio is  
-\[
-\eta = \frac{N - D\,L}{D\,L}
-= \frac{r_{\mathrm r}}{k_{\mathrm r}}
-+ \frac{r_{\mathrm c}}{k_{\mathrm c}}
-+ \frac{r_{\mathrm r} \, r_{\mathrm c}}{k_{\mathrm r} \, k_{\mathrm c}},
-\]
+\begin{equation}
+	\eta = \frac{N - D\,L}{D\,L}
+	= \frac{r_{\mathrm r}}{k_{\mathrm r}}
+	+ \frac{r_{\mathrm c}}{k_{\mathrm c}}
+	+ \frac{r_{\mathrm r} \, r_{\mathrm c}}{k_{\mathrm r} \, k_{\mathrm c}},
+\end{equation}
 where the third term represents the \emph{intersection overhead} caused by the parity--parity cells in the bottom-right of the matrix.  
 
-\begin{figure}
-	\centering
-	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/matrix_layout.png}
-	\captionof{figure}{\label{fig:}Data Layout}
-\end{figure}
-
 \paragraph{Bandwidth Overhead Analysis.}
+\label{sec:bandwidth overhead analysis}
+
 The bandwidth penalty imposed by 2-D product FEC is constant and proactive, meaning that the additional packets are transmitted regardless of whether errors actually occur\,\cite{fec_overhead_study}.  
-For example, a typical Pro-MPEG configuration with a \(25 \times 4\) data matrix (100 video packets) plus 25 row-parity packets and 4 column-parity packets requires transmission of 129 total packets, giving a constant overhead of  
-\[
-\frac{129 - 100}{100} = 29\%.
-\]
+For example, with a \(25 \times 4\) data matrix (100 video packets) plus 25 row-parity packets and 4 column-parity packets requires transmission of 129 total packets, giving a constant overhead of  
+\begin{equation}
+	\frac{129 - 100}{100} = 29\%.
+\end{equation}
 This value remains fixed across all network conditions. Using the general formula, consider a \(20 \times 5\) matrix with 25\% row protection (\(r_{\mathrm r}/k_{\mathrm r} = 0.25\)) and 20\% column protection (\(r_{\mathrm c}/k_{\mathrm c} = 0.20\)).  
 The intersection term contributes \(0.25 \times 0.20 = 0.05\), so the total overhead is  
-\[
-\eta = 0.25 + 0.20 + 0.05 = 0.50,
-\]
+\begin{equation}
+	\eta = 0.25 + 0.20 + 0.05 = 0.50,
+\end{equation}
 corresponding to a 50\% bandwidth increase\,\cite{2d_fec_bounds}. While this overhead would be excessive for file transfer, it is acceptable in low-latency video services where retransmissions are impractical or costly\,\cite{limit_fec,huawei_afec}.
 
 \paragraph{Error-Correction Efficiency.}
+\label{sec:error correction efficiency}
+
 The theoretical maximum correctable error probability for a product code can be bounded as\,\cite{rs_error_bounds}:
-\[
-P_{\mathrm{correctable}} \leq \min \left\{ \binom{n_{\mathrm r}}{t_{\mathrm r}}, \, \binom{n_{\mathrm c}}{t_{\mathrm c}} \right\} \cdot P_{\mathrm{random}}^{t_{\mathrm r} + t_{\mathrm c}},
-\]
+\begin{equation}
+	P_{\mathrm{correctable}} \leq \min \left\{ \binom{n_{\mathrm r}}{t_{\mathrm r}}, \, \binom{n_{\mathrm c}}{t_{\mathrm c}} \right\} \cdot P_{\mathrm{random}}^{t_{\mathrm r} + t_{\mathrm c}},
+\end{equation}
 where \(t_{\mathrm r} = \lfloor r_{\mathrm r} / 2 \rfloor\) and \(t_{\mathrm c} = \lfloor r_{\mathrm c} / 2 \rfloor\) are the per-dimension correction limits.  
 In burst-loss scenarios, residual packet loss rates follow approximately
-\[
-\mathrm{RPLR}_{2\mathrm{D}} \approx P_{\mathrm{loss}} \cdot \left( 1 - \prod_{i=1}^D \prod_{j=1}^L \big(1 - P_{\mathrm{deadlock}}^{(i,j)}\big) \right),
-\]
+\begin{equation}
+	\mathrm{RPLR}_{2\mathrm{D}} \approx P_{\mathrm{loss}} \cdot \left( 1 - \prod_{i=1}^D \prod_{j=1}^L \big(1 - P_{\mathrm{deadlock}}^{(i,j)}\big) \right),
+\end{equation}
 where \(P_{\mathrm{deadlock}}^{(i,j)}\) is the probability that the loss pattern at \((i,j)\) is unrecoverable.  
-For a \(10 \times 10\) matrix, deadlock configurations make up just 1.23\% of all 6-loss patterns but grow to 27.6\% for 12-loss patterns, showing the non-linear degradation of 2-D FEC in high-loss condition's\cite{2d_fec_bounds}.
+For a \(10 \times 10\) matrix, deadlock configurations make up just 1.23\% of all 6-loss patterns but grow to 27.6\% for 12-loss patterns, showing the non-linear degradation of 2-D FEC in high-loss condition's \cite{2d_fec_bounds}.
 
 \paragraph{Overhead Efficiency Comparison.}
+\label{sec:overhead efficiency comparison}
+
 Compared to other FEC methods, 2-D Reed--Solomon offers superior bandwidth efficiency for moderate protection levels, but at the cost of quadratic computational scaling.  
 For equivalent \(\approx 4\%\) overhead, an \(\mathrm{RS}(169,163)\) code with interleaving requires 44\% more bandwidth than Raptor codes to achieve the same resilience at 2\% packet loss\cite{raptor_vs_rs}.  
 Moreover, Reed–Solomon (RS) decoding complexity grows as 
 \(\mathcal{O}(k^2)\), where \(k\) denotes the number of source symbols. 
 In practice, RS decoding requires approximately \(2\text{--}10\times\) more 
-processing resources than Raptor codes when \(k < 250\)~\cite{shokrollahi2006raptor}.
-%In resource-constrained fog nodes, this computational load translates directly into higher power consumption and increased processing latency.
-
-%\paragraph{Practical Implications for Fog Deployments.}
-%In environments with costly or capacity-limited links the economic impact of constant FEC overhead is significant.  
-%When combined with a typical 20\% bitrate guard band, a 30\% 2-D FEC overhead can push the total transmission rate to 50\% above the base stream\,\cite{limit_fec}.  
-%For instance, a 5~Mbps stream with 30\% overhead requires 6.5~Mbps of link capacity, representing an annual cost increase of \$1,500--3,000 for premium satellite service.  
-%Adaptive FEC strategies, which adjust overhead dynamically in response to real-time loss metrics, can reduce bandwidth waste by 15--25\% during favorable conditions while still offering robust protection during loss bursts\,\cite{fec_scalable_video}.
+processing resources than Raptor codes when \(k < 250\) ~\cite{shokrollahi2006raptor}.
 
 \paragraph{Latency and Buffering Trade-offs.}
+\label{sec:latency buffering tradeoffs}
+
 Since the encoder must collect an entire \(D \times L\) matrix before column parities can be sent, the scheme incurs a buffering delay of  
-\[
-T_{\mathrm{FEC}} \approx \frac{(L - 1) + (D - 1)}{R_{\mathrm{pkt}}},
-\]
+\begin{equation}
+	T_{\mathrm{FEC}} \approx \frac{(L - 1) + (D - 1)}{R_{\mathrm{pkt}}},
+\end{equation}
 where \(R_{\mathrm{pkt}}\) is the packet emission rate.  
 Smaller column depths (\(L \le 5\)) reduce this delay while still addressing typical burst-loss patterns in Wi-Fi links \cite{smpte2022,fec_video_study}.  
 
 
 \paragraph{Packet interleave \& transmission ordering}
+\label{sec:packet interleave ordering}
 
-We adopted an adjustable interleaved scheme, shown in Fig.~3, that handles both bursty and random packet loss behavior to accommodate different loss patterns. In order to increase error correction efficiency, we transmit a transmission matrix by column and not by row; using the example in Fig.~3, where the matrix has 6 rows and 7 columns, the order in which the packets are sent is 
-\(\{0, 6, 12, 18, 24, 30, 1, 7, 13, 19, 25, 31, \dots\}\). 
-With this strategy we can spread packet loss across multiple rows, ensuring that consecutive dropped packets do not concentrate in a single codeword. For example, if four consecutive packets are lost, such as \(\{12, 13, 14, 15\}\), the loss is distributed across different rows and can be recovered through row parity. However, this approach alone does not handle random packet loss, which has been addressed by us through the introduction of column parity. If two packets in the same column are lost, for example \(\{6, 18\}\), column parity allows their recovery. By now, it should be clear that if we increase column parity then we are adding more protection against random packet loss, and adding more row parity will provide more protection for bursty packet loss. This balance enables the scheme to be tuned according to the predominant loss pattern in the network.
+\quad We adopted an interleaved scheme, shown in \textbf{\Cref{fig:data layout 2d}}, that handles both bursty and random packet loss behavior to accommodate different loss patterns. To increase error correction efficiency, we transmit the matrix by column and not by row; using the example in \textbf{\Cref{fig:data layout 2d}}, where the matrix has 6 rows and 7 columns, the order in which the packets are sent is \(\{0,\,7,\,14,\,21,\,28,\,35,\allowbreak 1,\,8,\,15,\,22,\,29,\,36,\,\dots\}\). This strategy spreads packet loss across multiple rows, ensuring that consecutive dropped packets do not concentrate in a single codeword. In the scenario where four consecutive packets are lost, such as \(\{12, 13, 14, 15\}\), the loss is distributed across different rows and can be recovered through row parity. However, this approach alone does not handle random packet loss, which we addressed by introducing column parity. If two packets in the same column are lost, \(\{9, 10\}\), column parity allows their recovery. Increasing column parity adds more protection against random packet loss, while increasing row parity provides more protection for bursty loss. The balance between row and column parity determines the overall resilience of the scheme. 
 
-From a mathematical perspective, let the transmission matrix be defined as \(M \in \mathbb{F}_q^{r \times c}\), where \(r\) represents the number of rows, \(c\) the number of columns, and \(\mathbb{F}_q\) the finite field over which coding is performed. For each row \(i\), we append \(p_r\) row parity packets computed as linear combinations:
+\quad Building on this principle, \textbf{\Cref{sec:reinforcement learning}} introduces a \textbf{Reinforcement Learning} approach that dynamically adjusts the parity configuration in response to observed network conditions to improve adaptability and efficiency.
 
-\[
-P_{r,i} = \sum_{j=1}^{c} \alpha_{i,j} M_{i,j}, \quad \alpha_{i,j} \in \mathbb{F}_q
-\]
 
-which ensures recovery from up to \(p_r\) burst errors along row \(i\). Similarly, for each column \(j\), we append \(p_c\) parity packets:
 
-\[
-P_{c,j} = \sum_{i=1}^{r} \beta_{i,j} M_{i,j}, \quad \beta_{i,j} \in \mathbb{F}_q
-\]
+\begin{figure}
+	\centering
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/matrix_layout.png}
+	\captionof{figure}{\label{fig:data layout 2d}Data Layout}
+\end{figure}
 
-allowing correction of up to \(p_c\) random losses distributed across the column. The probability of successful decoding can be expressed as
-
-\[
-P_{\text{success}} = 1 - P_{\text{loss}}(r,c,p_r,p_c),
-\]
-
-where \(P_{\text{loss}}\) is the probability that the number of erasures in any row exceeds \(p_r\) or in any column exceeds \(p_c\). For a channel modeled as a Gilbert–Elliot process, which captures both bursty and random losses, the expected packet loss burst length \(L_b\) influences the choice of \(p_r\), while the independent loss probability \(p\) guides the allocation of \(p_c\)~\cite{gilbert1960capacity,gallager1963ldpc}. 
-
-This approach follows established principles of product codes and erasure coding. By adjusting \(p_r\) and \(p_c\), the system operator can optimize the error correction overhead to match the loss distribution, as discussed in prior works on forward error correction for real-time multimedia streaming~\cite{lacan2005vandermonde,nonnenmacher1997parity}.
 
 \subsubsection{Reinforcement Learning}
 \label{sec:reinforcement learning}

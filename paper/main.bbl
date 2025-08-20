@@ -132,6 +132,37 @@ P.~Sharma, R.~Anand, and S.~Nand, ``A comparison of programming languages in
   Signal Processing (ICCSP)}.\hskip 1em plus 0.5em minus 0.4em\relax IEEE,
   2020, pp. 810--814.
 
+\bibitem{schulzrinne1996rtp}
+\BIBentryALTinterwordspacing
+H.~Schulzrinne, S.~Casner, R.~Frederick, and V.~Jacobson, ``Rtp: A transport
+  protocol for real-time applications,'' \emph{RFC 1889, IETF}, 1996. [Online].
+  Available: \url{https://www.rfc-editor.org/rfc/rfc1889}
+\BIBentrySTDinterwordspacing
+
+\bibitem{srt2021}
+\BIBentryALTinterwordspacing
+{Haivision}, ``Srt (secure reliable transport) protocol technical overview,''
+  Online Whitepaper, 2021. [Online]. Available:
+  \url{https://www.srtalliance.org/}
+\BIBentrySTDinterwordspacing
+
+\bibitem{alvestrand2018rtc}
+\BIBentryALTinterwordspacing
+H.~Alvestrand, ``Overview: Real-time protocols for browser-based
+  applications,'' RFC 8825, IETF, 2021. [Online]. Available:
+  \url{https://www.rfc-editor.org/rfc/rfc8825}
+\BIBentrySTDinterwordspacing
+
+\bibitem{iso13818}
+\emph{ISO/IEC 13818-1: Information Technology — Generic Coding of Moving
+  Pictures and Associated Audio Information: Systems}, ISO/IEC Std., 2019,
+  mPEG-2 Transport Stream specification.
+
+\bibitem{80211n_loss}
+{IEEE 802.11 Working Group}, ``Ieee 802.11n: Wireless lan medium access control
+  (mac) and physical layer (phy) specifications,'' IEEE, Tech. Rep., 2009,
+  packet loss behavior under multicast transmission.
+
 \bibitem{prompeg}
 {Pro-MPEG Forum}, ``Pro-mpeg code of practice \#3 release 2: Transmission of
   professional mpeg-2 transport streams over ip networks,'' 2004, available at:
