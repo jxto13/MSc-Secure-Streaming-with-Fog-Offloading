@@ -1,4 +1,4 @@
-This is LuaHBTeX, Version 1.22.0 (MiKTeX 25.4) (format=lualatex 2025.7.5)  20 AUG 2025 20:58
+This is LuaHBTeX, Version 1.22.0 (MiKTeX 25.4) (format=lualatex 2025.7.5)  22 AUG 2025 05:11
  restricted system commands enabled.
 **main.tex
 (./main.tex
@@ -1084,9 +1084,9 @@ e 7852.
 (C:/Users/tiago/AppData/Local/Programs/MiKTeX/tex/latex/hyperref/backref.sty
 Package: backref 2025-06-21 v1.45 Bibliographical back referencing
 )
-Package hyperref Info: Option `colorlinks' set `true' on input line 162.
-Package hyperref Info: Option `breaklinks' set `true' on input line 162.
-Package hyperref Info: Option `hypertexnames' set `true' on input line 162.
+Package hyperref Info: Option `colorlinks' set `true' on input line 163.
+Package hyperref Info: Option `breaklinks' set `true' on input line 163.
+Package hyperref Info: Option `hypertexnames' set `true' on input line 163.
 
 (C:/Users/tiago/AppData/Local/Programs/MiKTeX/tex/latex/fancybox/fancybox.sty
 Package: fancybox 2010/05/15 1.4
@@ -1575,11 +1575,11 @@ Package: glossary-tree 2025/05/14 v4.7 (NLCT)
 \glo@main@file=\write6
 
 \openout6 = main.glo
-Package glossaries Info: Writing glossary file main.glo on input line 231.
+Package glossaries Info: Writing glossary file main.glo on input line 232.
 \glo@acronym@file=\write7
 
 \openout7 = main.acn
-Package glossaries Info: Writing glossary file main.acn on input line 231.
+Package glossaries Info: Writing glossary file main.acn on input line 232.
 
 (C:/Users/tiago/AppData/Local/Programs/MiKTeX/tex/latex/titlesec/titletoc.sty
 Package: titletoc 2025/01/04 v2.17 TOC entries
@@ -1590,24 +1590,6 @@ Package csquotes Info: ... found 'babel' package.
  (./main.aux
 Package babel Info: 'portuguese' activates 'portuges' shorthands.
 (babel)             Reported  on input line 23.
-
-
-LaTeX Warning: Label `fig:' multiply defined.
-
-
-LaTeX Warning: Label `fig:@cref' multiply defined.
-
-
-LaTeX Warning: Label `fig:' multiply defined.
-
-
-LaTeX Warning: Label `fig:@cref' multiply defined.
-
-
-LaTeX Warning: Label `fig:' multiply defined.
-
-
-LaTeX Warning: Label `fig:@cref' multiply defined.
 
 
 LaTeX Warning: Label `fig:' multiply defined.
@@ -1739,12 +1721,12 @@ an be solved by adding a line like \setlength {\marginparwidth }{2cm} prior to
 loading the todonotes package. on input line 36.
 
 (./main.glsdefs)
-<Front/main.pdf, id=190, 597.5123pt x 845.04709pt>
+<Front/main.pdf, id=202, 597.5123pt x 845.04709pt>
 File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf>
 Package luatex.def Info: Front/main.pdf  used on input line 43.
 (luatex.def)             Requested size: 597.51083pt x 845.04503pt.
-<Front/main.pdf, id=192, page=1, 597.5123pt x 845.04709pt>
+<Front/main.pdf, id=204, page=1, 597.5123pt x 845.04709pt>
 File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf, page 1>
 Package luatex.def Info: Front/main.pdf , page1 used on input line 43.
@@ -1777,7 +1759,7 @@ File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf>
 Package luatex.def Info: Front/main.pdf  used on input line 45.
 (luatex.def)             Requested size: 597.51083pt x 845.04503pt.
-<Front/main.pdf, id=215, page=2, 597.5123pt x 845.04709pt>
+<Front/main.pdf, id=227, page=2, 597.5123pt x 845.04709pt>
 File: Front/main.pdf Graphic file (type pdf)
 <use Front/main.pdf, page 2>
 Package luatex.def Info: Front/main.pdf , page2 used on input line 45.
@@ -1938,77 +1920,57 @@ Overfull \hbox (6.08986pt too wide) detected at line 26
 
 
 Overfull \hbox (6.08986pt too wide) detected at line 27
- \TU/Arial(0)/m/n/10.95 7
- []
-
-
-Overfull \hbox (6.08986pt too wide) detected at line 28
  \TU/Arial(0)/m/n/10.95 8
  []
 
 
-Overfull \hbox (6.08986pt too wide) detected at line 29
+Overfull \hbox (6.08986pt too wide) detected at line 28
  \TU/Arial(0)/m/n/10.95 9
  []
 
 
+Overfull \hbox (12.17972pt too wide) detected at line 29
+ \TU/Arial(0)/m/n/10.95 10
+ []
+
+
 Overfull \hbox (12.17972pt too wide) detected at line 38
- \TU/Arial(0)/m/n/10.95 13
+ \TU/Arial(0)/m/n/10.95 14
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 39
- \TU/Arial(0)/m/n/10.95 15
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 40
  \TU/Arial(0)/m/n/10.95 16
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 41
- \TU/Arial(0)/m/n/10.95 16
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 42
- \TU/Arial(0)/m/n/10.95 16
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 43
- \TU/Arial(0)/m/n/10.95 20
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 44
- \TU/Arial(0)/m/n/10.95 22
+ \TU/Arial(0)/m/n/10.95 17
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 45
- \TU/Arial(0)/m/n/10.95 23
+ \TU/Arial(0)/m/n/10.95 21
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 46
- \TU/Arial(0)/m/n/10.95 23
+ \TU/Arial(0)/m/n/10.95 22
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 47
- \TU/Arial(0)/m/n/10.95 23
+ \TU/Arial(0)/m/n/10.95 24
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 48
- \TU/Arial(0)/m/n/10.95 24
+ \TU/Arial(0)/m/n/10.95 25
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 49
- \TU/Arial(0)/m/n/10.95 24
+ \TU/Arial(0)/m/n/10.95 25
  []
 
 
@@ -2018,57 +1980,72 @@ Overfull \hbox (12.17972pt too wide) detected at line 50
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 51
- \TU/Arial(0)/m/n/10.95 25
+ \TU/Arial(0)/m/n/10.95 26
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 52
+ \TU/Arial(0)/m/n/10.95 26
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 53
- \TU/Arial(0)/m/n/10.95 28
+ \TU/Arial(0)/m/n/10.95 27
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 54
- \TU/Arial(0)/m/n/10.95 29
+ \TU/Arial(0)/m/n/10.95 28
  []
 
 
-Overfull \hbox (12.17972pt too wide) detected at line 55
- \TU/Arial(0)/m/n/10.95 29
+Overfull \hbox (12.17972pt too wide) detected at line 56
+ \TU/Arial(0)/m/n/10.95 32
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 57
- \TU/Arial(0)/m/n/10.95 31
+ \TU/Arial(0)/m/n/10.95 33
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 58
- \TU/Arial(0)/m/n/10.95 31
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 59
- \TU/Arial(0)/m/n/10.95 31
+ \TU/Arial(0)/m/n/10.95 33
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 60
- \TU/Arial(0)/m/n/10.95 31
+ \TU/Arial(0)/m/n/10.95 35
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 61
- \TU/Arial(0)/m/n/10.95 31
+ \TU/Arial(0)/m/n/10.95 35
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 62
- \TU/Arial(0)/m/n/10.95 31
+ \TU/Arial(0)/m/n/10.95 35
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 63
- \TU/Arial(0)/m/n/10.95 31
+ \TU/Arial(0)/m/n/10.95 35
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 64
+ \TU/Arial(0)/m/n/10.95 35
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 65
+ \TU/Arial(0)/m/n/10.95 35
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 66
+ \TU/Arial(0)/m/n/10.95 35
  []
 
 
@@ -2084,33 +2061,53 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 
 
 ]
-Overfull \hbox (12.17972pt too wide) detected at line 64
- \TU/Arial(0)/m/n/10.95 31
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 65
- \TU/Arial(0)/m/n/10.95 32
- []
-
-
-Overfull \hbox (12.17972pt too wide) detected at line 66
- \TU/Arial(0)/m/n/10.95 32
- []
-
-
 Overfull \hbox (12.17972pt too wide) detected at line 67
- \TU/Arial(0)/m/n/10.95 32
+ \TU/Arial(0)/m/n/10.95 35
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 68
+ \TU/Arial(0)/m/n/10.95 36
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 69
- \TU/Arial(0)/m/n/10.95 32
+ \TU/Arial(0)/m/n/10.95 36
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 70
- \TU/Arial(0)/m/n/10.95 37
+ \TU/Arial(0)/m/n/10.95 36
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 72
+ \TU/Arial(0)/m/n/10.95 36
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 73
+ \TU/Arial(0)/m/n/10.95 41
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 74
+ \TU/Arial(0)/m/n/10.95 41
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 75
+ \TU/Arial(0)/m/n/10.95 41
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 76
+ \TU/Arial(0)/m/n/10.95 42
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 77
+ \TU/Arial(0)/m/n/10.95 42
  []
 
 )
@@ -2132,42 +2129,87 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 -----------------------------------------------------
 (./main.lof
 Overfull \hbox (6.08986pt too wide) detected at line 8
- \TU/Arial(0)/m/n/10.95 8
+ \TU/Arial(0)/m/n/10.95 9
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 9
- \TU/Arial(0)/m/n/10.95 13
+ \TU/Arial(0)/m/n/10.95 14
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 10
- \TU/Arial(0)/m/n/10.95 19
+ \TU/Arial(0)/m/n/10.95 17
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 11
- \TU/Arial(0)/m/n/10.95 20
+ \TU/Arial(0)/m/n/10.95 18
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 12
- \TU/Arial(0)/m/n/10.95 22
+ \TU/Arial(0)/m/n/10.95 18
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 13
- \TU/Arial(0)/m/n/10.95 26
+ \TU/Arial(0)/m/n/10.95 20
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 14
- \TU/Arial(0)/m/n/10.95 29
+ \TU/Arial(0)/m/n/10.95 21
  []
 
 
 Overfull \hbox (12.17972pt too wide) detected at line 15
+ \TU/Arial(0)/m/n/10.95 23
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 16
+ \TU/Arial(0)/m/n/10.95 24
+ []
+
+
+Overfull \hbox (4.35411pt too wide) detected at line 17
+\TU/Arial(0)/m/n/10.95 4.10. 
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 17
+ \TU/Arial(0)/m/n/10.95 27
+ []
+
+
+Overfull \hbox (3.54141pt too wide) detected at line 18
+\TU/Arial(0)/m/n/10.95 4.11. 
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 18
  \TU/Arial(0)/m/n/10.95 29
+ []
+
+
+Overfull \hbox (4.35411pt too wide) detected at line 19
+\TU/Arial(0)/m/n/10.95 4.12. 
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 19
+ \TU/Arial(0)/m/n/10.95 33
+ []
+
+
+Overfull \hbox (4.35411pt too wide) detected at line 20
+\TU/Arial(0)/m/n/10.95 4.13. 
+ []
+
+
+Overfull \hbox (12.17972pt too wide) detected at line 20
+ \TU/Arial(0)/m/n/10.95 33
  []
 
 )
@@ -2285,12 +2327,12 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [7]
-<Figures/DesignAndImplementation/system.png, id=445, 1347.0325pt x 1248.665pt>
+<Figures/DesignAndImplementation/system.png, id=479, 1347.0325pt x 1248.665pt>
 File: Figures/DesignAndImplementation/system.png Graphic file (type png)
 <use Figures/DesignAndImplementation/system.png>
 Package luatex.def Info: Figures/DesignAndImplementation/system.png  used on in
-put line 86.
-(luatex.def)             Requested size: 320.0935pt x 296.71344pt.
+put line 83.
+(luatex.def)             Requested size: 426.79135pt x 395.61792pt.
 
 
 
@@ -2300,7 +2342,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[8<./Figures/DesignAndImplementation/system.png>]
+[8]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2309,8 +2351,17 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[9]
-Overfull \hbox (3.89142pt too wide) in paragraph at lines 118--119
+[9<./Figures/DesignAndImplementation/system.png>]
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[10]
+Overfull \hbox (3.89142pt too wide) in paragraph at lines 115--116
 \TU/Arial(0)/m/n/10.95 ward Er-ror Cor-rec-tion (FEC) was de-vel-oped to over-co
 me the lim-i-ta-tions of one-dimensional
  []
@@ -2324,22 +2375,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[10]
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
 [11]
-Overfull \hbox (15.03778pt too wide) in paragraph at lines 189--195
-[][]\TU/Arial(0)/b/n/10.95 Over-head Ef-fi-ciency Com-par-i-son.[] \TU/Arial(0)
-/m/n/10.95 Com-pared to other FEC meth-ods, 2-D Reed--Solomon
- []
-
-
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2349,14 +2385,19 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [12]
-<Figures/DesignAndImplementation/matrix_layout.png, id=554, 1023.825pt x 522.95
+Overfull \hbox (15.03778pt too wide) in paragraph at lines 186--192
+[][]\TU/Arial(0)/b/n/10.95 Over-head Ef-fi-ciency Com-par-i-son.[] \TU/Arial(0)
+/m/n/10.95 Com-pared to other FEC meth-ods, 2-D Reed--Solomon
+ []
+
+<Figures/DesignAndImplementation/matrix_layout.png, id=588, 1023.825pt x 522.95
 375pt>
 File: Figures/DesignAndImplementation/matrix_layout.png Graphic file (type png)
 
 <use Figures/DesignAndImplementation/matrix_layout.png>
 Package luatex.def Info: Figures/DesignAndImplementation/matrix_layout.png  use
-d on input line 218.
-(luatex.def)             Requested size: 320.0935pt x 163.49446pt.
+d on input line 211.
+(luatex.def)             Requested size: 426.79135pt x 217.99527pt.
 
 
 
@@ -2366,9 +2407,18 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[13<./Figures/DesignAndImplementation/matrix_layout.png>]
+[13]
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[14<./Figures/DesignAndImplementation/matrix_layout.png>]
 Package hyperref Info: bookmark level for unknown algorithm defaults to 0 on in
-put line 242.
+put line 254.
 
 
 
@@ -2378,183 +2428,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[14]
-Missing character: There is no ⊕ (U+2295) in font name:Arial:mode=node;script=
-latn;language=dflt;+tlig;!
-Missing character: There is no ⊕ (U+2295) in font name:Arial:mode=node;script=
-latn;language=dflt;+tlig;!
-
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[15
-Missing character: There is no ⊕ (U+2295) in font name:Arial:mode=node;script=
-latn;language=dflt;+tlig;!
-]
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.4
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.5
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.6
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.7
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.8
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.9
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-0'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-1'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-2'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-3'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-4'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-5'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-6'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.4
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.5
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.6
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.7
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.8
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.9
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-0'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-1'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-2'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-3'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-4'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-5'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-6'
-
-Underfull \hbox (badness 5954) in paragraph at lines 377--378
-[] \TU/Arial(0)/b/n/10.95 if \TU/Arial(0)/m/n/10.95 best_xor is not None \TU/Ar
-ial(0)/b/n/10.95 and \TU/Arial(0)/m/n/10.95 best_xor_ben-e-fit $\OML/zplm/m/it/
-10.95 >$ \TU/Arial(0)/m/n/10.95 miss-ing_count of top
- []
-
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.4
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.5
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.6
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.7
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.8
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.9
-'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-0'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-1'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-2'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-3'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-4'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-5'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-6'
-<Figures/DesignAndImplementation/streaming_server.png, id=586, 1446.40375pt x 1
-677.26625pt>
-File: Figures/DesignAndImplementation/streaming_server.png Graphic file (type p
-ng)
-<use Figures/DesignAndImplementation/streaming_server.png>
-Package luatex.def Info: Figures/DesignAndImplementation/streaming_server.png  
-used on input line 421.
-(luatex.def)             Requested size: 320.0935pt x 371.17513pt.
-
+[15]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2564,6 +2438,20 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
 [16]
+LaTeX Font Info:    Font shape `U/msa/m/n' will be
+(Font)              scaled to size 10.42007pt on input line 300.
+LaTeX Font Info:    Font shape `U/msa/m/n' will be
+(Font)              scaled to size 7.91925pt on input line 300.
+LaTeX Font Info:    Font shape `U/msb/m/n' will be
+(Font)              scaled to size 10.42007pt on input line 300.
+LaTeX Font Info:    Font shape `U/msb/m/n' will be
+(Font)              scaled to size 7.91925pt on input line 300.
+
+Overfull \hbox (1.19989pt too wide) in paragraph at lines 325--326
+ [][] 
+ []
+
+
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2581,73 +2469,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[18
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-7'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-8'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-9'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
-0'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
-1'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
-2'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
-3'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
-4'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
-5'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
-6'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
-7'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
-8'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
-9'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
-0'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
-1'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
-2'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
-3'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
-4'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
-5'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
-6'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
-7'
-
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
-8'
-]
+[18]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2656,25 +2478,58 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[19
-warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
-7'
-<./Figures/DesignAndImplementation/streaming_server.png>]
-<Figures/DesignAndImplementation/edge_client.png, id=637, 1381.16pt x 1335.9912
+[19]
+<Figures/DesignAndImplementation/streaming_server.png, id=680, 1446.40375pt x 1
+677.26625pt>
+File: Figures/DesignAndImplementation/streaming_server.png Graphic file (type p
+ng)
+<use Figures/DesignAndImplementation/streaming_server.png>
+Package luatex.def Info: Figures/DesignAndImplementation/streaming_server.png  
+used on input line 387.
+(luatex.def)             Requested size: 426.79135pt x 494.91722pt.
+
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[20]
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[21<./Figures/DesignAndImplementation/streaming_server.png>]
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[22]
+<Figures/DesignAndImplementation/decoder_flowchart.png, id=711, 770.88pt x 738.
+76pt>
+File: Figures/DesignAndImplementation/decoder_flowchart.png Graphic file (type 
+png)
+<use Figures/DesignAndImplementation/decoder_flowchart.png>
+Package luatex.def Info: Figures/DesignAndImplementation/decoder_flowchart.png 
+ used on input line 450.
+(luatex.def)             Requested size: 426.79135pt x 409.0021pt.
+<Figures/DesignAndImplementation/edge_client.png, id=712, 1381.16pt x 1335.9912
 6pt>
 File: Figures/DesignAndImplementation/edge_client.png Graphic file (type png)
 <use Figures/DesignAndImplementation/edge_client.png>
 Package luatex.def Info: Figures/DesignAndImplementation/edge_client.png  used 
-on input line 434.
-(luatex.def)             Requested size: 320.0935pt x 309.61586pt.
-
-
-LaTeX Warning: Reference `alg:decoder' on page 20 undefined on input line 443.
-
-
-LaTeX Warning: Reference `alg:matrixtracker' on page 20 undefined on input line
- 443.
-
+on input line 460.
+(luatex.def)             Requested size: 426.79135pt x 412.82796pt.
 
 
 
@@ -2684,21 +2539,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[20<./Figures/DesignAndImplementation/edge_client.png>]
-Overfull \hbox (16.43068pt too wide) in paragraph at lines 445--446
-[]\TU/lmtt/m/n/10.95 MatrixTracker \TU/Arial(0)/m/n/10.95 ob-jects play a cru-ci
-al role in er-ror cor-rec-tion. They man-age a two-dimensional
- []
-
-
-LaTeX Warning: Reference `alg:keyrotation' on page 21 undefined on input line 4
-47.
-
-
-LaTeX Warning: Reference `alg:decodeapp' on page 21 undefined on input line 449
-.
-
-
+[23<./Figures/DesignAndImplementation/decoder_flowchart.png>]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2707,51 +2548,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[21]
-<Figures/DesignAndImplementation/erasure_packet.png, id=649, 1777.64125pt x 106
-9.9975pt>
-File: Figures/DesignAndImplementation/erasure_packet.png Graphic file (type png
-)
-<use Figures/DesignAndImplementation/erasure_packet.png>
-Package luatex.def Info: Figures/DesignAndImplementation/erasure_packet.png  us
-ed on input line 459.
-(luatex.def)             Requested size: 320.0935pt x 192.65654pt.
-
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[22<./Figures/DesignAndImplementation/erasure_packet.png>]
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[23]
-
-
-Package fancyhdr Warning: \headheight is too small (14.0pt): 
-(fancyhdr)                Make it at least 18.99997pt, for example:
-(fancyhdr)                \setlength{\headheight}{18.99997pt}.
-(fancyhdr)                You might also make \topmargin smaller:
-(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
-
-[24]
-<Figures/DesignAndImplementation/nan_phy.png, id=664, 681.29532pt x 379.4175pt>
-
-File: Figures/DesignAndImplementation/nan_phy.png Graphic file (type png)
-<use Figures/DesignAndImplementation/nan_phy.png>
-Package luatex.def Info: Figures/DesignAndImplementation/nan_phy.png  used on i
-nput line 514.
-(luatex.def)             Requested size: 320.0935pt x 178.26256pt.
-
+[24<./Figures/DesignAndImplementation/edge_client.png>]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2769,8 +2566,106 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[26<./Figures/DesignAndImplementation/nan_phy.png>]
-Overfull \hbox (3.84784pt too wide) in paragraph at lines 533--534
+[26]
+<Figures/DesignAndImplementation/erasure_packet.png, id=732, 1777.64125pt x 106
+9.9975pt>
+File: Figures/DesignAndImplementation/erasure_packet.png Graphic file (type png
+)
+<use Figures/DesignAndImplementation/erasure_packet.png>
+Package luatex.def Info: Figures/DesignAndImplementation/erasure_packet.png  us
+ed on input line 506.
+(luatex.def)             Requested size: 320.0935pt x 192.65654pt.
+
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[27<./Figures/DesignAndImplementation/erasure_packet.png>]
+
+LaTeX Warning: Reference `fig:nan_cluster' on page 1 undefined on input line 52
+7.
+
+
+LaTeX Warning: Reference `fig:nan_cluster_alt' on page 1 undefined on input lin
+e 527.
+
+
+LaTeX Warning: Reference `fig:nan_overlap_dual' on page 1 undefined on input li
+ne 527.
+
+
+LaTeX Warning: Reference `fig:nan_overlap' on page 1 undefined on input line 52
+7.
+
+
+LaTeX Warning: Reference `fig:discovery_window' on page 1 undefined on input li
+ne 527.
+
+
+LaTeX Warning: Reference `fig:publish_solicited' on page 1 undefined on input l
+ine 529.
+
+
+LaTeX Warning: Reference `fig:publish_unsolicited' on page 1 undefined on input
+ line 529.
+
+
+LaTeX Warning: Reference `fig:nan_discovery_arch' on page 1 undefined on input 
+line 529.
+
+
+LaTeX Warning: Reference `fig:ndp_example' on page 1 undefined on input line 53
+1.
+
+
+LaTeX Warning: Reference `fig:nan_geofence' on page 1 undefined on input line 5
+33.
+
+
+LaTeX Warning: Reference `fig:nan_ranging' on page 1 undefined on input line 53
+3.
+
+
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[28]
+<Figures/DesignAndImplementation/nan_phy.png, id=750, 681.29532pt x 379.4175pt>
+
+File: Figures/DesignAndImplementation/nan_phy.png Graphic file (type png)
+<use Figures/DesignAndImplementation/nan_phy.png>
+Package luatex.def Info: Figures/DesignAndImplementation/nan_phy.png  used on i
+nput line 545.
+(luatex.def)             Requested size: 320.0935pt x 178.26256pt.
+
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[29<./Figures/DesignAndImplementation/nan_phy.png>]
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[30]
+Overfull \hbox (3.84784pt too wide) in paragraph at lines 564--565
 [][]\TU/Arial(0)/b/n/10.95 An-droid Im-ple-men-ta-tion[] \TU/Arial(0)/m/n/10.95
  An-droid’s Wi-Fi Aware im-ple-men-ta-tion ex-poses hard-ware con-
  []
@@ -2784,13 +2679,13 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[27]
-<Figures/DesignAndImplementation/mesh_p2p.png, id=679, 563.10374pt x 553.06625p
+[31]
+<Figures/DesignAndImplementation/mesh_p2p.png, id=764, 563.10374pt x 553.06625p
 t>
 File: Figures/DesignAndImplementation/mesh_p2p.png Graphic file (type png)
 <use Figures/DesignAndImplementation/mesh_p2p.png>
 Package luatex.def Info: Figures/DesignAndImplementation/mesh_p2p.png  used on 
-input line 548.
+input line 579.
 (luatex.def)             Requested size: 320.0935pt x 314.39024pt.
 
 
@@ -2801,21 +2696,21 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[28]
+[32]
 
 Package hyperref Warning: Difference (2) between bookmark levels is greater 
-(hyperref)                than one, level fixed on input line 560.
+(hyperref)                than one, level fixed on input line 591.
 
-<Figures/DesignAndImplementation/android_application.png, id=684, 1167.36125pt 
+<Figures/DesignAndImplementation/android_application.png, id=770, 1167.36125pt 
 x 814.04124pt>
 File: Figures/DesignAndImplementation/android_application.png Graphic file (typ
 e png)
 <use Figures/DesignAndImplementation/android_application.png>
 Package luatex.def Info: Figures/DesignAndImplementation/android_application.pn
-g  used on input line 565.
+g  used on input line 596.
 (luatex.def)             Requested size: 320.0935pt x 223.20992pt.
 
-Overfull \hbox (3.37694pt too wide) in paragraph at lines 573--574
+Overfull \hbox (3.37694pt too wide) in paragraph at lines 604--605
 \TU/Arial(0)/m/n/10.95 android plu-gin to au-to-mate com-pi-la-tion and link-ing
 , pro-vided that the aarch64-linux-android
  []
@@ -2829,7 +2724,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[29<./Figures/DesignAndImplementation/mesh_p2p.png><./Figures/DesignAndImplement
+[33<./Figures/DesignAndImplementation/mesh_p2p.png><./Figures/DesignAndImplement
 ation/android_application.png>]) (./Chapters/Evaluation.tex
 
 
@@ -2839,7 +2734,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[30]
+[34]
 Chapter 5.
 ) (./Chapters/Conclusion.tex
 
@@ -2850,7 +2745,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[31
+[35
 
 ]
 Chapter 6.
@@ -2867,7 +2762,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[32
+[36
 
 ]
 Underfull \hbox (badness 5217) in paragraph at lines 44--44
@@ -2901,7 +2796,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[33
+[37
 
 ]
 
@@ -2912,7 +2807,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[34]
+[38]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2921,7 +2816,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[35]
+[39]
 Underfull \hbox (badness 1048) in paragraph at lines 223--223
 []\TU/Arial(0)/m/n/10.95 ------, ``Rap-tor codes,'' \TU/Arial(0)/m/it/10.95 IEEE
  Trans-ac-tions on In-for-ma-tion The-ory\TU/Arial(0)/m/n/10.95 , vol. 52, no. 
@@ -2929,7 +2824,7 @@ Underfull \hbox (badness 1048) in paragraph at lines 223--223
  []
 
 
-Underfull \hbox (badness 2310) in paragraph at lines 246--246
+Underfull \hbox (badness 2310) in paragraph at lines 235--235
 []\TU/Arial(0)/m/n/10.95 J. Dal-bey, ``Pseu-docode stan-dard,'' [][]$https://use
 rs.csc.calpoly.edu/~jdalbey/SWE/
  []
@@ -2943,7 +2838,7 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[36]
+[40]
 
 
 Package fancyhdr Warning: \headheight is too small (14.0pt): 
@@ -2952,14 +2847,134 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[37
+[41
 
 ]
-Overfull \hbox (4.11592pt too wide) in paragraph at lines 56--57
-[]\TU/Arial(0)/m/n/10.95 This rep-re-sen-ta-tion pri-or-i-tizes read-abil-ity, 
-problem-domain vo-cab-u-lary, and pre-ci-sion, while
- []
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+'
 
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.4
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.5
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.6
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.7
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.8
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.9
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+0'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+1'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+2'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+3'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+4'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+5'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.4
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.5
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.6
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.7
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.8
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.9
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+0'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+1'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+2'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+3'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+4'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+5'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.4
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.5
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.6
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.7
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.8
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.9
+'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+0'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+1'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+2'
 )
 
 
@@ -2969,7 +2984,73 @@ Package fancyhdr Warning: \headheight is too small (14.0pt):
 (fancyhdr)                You might also make \topmargin smaller:
 (fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
 
-[38]
+[42]
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[43]
+
+
+Package fancyhdr Warning: \headheight is too small (14.0pt): 
+(fancyhdr)                Make it at least 18.99997pt, for example:
+(fancyhdr)                \setlength{\headheight}{18.99997pt}.
+(fancyhdr)                You might also make \topmargin smaller:
+(fancyhdr)                \addtolength{\topmargin}{-4.99997pt}.
+
+[44
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+6'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+7'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+8'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.1
+9'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
+0'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
+1'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
+2'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
+3'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
+4'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
+5'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
+6'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
+7'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
+8'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.2
+9'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
+0'
+
+warning  (pdf backend): ignoring duplicate destination with the name 'ALG@line.3
+1'
+]
 
 Package glossaries Warning: No \printglossary or \printglossaries found. 
 (Remove \makeglossaries if you don't want any glossaries.) 
@@ -2988,21 +3069,20 @@ LaTeX Warning: There were undefined references.
 LaTeX Warning: There were multiply-defined labels.
 
 Package rerunfilecheck Info: File `main.out' has not changed.
-(rerunfilecheck)             Checksum: 5A463CAF1B809088F3A3B6C18728594F;8500.
+(rerunfilecheck)             Checksum: 709A911CE36A1D9DD172FACF15BEA121;9002.
 Package rerunfilecheck Info: File `main.brf' has not changed.
-(rerunfilecheck)             Checksum: FA4CB67482CFBBFC66B610424BA8D234;1912.
+(rerunfilecheck)             Checksum: A346C42F7C11D0DE6955AAF6D6392241;1970.
 )
 
 Here is how much of LuaTeX's memory you used:
- 49692 strings out of 470205
- 125007,1648299 words of node,token memory allocated
- 1164 words of node memory still in use:
-   7 hlist, 2 vlist, 2 rule, 5 glue, 4 kern, 1 glyph, 120 attribute, 96 glue_spe
-c, 62 attribute_list, 3 write, 14 pdf_action nodes
-   avail lists: 1:1,2:5788,3:799,4:320,5:481,6:156,7:11255,8:143,9:1028,10:20,11
-:748
- 76457 multiletter control sequences out of 65536+600000
- 110 fonts using 17721823 bytes
+ 50007 strings out of 470205
+ 100000,1648299 words of node,token memory allocated
+ 1224 words of node memory still in use:
+   7 hlist, 2 vlist, 2 rule, 5 glue, 4 kern, 1 glyph, 134 attribute, 96 glue_spe
+c, 69 attribute_list, 3 write, 17 pdf_action nodes
+   avail lists: 2:5561,3:756,4:294,5:495,6:155,7:7139,8:143,9:953,10:20,11:685
+ 76709 multiletter control sequences out of 65536+600000
+ 144 fonts using 19128671 bytes
  108i,19n,105p,7880b,1238s stack positions out of 10000i,1000n,20000p,200000b,200000s
 {C:/Users/tiago/AppData/Local/Programs/MiKTeX/fonts/enc/dvips/base/8r.enc}<c:/us
 ers/tiago/appdata/local/programs/miktex/fonts/opentype/public/lm/lmmono10-regula
@@ -3016,9 +3096,9 @@ ams/MiKTeX/fonts/type1/public/mathpazo/fplmr.pfb><C:/Users/tiago/AppData/Local/P
 rograms/MiKTeX/fonts/type1/public/mathpazo/fplmri.pfb><C:/Users/tiago/AppData/Lo
 cal/Programs/MiKTeX/fonts/type1/urw/palatino/uplr8a.pfb><C:/Users/tiago/AppData/
 Local/Programs/MiKTeX/fonts/type1/urw/palatino/uplri8a.pfb>
-Output written on main.pdf (47 pages, 825064 bytes).
+Output written on main.pdf (53 pages, 920874 bytes).
 
-PDF statistics: 871 PDF objects out of 1000 (max. 8388607)
- 218 named destinations out of 1000 (max. 131072)
- 384 words of extra memory for PDF output out of 10000 (max. 100000000)
+PDF statistics: 995 PDF objects out of 1000 (max. 8388607)
+ 236 named destinations out of 1000 (max. 131072)
+ 408 words of extra memory for PDF output out of 10000 (max. 100000000)
 

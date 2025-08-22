@@ -221,23 +221,12 @@ A.~Shokrollahi, ``Raptor codes,'' in \emph{IEEE Transactions on Information
 ------, ``Raptor codes,'' \emph{IEEE Transactions on Information Theory},
   vol.~52, no.~6, pp. 2551--2567, 2006.
 
-\bibitem{gilbert1960capacity}
-E.~N. Gilbert, ``Capacity of a burst-noise channel,'' \emph{Bell System
-  Technical Journal}, vol.~39, no.~5, pp. 1253--1265, 1960.
-
-\bibitem{gallager1963ldpc}
-R.~G. Gallager, \emph{Low-Density Parity-Check Codes}.\hskip 1em plus 0.5em
-  minus 0.4em\relax MIT Press, 1963.
-
-\bibitem{lacan2005vandermonde}
-J.~Lacan and J.~Fimes, ``Systematic mds erasure codes based on vandermonde
-  matrices,'' \emph{IEEE Communications Letters}, vol.~9, no.~5, pp. 465--467,
-  2005.
-
-\bibitem{nonnenmacher1997parity}
-J.~Nonnenmacher, E.~W. Biersack, and D.~Towsley, ``Parity-based loss recovery
-  for reliable multicast transmission,'' in \emph{Proceedings of the ACM
-  SIGCOMM}.\hskip 1em plus 0.5em minus 0.4em\relax ACM, 1997, pp. 349--359.
+\bibitem{wfa_aware}
+\BIBentryALTinterwordspacing
+{Wi-Fi Alliance}, ``Wi-fi aware specification, version 4.0,'' Wi-Fi Alliance,
+  Tech. Rep., 2022, available with permission from the Wi-Fi Alliance.
+  [Online]. Available: \url{https://www.wi-fi.org/discover-wi-fi/wi-fi-aware}
+\BIBentrySTDinterwordspacing
 
 \bibitem{dalbey2003pseudocode}
 J.~Dalbey, ``Pseudocode standard,''

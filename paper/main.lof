@@ -5,14 +5,19 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Sytem Overall Architecture}}{8}{figure.caption.5}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces Data Layout}}{13}{figure.caption.14}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces Streaming Server Diagram}}{19}{figure.caption.15}%
-\contentsline {figure}{\numberline {4.4}{\ignorespaces Edge Client Diagram}}{20}{figure.caption.16}%
-\contentsline {figure}{\numberline {4.5}{\ignorespaces Erasure Packet Flow}}{22}{figure.caption.17}%
-\contentsline {figure}{\numberline {4.6}{\ignorespaces Nan physical layer representation}}{26}{figure.caption.18}%
-\contentsline {figure}{\numberline {4.7}{\ignorespaces Android application Diagram}}{29}{figure.caption.20}%
-\contentsline {figure}{\numberline {4.8}{\ignorespaces Android application Diagram}}{29}{figure.caption.21}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Sytem Overall Architecture}}{9}{figure.caption.5}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Data Layout}}{14}{figure.caption.14}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces Scheduler alternates between multicast and unicast rounds.}}{17}{figure.caption.16}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Client feedback streams populate the NC matrix with aligned rows.}}{18}{figure.caption.17}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces A single coded multicast restores different packets at different receivers.}}{18}{figure.caption.19}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Greedy ranking with an XOR replacement step.}}{20}{figure.caption.22}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Streaming Server Diagram}}{21}{figure.caption.23}%
+\contentsline {figure}{\numberline {4.8}{\ignorespaces Decoder Flowchart Diagram}}{23}{figure.caption.24}%
+\contentsline {figure}{\numberline {4.9}{\ignorespaces Edge Client Diagram}}{24}{figure.caption.25}%
+\contentsline {figure}{\numberline {4.10}{\ignorespaces Erasure Packet Flow}}{27}{figure.caption.26}%
+\contentsline {figure}{\numberline {4.11}{\ignorespaces Nan physical layer representation}}{29}{figure.caption.27}%
+\contentsline {figure}{\numberline {4.12}{\ignorespaces Android application Diagram}}{33}{figure.caption.29}%
+\contentsline {figure}{\numberline {4.13}{\ignorespaces Android application Diagram}}{33}{figure.caption.30}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \contentsfinish 

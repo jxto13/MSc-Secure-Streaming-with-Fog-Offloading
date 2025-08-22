@@ -24,45 +24,45 @@ I'm skipping whatever remains of this entry
 Warning--empty journal in rs_error_bounds
 
 Done.
-You've used 38 entries,
+You've used 35 entries,
             4087 wiz_defined-function locations,
-            1042 strings with 13720 characters,
-and the built_in function-call counts, 22558 in all, are:
-= -- 1939
-> -- 387
-< -- 139
-+ -- 219
-- -- 72
-* -- 1005
-:= -- 3775
-add.period$ -- 80
-call.type$ -- 38
-change.case$ -- 49
-chr.to.int$ -- 318
-cite$ -- 39
-duplicate$ -- 1667
-empty$ -- 1828
-format.name$ -- 82
-if$ -- 5126
+            1026 strings with 13374 characters,
+and the built_in function-call counts, 19923 in all, are:
+= -- 1729
+> -- 335
+< -- 106
++ -- 187
+- -- 66
+* -- 885
+:= -- 3421
+add.period$ -- 73
+call.type$ -- 35
+change.case$ -- 48
+chr.to.int$ -- 240
+cite$ -- 36
+duplicate$ -- 1489
+empty$ -- 1604
+format.name$ -- 74
+if$ -- 4489
 int.to.chr$ -- 0
-int.to.str$ -- 38
-missing$ -- 324
-newline$ -- 171
-num.names$ -- 37
-pop$ -- 736
+int.to.str$ -- 35
+missing$ -- 302
+newline$ -- 164
+num.names$ -- 34
+pop$ -- 686
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 1775
+skip$ -- 1564
 stack$ -- 0
-substring$ -- 822
-swap$ -- 1267
-text.length$ -- 33
+substring$ -- 640
+swap$ -- 1109
+text.length$ -- 26
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 38
+type$ -- 35
 warning$ -- 1
-while$ -- 86
-width$ -- 40
-write$ -- 419
+while$ -- 71
+width$ -- 37
+write$ -- 394
 (There was 1 error message)

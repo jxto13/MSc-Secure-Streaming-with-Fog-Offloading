@@ -16,17 +16,14 @@
 \section{Requirements}
 \label{sec:requirements}
 
-\quad This section defines the system requirements and classifies them into functional and non-functional categories:
+\quad This section defines the system requirements and classifies them into functional and non-functional categories. \textbf{Functional requirements} specify the concrete capabilities that the system must provide, while \textbf{non-functional requirements} capture the quality attributes and constraints that govern how these functions are delivered. 
 
-\begin{description}
-	\item \textbf{Functional} requirements articulate the concrete capabilities that a system must implement in order to fulfill its intended purpose. They describe the explicit services to be delivered, the behaviors expected under different conditions, and the features that enable users or other systems to interact with it effectively. A detailed specification is presented in \textbf{\Cref{tab:functional-reqs}}
-	\item \textbf{Non-functional} requirements, in contrast, define the quality attributes and operational constraints that shape how these functions are executed. Rather than describing individual features, they establish criteria for system performance, scalability, reliability, security, and usability. These requirements determine the efficiency and robustness of the overall design, ensuring that functional behaviors occur within acceptable bounds of latency, throughput, resource consumption, and resilience.A detailed specification is presented in \textbf{\Cref{tab:nonfunctional-reqs}}
-\end{description}
+\quad The detailed specifications are listed in \textbf{\Cref{tab:functional-reqs}} and \textbf{\Cref{tab:nonfunctional-reqs}}, respectively.
 
 %\renewcommand{\arraystretch}{2} % vertical padding
 %\setlength{\tabcolsep}{8pt}       % horizontal padding
 
-\begin{table}[ht]
+\begin{table}[H]
 	\centering
 	\begin{tabular}{|p{2.2cm}|p{11.5cm}|}
 		\hline
@@ -53,7 +50,7 @@
 	\label{tab:functional-reqs}
 \end{table}
 
-\begin{table}[ht]
+\begin{table}[H]
 	\centering
 	\begin{tabular}{|p{2.2cm}|p{11.5cm}|}
 		\hline
@@ -81,9 +78,9 @@
 \quad The overall architecture of the system is shown in \textbf{\Cref{fig:system}}. For clarity, the presentation uses a single edge server, but the solution scales horizontally because servers can run as micro-servers in a Docker-based container pool forming a secure cloudlet. Video is first captured from a local source and compressed into a streaming-ready format by a hardware or software encoder located near the source. Encoding can also be performed in the cloud, but this increases latency because of the round-trip delay. Once processed at the edge server, the encoded stream is injected into the designated access points and multicast to all connected clients over Wi-Fi 802.11. The system also supports an edge cloud with peer-to-peer links between clients, enabling cooperative data exchange so devices can request and forward missing segments.
 
 
-\begin{figure}
+\begin{figure}[H]
 	\centering
-	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/system.png}
+	\includegraphics[width=1\linewidth]{DesignAndImplementation/system.png}
 	\captionof{figure}{\label{fig:system}Sytem Overall Architecture}
 \end{figure}
 
@@ -109,7 +106,7 @@
 
 \quad The \textbf{Source Stream Handler} module functions as the server’s ingress layer for media processing. The data flow begins with the creation of a \textit{Data Handler}, as shown in \textbf{\Cref{fig:streaming server}}, since input parsing and encoding are separated by clear abstractions, the system can support a range of protocols such as RTP~\cite{schulzrinne1996rtp}, SRT~\cite{srt2021}, WebRTC~\cite{alvestrand2018rtc}, or file-based as input sources. For this implementation, MPEG-TS~\cite{iso13818} was selected due to the benefits outlined in \textbf{\Cref{BackgroundWork}}. The Data Source buffers the incoming stream and arranges it into a two-dimensional matrix, shown in \textbf{\Cref{fig:data layout 2d}}, which is then passed to the encoder. The encoder employs Reed–Solomon (RS) erasure coding, chosen for its efficiency in correcting a small number of erasures with manageable computational cost, as demonstrated in \textbf{\Cref{BackgroundWork}}. Because UDP transmission over 802.11n exhibits bursty packet loss, particularly under multicast conditions \cite{80211n_loss}, the system proactively adds redundancy through erasure coding.
 
-\quad Representing packets in a two-dimensional matrix enables enables the construction of two-dimensional product RS codes, which provide redundancy along both rows and columns, as detailed in \textbf{\nameref{sec:2d_fec}}. Their use introduces constant bandwidth overhead, analyzed in \textbf{\nameref{sec:bandwidth overhead analysis}}, where protection levels directly translate into predictable redundancy percentages. Error-correction efficiency under both bursty and random loss patterns is quantified in \textbf{\nameref{sec:error correction efficiency}}, while computational and bandwidth efficiency compared to alternative codes is examined in \textbf{\nameref{sec:overhead efficiency comparison}}. Finally, buffering and latency implications are addressed in \textbf{\nameref{sec:latency buffering tradeoffs}}, and the adjustable interleaved transmission scheme that distributes losses across rows and columns is discussed in \textbf{\nameref{sec:packet interleave ordering}}.
+\quad Representing packets in a two-dimensional matrix enables the construction of two-dimensional product RS codes, which provide redundancy along both rows and columns, as detailed in \textbf{\nameref{sec:2d_fec}}. Their use introduces constant bandwidth overhead, analyzed in \textbf{\nameref{sec:bandwidth overhead analysis}}, where protection levels directly translate into predictable redundancy percentages. Error-correction efficiency under both bursty and random loss patterns is quantified in \textbf{\nameref{sec:error correction efficiency}}, while computational and bandwidth efficiency compared to alternative codes is examined in \textbf{\nameref{sec:overhead efficiency comparison}}. Finally, buffering and latency implications are addressed in \textbf{\nameref{sec:latency buffering tradeoffs}}, and the adjustable interleaved transmission scheme that distributes losses across rows and columns is discussed in \textbf{\nameref{sec:packet interleave ordering}}.
 
 
 \paragraph{Two-Dimensional Product Reed–Solomon FEC}
@@ -209,266 +206,271 @@ Smaller column depths (\(L \le 5\)) reduce this delay while still addressing typ
 
 \quad We adopted an interleaved scheme, shown in \textbf{\Cref{fig:data layout 2d}}, that handles both bursty and random packet loss behavior to accommodate different loss patterns. To increase error correction efficiency, we transmit the matrix by column and not by row; using the example in \textbf{\Cref{fig:data layout 2d}}, where the matrix has 6 rows and 7 columns, the order in which the packets are sent is \(\{0,\,7,\,14,\,21,\,28,\,35,\allowbreak 1,\,8,\,15,\,22,\,29,\,36,\,\dots\}\). This strategy spreads packet loss across multiple rows, ensuring that consecutive dropped packets do not concentrate in a single codeword. In the scenario where four consecutive packets are lost, such as \(\{12, 13, 14, 15\}\), the loss is distributed across different rows and can be recovered through row parity. However, this approach alone does not handle random packet loss, which we addressed by introducing column parity. If two packets in the same column are lost, \(\{9, 10\}\), column parity allows their recovery. Increasing column parity adds more protection against random packet loss, while increasing row parity provides more protection for bursty loss. The balance between row and column parity determines the overall resilience of the scheme. 
 
-\quad Building on this principle, \textbf{\Cref{sec:reinforcement learning}} introduces a \textbf{Reinforcement Learning} approach that dynamically adjusts the parity configuration in response to observed network conditions to improve adaptability and efficiency.
-
-
-
-\begin{figure}
+\begin{figure}[H]
 	\centering
-	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/matrix_layout.png}
+	\includegraphics[width=1\linewidth]{DesignAndImplementation/matrix_layout.png}
 	\captionof{figure}{\label{fig:data layout 2d}Data Layout}
 \end{figure}
+
+\quad Building on this principle, \textbf{\Cref{sec:reinforcement learning}} introduces a \textbf{Reinforcement Learning} approach that dynamically adjusts the parity configuration in response to observed network conditions to improve adaptability and efficiency.
 
 
 \subsubsection{Reinforcement Learning}
 \label{sec:reinforcement learning}
 
-Adaptive video streaming and error control mechanisms must operate efficiently in highly dynamic network environments, where conditions such as bandwidth, latency, packet loss, and jitter fluctuate unpredictably. Traditional static configurations, such as fixed Forward Error Correction (FEC) ratios, often result in suboptimal performance: either wasting bandwidth by overprotecting streams during stable conditions or degrading video quality and reliability by underprotecting streams when network quality deteriorates.
+\quad Adaptive video streaming and error control mechanisms must operate efficiently in highly dynamic environments but static FEC ratios either waste bandwidth by overprotecting stable streams or degrade quality by underprotecting during loss events, as shown in \textbf{\nameref{sec:bandwidth overhead analysis}}. Reinforcement Learning (RL) provides a data-driven alternative by continuously adapting redundancy in response to observed conditions, as detailed in \textbf{\Cref{BackgroundWork}}.
 
-Reinforcement Learning (RL) offers a powerful, data-driven approach to overcome these limitations by enabling adaptive, context-aware decision-making. In this framework, RL agents actively learn optimal strategies through continuous interaction with the networking environment, receiving feedback based on performance outcomes. In live streaming scenarios, RL agents monitor real-time metrics including packet loss rates, jitter, network throughput, and buffer occupancy levels. Using this information, they dynamically adjust encoding parameters, bitrate selections, or FEC redundancy ratios to optimize delivery quality and efficiency.
+\quad To prevent an excessively large Q-table with many entries, packet loss is discretized into bins. Each entry in the table corresponds to a pair $(s,a)$, where $s$ is a loss state and $a$ is a FEC action specifying adjustments to row and column parity. The loss state is derived from a binning function that maps packet loss percentages into discrete categories:  
 
-One of the most studied RL algorithms in this domain is Q-learning, a value-based method prized for its conceptual simplicity and applicability to online adaptation. Q-learning agents maintain a Q-table that maps observed network states to corresponding actions—such as selecting a particular FEC ratio or encoding bitrate—and iteratively update this table by comparing expected and actual rewards. Over time, this process converges toward policies that maximize overall Quality of Experience (QoE), characterized by fewer playback stalls, higher visual quality, and reduced latency, while minimizing unnecessary bandwidth overhead due to excessive redundancy.
+\begin{equation}
+	\text{loss\_bin}(l) = 
+	\begin{cases}
+		0, & l < 1.0 \quad \text{(Excellent)} \\
+		1, & 1.0 \leq l < 5.0 \quad \text{(Good)} \\
+		2, & 5.0 \leq l < 10.0 \quad \text{(Moderate)} \\
+		3, & 10.0 \leq l < 20.0 \quad \text{(Poor)} \\
+		4, & l \geq 20.0 \quad \text{(Bad)}.
+	\end{cases}
+\end{equation}
 
-By transforming FEC and bitrate adaptation from static, heuristic configurations to intelligent, feedback-driven control systems, RL enables seamless, decentralized optimization without the need for centralized coordination or explicit network-side control. This flexibility is especially valuable in fog and edge streaming architectures, where heterogeneous network conditions and resource constraints demand continuous, localized adaptation. Moreover, reinforcement learning approaches are extensible, capable of integrating additional network and user context information to refine control policies further.
+\quad In this framework, an RL agent was developed and observes packet loss, throughput, and buffer occupancy, then selects actions such as increasing row redundancy for burst losses or column redundancy for random losses, as described in \textbf{\nameref{sec:packet interleave ordering}}. Each action is evaluated through the reward function applied in \textbf{Algorithm~\ref{alg:qlearning}}, which penalizes higher loss states and excessive redundancy overhead:  
 
-% State:
-%   - loss_bin: discrete bin of observed packet loss rate (0: excellent, 1: good, ..., 4: bad)
-% Action:
-%   - FecDataAction:
-%       - fec_row: Direction (Increase, Decrease, NoChange)
-%       - fec_col: Direction (Increase, Decrease, NoChange)
+\begin{equation}
+	r(s,a) = -1.5 \cdot \text{loss\_bin}(s) 
+	- 10 \cdot \frac{\text{fec\_row}(a) + \text{fec\_col}(a)}
+	{\text{data\_row} \cdot \text{data\_col}}.
+\end{equation}
 
-\begin{algorithm}
+\quad Q-learning, shown in \textbf{Algorithm~\ref{alg:qlearning}}, maintains the Q-table mapping discretized packet-loss states to FEC actions. After each action, the table is updated using observed rewards. The main parameters are:  
+
+\begin{itemize}
+	\item \textbf{Exploration rate} $\epsilon$: controls random action selection, with decay $\epsilon_t = \epsilon_0 e^{-kt}$ shifting the agent from exploration to exploitation.  
+	\item \textbf{Learning rate} $\alpha$: regulates the impact of new updates.  
+	\item \textbf{Discount factor} $\gamma$: determines the weight of long-term stability versus immediate gains.  
+\end{itemize}
+
+
+\begin{algorithm}[H]
 	\caption{Q-Learning for Adaptive FEC}
+	\label{alg:qlearning}
 	\begin{algorithmic}[1]
 		\State \textbf{State $s$:} loss\_bin (discretized packet loss rate)
 		\State \textbf{Action $a$:} FecDataAction \{fec\_row: Direction, fec\_col: Direction\}
-		\State Initialize $Q(s, a)$ arbitrarily for all $s, a$
-		\State Set learning rate $\alpha$, discount factor $\gamma$, exploration rate $\epsilon$
+		\State Initialize $Q(s, a)$ for all $s, a$
+		\State Set $\alpha$, $\gamma$, $\epsilon_0$, decay $k$
 		\For{each episode}
-		\State Observe current state $s = \text{loss\_bin}$
-		\If{random number $< \epsilon$}
-		\State Choose random action $a$ (random Direction for fec\_row and fec\_col)
+		\State Observe state $s$
+		\If{rand $< \epsilon_t$}
+		\State Choose random action $a$
 		\Else
 		\State $a \gets \arg\max_{a'} Q(s, a')$
 		\EndIf
-		\State Apply action $a$ (adjust FEC row/col redundancy according to $a$)
-		\State Observe reward $r$ and next state $s'$
-		\State $Q(s, a) \gets Q(s, a) + \alpha \left[ r + \gamma \max_{a'} Q(s', a') - Q(s, a) \right]$
-		\State $s \gets s'$
+		\State Apply $a$, observe reward $r$, next state $s'$
+		\State $Q(s, a) \gets Q(s, a) + \alpha \left[r + \gamma \max_{a'} Q(s', a') - Q(s, a)\right]$
+		\State $s \gets s'$, update $\epsilon_t \gets \epsilon_0 e^{-kt}$
 		\EndFor
 	\end{algorithmic}
 \end{algorithm}
+
+\quad Through this loop, the agent converges toward redundancy levels that minimize bandwidth, and because the system relies on online learning, no pretrained model is required; instead, the Q-table is continuously updated during operation and when the same configuration of $\epsilon$, $\alpha$, and $\gamma$ is used, the table can be saved and reloaded, allowing the agent to accumulate experience across sessions and improve as it is deployed longer. 
+
+\quad Adaptive FEC and reinforcement learning address redundancy during encoding, but end-to-end reliability also requires mechanisms to manage group state and coordinate recovery. The \textbf{\Cref{sec:membership manager}} introduces the \textbf{\nameref{sec:membership manager}}, which maintains awareness of active receivers and their feedback, providing the foundation for higher-level scheduling. 
+
+\quad Building on this, the \textbf{\nameref{sec:network scheduler framework}} organizes packet retransmissions to ensure efficient recovery across the streaming system.
+
+\subsubsection{Membership Manager}
+\label{sec:membership manager}
+
+\paragraph{Report Sink}
+\label{sec:report sink}
 
 
 \subsubsection{Network Scheduler Framework}
 \label{sec:network scheduler framework}
 
-The retransmission process in the secure streaming system operates as a tightly coordinated cycle, ensuring that every client receives all necessary packets despite network loss. At the core of this process, the server maintains a set of client sessions, each representing the state of an individual client, including their packet reception reports, bandwidth usage, and latency estimates. When a client sends a feedback report, the server updates its session data, recording which packets have been received and which are missing. This feedback forms the basis for constructing the network coding (NC) matrix, which provides a snapshot of packet reception status across all clients. Figure 1 illustrates the flow of feedback from clients to the server and the construction of the NC matrix.
+\quad Reliable multicast streaming faces uneven packet loss across receivers: some clients miss the same packets, while others lose different ones. This diversity makes uniform recovery inefficient, since conventional retransmission strategies either unicast every missing packet and waste bandwidth, or multicast packets without ensuring that all receivers benefit, as shown in \textbf{\Cref{BackgroundWork}}. The challenge is to design a recovery strategy that adapts to diverse loss patterns, minimizes duplicate effort, and uses limited bandwidth effectively.
 
-%\begin{figure}[h] \centering \includegraphics[width=0.8\textwidth]{nc_matrix_diagram.png} \caption{Clients send feedback reports to the server, which builds the NC matrix representing packet reception status.} \end{figure}
+\quad The retransmission framework addresses this by running as a continuous cycle that alternates between multicast and unicast, see \textbf{\Cref{fig:phase_cycle}}, both phases operating on the same network view and using the same action selector. While this cycle forms the core, the design is modular and allows additional recovery pipelines to be inserted, as illustrated in \textbf{\Cref{fig:streaming server}}. The complete loop is detailed in \textbf{\Cref{alg:retransmission-manager}}, which shows how the scheduler advances through phases, processes NC matrices, and executes retransmissions.
 
-The server generates the NC matrix by iterating through each client and extracting their latest reports. For every report, the server identifies the matrix index and appends the client’s bitmap—a vector indicating received and missing packets—as a new row in the corresponding matrix. Alongside the matrix, the server maintains a list of client identifiers and their IP addresses, associating each row with the client who provided it. This structure allows the server to analyze packet loss patterns and identify which packets are missing for which clients, forming the foundation for efficient retransmission strategies.
-
-Retransmission occurs in two distinct phases: multicast and unicast. During the multicast phase, the server targets all clients simultaneously, sending either individual packets or network-coded packets, such as XOR combinations. Network coding leverages the overlap in packet loss among clients, allowing the server to send a single coded packet that multiple clients can use to recover different missing packets. For example, if one client is missing packet A and another is missing packet B, the server can send A ⊕ B; each client can then use the coded packet and their existing data to recover the missing information. Figure 2 demonstrates how network coding enables efficient recovery for multiple clients using a single transmission.
-
-%\begin{figure}[h] \centering \includegraphics[width=0.7\textwidth]{network_coding_xor.png} \caption{Network coding: The server sends A ⊕ B, allowing Client 1 (who has A) to recover B and Client 2 (who has B) to recover A.} \end{figure}
-
-In the unicast phase, the server focuses on targeted retransmissions, sending specific packets directly to clients who need them. This phase is most effective when only a few clients are missing packets, as it avoids unnecessary bandwidth consumption. The server tracks which packets and actions have already been sent in each phase and round, using a combination of matrix identifiers and action types to prevent duplicate transmissions. Figure 3 shows the phase cycle, where the server alternates between multicast and unicast phases, advancing to the next phase after each round.
-
-%\begin{figure}[h] \centering \includegraphics[width=0.6\textwidth]{phase_cycle.png} \caption{Phase cycle: The server alternates between multicast and unicast phases, advancing after each round.} \end{figure}
-
-The selection of retransmission actions follows a greedy algorithm. The server analyzes the NC matrix to determine which packets are missing for the largest number of clients. It then prioritizes sending those packets or, when beneficial, network-coded combinations that help the most clients simultaneously. By sorting packets based on the number of clients missing them and evaluating the potential benefit of XOR actions, the server chooses up to five actions per round, always aiming to maximize recovery with minimal transmissions. Figure 4 visualizes the greedy selection process, where the server chooses the action that helps the most clients in each round.
-
-%\begin{figure}[h] \centering \includegraphics[width=0.7\textwidth]{greedy_selection.png} \caption{Greedy selection: The server chooses the action (packet or XOR) that helps the most clients in each round.} \end{figure}
-
-Bandwidth management plays a crucial role in maintaining system stability and fairness. Each client session includes a bandwidth manager that tracks the rate of unicast transmissions, ensuring that no client exceeds their allocated bitrate. For multicast transmissions, a separate manager monitors the aggregate bandwidth, preventing the server from overwhelming the network. These managers operate in real time, adjusting rates and enforcing limits based on current usage and configuration parameters. Figure 5 depicts the bandwidth managers for both unicast and multicast transmissions, showing how they enforce limits and prevent congestion.
-
-%\begin{figure}[h] \centering \includegraphics[width=0.8\textwidth]{bandwidth_managers.png} \caption{Bandwidth managers: Each client has a unicast bandwidth manager, and multicast transmissions are regulated by a separate manager.} \end{figure}
-
-Throughout the retransmission process, the server maintains a tight feedback loop, continuously updating client states, recalculating the NC matrix, and adapting its strategy to current network conditions. By combining detailed packet tracking, adaptive phase cycling, efficient network coding, and rigorous bandwidth management, the system delivers robust and scalable packet recovery. The server ensures that every client remains synchronized and receives the complete data stream, even in challenging network environments.
-
-\begin{algorithm}
-	\caption{Main Retransmission Manager Loop}
-	\begin{algorithmic}[1]
-		\State \textbf{Initialize} phase\_index $\gets$ 0
-		\State \textbf{Initialize} round $\gets$ 0
-		\While{true}
-		\State phase\_config $\gets$ phases[phase\_index]
-		\If{phase\_config.enabled = \textbf{false}}
-		\State \textbf{Call} advance\_phase()
-		\State \textbf{Continue}
-		\EndIf
-		\If{phase\_config.phase = Multicast}
-		\ForAll{matrix in client\_sessions}
-		\If{matrix is empty}
-		\State \textbf{Continue}
-		\EndIf
-		\State already\_sent $\gets$ actions sent for this matrix in this phase/round
-		\State sent\_packets $\gets$ \textbf{Call} compute\_retransmissions(matrix, already\_sent)
-		\ForAll{action in sent\_packets}
-		\State \textbf{Record} action as sent in packet\_states for this phase/round
-		\If{action is Packet(idx)}
-		\State \textbf{Call} handle\_transmission\_packet(idx, matrix)
-		\ElsIf{action is Xor(i, j)}
-		\State \textbf{Call} handle\_xor\_packet(i, j, matrix)
-		\EndIf
-		\EndFor
-		\EndFor
-		\ElsIf{phase\_config.phase = Unicast}
-		\ForAll{matrix in client\_sessions}
-		\If{matrix is empty}
-		\State \textbf{Continue}
-		\EndIf
-		\ForAll{client in matrix}
-		\State missing\_indices $\gets$ indices of packets missing for client
-		\If{missing\_indices is empty}
-		\State \textbf{Continue}
-		\EndIf
-		\ForAll{packet\_idx in missing\_indices}
-		\If{packet\_idx can be sent in this phase/round}
-		\State \textbf{Record} packet\_idx as sent in packet\_states for this phase/round
-		\State \textbf{Call} handle\_unicast\_packets\_for\_client(packet\_idx, client)
-		\EndIf
-		\EndFor
-		\EndFor
-		\EndFor
-		\EndIf
-		\State \textbf{Call} advance\_phase()
-		\EndWhile
-	\end{algorithmic}
-\end{algorithm}
-
-\begin{algorithm}
-	\caption{Algorithm Decision Logic (compute\_retransmissions)}
-	\begin{algorithmic}[1]
-		\Function{compute\_retransmissions}{network\_coding\_matrix, already\_sent}
-		\State num\_clients $\gets$ number of rows in network\_coding\_matrix
-		\State num\_packets $\gets$ number of columns in network\_coding\_matrix
-		\State sent\_packets $\gets$ empty list
-		\For{packet\_index $= 0$ \textbf{to} num\_packets $- 1$}
-		\State missing\_count[packet\_index] $\gets$ number of clients missing this packet
-		\EndFor
-		\State needed\_packets $\gets$ list of packet indices missing for at least one client and not in already\_sent
-		\If{needed\_packets is empty}
-		\State \Return sent\_packets
-		\EndIf
-		\State best\_xor $\gets$ None
-		\State best\_xor\_benefit $\gets$ 0
-		\For{i $= 0$ \textbf{to} num\_packets $- 1$}
-		\If{missing\_count[i] $= 0$}
-		\State \textbf{Continue}
-		\EndIf
-		\For{j $= i+1$ \textbf{to} num\_packets $- 1$}
-		\If{missing\_count[j] $= 0$ \textbf{or} Xor(i, j) in already\_sent}
-		\State \textbf{Continue}
-		\EndIf
-		\State xor\_benefit $\gets$ number of clients who have exactly one of i or j
-		\If{xor\_benefit $>$ best\_xor\_benefit}
-		\State best\_xor\_benefit $\gets$ xor\_benefit
-		\State best\_xor $\gets$ (i, j)
-		\EndIf
-		\EndFor
-		\EndFor
-		\State needed\_sorted $\gets$ needed\_packets sorted by missing\_count descending
-		\For{idx in first 5 of needed\_sorted}
-		\State \textbf{Add} Packet(idx) to sent\_packets
-		\EndFor
-		\If{best\_xor is not None \textbf{and} best\_xor\_benefit $>$ missing\_count of top needed\_packet}
-		\State \textbf{Remove} first Packet action from sent\_packets if present
-		\State \textbf{Insert} Xor(best\_xor) at front of sent\_packets
-		\EndIf
-		\State \Return sent\_packets
-		\EndFunction
-	\end{algorithmic}
-\end{algorithm}
-
-
-\begin{algorithm}
-	\caption{Generate Network Coding Matrix}
-	\begin{algorithmic}[1]
-		\Function{generate\_nc\_matrix}{}
-		\State \textbf{Initialize} nc\_matrixes as an empty map from matrix\_index to (matrix, client\_list)
-		\ForAll{client in clients}
-		\State client\_id $\gets$ client.client\_id
-		\State client\_data $\gets$ client.client\_data
-		\ForAll{report in client\_data.reports}
-		\State matrix\_index $\gets$ report.matrix\_index
-		\State bitmap $\gets$ report.bitmap
-		\If{matrix\_index not in nc\_matrixes}
-		\State \textbf{Insert} (empty matrix, empty client\_list) for matrix\_index into nc\_matrixes
-		\EndIf
-		\State \textbf{Append} bitmap as a new row to the matrix for matrix\_index in nc\_matrixes
-		\State \textbf{Append} (client\_id, client\_data.ip) to the client\_list for matrix\_index in nc\_matrixes
-		\EndFor
-		\EndFor
-		\State \Return nc\_matrixes
-		\EndFunction
-	\end{algorithmic}
-\end{algorithm}
-
-
-\subsubsection{Report Sink}
-\label{sec:report sink}
-
-The reporting sink is used to send compress bitmap reports with metrics to the server, the reports have a signature to authentic the message and counter to avoid replay attacks. The report is serialized and compressed using gzip. 
-
-\subsubsection{Membership Manager}
-\label{sec:membership manager}
-
-\begin{figure}
+% Figure 3: Phase cycle
+\begin{figure}[H]
 	\centering
-	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/streaming_server.png}
+	\begin{tikzpicture}[node distance=18mm,>=latex, font=\small]
+		\tikzset{state/.style={draw, minimum width=25mm, align=center}}
+		\node[state] (mc) {Multicast\\round $r$};
+		\node[state, right=35mm of mc] (uc) {Unicast\\round $r$};
+		\draw[->] (mc) -- node[above]{advance\_phase()} (uc);
+		\draw[->] (uc) .. controls +(0,-2) and +(0,-2) .. node[below]{advance\_phase()} (mc);
+	\end{tikzpicture}
+	\caption{Scheduler alternates between multicast and unicast rounds.}
+	\label{fig:phase_cycle}
+\end{figure}
+
+\quad At the core of this process lies the network coding (NC) matrix, which aggregates client feedback into aligned rows of received and missing packets. Each update appends a client bitmap linked to its identifier and address, producing a live map of packet availability across the group. The server consults this matrix to detect overlaps in loss and to guide the action selector, as illustrated in \textbf{\Cref{fig:nc_flow}}. The construction of these matrices from client reports is specified in \textbf{\Cref{alg:generate-nc-matrices}}.
+
+% Figure 1: Feedback aggregation into NC matrix
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[node distance=10mm, >=latex, font=\small]
+		\tikzset{box/.style={draw, rounded corners, align=center, minimum width=25mm, minimum height=7mm}}
+		\node[box] (c1) {Client 1\\Bitmap};
+		\node[box, below=of c1] (c2) {Client 2\\Bitmap};
+		\node[box, below=of c2] (c3) {Client $N$\\Bitmap};
+		\node[box, right=15mm of c2, minimum width=40mm] (srv) {Server\\Session State};
+		\node[box, right=30mm of srv, minimum width=40mm] (mat) {NC Matrix\\rows: clients\\cols: packets};
+		\draw[->] (c1) -- node[above]{\quad \quad feedback} (srv);
+		\draw[->] (c2) -- (srv);
+		\draw[->] (c3) -- (srv);
+		\draw[->] (srv) -- node[above]{append rows} (mat);
+	\end{tikzpicture}
+	\caption{Client feedback streams populate the NC matrix with aligned rows.}
+	\label{fig:nc_flow}
+\end{figure}
+
+\paragraph{Network coding in multicast}
+\label{pg: network coding in multicast}
+
+The multicast phase leverages coding opportunities to maximize efficiency, when two clients miss different packets, a single coded transmission can repair both. For instance, if one client lacks $P_1$ and another lacks $P_2$, sending $P_1 \oplus P_2$ enables both to recover their missing data, this is illustrated in \textbf{\Cref{fig:xor_example}}. This approach extends naturally to larger groups, since coding raises the likelihood that each receiver can benefit from at least part of the transmission. The framework also supports Reed--Solomon codes over $GF(2^m)$, where the sender generates parity symbols from multiple packets. A receiver missing only one symbol in such a block can reconstruct it from the others, which improves coding gain under partially overlapping loss patterns.
+
+% Figure 2: Two-receiver XOR recovery
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[node distance=10mm,>=latex, font=\small]
+		\tikzset{box/.style={draw, rounded corners, align=center, minimum width=25mm, minimum height=7mm}}
+		\node[box] (srv) {Server};
+		\node[box, below left=15mm and 25mm of srv] (a) {Client A\\has $P_2$\\misses $P_1$};
+		\node[box, below right=15mm and 25mm of srv] (b) {Client B\\has $P_1$\\misses $P_2$};
+		\draw[->] (srv) -- node[left]{send $P_1 \oplus P_2$} (a);
+		\draw[->] (srv) -- node[right]{send $P_1 \oplus P_2$} (b);
+		\node[below=6mm of a] (decA) {$P_1=(P_1\oplus P_2)\oplus P_2$};
+		\node[below=6mm of b] (decB) {$P_2=(P_1\oplus P_2)\oplus P_1$};
+	\end{tikzpicture}
+	\caption{A single coded multicast restores different packets at different receivers.}
+	\label{fig:xor_example}
+\end{figure}
+
+
+\paragraph{Multicast phase}
+In the multicast phase, the scheduler considers all NC matrices in turn, as previews explained in \textbf{\nameref{pg: network coding in multicast}}. For each matrix, it checks whether retransmissions have already been sent in the current round and filters them out, it then applies the greedy selector described in \textbf{\Cref{alg:compute-retransmissions}}, which ranks packets by the number of clients missing them, explores coding opportunities, and produces a bounded set of retransmission actions. The scheduler evaluates each action against the multicast bandwidth manager before sending, ensuring that only admissible transmissions proceed (\textbf{\Cref{fig:system}}). Depending on the selector’s decision, the server either multicasts the original packet or emits a coded combination. All chosen actions are logged against the matrix and round identifiers to prevent duplication until the cycle advances.
+
+\paragraph{Unicast phase}
+Once multicast has resolved the common losses, the scheduler transitions to unicast to handle the remaining gaps, it processes each NC matrix sequentially, scanning rows to match individual clients with the specific packets they still miss. Before transmitting, the scheduler verifies that the action is valid for the current round and that the client’s unicast bandwidth budget has not been exceeded (\textbf{\Cref{fig:streaming server}}). When both conditions are met, it delivers the missing packet directly and logs the action, if the client has already reached its bandwidth allocation, further transmissions to that client are deferred until the next round. This policy enforces fairness, avoids overloading weaker receivers, and still guarantees eventual recovery.
+
+
+\quad The choice of retransmission actions therefore combines coding opportunities with a greedy selection of missing packets. Each round is capped to balance recovery efficiency and transmission overhead, as illustrated in \textbf{\Cref{fig:greedy_flow}}. Bandwidth managers regulate both per-client and aggregate send rates, ensuring retransmissions remain sustainable under fluctuating network conditions, this functionality is coordinated by the \textbf{\Cref{sec:membership manager}} as previously shown and described.
+
+
+% Figure 4: Greedy action selection flow
+\begin{figure}[H]
+	\centering
+	\begin{tikzpicture}[node distance=10mm, >=latex, font=\small]
+		\tikzset{box/.style={draw, rounded corners, align=center, minimum width=35mm, minimum height=7mm}}
+		\node[box] (start) {NC matrix $m$};
+		\node[box, below=of start] (count) {count missing per packet};
+		\node[box, below=of count] (pairs) {scan pairs $(i,j)$ and compute XOR gain};
+		\node[box, below=of pairs] (rank) {rank packets by missing count};
+		\node[box, below=of rank] (select) {pick top $K$ Packet actions};
+		\node[box, below=of select] (compare) {if best XOR gain $>$ top Packet gain, swap in XOR};
+		\node[box, below=of compare] (out) {actions for round};
+		\draw[->] (start) -- (count) -- (pairs) -- (rank) -- (select) -- (compare) -- (out);
+	\end{tikzpicture}
+	\caption{Greedy ranking with an XOR replacement step.}
+	\label{fig:greedy_flow}
+\end{figure}
+
+\quad The retransmission manager thus operates as a control loop that extracts feedbacks, regenerates the NC matrix, chooses retransmission actions, enforces bandwidth constraints, and alternates phases in the pipeline, those the framework achieves scalable and robust packet recovery, even under adverse conditions and all clients converge toward full reception of the data stream, as will be proved in \textbf{\Cref{Evaluation}}.
+
+\quad Building on this foundation, \textbf{\Cref{sec:client library}} introduces the \textbf{\nameref{sec:client library}}, which provides the complementary mechanisms required on the receiver side. While the server coordinates retransmission through phase cycling and coding, reliable delivery also depends on how clients generate timely feedback, decode coded packets, and reintegrate recovered data into the playback stream.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{DesignAndImplementation/streaming_server.png}
 	\captionof{figure}{\label{fig:streaming server}Streaming Server Diagram}
 \end{figure}
 
 
-%% ----------------------------------------------------------------------------------------------------------%%
+%%% ----------------------------------------------------------------------------------------------------------%%
+%\subsection{Client Library}
+%\label{sec:client library}
+%%% ----------------------------------------------------------------------------------------------------------%%
+%
+%\quad The \textbf{Client Library} implements the receiver-side of the streaming pipeline introduced in \textbf{\Cref{sec:system architecture}}, whereas the server coordinates encoding, redundancy, and recovery, the client library ensures that these processes result in continuous and reliable playback. It manages packet reception over multicast and unicast channels, decodes coded packets using the schemes described in \textbf{\nameref{sec:2d_fec}} and \textbf{\nameref{sec:packet interleave ordering}}, integrates retransmissions coordinated by the server, and verifies data integrity and authenticity to maintain the end-to-end security guarantees established by the cryptographic subsystem, detailed in \textbf{\Cref{fig:edge_client}}. By aligning with the retransmission manager’s cycle and bandwidth policies, the client library closes the loop of the \textbf{\nameref{fig:system}}. Packaged as a reusable component with a stable API, it compiles for multiple targets and enables applications to embed the same receiver core across platforms without duplicating logic, supporting both Linux and Android clients as representative deployments, which are further detailed in \textbf{\Cref{sec:frontend implementation}}.
+%
+%\quad Internally, the library separates its responsibilities into concurrent threads for multicast and unicast reception, enabling timely handling of both bulk data and targeted recovery packets. Each reception path feeds into a buffering layer that aligns packets with the two-dimensional FEC matrix, preparing them for decoding and reintegration. When coded packets arrive, the library applies Reed–Solomon decoding or XOR reconstruction as specified in \textbf{\nameref{pg: network coding in multicast}}, allowing recovery from both random and burst losses. Recovered data is passed through an authentication and integrity check before reassembly into the playback stream.
+%
+%\quad To support adaptive redundancy, the client library generates periodic feedback reports for the server, encoding received and missing packets into the bitmap format required for the NC matrix in \textbf{\Cref{fig:nc_flow}}. These reports enable the server to align client states, discover coding opportunities, and select retransmission actions. Feedback messages also carry lightweight acknowledgments and heartbeat information, ensuring both liveness detection and efficient use of the constrained upstream channel described in \textbf{\Cref{sec:network scheduler framework}}.
+%
+%\quad The library further exposes metrics such as loss rate, recovery latency, and buffer occupancy to the reporting infrastructure defined in the \textbf{\nameref{sec:membership manager}}. These measurements contribute to monitoring and optimization at the system level while allowing the client to adjust its playback buffer size dynamically to accommodate network variability. In this way, the client library not only acts as a receiver but also as an active participant in the adaptive streaming framework, reinforcing both robustness and quality of service.
+%
+%\subsubsection{Decoder}
+%\label{sec:decoder}
+%
+%\quad The decoder ensures that video data is reliably validated, reconstructed, and decrypted in real time. Its operation follows the loop shown in \textbf{Algorithm~\ref{alg:decoder}}, which continuously reacts to two types of events: incoming packets and periodic ticks. Tick events trigger buffer reporting and metric updates to the retransmission manager, while also initiating the decoding of buffered data into the application layer. The buffer organizes packets into matrices that represent segments of the stream, allowing efficient handling of out-of-order arrivals and retransmissions.
+%
+%
+%\quad When a packet arrives, the decoder first determines its type and validates its authenticity using elliptic-curve digital signatures. This ensures that only legitimate packets are processed. Transmission packets carry the main video data, while retransmission packets support error recovery and may contain either original segments or coded combinations for lightweight forward error correction. Each packet is mapped to its proper position in the matrix, and the corresponding bitmap is updated to reflect progress toward completeness.
+%
+%\quad Error correction builds on the matrix structure. The decoder applies Reed–Solomon coding across rows and columns to reconstruct missing packets once sufficient redundancy is available. XOR combinations provide an additional recovery path when all but one packet in a set are present. This layered approach balances efficiency and robustness, enabling recovery under both random and bursty loss conditions that are common in wireless environments.
+%
+%\quad Security is preserved through continuous key management. The decoder maintains active and next session keys, rotating them at fixed epochs to limit exposure if a key is compromised. Rotation is triggered when the matrix index reaches the configured interval, at which point the decoder updates its keys using specially transmitted packets or, if needed, requests fresh keys from the server. All video data is decrypted with the appropriate session key and verified for integrity before playback.
+%
+%\quad Once a matrix is complete, the decoder removes redundant parity packets, decrypts the recovered data, and validates it against signatures before passing it to the application layer. In cases of decryption failure, updated keys are requested and the process retried, ensuring resilience against synchronization errors. Throughout operation, the decoder reports metrics such as buffer occupancy, packet loss, and retransmission counts to support adaptive redundancy decisions and bandwidth management on the server side. Reports are cryptographically signed to prevent tampering.
+%
+%\quad The decoder’s design combines efficient packet handling, erasure coding, and cryptographic safeguards. By integrating these mechanisms with careful concurrency control, it provides reliable and secure stream delivery despite the variability of wireless links and the presence of potential adversaries.
+%
+%\begin{figure}[H]
+%	\centering
+%	\includegraphics[width=1\linewidth]{DesignAndImplementation/edge_client.png}
+%	\caption{Edge Client Diagram}
+%	\label{fig:edge_client}
+%\end{figure}
+
+
+
 \subsection{Client Library}
+\label{sec:client library}
 %% ----------------------------------------------------------------------------------------------------------%%
 
-The Client Library operates through interconnected modules that manage reception, decoding, retransmission, and secure communication. Static global data, client session management, and a gRPC channel form the high-level control layer; within the receiver subsystem, dedicated threads handle WiFi multicast and unicast streams, each paired with a bandwidth monitor to track link performance, incoming data flows into the decoder which prepares it to be send to the prefired frontend implementation, and also into the ~\nameref{sec:retransmission manager}, which caches content and issues retransmission requests when needed; a secure connection handler within the Tokio runtime ensures encrypted and authenticated communication; client receivers manage incoming responses and maintain synchronization with WiFi links and WiFi Aware data paths, enabling efficient interaction with both WiFi access points and peer devices.
+\quad The \textbf{Client Library} implements the receiver-side of the streaming pipeline introduced in \textbf{\Cref{sec:system architecture}}. Whereas the server coordinates encoding, redundancy, and recovery, the client library ensures that these processes result in continuous and reliable playback. It manages packet reception over multicast and unicast channels, integrates retransmissions coordinated by the server, and verifies data integrity and authenticity to maintain the end-to-end security guarantees established by the cryptographic subsystem, detailed in \textbf{\Cref{fig:edge client}}. By aligning with the retransmission manager’s cycle and bandwidth policies, the client library closes the loop of the \textbf{\nameref{fig:system}}. Packaged as a reusable component with a stable API, it compiles for multiple targets and enables applications to embed the same receiver core across platforms without duplicating logic, supporting both Linux and Android clients as representative deployments, which are further detailed in \textbf{\Cref{sec:frontend implementation}}.
 
-\begin{figure}
-	\centering
-	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/edge_client.png}
-	\captionof{figure}{\label{fig:}Edge Client Diagram}
-\end{figure}
+\quad Internally, the library separates its responsibilities into concurrent threads for multicast and unicast reception, \textbf{\Cref{fig:edge client}}, enabling timely handling of both bulk data and targeted recovery packets. Each reception path feeds into a buffering layer that aligns packets with the two-dimensional FEC matrix, preparing them for processing. To support adaptive redundancy, the client library generates periodic feedback reports for the server, encoding received and missing packets into the bitmap format required for the NC matrix in \textbf{\Cref{fig:nc_flow}}. These reports enable the server to align client states, discover coding opportunities, and select retransmission actions. Feedback messages also carry lightweight acknowledgments and heartbeat information, ensuring both liveness detection and efficient use of the constrained upstream channel described in \textbf{\Cref{sec:report sink}}.
 
-
+\quad The library further exposes metrics such as loss rate, recovery latency, and buffer occupancy to the reporting infrastructure defined in the \textbf{\nameref{sec:membership manager}}. These measurements contribute to monitoring and optimization, like previously mentioned in \textbf{\Cref{sec:reinforcement learning}}. The details of packet validation, error recovery, and decryption are handled by the \textbf{\nameref{sec:decoder}}, which operates on the buffered data and ensures secure delivery to the application layer.
 
 \subsubsection{Decoder}
 \label{sec:decoder}
 
-The decoder is responsible for reliably validating, reconstructing, and decrypting video data packets in real time, these operations, as described in Algorithm ~\ref{alg:decoder}, which continuously listens for both periodic tick events and incoming data packets. Tick events trigger two main actions: reporting the current buffer state and metrics to the retransmission manager and server, but also decoding buffered data to the application layer. The buffer is a queue of \texttt{MatrixTracker} objects, each representing a matrix of packets corresponding to multiple segments of the video stream, this design allows the decoder to efficiently handle out-of-order arrivals and retransmissions so when a data packet arrives, the decoder first attempts to deserialize the binary data to an PacketType, after the type is known and corrected decoded then validates the packet’s authenticity using ECDSA signature, this process ensures that only legitimate packets are processed, maintaining the integrity of the stream. \texttt{TransmissionPacket} objects are the primary data units, while \texttt{RetransmissionPacket} objects serve for error recovery and may contain either a normal transmission or an XOR packet for lightweight forward error correction, the handling and validation of these packets are detailed in Algorithm~\ref{alg:matrixtracker}, where each packet is mapped to its correct position in the matrix, and the bitmap is updated to reflect its presence.
-
-\texttt{MatrixTracker} objects play a crucial role in error correction. They manage a two-dimensional grid of packets, including both data and FEC (Forward Error Correction) packets. The decoder leverages Reed-Solomon erasure coding to reconstruct missing packets, iterating over rows and columns to recover lost data whenever enough FEC shards are available. XOR packets provide an additional mechanism for recovering missing data when all but one packet in a set are present. This robust approach to error correction is essential for maintaining stream quality in unreliable network environments.
-
-Security is further enhanced through careful key management and rotation, as outlined in Algorithm~\ref{alg:keyrotation}. The decoder maintains both a current and a next session key, using them to decrypt video data and periodically rotating them at defined epochs. Key rotation is triggered when a matrix index matches the epoch interval, at which point the decoder securely updates its keys by decrypting special packets and, if necessary, requesting new keys from the server via gRPC. This mechanism ensures that the confidentiality of the stream is preserved even if a key is compromised.
-
-Once a matrix is deemed ready for decoding, the decoder removes FEC rows and columns and proceeds to depad and decrypt each packet using the appropriate session key. If decryption fails, the decoder requests updated keys from the server and retries, ensuring resilience against key synchronization issues. The decrypted data is then validated for integrity using ECDSA signatures before being delivered to the application layer for playback or further processing, as described in Algorithm~\ref{alg:decodeapp}.
-
-Throughout its operation, the decoder periodically reports metrics and buffer state, including packet loss rates and retransmission counters, to facilitate adaptive streaming and efficient error recovery. These reports are signed with the client’s private key to prevent tampering. The decoder’s design also incorporates concurrency primitives such as atomic flags and read-write locks to ensure thread-safe operation in a multi-threaded environment.
-
-In summary, the decoder integrates advanced techniques from networking, cryptography, and error correction to provide secure, reliable, and efficient video streaming. Its algorithms for packet handling, matrix reconstruction, key management, and application layer delivery work together to ensure both the security and quality of the streaming experience, even in the face of network unreliability and potential security threats.
+\quad The decoder ensures that video data is reliably validated, reconstructed, and decrypted in real time. Its operation follows the loop shown in \textbf{\Cref{fig:decoder}}, which continuously reacts to two types of events: incoming packets and periodic ticks. Tick events trigger buffer reporting and metric updates to the retransmission manager, while also initiating the decoding of buffered data into the application layer.
 
 
+\quad Upon packet arrival, the decoder determines the packet type and validates its authenticity using elliptic-curve digital signatures, which will be clarified in \textbf{\Cref{Security}}. Transmission packets carry the main video data, while retransmission packets support error recovery and may contain either original segments or coded combinations for forward error correction, each packet is mapped to its position in the matrix, and the corresponding bitmap is updated to track completeness. Error correction builds on this matrix structure, he decoder applies Reed–Solomon coding across rows and columns to reconstruct missing packets once sufficient redundancy is available.
 
-\begin{figure}
+\begin{figure}[H]
 	\centering
-	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/erasure_packet.png}
-	\captionof{figure}{\label{fig:}Erasure Packet Flow}
+	\includegraphics[width=1\linewidth]{DesignAndImplementation/decoder_flowchart.png}
+	\caption{Decoder Flowchart Diagram}
+	\label{fig:decoder}
 \end{figure}
 
+
+\quad Security is preserved through continuous key management, the decoder maintains active and next session keys, rotating them at fixed epochs. Rotation is triggered when the matrix index reaches the configured interval, but if an outage persists too long, it requests fresh keys from the server. Once a matrix is complete, the decoder removes redundant parity packets, decrypts the recovered data, and validates it against signatures before passing it to the application layer. 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{DesignAndImplementation/edge_client.png}
+	\caption{Edge Client Diagram}
+	\label{fig:edge client}
+\end{figure}
 
 
 \subsubsection{Retransmission Manager}
 \label{sec:retransmission manager}
 
-Restransmission manager is run in a sperate thread avoiding blocking the decoder that need to maintain a constant performance requirement, the manager needs to have access to the current data in the buffer but to avoid dead locks and performance issues of always requiring a lock in the data, a cache buffer is used in the manager with a periodic sync with a limit size, so when theres a report sent to the servers a channel connected from the decoder to the manager gets all the current buffer from decoder and compares with the cache and only updates matrixes that where changed, avoiding retransmission in the mesh network not necessary. Then the manager as a main loop that reads all the request from the mesh network send to him, checks the cache if it has the packet creates a response with the correct type defined in the protofile and sends the reponse to the mesh, when a clients receives the reponse it creates the correct type that the decoder is expected to receives and sends to the data channel. 
+\quad The retransmission manager runs in a separate thread so it never blocks the decoder, which must keep constant performance, \textbf{\Cref{fig:edge client}}. It holds a bounded cache that mirrors the decoder’s buffer and syncs periodically, avoiding locks on data. When the decoder sends a report to the servers, it also pushes its current buffer over a channel to the manager; the manager diffs this against the cache and updates only the matrices that changed, preventing unnecessary retransmissions on the mesh network. In its main loop, the manager handles mesh requests, checks the cache for the requested packet, builds a response using the protobuf-defined type, and sends it back to the mesh. Each client then reconstructs the decoder-expected type from the response and forwards it on the data channel. This design remains generic and can be linked to any mesh implementation.
 
 %% ----------------------------------------------------------------------------------------------------------%%
 \subsection{Security}
+\label{Security}
 %% ----------------------------------------------------------------------------------------------------------%%
 
 \subsubsection{Threat Model}
@@ -499,20 +501,49 @@ Two signatures carry distinct guarantees. The server produces a payload signatur
 This separation confines authority: only the server can originate valid content, while any client can be held accountable for forwarding behavior without possessing the power to forge content. If a client key leaks, attackers can generate new hop signatures but cannot forge server-authenticated payloads. If the server’s application key for encryption leaks, the rotation policy bounds damage to the affected epochs, and prior epochs remain confidential; if the server’s signing key leaks, new payloads can be forged, so detection relies on rapid revocation and re-issuance, while archived signatures remain attributable but no longer trustworthy for freshness. Residual risks include denial-of-service via signature flooding, misuse of the private CA, clock drift that weakens freshness checks on reports, and implementation bugs in deterministic serialization of signed data. These risks are operational and are addressed by rate limits, certificate lifecycle management, time synchronization, and rigorous testing of signing and verification code paths.
 
 
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/erasure_packet.png}
+	\caption{Erasure Packet Flow}
+	\label{fig:erasure_packet}
+\end{figure}
+
+
+
 %% ----------------------------------------------------------------------------------------------------------%%
 \section{Mobile edge cloud offloading}
 \label{sec:mobile edge cloud offloading}
 %% ----------------------------------------------------------------------------------------------------------%%
 
+\quad Mobile edge cloud offloading reduces the computational burden on mobile devices by delegating intensive tasks to nearby edge servers. This paradigm minimizes latency, conserves device energy, and leverages distributed resources at the network edge. A central challenge lies in establishing reliable, low-latency communication channels between mobile clients and edge servers, especially in dynamic wireless environments. As discussed in \Cref{sec:wifi aware}, Wi-Fi Aware serves as a communication enabler that addresses these challenges by supporting direct peer-to-peer discovery, connectivity, and context-aware services without relying on traditional infrastructure. The practical implementation used in this work is based on the Android operating system, which exposes APIs to control Wi-Fi Aware for service discovery and peer-to-peer communication, as described in \Cref{sec:p2p discovery and connection}.
+
 \subsection{Wifi Aware}
 \label{sec:wifi aware}
+
+
+
+Wi-Fi Aware, also known as Neighbor Awareness Networking (NAN), is a peer-to-peer connectivity technology standardized by the Wi-Fi Alliance. Unlike traditional Wi-Fi, which requires an access point or pre-existing infrastructure, Wi-Fi Aware enables devices to discover each other and exchange data directly. The specification defines a complete architecture that integrates discovery, data communication, scheduling, and ranging into a unified framework~\cite{wfa_aware}.
+
+At its foundation, Wi-Fi Aware organizes devices into \emph{NAN clusters}, which synchronize through periodic \emph{Discovery Windows} where devices exchange service discovery beacons and negotiate roles. \Cref{fig:nan_cluster} illustrates a cluster topology, while \Cref{fig:nan_cluster_alt} shows how master devices alternate to maintain synchronization. Larger NAN networks may consist of multiple clusters that overlap or merge, as depicted in \Cref{fig:nan_overlap,fig:nan_overlap_dual}. The Discovery Window itself, the central mechanism for synchronization, is highlighted in \Cref{fig:discovery_window}.
+
+The technology uses a publish/subscribe model for service discovery. Applications can publish services that become discoverable by nearby devices, or subscribe to services advertised by others. The logical architecture of the discovery engine and its data flow are presented in \Cref{fig:nan_discovery_arch,fig:publish_unsolicited,fig:publish_solicited}. These figures demonstrate how unsolicited and solicited service advertisements operate, clarifying the control and data flows within the discovery process.
+
+After discovery, devices can establish \emph{NAN Data Paths (NDPs)} for unicast exchanges or form \emph{NAN Device Links (NDLs)} to manage resources across multiple peers. \Cref{fig:ndp_example} illustrates how NDPs, NDLs, and NAN Data Clusters (NDCs) interconnect to support communication scheduling. Once established, these links allow higher-layer protocols, including IPv6, to run directly between peers without requiring access points.
+
+Wi-Fi Aware also integrates a ranging component based on the IEEE 802.11 Fine Timing Measurement (FTM) protocol. This allows devices to measure relative distances with sub-meter accuracy. \Cref{fig:nan_ranging,fig:nan_geofence} illustrate two such scenarios: device-to-device ranging and the use of ingress or egress geofences. This capability enables location-aware services such as contextual discovery, secure pairing, and proximity-triggered applications.
+
+By combining continuous service discovery, efficient direct communication, and accurate ranging, Wi-Fi Aware provides the building blocks for a new class of context-aware mobile services. The figures in the specification help visualize how clusters are formed, how discovery occurs, and how communication and ranging are orchestrated, making the underlying protocol behavior clearer.
+
+
+
+
 
 Wi-Fi Aware, standardized under the Neighbor Awareness Networking (NAN) protocol by the Wi-Fi Alliance, represents a significant evolution in wireless networking, shifting the paradigm from infrastructure-dependent communication to direct, context-driven device-to-device interaction. Built on top of the IEEE 802.11 MAC/PHY framework, Wi-Fi Aware enables continuous discovery and service exchange between devices without prior association with an access point or on cellular infrastructure. This is accomplished through synchronized communication windows, highly efficient service advertisement mechanisms, and a robust scheduling system designed to optimize radio resource usage in dense environments. Devices engaging in NAN operations are capable of discovering each other and negotiating data connections based on service requirements, proximity, and availability, while maintaining an energy profile suitable for mobile and IoT deployments.
 
 \begin{figure}
 	\centering
 	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/nan_phy.png}
-	\captionof{figure}{\label{fig:}Nan physical layer representation}
+	\captionof{figure}{\label{fig:nan_phy}Nan physical layer representation}
 \end{figure}
 
 At the heart of NAN is its cluster-based architecture, in which a NAN Cluster is formed by devices synchronized to the same Discovery Window (DW) schedule. Clusters are identified by a NAN Cluster ID and can merge when overlapping networks are detected, ensuring operational efficiency and scalability. Synchronization is achieved through NAN Synchronization Beacons, which are transmitted by elected Master Devices within each cluster. Master election relies on a deterministic process based on Master Preference and Anchor Master Rank, ensuring fairness and adaptability to network topology changes. The synchronization mechanism not only aligns device activity for discovery but also reduces channel contention and power consumption by ensuring that all participating devices operate in well-defined active periods.
