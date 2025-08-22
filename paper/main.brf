@@ -1,3 +1,7 @@
+\backcite {wifi_aware_specification}{{vii}{5}{chapter*.2}}
+\backcite {wifi_aware_specification}{{vii}{5}{chapter*.2}}
+\backcite {wifi_aware_specification}{{vii}{5}{chapter*.2}}
+\backcite {android_wifi_aware_source}{{vii}{5}{chapter*.2}}
 \backcite {abiresearch2025}{{1}{1}{chapter.1}}
 \backcite {cisco2024}{{1}{1}{chapter.1}}
 \backcite {newscast2025}{{1}{1}{chapter.1}}
@@ -34,5 +38,17 @@
 \backcite {shokrollahi2006raptor}{{13}{4.2.1.1}{paragraph*.11}}
 \backcite {smpte2022}{{13}{4.2.1.1}{equation.4.10}}
 \backcite {fec_video_study}{{13}{4.2.1.1}{equation.4.10}}
-\backcite {wfa_aware}{{28}{4.3.1}{subsection.4.3.1}}
-\backcite {dalbey2003pseudocode}{{41}{.1}{section.Alph0.1}}
+\backcite {wifi_aware_specification}{{31}{4.11}{figure.caption.27}}
+\backcite {wifi_aware_specification}{{32}{4.12}{figure.caption.28}}
+\backcite {wifi_aware_specification}{{32}{4.13}{figure.caption.29}}
+\backcite {android_wifi_aware_overview}{{33}{4.3.1}{paragraph*.30}}
+\backcite {android_wifi_aware_overview}{{33}{4.3.1}{paragraph*.30}}
+\backcite {wifi_aware_specification}{{33}{4.3.1}{paragraph*.30}}
+\backcite {android_wifi_aware_overview}{{33}{4.3.1}{paragraph*.30}}
+\backcite {android_wifi_aware_overview}{{33}{4.3.1}{paragraph*.30}}
+\backcite {android_wifi_aware_overview}{{33}{4.3.1}{paragraph*.30}}
+\backcite {android_wifi_aware_hal}{{33}{4.3.1}{paragraph*.30}}
+\backcite {android_wifi_aware_hal}{{33}{4.3.1}{paragraph*.30}}
+\backcite {android_wifi_aware_source}{{34}{4.3.1}{paragraph*.30}}
+\backcite {android_wifi_aware_source}{{34}{4.14}{figure.caption.31}}
+\backcite {dalbey2003pseudocode}{{43}{.1}{section.Alph0.1}}
