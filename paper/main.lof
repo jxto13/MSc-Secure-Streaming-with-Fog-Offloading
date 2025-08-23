@@ -14,13 +14,16 @@
 \contentsline {figure}{\numberline {4.7}{\ignorespaces Streaming Server Diagram}}{22}{figure.caption.23}%
 \contentsline {figure}{\numberline {4.8}{\ignorespaces Decoder Flowchart Diagram}}{24}{figure.caption.24}%
 \contentsline {figure}{\numberline {4.9}{\ignorespaces Edge Client Diagram}}{25}{figure.caption.25}%
-\contentsline {figure}{\numberline {4.10}{\ignorespaces Erasure Packet Flow}}{29}{figure.caption.26}%
-\contentsline {figure}{\numberline {4.11}{\ignorespaces NAN cluster topology, adapted from the Wi-Fi Aware Specification v4.0 \cite {wifi_aware_specification}.}}{31}{figure.caption.27}%
-\contentsline {figure}{\numberline {4.12}{\ignorespaces Functional architecture of Wi-Fi Aware, adapted from the Wi-Fi Aware Specification v4.0 \cite {wifi_aware_specification}.}}{32}{figure.caption.28}%
-\contentsline {figure}{\numberline {4.13}{\ignorespaces Relationship between NAN Device Links (NDLs) and NAN Data Paths (NDPs), adapted from the Wi-Fi Aware Specification v4.0 \cite {wifi_aware_specification}.}}{32}{figure.caption.29}%
-\contentsline {figure}{\numberline {4.14}{\ignorespaces Android Wi-Fi stack showing the interaction between applications, the framework, and the Wi-Fi Aware HAL \cite {android_wifi_aware_source}.}}{34}{figure.caption.31}%
-\contentsline {figure}{\numberline {4.15}{\ignorespaces Android application Diagram}}{35}{figure.caption.32}%
-\contentsline {figure}{\numberline {4.16}{\ignorespaces Android application Diagram}}{36}{figure.caption.33}%
+\contentsline {figure}{\numberline {4.10}{\ignorespaces Simplified view of the Retransmission Manager showing its interactions with the decoder, the data cache, and the mesh network. This diagram complements the overall architecture in \textbf {\Cref {fig:edge client}} by focusing on retransmission-specific flows.}}{26}{figure.caption.26}%
+\contentsline {figure}{\numberline {4.11}{\ignorespaces Erasure Packet Flow}}{30}{figure.caption.27}%
+\contentsline {figure}{\numberline {4.12}{\ignorespaces NAN cluster topology, adapted from the Wi-Fi Aware Specification v4.0 \cite {wifi_aware_specification}.}}{32}{figure.caption.28}%
+\contentsline {figure}{\numberline {4.13}{\ignorespaces Functional architecture of Wi-Fi Aware, adapted from the Wi-Fi Aware Specification v4.0 \cite {wifi_aware_specification}.}}{33}{figure.caption.29}%
+\contentsline {figure}{\numberline {4.14}{\ignorespaces Relationship between NAN Device Links (NDLs) and NAN Data Paths (NDPs), adapted from the Wi-Fi Aware Specification v4.0 \cite {wifi_aware_specification}.}}{33}{figure.caption.30}%
+\contentsline {figure}{\numberline {4.15}{\ignorespaces Android Wi-Fi stack showing the interaction between applications, the framework, and the Wi-Fi Aware HAL \cite {android_wifi_aware_source}.}}{35}{figure.caption.32}%
+\contentsline {figure}{\numberline {4.16}{\ignorespaces Android application Diagram}}{37}{figure.caption.33}%
+\contentsline {figure}{\numberline {4.17}{\ignorespaces FCUP's fat cat doing what cats do.}}{38}{figure.caption.34}%
+\contentsline {figure}{\numberline {4.18}{\ignorespaces FCUP's fat cat.}}{38}{figure.caption.34}%
+\contentsline {figure}{\numberline {4.19}{\ignorespaces Android application Diagram}}{39}{figure.caption.35}%
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \contentsfinish 

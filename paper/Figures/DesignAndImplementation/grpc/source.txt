@@ -1,1 +1,0 @@
-https://schimizu.com/grpc-architecture-security-best-practices-and-a-comparison-with-restful-apis-part-ii-17cce1107af4

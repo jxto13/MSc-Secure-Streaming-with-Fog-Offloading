@@ -288,7 +288,7 @@ Smaller column depths (\(L \le 5\)) reduce this delay while still addressing typ
 \paragraph{Report Sink}
 \label{sec:report sink}
 
-\quad the Report Sink is a subcomponent of the Membership Manager, processes feedback streams sent by clients, it handles compressed reports that contain performance metrics, packet reception data, and session statistics. These reports are decompressed, validated, and checked against client signatures using the stored public keys before being admitted into the system, this ensures that only authentic and untampered data contributes to session state. The cryptographic validation and trust model underlying this process are discussed in \textbf{\Cref{Security}}. By centralizing report processing, the Report Sink provides the scheduler and monitoring infrastructure with reliable input for anomaly detection, trend analysis, and adaptation of redundancy or retransmission strategies. Even under constrained network conditions, it preserves the integrity of client feedback so that decision-making is based on trustworthy information.
+\quad The Report Sink is a subcomponent of the \textbf{\nameref{sec:membership manager}}, processes feedback streams sent by clients, it handles compressed reports that contain performance metrics, packet reception data, and session statistics. These reports are decompressed, validated, and checked against client signatures using the stored public keys before being admitted into the system, this ensures that only authentic and untampered data contributes to session state. The cryptographic validation and trust model underlying this process are discussed in \textbf{\Cref{Security}}. By centralizing report processing, the Report Sink provides the scheduler and monitoring infrastructure with reliable input for anomaly detection, trend analysis, and adaptation of redundancy or retransmission strategies. Even under constrained network conditions, it preserves the integrity of client feedback so that decision-making is based on trustworthy information.
 
 \quad Building on this foundation, the \textbf{\nameref{sec:network scheduler framework}} described next uses client feedback and report bitmaps to drive coordinated retransmissions across the streaming system.
 
@@ -396,44 +396,6 @@ Once multicast has resolved the common losses, the scheduler transitions to unic
 \end{figure}
 
 
-%%% ----------------------------------------------------------------------------------------------------------%%
-%\subsection{Client Library}
-%\label{sec:client library}
-%%% ----------------------------------------------------------------------------------------------------------%%
-%
-%\quad The \textbf{Client Library} implements the receiver-side of the streaming pipeline introduced in \textbf{\Cref{sec:system architecture}}, whereas the server coordinates encoding, redundancy, and recovery, the client library ensures that these processes result in continuous and reliable playback. It manages packet reception over multicast and unicast channels, decodes coded packets using the schemes described in \textbf{\nameref{sec:2d_fec}} and \textbf{\nameref{sec:packet interleave ordering}}, integrates retransmissions coordinated by the server, and verifies data integrity and authenticity to maintain the end-to-end security guarantees established by the cryptographic subsystem, detailed in \textbf{\Cref{fig:edge_client}}. By aligning with the retransmission manager’s cycle and bandwidth policies, the client library closes the loop of the \textbf{\nameref{fig:system}}. Packaged as a reusable component with a stable API, it compiles for multiple targets and enables applications to embed the same receiver core across platforms without duplicating logic, supporting both Linux and Android clients as representative deployments, which are further detailed in \textbf{\Cref{sec:frontend implementation}}.
-%
-%\quad Internally, the library separates its responsibilities into concurrent threads for multicast and unicast reception, enabling timely handling of both bulk data and targeted recovery packets. Each reception path feeds into a buffering layer that aligns packets with the two-dimensional FEC matrix, preparing them for decoding and reintegration. When coded packets arrive, the library applies Reed–Solomon decoding or XOR reconstruction as specified in \textbf{\nameref{pg: network coding in multicast}}, allowing recovery from both random and burst losses. Recovered data is passed through an authentication and integrity check before reassembly into the playback stream.
-%
-%\quad To support adaptive redundancy, the client library generates periodic feedback reports for the server, encoding received and missing packets into the bitmap format required for the NC matrix in \textbf{\Cref{fig:nc_flow}}. These reports enable the server to align client states, discover coding opportunities, and select retransmission actions. Feedback messages also carry lightweight acknowledgments and heartbeat information, ensuring both liveness detection and efficient use of the constrained upstream channel described in \textbf{\Cref{sec:network scheduler framework}}.
-%
-%\quad The library further exposes metrics such as loss rate, recovery latency, and buffer occupancy to the reporting infrastructure defined in the \textbf{\nameref{sec:membership manager}}. These measurements contribute to monitoring and optimization at the system level while allowing the client to adjust its playback buffer size dynamically to accommodate network variability. In this way, the client library not only acts as a receiver but also as an active participant in the adaptive streaming framework, reinforcing both robustness and quality of service.
-%
-%\subsubsection{Decoder}
-%\label{sec:decoder}
-%
-%\quad The decoder ensures that video data is reliably validated, reconstructed, and decrypted in real time. Its operation follows the loop shown in \textbf{Algorithm~\ref{alg:decoder}}, which continuously reacts to two types of events: incoming packets and periodic ticks. Tick events trigger buffer reporting and metric updates to the retransmission manager, while also initiating the decoding of buffered data into the application layer. The buffer organizes packets into matrices that represent segments of the stream, allowing efficient handling of out-of-order arrivals and retransmissions.
-%
-%
-%\quad When a packet arrives, the decoder first determines its type and validates its authenticity using elliptic-curve digital signatures. This ensures that only legitimate packets are processed. Transmission packets carry the main video data, while retransmission packets support error recovery and may contain either original segments or coded combinations for lightweight forward error correction. Each packet is mapped to its proper position in the matrix, and the corresponding bitmap is updated to reflect progress toward completeness.
-%
-%\quad Error correction builds on the matrix structure. The decoder applies Reed–Solomon coding across rows and columns to reconstruct missing packets once sufficient redundancy is available. XOR combinations provide an additional recovery path when all but one packet in a set are present. This layered approach balances efficiency and robustness, enabling recovery under both random and bursty loss conditions that are common in wireless environments.
-%
-%\quad Security is preserved through continuous key management. The decoder maintains active and next session keys, rotating them at fixed epochs to limit exposure if a key is compromised. Rotation is triggered when the matrix index reaches the configured interval, at which point the decoder updates its keys using specially transmitted packets or, if needed, requests fresh keys from the server. All video data is decrypted with the appropriate session key and verified for integrity before playback.
-%
-%\quad Once a matrix is complete, the decoder removes redundant parity packets, decrypts the recovered data, and validates it against signatures before passing it to the application layer. In cases of decryption failure, updated keys are requested and the process retried, ensuring resilience against synchronization errors. Throughout operation, the decoder reports metrics such as buffer occupancy, packet loss, and retransmission counts to support adaptive redundancy decisions and bandwidth management on the server side. Reports are cryptographically signed to prevent tampering.
-%
-%\quad The decoder’s design combines efficient packet handling, erasure coding, and cryptographic safeguards. By integrating these mechanisms with careful concurrency control, it provides reliable and secure stream delivery despite the variability of wireless links and the presence of potential adversaries.
-%
-%\begin{figure}[H]
-%	\centering
-%	\includegraphics[width=1\linewidth]{DesignAndImplementation/edge_client.png}
-%	\caption{Edge Client Diagram}
-%	\label{fig:edge_client}
-%\end{figure}
-
-
-
 \subsection{Client Library}
 \label{sec:client library}
 %% ----------------------------------------------------------------------------------------------------------%%
@@ -458,9 +420,7 @@ Once multicast has resolved the common losses, the scheduler transitions to unic
 	\label{fig:decoder}
 \end{figure}
 
-\quad Security is preserved through continuous key management, as detailed in \textbf{\Cref{Security}}, the decoder maintains active and next session keys, rotating them at fixed epochs, with rotation triggered when the matrix index reaches the configured interval, but if an outage persists too long it requests fresh keys from the server. Once a matrix is complete, the decoder removes redundant parity packets, decrypts the recovered data, and validates it against signatures before passing it to the application layer. 
-
-\quad Security is preserved through continuous key management, as detailed in \textbf{\Cref{Security}}, with the decoder maintaining active and next session keys that rotate at fixed epochs. Rotation is triggered when the matrix index reaches the configured interval, but if an outage persists too long the decoder requests fresh keys from the server via a secure TLS Channel, as described in \textbf{\Cref{sec:authz_trust_model}}. Once a matrix is complete it removes redundant parity packets, decrypts the recovered data, and validates it against signatures before passing it to the application layer.
+\quad Security is preserved through continuous key management, as detailed in \textbf{\Cref{Security}}, the decoder maintains active and next session keys, rotating them at fixed epochs, rotation triggered when the matrix index reaches the configured interval, but if an outage persists too long it requests fresh keys from the server via a secure TLS Channel, as described in \textbf{\Cref{sec:authz_trust_model}}. Once a matrix is complete, the decoder removes redundant parity packets, decrypts the recovered data, and validates it against signatures before passing it to the application layer. 
 
 \begin{figure}[H]
 	\centering
@@ -469,21 +429,47 @@ Once multicast has resolved the common losses, the scheduler transitions to unic
 	\label{fig:edge client}
 \end{figure}
 
+\quad To complement the decoder, the client library integrates a \textbf{\nameref{sec:retransmission manager}}, a sub-component that coordinates the recovery of missing data in the mesh implementation described in \textbf{\Cref{sec:mesh networking}}, enabling peers to exchange lost packets efficiently without interrupting the decoding process.
 
 \subsubsection{Retransmission Manager}
 \label{sec:retransmission manager}
 
-\quad The retransmission manager runs in a separate thread so it never blocks the decoder, which must keep constant performance, \textbf{\Cref{fig:edge client}}. It holds a bounded cache that mirrors the decoder’s buffer and syncs periodically, avoiding locks on data. When the decoder sends a report to the servers, it also pushes its current buffer over a channel to the manager; the manager diffs this against the cache and updates only the matrices that changed, preventing unnecessary retransmissions on the mesh network. In its main loop, the manager handles mesh requests, checks the cache for the requested packet, builds a response using the protobuf-defined type, and sends it back to the mesh. Each client then reconstructs the decoder-expected type from the response and forwards it on the data channel. This design remains generic and can be linked to any mesh implementation.
 
-The Retransmission Manager is designed to bridge the decoder and the mesh network in a secure streaming system by maintaining continuity and reliability in data delivery. Its role is to store buffer snapshots from the decoder, serve retransmission requests from peers, and forward packets to the appropriate destinations without disrupting the decoder’s real-time performance. The manager operates in a dedicated thread and uses a bounded cache that mirrors the decoder’s buffer, updated periodically to avoid locking contention. By diffing the decoder’s buffer against its cache, it ensures only modified matrices are refreshed, reducing unnecessary retransmissions across the mesh. When retransmission requests arrive, the manager looks up the cache, builds a response if the data is available, and sends it back to the requester, while silently discarding requests for unavailable data. At the same time, it forwards packets from the mesh to the decoder, closing the communication loop. Thread-safe synchronization guarantees reliable access to shared resources, and a configurable cache size prevents excessive memory use. This design allows the manager to remain resilient under high load, scale across large deployments, and continue serving retransmissions even when the decoder has already moved past the requested data. It is a generic component that can integrate with different mesh implementations, making it suitable for secure streaming systems where packet loss, recovery, and consistency are critical.
+\quad The Retransmission Manager bridges the decoder and the \textbf{\nameref{sec:mesh networking}} to preserve continuity and reliability in secure streaming. It operates in a dedicated thread to avoid blocking the decoder, which must sustain real-time performance, as illustrated in \textbf{\Cref{fig:edge client}}. The manager maintains a bounded cache that mirrors the decoder’s buffer and updates it periodically without locking contention by comparing incoming buffer snapshots with its cache, it refreshes only modified matrices, thereby reducing redundant processing and minimizing unnecessary allocations. 
+
+\quad In its main loop, the manager handles retransmission requests from peers by consulting the cache, building responses in the protobuf-defined format, and sending them back to the requester, if the requested data is no longer available, the request is discarded silently, avoiding wasted cycles. Packets received from the mesh are reconstructed into decoder-compatible types and forwarded directly to the decoder, closing the communication loop, shown in \textbf{\Cref{fig:edge client}}. Thread-safe synchronization ensures reliable access to shared resources, while a configurable cache size limits memory consumption and enables predictable performance under load and because the manager continues serving retransmissions even after the decoder has advanced beyond the requested data, it improves resilience by allowing late retransmission requests to be satisfied even after the decoder has already advanced beyond the requested data. The component’s interactions with the decoder, cache, and mesh network are summarized in \textbf{\Cref{fig:retransmission manager}}.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.4\textwidth]{DesignAndImplementation/client_manager.png}
+	\caption{Simplified view of the Retransmission Manager showing its interactions with the decoder, the data cache, and the mesh network. This diagram complements the overall architecture in \textbf{\Cref{fig:edge client}} by focusing on retransmission-specific flows.}
+	\label{fig:retransmission manager}
+\end{figure}
 
 
-%% ----------------------------------------------------------------------------------------------------------%%
-\subsection{Security}
+\quad Its generic interface allows integration with different mesh implementations, making it suitable for large-scale secure streaming systems where packet recovery and consistency are critical. Implemented within the client library, it links with the mechanisms described in \textbf{\Cref{sec:mesh networking}}, while its role within the client architecture is illustrated in \textbf{\Cref{fig:edge client}}.
+
+
+\subsection{Conclusion}
+\label{sec:system architecture conclusion}
+
+
+\quad In summary, the system architecture presented in this chapter integrates the essential mechanisms needed to achieve secure and reliable video streaming in dynamic network environments. It builds on the requirements identified in \textbf{\Cref{sec:requirements}}.
+
+\quad On the server side, the \textbf{\nameref{sec:source stream handler}}, \textbf{\nameref{sec:membership manager}}, and \textbf{\nameref{sec:network scheduler framework}} work together to encode video, manage session state, and coordinate retransmission through coding-aware strategies. On the client side, the \textbf{\nameref{sec:client library}} complements these functions by validating, buffering, and recovering data in real time, with the \textbf{\nameref{sec:decoder}} ensuring error correction and decryption, and the \textbf{\nameref{sec:retransmission manager}} enabling peer-assisted recovery beyond what the server alone can provide.
+
+\quad Together, these elements form a complete end-to-end pipeline from video source to playback and the modular design allows each component to operate independently while exposing clear interfaces that enable horizontal scaling, flexible deployment, and the integration of advanced features such as the reinforcement learning approach in \textbf{\nameref{sec:reinforcement learning}} for adaptive redundancy or mesh-assisted retransmissions described in \textbf{\nameref{sec:mesh networking}} for cooperative recovery.
+
+\quad With the architecture established, the next section, \textbf{\Cref{Security}}, examines the security mechanisms that underpin trust, confidentiality, and integrity across this pipeline. These include the \textbf{\nameref{sec:threat_model}} for defining the adversarial assumptions, the \textbf{\nameref{sec:authz_trust_model}} for authentication and authorization, and the \textbf{\nameref{sec:forward_secrecy_stream_integrity}} for ensuring stream integrity and confidentiality over time.
+
+\newpage
+
+%%----------------------------------------------------------------------------------------------------------%%
+\section{Security}
 \label{Security}
 %% ----------------------------------------------------------------------------------------------------------%%
 
-\subsubsection{Threat Model}
+\subsection{Threat Model}
 \label{sec:threat_model}
 The system ingests an MPEG-TS stream from a trusted external encoder, forms a two-dimensional matrix, applies Reed–Solomon codes by row and by column, and disseminates packets to clients via fog offloading. A private Certification Authority (CA) signs the server certificate at bootstrap and later signs client certificates over an authenticated channel. The server encrypts each payload with a symmetric key that rotates after a fixed number of matrices and signs the payload; clients may add a separate hop signature during mesh retransmission, but the server’s payload signature remains authoritative.
 
@@ -491,20 +477,20 @@ The analysis considers confidentiality of live content and metadata, secrecy of 
 
 The adversary can eavesdrop, drop, delay, reorder, replay, and inject packets on any network segment; can operate malicious fog nodes or clients; can attempt TLS downgrades and impersonation; and can compromise endpoints after deployment. The adversary cannot break standard cryptographic primitives within their security margins. Physical attacks and compromise of the CA root are out of scope. The system aims to provide confidentiality in transit, end-to-end origin authentication for data packets, integrity for reports, replay resistance within defined windows, and availability under loss patterns mitigated by FEC.
 
-\subsubsection{Authentication, Authorization, and Trust Model}
+\subsection{Authentication, Authorization, and Trust Model}
 \label{sec:authz_trust_model}
 Trust anchors in a private CA whose public key ships with the client. On startup, the server generates an elliptic-curve keypair, submits a CSR to the CA, and serves with the signed certificate. A client establishes gRPC over TLS to a server it authenticates against the CA, then generates its own keypair, submits a CSR over the authenticated channel, and receives a client certificate. Subsequent requests can bind device or account identity to the client certificate, which enables authorization at RPC boundaries and at the reporting sink.
 
 The server signs the application payload so recipients can validate origin independently of transport termination at fog nodes. The client signs periodic reports that carry a monotonic counter; the server enforces counter monotonicity and certificate-based identity to prevent replay and forgery. Authorization follows from certificate attributes and server-side policy that maps identities to stream entitlements, rate limits, or retransmission privileges. Revocation proceeds by short certificate lifetimes and server-maintained deny lists checked at handshake and at report verification. Auditability follows from logging of issued certificates, signature verification outcomes, and counter violations.
 
 
-\subsubsection{Forward Secrecy and Stream Integrity}
+\subsection{Forward Secrecy and Stream Integrity}
 \label{sec:forward_secrecy_stream_integrity}
 Transport-level forward secrecy follows from ephemeral key exchange in TLS, which ensures that disclosure of the server’s certificate key does not reveal past session keys. Application-level keys rotate after a fixed number of matrices, which limits the exposure window if an attacker later extracts process memory on the server or a client. Rotation semantics require that endpoints retain only the current epoch and the immediately previous epoch to tolerate reordering, and that expired epoch keys be erased on rotation.
 
 Stream integrity is layered. Authenticated encryption of the payload provides per-packet integrity and non-malleability. The detached server signature over the payload binds ciphertext to the server identity and to the current epoch, which prevents cross-stream splicing and tampering by intermediary fog nodes. Structural checks on matrix coordinates, row and column indices, and FEC relations detect malformed or adversarially crafted symbols. The receiver rejects packets that fail signature verification, fail authenticated decryption, violate epoch acceptance windows, or contradict parity relationships implied by Reed–Solomon coding.
 
-\subsubsection{Double Signature Schema}
+\subsection{Double Signature Schema}
 \label{sec:double_signature_schema}
 Two signatures carry distinct guarantees. The server produces a payload signature that authenticates the content end-to-end and that remains stable across mesh hops and offloading. A client that retransmits within the mesh may attach a second, hop-level signature that authenticates the forwarding act and enables accountability, rate limiting, or misbehavior detection inside the mesh. Verification proceeds by first validating the server’s payload signature against the CA-backed certificate chain and only then interpreting any hop-level signature for local policy decisions.
 
@@ -523,19 +509,16 @@ This separation confines authority: only the server can originate valid content,
 \section{Mobile edge cloud offloading}
 \label{sec:mobile edge cloud offloading}
 
+\quad Mobile edge cloud offloading reduces the computational burden on mobile devices by delegating intensive tasks to nearby edge servers, this paradigm minimizes latency, conserves device energy, and leverages distributed resources at the network edge. A central challenge lies in establishing reliable, low-latency communication channels between mobile clients and edge servers, especially in dynamic wireless environments. Traditional short-range technologies such as Bluetooth or Wi-Fi Direct are not optimal in this context, Bluetooth offers low energy consumption but suffers from limited bandwidth and high connection setup latency, which makes it unsuitable for continuous data exchange required by real-time edge applications while Wi-Fi Direct provides higher throughput it relies on centralized group owners that introduce single points of failure and hinder decentralized, multi-peer scalability. 
 
-\quad Mobile edge cloud offloading reduces the computational burden on mobile devices by delegating intensive tasks to nearby edge servers. This paradigm minimizes latency, conserves device energy, and leverages distributed resources at the network edge. A central challenge lies in establishing reliable, low-latency communication channels between mobile clients and edge servers, especially in dynamic wireless environments. Traditional short-range technologies such as Bluetooth or Wi-Fi Direct are not optimal in this context, Bluetooth offers low energy consumption but suffers from limited bandwidth and high connection setup latency, which makes it unsuitable for continuous data exchange required by real-time edge applications while Wi-Fi Direct provides higher throughput it relies on centralized group owners that introduce single points of failure and hinder decentralized, multi-peer scalability. 
-
-
-\quad In contrast, Wi-Fi Aware, standardized as Neighbor Awareness Networking (NAN), enables devices to continuously discover each other and establish direct, peer-to-peer links without relying on access points or centralized coordinators. Its design supports synchronized discovery windows, publish-subscribe service advertisements, and secure data path setup, which together provide low-latency and energy-efficient connectivity in mobile environments. These properties make Wi-Fi Aware particularly suitable for mobile edge offloading, where devices must dynamically form links in changing topologies while avoiding centralized bottlenecks. Because of this, Wi-Fi Aware serves as the communication enabler that addresses the limitations of traditional short-range technologies and underpins the decentralized, context-aware networking model required for this work. The following \Cref{sec:wifi aware} examines the Wi-Fi Aware standard in more detail, focusing on its mechanisms for peer discovery, connection establishment, and secure communication, while \Cref{sec:p2p discovery and connection} describes its practical implementation on the Android operating system.
-
+\quad In contrast, \textbf{\nameref{sec:wifi aware}}, standardized as Neighbor Awareness Networking (NAN) \cite{wifi_aware_specification}, enables devices to continuously discover each other and establish direct, peer-to-peer links without relying on access points or centralized coordinators. Its design supports synchronized discovery windows, publish-subscribe service advertisements, and secure data path setup, which together provide low-latency and energy-efficient connectivity in mobile environments. These properties make Wi-Fi Aware particularly suitable for mobile edge offloading, where devices must dynamically form links in changing topologies while avoiding centralized bottlenecks. Because of this, Wi-Fi Aware serves as the communication enabler that addresses the limitations of traditional short-range technologies and underpins the decentralized, context-aware networking model required for this work. The following \textbf{\Cref{sec:wifi aware}} examines the Wi-Fi Aware standard in more detail, focusing on its mechanisms for peer discovery, connection establishment, and secure communication, while \textbf{\nameref{sec:p2p discovery and connection}} describes its practical implementation on the Android operating system.
 
 \subsection{Wi-Fi Aware}
 \label{sec:wifi aware}
 
-\quad Wi-Fi Aware, standardized by the Wi-Fi Alliance under the name Neighbor Awareness Networking (NAN), enables devices in proximity to discover each other and establish direct communication links without requiring an access point or Internet connection. Devices periodically synchronize through \textit{Discovery Windows}, during which they exchange synchronization beacons and advertise services using a publish-subscribe model. Once a service match is identified, devices negotiate to establish a NAN Data Path (NDP), which can carry unicast or group traffic. The protocol supports encryption and authentication primitives, ensuring that discovered peers can form secure links. This decentralized architecture avoids single points of failure and provides scalable peer-to-peer networking that is well-suited to mobile edge scenarios.
+\quad Wi-Fi Aware, standardized by the Wi-Fi Alliance under the name Neighbor Awareness Networking (NAN), enables devices in proximity to discover each other and establish direct communication links without requiring an access point or Internet connection. Devices periodically synchronize through \textbf{\textit{Discovery Windows}}, during which they exchange synchronization beacons and advertise services using a publish-subscribe model, once a service match is identified, devices negotiate to establish a NAN Data Path (NDP), which can carry unicast or group traffic. The protocol supports encryption and authentication primitives, ensuring that discovered peers can form secure links, this decentralized architecture avoids single points of failure and provides scalable peer-to-peer networking that is well-suited to mobile edge scenarios.
 
-\quad A central element of Wi-Fi Aware is the formation of \textit{NAN Clusters}, which are groups of devices that synchronize their Discovery Windows to coordinate discovery and communication. Master election mechanisms dynamically assign roles within a cluster, allowing devices to maintain synchronization without central infrastructure. Figure~\ref{fig:aware_cluster} illustrates the concept of a NAN cluster, where multiple nearby devices synchronize for mutual discovery.
+\quad A central element of Wi-Fi Aware is the formation of \textbf{\textit{NAN Clusters}}, which are groups of devices that synchronize their Discovery Windows to coordinate discovery and communication. Master election mechanisms dynamically assign roles within a cluster, allowing devices to maintain synchronization without central infrastructure, \textbf{\Cref{fig:aware_cluster}} illustrates the concept of a NAN cluster, where multiple nearby devices synchronize for mutual discovery.
 
 \begin{figure}[H]
 	\centering
@@ -544,7 +527,7 @@ This separation confines authority: only the server can originate valid content,
 	\label{fig:aware_cluster}
 \end{figure}
 
-\quad Beyond discovery, the NAN protocol defines mechanisms for scheduling medium access and managing multiple concurrent operations. Devices may join more than one cluster, merge clusters upon detecting overlap, and operate in parallel with other Wi-Fi modes such as infrastructure or Wi-Fi Direct. This concurrency makes it possible to offload data-intensive applications while still maintaining regular connectivity. Figure~\ref{fig:aware_functional} shows the functional architecture of the protocol, which integrates the Discovery Engine, Data Engine, Ranging, and Scheduler into a single stack.
+\quad Beyond discovery, the NAN protocol defines mechanisms for scheduling medium access and managing multiple concurrent operations. Devices may join more than one cluster, merge clusters upon detecting overlap, and operate in parallel with other Wi-Fi modes such as infrastructure or Wi-Fi Direct. This concurrency makes it possible to offload data-intensive applications while still maintaining regular connectivity, \textbf{\Cref{fig:aware_functional}} shows the functional architecture of the protocol, which integrates the Discovery Engine, Data Engine, Ranging, and Scheduler into a single stack.
 
 \begin{figure}[H]
 	\centering
@@ -553,7 +536,7 @@ This separation confines authority: only the server can originate valid content,
 	\label{fig:aware_functional}
 \end{figure}
 
-\quad To support efficient data transfer, Wi-Fi Aware introduces the NAN Data Link (NDL) abstraction, which provides the resources for establishing one or more NAN Data Paths (NDPs) between devices. An NDL ensures that peers share synchronized slots, allowing data paths to scale as applications demand. Figure~\ref{fig:aware_ndp} illustrates the relationship between NDLs and NDPs within a cluster.
+\quad To support efficient data transfer, Wi-Fi Aware introduces the NAN Data Link (NDL) abstraction, which provides the resources for establishing one or more NAN Data Paths (NDPs) between devices. An NDL ensures that peers share synchronized slots, allowing data paths to scale as applications demand, \textbf{\Cref{fig:aware_ndp}} illustrates the relationship between NDLs and NDPs within a cluster.
 
 \begin{figure}[H]
 	\centering
@@ -562,17 +545,20 @@ This separation confines authority: only the server can originate valid content,
 	\label{fig:aware_ndp}
 \end{figure}
 
-\quad These protocol components together enable Wi-Fi Aware to provide low-latency, context-aware connectivity. By combining synchronized discovery, scalable service advertisements, and secure peer-to-peer data paths, Wi-Fi Aware forms the foundation for decentralized edge communication required in mobile offloading.
+\quad These protocol components together enable Wi-Fi Aware to provide low-latency, context-aware connectivity. By combining synchronized discovery, scalable service advertisements, and secure peer-to-peer data paths, Wi-Fi Aware forms the foundation for decentralized edge communication required in mobile offloading used in this work.
 
+\quad In practice, the usefulness of Wi-Fi Aware depends on its integration into platforms, Wi-Fi Aware is a standardized protocol defined by the Wi-Fi Alliance, as previously described and platforms must provide their own implementations in order to expose its capabilities to applications. The next paragraph, \textbf{\nameref{sec:p2p discovery and connection}}, explains how Android integrates Wi-Fi Aware into its networking stack, detailing the APIs available to developers and the practical restrictions imposed by hardware and system design.
 
 \paragraph{Android Implementation}
 \label{sec:p2p discovery and connection}
 
-\quad Android provides an API to create Wi-Fi Aware sessions where applications can operate as publishers or subscribers, exchange messages, and establish secure NAN data paths. This support was introduced in Android 8.0 (API 26) through the \texttt{WifiAwareManager} service, which enables applications to initiate publish/subscribe discovery sessions and create peer-to-peer data paths \cite{android_wifi_aware_overview}. Android manages cluster formation automatically at the system level, while applications interact only with higher-level session abstractions \cite{android_wifi_aware_overview}. Hardware constraints significantly influence connectivity: each device must act as both subscriber and publisher, which can lead to race conditions when peers discover each other simultaneously. To resolve this, Android implementations rely on the metadata exchange defined in the Wi-Fi Aware specification \cite{wifi_aware_specification}, allowing devices to share capabilities such as the number of supported interfaces and data paths before role assignment. For example, the Pixel 6 supports one NAN interface with eight data paths, while the Pixel 7a supports two interfaces, enabling concurrent links with multiple peers. Based on this metadata, devices negotiate roles to balance resources, with deterministic resolution falling back to UUID comparison when needed.
+\quad Android provides an API to create Wi-Fi Aware sessions in which applications operate as publishers, subscribers, or both, exchange messages, and establish secure NAN data paths. This support first appeared in Android 8.0 (API 26) through the \textbf{\texttt{WifiAwareManager}} service, which allows applications to initiate publish/subscribe discovery sessions and create peer-to-peer data paths \cite{android_wifi_aware_overview}. Cluster formation is managed entirely by the system, while applications interact with higher-level session abstractions \cite{android_wifi_aware_overview}. Connectivity depends on hardware resources, particularly the number of supported interfaces and data paths. For instance, the Pixel 6 exposes one NAN interface with eight data paths, while the Pixel 7a supports two interfaces, enabling concurrent communication with multiple peers.
 
-\quad Android’s Wi-Fi Aware API has evolved across versions. Starting with Android 12 (API 31), the responder no longer needs to know the initiator’s MAC address in advance, which speeds up data-path setup and supports multiple point-to-point links with a single network request \cite{android_wifi_aware_overview}. Android 13 (API 33) introduced \textit{Instant Communication Mode}, which accelerates discovery, messaging, and data path setup—but remains active for only 30 seconds due to higher power consumption \cite{android_wifi_aware_overview}. Developers can query device-specific limits—such as available sessions or support for Instant Communication Mode—via the \texttt{getAvailableAwareResources()} method \cite{android_wifi_aware_overview}.
+\quad The Wi-Fi Aware API has evolved steadily across Android versions. Android 12 (API 31) removed the requirement for responders to know the initiator’s MAC address beforehand, which shortened setup time and enabled multiple point-to-point links through a single request \cite{android_wifi_aware_overview}. Android 13 (API 33) added \textit{Instant Communication Mode}, designed for rapid discovery, messaging, and data-path setup. This mode operates for only 30 seconds due to higher energy demands but provides significant speed improvements for short-lived interactions \cite{android_wifi_aware_overview}.
 
-\quad At the system level, Wi-Fi Aware requires both framework and firmware support. Device manufacturers enable it via the \texttt{WIFI\_HIDL\_FEATURE\_AWARE} build flag and provide the necessary HAL interface (\texttt{IWifiNanIface.hal}) \cite{android_wifi_aware_hal}. The Android framework communicates with the NAN HAL through classes such as \texttt{WifiAwareNativeApi} \cite{android_wifi_aware_hal}. Security is enforced through MAC address randomization, which is mandatory for discovery and data interfaces. By default, the randomized MAC rotates every 30 minutes; randomization may pause during active data paths but never reverts to the device’s factory MAC address \cite{android_wifi_aware_source}.
+\quad At the system level, Wi-Fi Aware requires integration across both the Android framework and device firmware, manufacturers enable the feature via the \textbf{\texttt{WIFI\_HIDL\_FEATURE\_AWARE}} build flag and implement the necessary HAL interface (\textbf{\texttt{IWifiNanIface.hal}}) \cite{android_wifi_aware_hal}. The framework interacts with the NAN HAL through classes such as \texttt{WifiAwareNativeApi} \cite{android_wifi_aware_hal}, and in practice, not all capabilities are available on every device, as vendors may impose restrictions in their HAL implementations that limit session counts, interface usage, or advanced features. Security and privacy are enforced through mandatory MAC address randomization for both discovery and data interfaces, by default, randomized MACs rotate every 30 minutes, pausing only while active data paths remain established and the factory MAC address is never exposed \cite{android_wifi_aware_source}.
+
+\quad The overall architecture of Android’s Wi-Fi stack is shown in \textbf{\Cref{fig:android_wifi_aware_stack}}, highlighting how applications communicate through the framework, system services, and HAL before reaching vendor drivers.
 
 \begin{figure}[H]
 	\centering
@@ -581,8 +567,9 @@ This separation confines authority: only the server can originate valid content,
 	\label{fig:android_wifi_aware_stack}
 \end{figure}
 
-\quad These mechanisms ensure stable peer-to-peer networking, providing low-latency discovery and secure data paths for mobile edge offloading. Android’s combination of flexible APIs and internal handling of synchronization, resource negotiation, and privacy safeguards enables developers to integrate Wi-Fi Aware into decentralized, latency-sensitive applications such as those explored in this work.
+\quad These mechanisms provide low-latency discovery, secure peer-to-peer data paths, and efficient use of hardware resources. Together, the APIs, vendor HAL implementations, and system-level controls make Wi-Fi Aware practical for decentralized and latency-sensitive applications such as those developed in this work.
 
+\quad Building on this foundation, the \textbf{\Cref{sec:android frontend}} shows how these APIs are applied in practice through the \textbf{\nameref{sec:client library}}, which supports the mesh networking capabilities described in \textbf{\Cref{sec:mesh networking}}.
 
 \subsection{Mesh Networking}
 \label{sec:mesh networking}
@@ -607,10 +594,26 @@ Requests and responses are propagated across the network through flooding. As a 
 
 
 
-\subsubsection{Android Frontend}
+\subsection{Android Frontend}
 \label{sec:android frontend}
 
-\begin{figure}
+\begin{figure}[H]
+	\centering
+	\begin{minipage}[t]{.49\textwidth} % note the [t] for top alignment
+		\centering
+		\includegraphics[width=\linewidth]{DesignAndImplementation/app_1.png}
+		\captionof{figure}{\label{fig:FCUPfatcatSide1}FCUP's fat cat doing what cats do.}
+	\end{minipage}%
+	\hfill
+	\begin{minipage}[t]{.49\textwidth} % top alignment here too
+		\centering
+		\includegraphics[width=\linewidth]{DesignAndImplementation/app_2.png}
+		\captionof{figure}{\label{fig:FCUPfatcatSide2}FCUP's fat cat.}
+	\end{minipage}
+\end{figure}
+
+
+\begin{figure}[H]
 	\centering
 	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/android_application.png}
 	\captionof{figure}{\label{fig:}Android application Diagram}
