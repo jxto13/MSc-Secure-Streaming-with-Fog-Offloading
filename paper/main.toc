@@ -14,7 +14,8 @@
 \contentsline {chapter}{Table of Contents}{v}{dummy.4}%
 \setcounter {tocdepth}{3}
 \vspace {0.3cm}
-\contentsline {chapter}{List of Figures}{vii}{dummy.5}%
+\contentsline {chapter}{List of Tables}{vii}{dummy.5}%
+\contentsline {chapter}{List of Figures}{viii}{dummy.6}%
 \vspace {0.3cm}
 \contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
 \contentsline {section}{\numberline {1.1}Motivation \& Approach}{2}{section.1.1}%
@@ -27,53 +28,53 @@
 \contentsline {section}{\numberline {4.2}System Architecture}{8}{section.4.2}%
 \contentsline {subsection}{\numberline {4.2.1}Streaming Server}{9}{subsection.4.2.1}%
 \contentsline {subsubsection}{\numberline {4.2.1.1}Source Stream Handler}{10}{subsubsection.4.2.1.1}%
-\contentsline {paragraph}{Two-Dimensional Product Reed–Solomon FEC}{11}{paragraph*.6}%
-\contentsline {paragraph}{Reed--Solomon Encoding.}{11}{paragraph*.7}%
-\contentsline {paragraph}{Constructing the Product Code.}{11}{paragraph*.8}%
-\contentsline {paragraph}{Bandwidth Overhead Analysis.}{12}{paragraph*.9}%
-\contentsline {paragraph}{Error-Correction Efficiency.}{12}{paragraph*.10}%
-\contentsline {paragraph}{Overhead Efficiency Comparison.}{13}{paragraph*.11}%
-\contentsline {paragraph}{Latency and Buffering Trade-offs.}{13}{paragraph*.12}%
-\contentsline {paragraph}{Packet interleave \& transmission ordering}{13}{paragraph*.13}%
+\contentsline {paragraph}{Two-Dimensional Product Reed–Solomon FEC}{11}{paragraph*.7}%
+\contentsline {paragraph}{Reed--Solomon Encoding.}{11}{paragraph*.8}%
+\contentsline {paragraph}{Constructing the Product Code.}{11}{paragraph*.9}%
+\contentsline {paragraph}{Bandwidth Overhead Analysis.}{12}{paragraph*.10}%
+\contentsline {paragraph}{Error-Correction Efficiency.}{12}{paragraph*.11}%
+\contentsline {paragraph}{Overhead Efficiency Comparison.}{13}{paragraph*.12}%
+\contentsline {paragraph}{Latency and Buffering Trade-offs.}{13}{paragraph*.13}%
+\contentsline {paragraph}{Packet interleave \& transmission ordering}{13}{paragraph*.14}%
 \contentsline {subsubsection}{\numberline {4.2.1.2}Reinforcement Learning}{14}{subsubsection.4.2.1.2}%
 \contentsline {subsubsection}{\numberline {4.2.1.3}Membership Manager}{16}{subsubsection.4.2.1.3}%
-\contentsline {paragraph}{Report Sink}{17}{paragraph*.15}%
+\contentsline {paragraph}{Report Sink}{17}{paragraph*.16}%
 \contentsline {subsubsection}{\numberline {4.2.1.4}Network Scheduler Framework}{18}{subsubsection.4.2.1.4}%
-\contentsline {paragraph}{Network coding in multicast}{19}{paragraph*.18}%
-\contentsline {paragraph}{Multicast phase}{19}{paragraph*.20}%
-\contentsline {paragraph}{Unicast phase}{20}{paragraph*.21}%
+\contentsline {paragraph}{Network coding in multicast}{19}{paragraph*.19}%
+\contentsline {paragraph}{Multicast phase}{19}{paragraph*.21}%
+\contentsline {paragraph}{Unicast phase}{20}{paragraph*.22}%
 \contentsline {subsection}{\numberline {4.2.2}Client Library}{22}{subsection.4.2.2}%
 \contentsline {subsubsection}{\numberline {4.2.2.1}Decoder}{23}{subsubsection.4.2.2.1}%
 \contentsline {subsubsection}{\numberline {4.2.2.2}Retransmission Manager}{25}{subsubsection.4.2.2.2}%
 \contentsline {subsection}{\numberline {4.2.3}Conclusion}{27}{subsection.4.2.3}%
-\contentsline {section}{\numberline {4.3}Security}{28}{section.4.3}%
-\contentsline {subsection}{\numberline {4.3.1}Threat Model}{28}{subsection.4.3.1}%
-\contentsline {subsection}{\numberline {4.3.2}Authentication, Authorization, and Trust Model}{28}{subsection.4.3.2}%
-\contentsline {subsection}{\numberline {4.3.3}Forward Secrecy and Stream Integrity}{29}{subsection.4.3.3}%
-\contentsline {subsection}{\numberline {4.3.4}Double Signature Schema}{29}{subsection.4.3.4}%
-\contentsline {section}{\numberline {4.4}Mobile edge cloud offloading}{30}{section.4.4}%
-\contentsline {subsection}{\numberline {4.4.1}Wi-Fi Aware}{31}{subsection.4.4.1}%
-\contentsline {paragraph}{Android Implementation}{34}{paragraph*.31}%
-\contentsline {subsection}{\numberline {4.4.2}Mesh Networking}{36}{subsection.4.4.2}%
-\contentsline {section}{\numberline {4.5}Frontend implementation}{38}{section.4.5}%
-\contentsline {subsection}{\numberline {4.5.1}Android Frontend}{38}{subsection.4.5.1}%
-\contentsline {paragraph}{Android Rust Linker}{39}{paragraph*.36}%
-\contentsline {chapter}{\numberline {5}Evaluation}{40}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Experimental setup and methodology}{40}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Comparative evaluation without edge-cloud}{40}{section.5.2}%
-\contentsline {subsection}{\numberline {5.2.1}Bandwidth usage}{40}{subsection.5.2.1}%
-\contentsline {subsection}{\numberline {5.2.2}Impact of the Reinforcement Learning Agent}{40}{subsection.5.2.2}%
-\contentsline {section}{\numberline {5.3}Comparative evaluation with edge-cloud}{40}{section.5.3}%
-\contentsline {subsection}{\numberline {5.3.1}Bandwidth usage}{40}{subsection.5.3.1}%
-\contentsline {subsection}{\numberline {5.3.2}Impact of the Reinforcement Learning Agent}{40}{subsection.5.3.2}%
-\contentsline {chapter}{\numberline {6}Conclusion}{41}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Summary}{41}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Future Work}{41}{section.6.2}%
+\contentsline {section}{\numberline {4.3}Mobile edge cloud offloading}{27}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Wi-Fi Aware}{28}{subsection.4.3.1}%
+\contentsline {paragraph}{Android Implementation}{31}{paragraph*.31}%
+\contentsline {subsection}{\numberline {4.3.2}Mesh Networking}{33}{subsection.4.3.2}%
+\contentsline {section}{\numberline {4.4}Frontend implementation}{36}{section.4.4}%
+\contentsline {subsection}{\numberline {4.4.1}Android Frontend}{36}{subsection.4.4.1}%
+\contentsline {section}{\numberline {4.5}Security}{40}{section.4.5}%
+\contentsline {subsection}{\numberline {4.5.1}Threat Model}{41}{subsection.4.5.1}%
+\contentsline {subsection}{\numberline {4.5.2}Authentication, Authorization, and Trust Model}{42}{subsection.4.5.2}%
+\contentsline {subsection}{\numberline {4.5.3}Forward Secrecy and Stream Integrity}{43}{subsection.4.5.3}%
+\contentsline {subsection}{\numberline {4.5.4}Double Signature Schema}{44}{subsection.4.5.4}%
+\contentsline {section}{\numberline {4.6}Conclusion}{46}{section.4.6}%
+\contentsline {chapter}{\numberline {5}Evaluation}{47}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Evaluation Environment}{47}{section.5.1}%
+\contentsline {subsection}{\numberline {5.1.1}Adaptive Redundancy and Reinforcement Learning}{49}{subsection.5.1.1}%
+\contentsline {subsection}{\numberline {5.1.2}Retransmission Scheduler Efficiency}{49}{subsection.5.1.2}%
+\contentsline {subsection}{\numberline {5.1.3}Peer-Assisted Mesh Recovery and Android Offloading}{49}{subsection.5.1.3}%
+\contentsline {section}{\numberline {5.2}Discussion}{52}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Experimental setup and methodology}{52}{section.5.3}%
+\contentsline {chapter}{\numberline {6}Conclusion}{53}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Summary}{53}{section.6.1}%
+\contentsline {section}{\numberline {6.2}Future Work}{53}{section.6.2}%
 \vspace {0.5cm}
-\contentsline {chapter}{Bibliography}{41}{dummy.6}%
-\contentsline {section}{\numberline {.1}Pseudocode Standard}{46}{section.Alph0.1}%
-\contentsline {subsection}{\numberline {.1.1}Structured Constructs}{46}{subsection.Alph0.1.1}%
-\contentsline {subsection}{\numberline {.1.2}Formatting Guidelines}{46}{subsection.Alph0.1.2}%
-\contentsline {subsection}{\numberline {.1.3}Examples}{47}{subsection.Alph0.1.3}%
-\contentsline {section}{\numberline {.2}Algorithms}{47}{section.Alph0.2}%
+\contentsline {chapter}{Bibliography}{53}{dummy.7}%
+\contentsline {section}{\numberline {.1}Pseudocode Standard}{55}{section.Alph0.1}%
+\contentsline {subsection}{\numberline {.1.1}Structured Constructs}{55}{subsection.Alph0.1.1}%
+\contentsline {subsection}{\numberline {.1.2}Formatting Guidelines}{55}{subsection.Alph0.1.2}%
+\contentsline {subsection}{\numberline {.1.3}Examples}{56}{subsection.Alph0.1.3}%
+\contentsline {section}{\numberline {.2}Algorithms}{56}{section.Alph0.2}%
+\contentsline {section}{\numberline {.3}Dashboard Results}{59}{section.Alph0.3}%
 \contentsfinish 

@@ -411,7 +411,7 @@ Once multicast has resolved the common losses, the scheduler transitions to unic
 
 \quad The decoder ensures that video data is reliably validated, reconstructed, and decrypted in real time. Its operation follows the loop shown in \textbf{\Cref{fig:decoder}}, which continuously reacts to two types of events: incoming packets and periodic ticks. Tick events trigger buffer reporting and metric updates to the retransmission manager, while also initiating the decoding of buffered data into the application layer.
 
-\quad Upon packet arrival, the decoder determines the packet type and validates its authenticity using elliptic-curve digital signatures, which will be clarified in \textbf{\Cref{Security}}. Transmission packets carry the main video data, while retransmission packets support error recovery and may contain either original segments or coded combinations for forward error correction, each packet is mapped to its position in the matrix, and the corresponding bitmap is updated to track completeness. Building on this matrix structure, the decoder applies Reed–Solomon coding across rows and columns to reconstruct missing packets once sufficient redundancy is available.
+\quad Upon packet arrival, the decoder determines the packet type and validates its authenticity using elliptic-curve digital signatures, which will be clarified in \textbf{\Cref{Security}}. Transmission packets carry the main video data, while retransmission packets support error recovery and may contain either original segments or coded combinations for forward error correction, each packet is mapped to its position in the matrix, and the corresponding bitmap is updated to track completeness. Building on this matrix structure, the decoder applies Reed–Solomon coding across rows and columns to reconstruct missing packets once sufficient redundancy is available, \textbf{\Cref{fig:erasure_packet}}.
 
 \begin{figure}[H]
 	\centering
@@ -442,7 +442,7 @@ Once multicast has resolved the common losses, the scheduler transitions to unic
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=0.4\textwidth]{DesignAndImplementation/client_manager.png}
-	\caption{Simplified view of the Retransmission Manager showing its interactions with the decoder, the data cache, and the mesh network. This diagram complements the overall architecture in \textbf{\Cref{fig:edge client}} by focusing on retransmission-specific flows.}
+	\caption{Simplified view of the Retransmission Manager and its interactions with decoder, cache, and mesh network.}
 	\label{fig:retransmission manager}
 \end{figure}
 
@@ -454,55 +454,13 @@ Once multicast has resolved the common losses, the scheduler transitions to unic
 \label{sec:system architecture conclusion}
 
 
-\quad In summary, the system architecture presented in this chapter integrates the essential mechanisms needed to achieve secure and reliable video streaming in dynamic network environments. It builds on the requirements identified in \textbf{\Cref{sec:requirements}}.
+\quad In summary, the system architecture presented in this chapter integrates the essential mechanisms needed to achieve secure and reliable video streaming in dynamic network environments and it builds on the requirements identified in \textbf{\Cref{sec:requirements}}.
 
-\quad On the server side, the \textbf{\nameref{sec:source stream handler}}, \textbf{\nameref{sec:membership manager}}, and \textbf{\nameref{sec:network scheduler framework}} work together to encode video, manage session state, and coordinate retransmission through coding-aware strategies. On the client side, the \textbf{\nameref{sec:client library}} complements these functions by validating, buffering, and recovering data in real time, with the \textbf{\nameref{sec:decoder}} ensuring error correction and decryption, and the \textbf{\nameref{sec:retransmission manager}} enabling peer-assisted recovery beyond what the server alone can provide.
+\quad On the server side, the \textbf{\nameref{sec:source stream handler}}, \textbf{\nameref{sec:membership manager}}, and \textbf{\nameref{sec:network scheduler framework}} work together to encode video, manage session state, and coordinate retransmission through coding-aware strategies. On the client side, the \textbf{\nameref{sec:client library}} validates, buffers, and recovers data in real time, while the \textbf{\nameref{sec:decoder}} handles error correction and decryption, while the \textbf{\nameref{sec:retransmission manager}} supports peer-assisted recovery that extends beyond server capabilities.
 
 \quad Together, these elements form a complete end-to-end pipeline from video source to playback and the modular design allows each component to operate independently while exposing clear interfaces that enable horizontal scaling, flexible deployment, and the integration of advanced features such as the reinforcement learning approach in \textbf{\nameref{sec:reinforcement learning}} for adaptive redundancy or mesh-assisted retransmissions described in \textbf{\nameref{sec:mesh networking}} for cooperative recovery.
 
 \quad With the architecture established, the next section, \textbf{\Cref{Security}}, examines the security mechanisms that underpin trust, confidentiality, and integrity across this pipeline. These include the \textbf{\nameref{sec:threat_model}} for defining the adversarial assumptions, the \textbf{\nameref{sec:authz_trust_model}} for authentication and authorization, and the \textbf{\nameref{sec:forward_secrecy_stream_integrity}} for ensuring stream integrity and confidentiality over time.
-
-\newpage
-
-%%----------------------------------------------------------------------------------------------------------%%
-\section{Security}
-\label{Security}
-%% ----------------------------------------------------------------------------------------------------------%%
-
-\subsection{Threat Model}
-\label{sec:threat_model}
-The system ingests an MPEG-TS stream from a trusted external encoder, forms a two-dimensional matrix, applies Reed–Solomon codes by row and by column, and disseminates packets to clients via fog offloading. A private Certification Authority (CA) signs the server certificate at bootstrap and later signs client certificates over an authenticated channel. The server encrypts each payload with a symmetric key that rotates after a fixed number of matrices and signs the payload; clients may add a separate hop signature during mesh retransmission, but the server’s payload signature remains authoritative.
-
-The analysis considers confidentiality of live content and metadata, secrecy of symmetric epoch keys, secrecy of private keys held by the CA, server, and clients, correctness of FEC matrices, and integrity and freshness of client reports. The primary trust boundaries lie between encoder and server, inside the server’s matrix/FEC pipeline, across the CA issuance path, and across the gRPC/TLS channels to clients and fog nodes.
-
-The adversary can eavesdrop, drop, delay, reorder, replay, and inject packets on any network segment; can operate malicious fog nodes or clients; can attempt TLS downgrades and impersonation; and can compromise endpoints after deployment. The adversary cannot break standard cryptographic primitives within their security margins. Physical attacks and compromise of the CA root are out of scope. The system aims to provide confidentiality in transit, end-to-end origin authentication for data packets, integrity for reports, replay resistance within defined windows, and availability under loss patterns mitigated by FEC.
-
-\subsection{Authentication, Authorization, and Trust Model}
-\label{sec:authz_trust_model}
-Trust anchors in a private CA whose public key ships with the client. On startup, the server generates an elliptic-curve keypair, submits a CSR to the CA, and serves with the signed certificate. A client establishes gRPC over TLS to a server it authenticates against the CA, then generates its own keypair, submits a CSR over the authenticated channel, and receives a client certificate. Subsequent requests can bind device or account identity to the client certificate, which enables authorization at RPC boundaries and at the reporting sink.
-
-The server signs the application payload so recipients can validate origin independently of transport termination at fog nodes. The client signs periodic reports that carry a monotonic counter; the server enforces counter monotonicity and certificate-based identity to prevent replay and forgery. Authorization follows from certificate attributes and server-side policy that maps identities to stream entitlements, rate limits, or retransmission privileges. Revocation proceeds by short certificate lifetimes and server-maintained deny lists checked at handshake and at report verification. Auditability follows from logging of issued certificates, signature verification outcomes, and counter violations.
-
-
-\subsection{Forward Secrecy and Stream Integrity}
-\label{sec:forward_secrecy_stream_integrity}
-Transport-level forward secrecy follows from ephemeral key exchange in TLS, which ensures that disclosure of the server’s certificate key does not reveal past session keys. Application-level keys rotate after a fixed number of matrices, which limits the exposure window if an attacker later extracts process memory on the server or a client. Rotation semantics require that endpoints retain only the current epoch and the immediately previous epoch to tolerate reordering, and that expired epoch keys be erased on rotation.
-
-Stream integrity is layered. Authenticated encryption of the payload provides per-packet integrity and non-malleability. The detached server signature over the payload binds ciphertext to the server identity and to the current epoch, which prevents cross-stream splicing and tampering by intermediary fog nodes. Structural checks on matrix coordinates, row and column indices, and FEC relations detect malformed or adversarially crafted symbols. The receiver rejects packets that fail signature verification, fail authenticated decryption, violate epoch acceptance windows, or contradict parity relationships implied by Reed–Solomon coding.
-
-\subsection{Double Signature Schema}
-\label{sec:double_signature_schema}
-Two signatures carry distinct guarantees. The server produces a payload signature that authenticates the content end-to-end and that remains stable across mesh hops and offloading. A client that retransmits within the mesh may attach a second, hop-level signature that authenticates the forwarding act and enables accountability, rate limiting, or misbehavior detection inside the mesh. Verification proceeds by first validating the server’s payload signature against the CA-backed certificate chain and only then interpreting any hop-level signature for local policy decisions.
-
-This separation confines authority: only the server can originate valid content, while any client can be held accountable for forwarding behavior without possessing the power to forge content. If a client key leaks, attackers can generate new hop signatures but cannot forge server-authenticated payloads. If the server’s application key for encryption leaks, the rotation policy bounds damage to the affected epochs, and prior epochs remain confidential; if the server’s signing key leaks, new payloads can be forged, so detection relies on rapid revocation and re-issuance, while archived signatures remain attributable but no longer trustworthy for freshness. Residual risks include denial-of-service via signature flooding, misuse of the private CA, clock drift that weakens freshness checks on reports, and implementation bugs in deterministic serialization of signed data. These risks are operational and are addressed by rate limits, certificate lifecycle management, time synchronization, and rigorous testing of signing and verification code paths.
-
-
-\begin{figure}[H]
-	\centering
-	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/erasure_packet.png}
-	\caption{Erasure Packet Flow}
-	\label{fig:erasure_packet}
-\end{figure}
 
 
 
@@ -554,7 +512,7 @@ This separation confines authority: only the server can originate valid content,
 
 \quad Android provides an API to create Wi-Fi Aware sessions in which applications operate as publishers, subscribers, or both, exchange messages, and establish secure NAN data paths. This support first appeared in Android 8.0 (API 26) through the \textbf{\texttt{WifiAwareManager}} service, which allows applications to initiate publish/subscribe discovery sessions and create peer-to-peer data paths \cite{android_wifi_aware_overview}. Cluster formation is managed entirely by the system, while applications interact with higher-level session abstractions \cite{android_wifi_aware_overview}. Connectivity depends on hardware resources, particularly the number of supported interfaces and data paths. For instance, the Pixel 6 exposes one NAN interface with eight data paths, while the Pixel 7a supports two interfaces, enabling concurrent communication with multiple peers.
 
-\quad The Wi-Fi Aware API has evolved steadily across Android versions. Android 12 (API 31) removed the requirement for responders to know the initiator’s MAC address beforehand, which shortened setup time and enabled multiple point-to-point links through a single request \cite{android_wifi_aware_overview}. Android 13 (API 33) added \textit{Instant Communication Mode}, designed for rapid discovery, messaging, and data-path setup. This mode operates for only 30 seconds due to higher energy demands but provides significant speed improvements for short-lived interactions \cite{android_wifi_aware_overview}.
+\quad The Wi-Fi Aware API has evolved steadily across Android versions, with Android 12 (API 31) removing the requirement for responders to know the initiator’s MAC address beforehand, which shortened setup time and enabled multiple point-to-point links through a single request \cite{android_wifi_aware_overview}, and Android 13 (API 33) adding \textit{Instant Communication Mode}, designed for rapid discovery, messaging, and data-path setup that operates for only 30 seconds due to higher energy demands but provides significant speed improvements for short-lived interactions \cite{android_wifi_aware_overview}.
 
 \quad At the system level, Wi-Fi Aware requires integration across both the Android framework and device firmware, manufacturers enable the feature via the \textbf{\texttt{WIFI\_HIDL\_FEATURE\_AWARE}} build flag and implement the necessary HAL interface (\textbf{\texttt{IWifiNanIface.hal}}) \cite{android_wifi_aware_hal}. The framework interacts with the NAN HAL through classes such as \texttt{WifiAwareNativeApi} \cite{android_wifi_aware_hal}, and in practice, not all capabilities are available on every device, as vendors may impose restrictions in their HAL implementations that limit session counts, interface usage, or advanced features. Security and privacy are enforced through mandatory MAC address randomization for both discovery and data interfaces, by default, randomized MACs rotate every 30 minutes, pausing only while active data paths remain established and the factory MAC address is never exposed \cite{android_wifi_aware_source}.
 
@@ -569,60 +527,339 @@ This separation confines authority: only the server can originate valid content,
 
 \quad These mechanisms provide low-latency discovery, secure peer-to-peer data paths, and efficient use of hardware resources. Together, the APIs, vendor HAL implementations, and system-level controls make Wi-Fi Aware practical for decentralized and latency-sensitive applications such as those developed in this work.
 
-\quad Building on this foundation, the \textbf{\Cref{sec:android frontend}} shows how these APIs are applied in practice through the \textbf{\nameref{sec:client library}}, which supports the mesh networking capabilities described in \textbf{\Cref{sec:mesh networking}}.
+\quad Building on this foundation, the \textbf{\nameref{sec:android frontend}} shows how these APIs are applied in practice with the combination of the \textbf{\nameref{sec:client library}}, which supports the mesh networking capabilities described in \textbf{\Cref{sec:mesh networking}}.
 
 \subsection{Mesh Networking}
 \label{sec:mesh networking}
+%
 
-The mesh networking module is embedded in the client library but remains disabled by default. This modular design avoids unnecessary resource allocation in scenarios where offloading is not required or feasible. The mesh operates on an unstructured, partially connected topology due to the hardware constraints described earlier. To mitigate these limitations, each packet carries a time-to-live value. Upon reception, the system checks the TTL, and if greater than zero, processes the packet and relays it to all interfaces except the one it arrived on. This mechanism prevents loops and implements a controlled flooding strategy. A heartbeat mechanism complements this process by maintaining active links, since Android terminates idle peer-to-peer connections after sixty seconds.
+\quad The mesh networking module extends the client library introduced in \textbf{\Cref{sec:client library}} by enabling cooperative recovery of missing packets among peers, rather than coordinating directly with the server, this functionality integrates with the retransmission manager described in \textbf{\Cref{sec:retransmission manager}}, which bridges the decoder and the mesh to allow reconstructed packets to flow seamlessly into the playback pipeline. By distributing recovery tasks across peers, the system reduces the load on the access point and improves resilience in lossy environments, particularly in dense deployments where overlapping losses occur and peer-to-peer links provide faster or more efficient recovery paths.
 
-The system relies on the Tokio runtime to schedule periodic tasks and handle socket packet detection. Client integration is achieved through channels, which eliminate data sharing issues and prevent deadlocks or race conditions. Because Tokio’s asynchronous model is incompatible with standard synchronous channels, the implementation uses the Loole crate to bridge asynchronous and synchronous communication, enabling coordination between the retransmission manager and the mesh.
+\quad From a design standpoint, the mesh module is agnostic to the underlying link technology and reacts only to interface join and leave events, it does not embed specific semantics but operates over any peer-to-peer transport that exposes sockets, which makes the component reusable across environments, while in this work the mechanism described in \textbf{\Cref{sec:wifi aware}} is used.
+Cooperative exchange is implemented through controlled flooding: each request is broadcast to all active peers, carrying a hop-limited time-to-live (TTL) value that decrements on forwarding, this strategy eliminates the need for centralized coordination or global routing, bounds propagation in the presence of loops, and prevents broadcast storms. By constraining the TTL to a few hops, the system focuses recovery within neighborhoods where overlapping losses are most likely, balancing reachability with signaling overhead, while heartbeat messages maintain peer liveness to prune stale links and keep active sessions stable.
 
-Requests and responses are propagated across the network through flooding. As a result, matrices may already exist in the mesh before a client issues a request, which reduces latency and improves responsiveness.
+\quad Internally, the design is structured around a node abstraction that encapsulates runtime tasks, sockets, and peer management, as shown in \textbf{\Cref{fig:mesh_networking}}, each node manages multiple UDP sockets across available interfaces (IPv4, IPv6, or any). Incoming packets are classified as broadcast, relay, or direct messages and are dispatched through asynchronous channels. The node maintains a \texttt{PeerMap} containing peer identifiers and last-seen timestamps, updated by periodic heartbeat tasks. Requests and responses are encoded into mesh packets with type fields (\texttt{Heartbeat}, \texttt{Request}, \texttt{Response}) and TTL values. These packets interact directly with the retransmission manager, which uses them to fulfill data recovery requests and to forward reconstructed packets back into the decoding pipeline. By relying on Tokio’s asynchronous runtime and channel-based communication, the implementation avoids race conditions and ensures non-blocking interaction between components.
 
-\begin{figure}
+\begin{figure}[H]
 	\centering
-	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/mesh_p2p.png}
-	\captionof{figure}{\label{fig:}Android application Diagram}
+	\includegraphics[width=1\linewidth]{DesignAndImplementation/mesh_networking.png}
+	\caption{\label{fig:mesh_networking}Internal architecture of a mesh node, showing its sockets, runtime tasks, channels, and interaction with the retransmission manager.}
 \end{figure}
 
+\quad Each client remains connected to the Wi-Fi access point but also establishes peer-to-peer paths that provide alternative recovery routes, as illustrated in \textbf{\Cref{fig:mesh_p2p}}, so if client B misses a packet already received by client C the missing data can be obtained directly through the mesh rather than requiring retransmission from the server, reducing redundant traffic at the access point and distributing recovery effort across the peer group.
 
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/mesh_p2p.png}
+	\caption{\label{fig:mesh_p2p}Example of mesh-enabled streaming: clients A–D remain connected to the Wi-Fi access point while forming peer-to-peer (P2P) links for cooperative retransmissions.}
+\end{figure}
+
+\quad The mesh integrates with the security described in \textbf{\Cref{Security}}, peers retransmit packets signed by the server and may attach hop-level signatures as defined in the double signature schema of \textbf{\Cref{sec:double_signature_schema}}. This ensures that while only the server can originate valid content, peers remain accountable for forwarding behavior without undermining end-to-end authenticity, by combining the node architecture in \textbf{\Cref{fig:mesh_networking}} with the peer-to-peer topology in \textbf{\Cref{fig:mesh_p2p}}, the system achieves a modular mesh design that leverages Wi-Fi Aware for connectivity, the client library for decoding, the retransmission manager for coordination, and the security framework for trust. Together, these components implement a hybrid recovery strategy that enhances efficiency and fault tolerance in dense wireless deployments.
+
+\quad Finally, the Android frontend described in \textbf{\Cref{sec:android frontend}} provides the platform-specific glue that binds Wi-Fi Aware events to the generic mesh module, surfacing peer interfaces as sockets and enabling the recovery pipeline to operate seamlessly on mobile devices.
 %% ----------------------------------------------------------------------------------------------------------%%
 \section{Frontend implementation}
 \label{sec:frontend implementation}
 %% ----------------------------------------------------------------------------------------------------------%%
 
+\quad The frontend constitutes the final layer of the system, bridging the client library with user-facing applications. While the core mechanisms of encoding, redundancy, recovery, and security are encapsulated in the \textbf{\nameref{sec:client library}}, a frontend is required to expose these capabilities in practice, either for testing or for end-user interaction. To validate functionality and to provide a reproducible reference, a lightweight headless example was first developed, this example runs directly on the command line, invoking the client library to connect to a given stream, execute decoding, and report collected metrics such as throughput and loss. Its minimal design removes dependencies on external frameworks and serves as a diagnostic baseline for debugging and integration.
 
 
 \subsection{Android Frontend}
 \label{sec:android frontend}
 
+\quad The Android frontend constitutes the user-facing layer of the system, integrating the client library, Wi-Fi Aware communication, and the media stack into a mobile application. Its primary role is to expose the secure streaming pipeline to end users while maintaining the performance and reliability guarantees established in the system architecture of \textbf{\Cref{sec:system architecture}}. The overall application architecture is illustrated in \Cref{fig:android_application}, highlighting the interaction between Media3, the Rust service, the JNI layer, and the Wi-Fi Aware library.
+
+\quad A dedicated Rust linker library mediates the interaction between the Android framework and the native components, using the \texttt{org.mozilla.rust-android-gradle} plugin, the client library, edge client, and mesh networking module are compiled into a single shared object that is loaded through the Java Native Interface (JNI). At runtime, this library initializes logging to \texttt{adb logcat}, ensuring that native events and errors are visible within the Android debugging pipeline, it exposes a minimal set of methods to start and stop the client, manage sockets for Wi-Fi Aware data paths, retrieve metrics, and enable or disable mesh retransmissions. This design centralizes initialization of the native subsystems and reduces the overhead of JNI calls, which are restricted to control operations, while high-throughput data transfer is handled through file descriptors.
+
+\quad The media path relies on Jetpack Media3 to provide playback functionality, a \texttt{Player} instance consumes data via a custom file descriptor source, ensuring that decoded video generated by the client library is transferred to the Android media stack without JNI memory copies. When the user initiates a session, the Rust client writes the recovered MPEG-TS stream into the write end of a Unix pipe, and the Android layer passes the corresponding read end to Media3, this approach maintains backpressure semantics, avoids garbage collection overhead, and guarantees that closing the descriptor cleanly terminates playback.
+
+\quad Wi-Fi Aware functionality is integrated through a dedicated Android library that wraps the \texttt{WifiAwareManager} service, as detailed in \textbf{\Cref{sec:wifi aware}}. This library manages discovery, publisher and subscriber sessions, and the establishment of NAN data paths. Connection handlers translate link events into socket endpoints, which are then provided to the Rust client. These sockets allow the client library to participate in mesh retransmissions, as described in \textbf{\Cref{sec:mesh networking}}, while also surfacing session metadata such as peer identifiers, IPv6 addresses, and connection durations to the application interface.
+
 \begin{figure}[H]
 	\centering
-	\begin{minipage}[t]{.49\textwidth} % note the [t] for top alignment
+	\includegraphics[width=1\linewidth]{DesignAndImplementation/android_application.png}
+	\captionof{figure}{\label{fig:android_application}Android application Diagram}
+\end{figure}
+
+\quad The streaming screen (\textbf{\Cref{fig:app_streaming}}) represents the main user interface of the application and is organized into four elements: the stream configuration panel \textbf{(1)} for entering the URI and controlling session state, the video playback area \textbf{(2)} for displaying the stream, the network statistics panel \textbf{(3)} reporting bitrate, loss, and NAN paths, and the Wi-Fi Aware connections list \textbf{(4)} showing active peers. Selecting a peer expands into the interface diagnostics view \textbf{(5)} in \textbf{\Cref{fig:app_interface}}, which reports socket parameters, interface name, and IPv6 configuration.
+
+\begin{figure}[H]
+	\centering
+	\begin{minipage}[t]{.49\textwidth}
 		\centering
 		\includegraphics[width=\linewidth]{DesignAndImplementation/app_1.png}
-		\captionof{figure}{\label{fig:FCUPfatcatSide1}FCUP's fat cat doing what cats do.}
+		\captionof{figure}{\label{fig:app_streaming}Streaming screen with session controls, playback, statistics, and peer connections.}
 	\end{minipage}%
 	\hfill
-	\begin{minipage}[t]{.49\textwidth} % top alignment here too
+	\begin{minipage}[t]{.49\textwidth}
 		\centering
 		\includegraphics[width=\linewidth]{DesignAndImplementation/app_2.png}
-		\captionof{figure}{\label{fig:FCUPfatcatSide2}FCUP's fat cat.}
+		\captionof{figure}{\label{fig:app_interface}Expanded peer view showing detailed Wi-Fi Aware connection information.}
+	\end{minipage}
+\end{figure}
+
+\quad The settings screen (\textbf{\Cref{fig:app_settings}}) exposes configuration options and hardware state. It includes the Wi-Fi Aware toggle and hardware status \textbf{(6)}, and an additional settings placeholder \textbf{(7)} for future extensions. The application also provides a navigation drawer \textbf{(8)} shown in \textbf{\Cref{fig:app_navigation}}, which gives access to the streaming interface, the settings panel, and system information such as the app logo.
+
+\begin{figure}[H]
+	\centering
+	\begin{minipage}[t]{.49\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{DesignAndImplementation/app_3.png}
+		\captionof{figure}{\label{fig:app_navigation}Navigation drawer providing access to application views.}
+	\end{minipage}%
+	\hfill
+	\begin{minipage}[t]{.49\textwidth}
+		\centering
+		\includegraphics[width=\linewidth]{DesignAndImplementation/app_4.png}
+		\captionof{figure}{\label{fig:app_settings}Settings screen with Wi-Fi Aware configuration and additional options.}
 	\end{minipage}
 \end{figure}
 
 
+
+
+\quad The Android application consolidates the integration of the client library, media stack, and Wi-Fi Aware subsystem into a deployable mobile frontend. It presents the secure streaming pipeline through a user interface that supports playback, monitoring, and peer-to-peer connectivity, demonstrating the system’s functionality in realistic conditions. This implementation anchors the design in real usage conditions and provides the foundation for the evaluation presented in \textbf{\Cref{Evaluation}}.
+
+
+
+
+\newpage
+
+%%%----------------------------------------------------------------------------------------------------------%%
+%\section{Security}
+%\label{Security}
+%%% ----------------------------------------------------------------------------------------------------------%%
+%
+%
+%\quad Security is a central requirement of the proposed livestreaming framework, as established in \textbf{\Cref{sec:requirements}}, and underpins the design decisions introduced in \textbf{\Cref{sec:system architecture}}. Because content is distributed across untrusted fog nodes and peer-to-peer meshes, the system must guarantee confidentiality, integrity, authenticity, and availability even in adversarial environments. To formalize this analysis, we adopt the STRIDE methodology \cite{practicaldevsecops_stride}, a structured framework widely used in security engineering to classify threats into six categories, as illustrated in \textbf{\Cref{fig:stride_model}}:
+%
+%\begin{description}
+%	\item \textbf{Spoofing identity} – Impersonating a legitimate user, device, or service to gain unauthorized access.
+%	\item \textbf{Tampering with data} – Unauthorized modification of data in storage or in transit to disrupt or deceive.
+%	\item \textbf{Repudiation} – Denying that an action was performed, complicating accountability without strong logging or signatures.
+%	\item \textbf{Information disclosure} – Exposing confidential information to unauthorized entities through interception, leakage, or misconfiguration.
+%	\item \textbf{Denial of service (DoS)} – Disrupting or degrading system availability by overwhelming resources or exploiting weaknesses.
+%	\item \textbf{Elevation of privilege} – Gaining access rights beyond those initially granted, enabling attackers to perform restricted operations.
+%\end{description}
+%
+%
+%
+%\begin{figure}[H]
+%	\centering
+%	\includegraphics[width=0.8\textwidth]{Security/STRIDE.png}
+%	\caption{STRIDE security model \cite{practicaldevsecops_stride}}
+%	\label{fig:stride_model}
+%\end{figure}
+%
+%\quad Building on this framework, the subsections that follow apply STRIDE to the proposed architecture. \textbf{\Cref{sec:threat_model}} introduces the Threat Model, defining the adversary’s capabilities and the assets under protection. \textbf{\Cref{sec:authz_trust_model}} presents the Authentication, Authorization, and Trust Model, showing how identities and entitlements are enforced and how revocation is managed. \textbf{\Cref{sec:forward_secrecy_stream_integrity}} addresses Forward Secrecy and Stream Integrity, detailing the mechanisms that preserve confidentiality and authenticity across epochs and network topologies. Finally, \textbf{\Cref{sec:double_signature_schema}} expands on the Double Signature Schema, which integrates accountability in mesh retransmissions without weakening the server’s authority over content authenticity.
+%
+%\subsection{Threat Model}
+%\label{sec:threat_model}
+%
+%\quad The system assumes an adversary with complete control over the network channel, including the ability to observe, delay, drop, reorder, replay, or inject packets. Malicious entities may operate as compromised fog nodes, dishonest clients, or external attackers attempting to subvert cryptographic protocols. Within STRIDE, threats manifest as follows: spoofing through rogue certificates or impersonation; tampering by modifying payloads, FEC symbols, or retransmission requests; repudiation when clients deny having sent feedback or retransmissions; information disclosure through passive capture or memory scraping of keys; denial of service via signature flooding, resource exhaustion, or malformed parity injections; and elevation of privilege by misusing certificate attributes to exceed entitlements.
+%
+%\quad To counter these adversaries, the system enforces strict certificate validation, authenticated encryption, structural validation of matrices, rate-limiting of feedback and retransmissions, and continuous observability of anomalies. Importantly, failure containment limits the blast radius of key compromise: a leaked client key enables only hop-level impersonation, a leaked server encryption key affects at most two epochs due to rotation, and a leaked server signing key requires immediate revocation but does not invalidate archived signatures.
+%
+%\subsection{Authentication, Authorization, and Trust Model}
+%\label{sec:authz_trust_model}
+%
+%\quad Authentication and authorization form the foundation against spoofing and elevation of privilege. Trust anchors in a private Certification Authority (CA) whose root is embedded into all clients. On initialization, servers obtain elliptic-curve certificates through authenticated CSRs, and clients request short-lived certificates over TLS-authenticated channels. The use of short validity intervals, combined with deny-list checks, mitigates impersonation by stale or revoked identities.
+%
+%\quad Authorization is policy-driven: certificate attributes determine stream entitlements, retransmission privileges, and bandwidth quotas. This prevents clients from escalating their privileges or gaining unauthorized access to resources. Feedback paths are bound to identities via certificate signatures over monotonic counters, ensuring that reports cannot be forged or replayed, addressing repudiation and tampering simultaneously.
+%
+%\quad Observability supports trust by logging issuance, verification results, and counter violations. These logs feed anomaly detection and accountability frameworks, aligning with the denial of service and repudiation categories by ensuring that attacks leave an auditable trace. Together, authentication, authorization, and trust enforce least-privilege access and ensure that every action within the system is attributable.
+%
+%\subsection{Forward Secrecy and Stream Integrity}
+%\label{sec:forward_secrecy_stream_integrity}
+%
+%\quad To mitigate information disclosure, transport confidentiality relies on TLS with ephemeral elliptic-curve key exchange, ensuring that long-term certificate keys cannot decrypt past sessions. At the application layer, symmetric content keys rotate after a fixed number of matrices, forming epochs. Endpoints retain only the current and immediately previous epoch, securely erasing expired keys to prevent replay and exposure from memory scraping.
+%
+%\quad To counter tampering, each packet is protected by authenticated encryption with unique nonces derived from matrix coordinates. Detached server signatures bind ciphertext and metadata (stream identifiers, epochs, and coordinates) to the origin, ensuring that adversaries cannot splice, reorder, or forge payloads. Structural Reed–Solomon consistency checks validate matrices before decryption, discarding adversarial or malformed inputs early to conserve resources and prevent exhaustion.
+%
+%\quad Together, these mechanisms preserve confidentiality, integrity, and authenticity across time and topology. Even if encryption keys are compromised, exposure is bounded to one epoch; if signing keys are compromised, revocation ensures rapid containment. Stream integrity therefore remains robust even when distributed through untrusted fog relays or mesh peers.
+%
+%\subsection{Double Signature Schema}
+%\label{sec:double_signature_schema}
+%
+%\quad Accountability within the mesh addresses repudiation and denial of service without compromising the end-to-end authenticity of the stream. The server produces a payload signature that authoritatively authenticates content, while retransmitting clients may attach a secondary hop-level signature that authenticates the forwarding act. Verification order enforces that the server’s payload signature is always checked first, ensuring that mesh signatures cannot override origin guarantees.
+%
+%\quad This separation of responsibilities ensures that only the server can originate valid content, while clients remain accountable for retransmission behavior. If a client key leaks, attackers can generate hop signatures but cannot forge server-authenticated payloads. If the server’s encryption key leaks, damage is bounded by epoch rotation. If the server’s signing key leaks, new payloads become forgeable, but deny-list enforcement and rapid certificate re-issuance mitigate long-term damage.
+%
+%\quad By combining end-to-end authenticity with optional hop-level accountability, the double signature schema provides strong defense against repudiation, deters malicious retransmission, and enables policy enforcement inside the mesh, while ensuring that stream integrity remains anchored in the server’s authority.
+%
+%\begin{figure}[H]
+%	\centering
+%	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/erasure_packet.png}
+%	\caption{Erasure Packet Flow}
+%	\label{fig:erasure_packet}
+%\end{figure}
+%\section{Security}
+%\label{Security}
+%%% ----------------------------------------------------------------------------------------------------------%%
+%
+%\quad Security is a central requirement of the proposed livestreaming framework, as established in \textbf{\Cref{sec:requirements}}, and underpins the design decisions introduced in \textbf{\Cref{sec:system architecture}}. Because content is distributed across untrusted fog nodes and peer-to-peer meshes, the system must guarantee confidentiality, integrity, authenticity, and availability even in adversarial environments. To formalize this analysis, we adopt the STRIDE methodology \cite{practicaldevsecops_stride}, a structured framework widely used in security engineering to classify threats into six categories, as illustrated in \textbf{\Cref{fig:stride_model}}:
+%
+%\begin{description}
+%	\item \textbf{Spoofing identity} – Impersonating a legitimate user, device, or service to gain unauthorized access.
+%	\item \textbf{Tampering with data} – Unauthorized modification of data in storage or in transit to disrupt or deceive.
+%	\item \textbf{Repudiation} – Denying that an action was performed, complicating accountability without strong logging or signatures.
+%	\item \textbf{Information disclosure} – Exposing confidential information to unauthorized entities through interception, leakage, or misconfiguration.
+%	\item \textbf{Denial of service (DoS)} – Disrupting or degrading system availability by overwhelming resources or exploiting weaknesses.
+%	\item \textbf{Elevation of privilege} – Gaining access rights beyond those initially granted, enabling attackers to perform restricted operations.
+%\end{description}
+%
+%\begin{figure}[H]
+%	\centering
+%	\includegraphics[width=0.8\textwidth]{Security/STRIDE.png}
+%	\caption{STRIDE security model \cite{practicaldevsecops_stride}}
+%	\label{fig:stride_model}
+%\end{figure}
+%
+%\quad Building on this framework, the subsections that follow apply STRIDE to the proposed architecture. \textbf{\Cref{sec:threat_model}} introduces the Threat Model, defining the adversary’s capabilities and the assets under protection. \textbf{\Cref{sec:authz_trust_model}} presents the Authentication, Authorization, and Trust Model, showing how identities and entitlements are enforced and how revocation is managed. \textbf{\Cref{sec:forward_secrecy_stream_integrity}} addresses Forward Secrecy and Stream Integrity, detailing the mechanisms that preserve confidentiality and authenticity across epochs and network topologies. Finally, \textbf{\Cref{sec:double_signature_schema}} expands on the Double Signature Schema, which integrates accountability in mesh retransmissions without weakening the server’s authority over content authenticity.
+%
+%\subsection{Threat Model}
+%\label{sec:threat_model}
+%
+%\quad The system assumes an adversary with complete control over the network channel, including the ability to observe, delay, drop, reorder, replay, or inject packets. Malicious entities may operate as compromised fog nodes, dishonest clients, or external attackers attempting to subvert cryptographic protocols. Within STRIDE, threats manifest as follows: spoofing through rogue certificates or impersonation; tampering by modifying payloads, FEC symbols, or retransmission requests; repudiation when clients deny having sent feedback or retransmissions; information disclosure through passive capture or memory scraping of keys; denial of service via signature flooding, resource exhaustion, or malformed parity injections; and elevation of privilege by misusing certificate attributes to exceed entitlements.
+%
+%\quad To counter these adversaries, the system enforces strict certificate validation, authenticated encryption, structural validation of matrices, rate-limiting of feedback and retransmissions, and continuous observability of anomalies. Failure containment limits the blast radius of key compromise: a leaked client key enables only hop-level impersonation, a leaked server encryption key affects at most two epochs due to rotation, and a leaked server signing key requires immediate revocation but does not invalidate archived signatures. Because session keys are embedded into encrypted payloads, exposure is strictly bounded to “current plus next,” and structural Reed–Solomon checks discard malformed matrices before costly decryption.
+%
+%\subsection{Authentication, Authorization, and Trust Model}
+%\label{sec:authz_trust_model}
+%
+%\quad Authentication and authorization form the foundation against spoofing and elevation of privilege. Trust anchors in a private Certification Authority (CA) whose root is embedded into all clients. On initialization, servers obtain elliptic-curve certificates through authenticated CSRs, and clients request short-lived certificates over TLS-authenticated channels. Issuance checks that certificates are minted only by the embedded CA. The system does not rely on external CRLs or OCSP; revocation is enforced locally by rejecting future TLS or UDP sessions from denied identities. Short validity intervals therefore mitigate impersonation by stale or revoked certificates.
+%
+%\quad Authorization is policy-driven: certificate attributes determine stream entitlements, retransmission privileges, and bandwidth quotas. Feedback paths are cryptographically bound to identities through ECDSA signatures over monotonic counters, preventing replay and repudiation. Reports with out-of-order counters are dropped, ensuring that only fresh feedback influences retransmission. 
+%
+%\quad Observability supports trust by logging certificate issuance, signature verification, and counter violations. These logs feed anomaly detection and provide accountability in cases of denial of service or repudiation, ensuring that malicious activity leaves an auditable trail.
+%
+%\subsection{Forward Secrecy and Stream Integrity}
+%\label{sec:forward_secrecy_stream_integrity}
+%
+%\quad To mitigate information disclosure, transport confidentiality relies on TLS with ephemeral elliptic-curve key exchange, ensuring that long-term keys cannot decrypt past sessions. At the application layer, symmetric content keys rotate by epoch and are embedded in encrypted payloads. Endpoints retain only the current and next epoch, securely erasing expired keys to reduce exposure. This design bounds damage if a session key leaks.
+%
+%\quad Stream packets follow a sign–then–encrypt model. The server signs each cleartext payload and then encrypts it with AES-256-CBC under the current key, finally signing the outer transmission packet. This double signature ensures authenticity even before decryption. Reed–Solomon parity symbols and retransmissions are signed as well, guaranteeing that injected or malformed shards cannot bypass verification. Structural consistency checks discard corrupted matrices early to conserve resources and prevent denial of service.
+%
+%\quad A residual weakness is that AES-CBC with static IVs leaks equality patterns within an epoch, although the surrounding signatures detect tampering. Migrating to per-packet AEAD with unique nonces (AES-GCM or ChaCha20-Poly1305) would strengthen confidentiality while simplifying the dual signature requirement.
+%
+%\subsection{Double Signature Schema}
+%\label{sec:double_signature_schema}
+%
+%\quad Accountability within the mesh addresses repudiation and denial of service without compromising end-to-end authenticity. The server produces a payload signature that authoritatively authenticates content, while retransmitting clients may attach a hop-level signature that authenticates the forwarding act. Verification order enforces that the server’s payload signature is always checked first, ensuring that mesh signatures cannot override server authority.
+%
+%\quad This separation ensures that only the server can originate valid content, while clients remain accountable for retransmission behavior. If a client key leaks, attackers can forge hop signatures but not payloads. If the server’s encryption key leaks, damage is contained to two epochs. If the server’s signing key leaks, new payloads become forgeable, but archived signatures remain valid and deny-list enforcement contains long-term damage.
+%
+%\quad Mesh retransmission currently lacks authentication in the code, exposing an attack surface where adversaries could inject false requests or replies. Signing mesh messages with the client EC key or tunneling them through the secure gRPC channel would close this gap.
+%
+%\begin{figure}[H]
+%	\centering
+%	\includegraphics[width=0.8\textwidth]{Security/security_flow.png}
+%	\caption{Text-based diagram of security flows}
+%	\label{fig:security_flow}
+%\end{figure}
+
+\section{Security}
+\label{Security}
+%% ----------------------------------------------------------------------------------------------------------%%
+
+\quad Security is a central requirement of the proposed livestreaming framework, as established in \textbf{\Cref{sec:requirements}}, and guides the design decisions introduced in \textbf{\Cref{sec:system architecture}}. Because content is distributed across untrusted fog nodes and peer-to-peer meshes, the system must guarantee confidentiality, integrity, authenticity, and availability even in adversarial environments, to formalize this analysis, we adopt the STRIDE methodology \cite{practicaldevsecops_stride}, a structured framework widely used in security engineering to classify threats into six categories, as illustrated in \textbf{\Cref{fig:stride_model}}:
+
+\begin{description}
+	\item \textbf{Spoofing identity} – Impersonating a legitimate user, device, or service to gain unauthorized access.
+	\item \textbf{Tampering with data} – Unauthorized modification of data in storage or in transit to disrupt or deceive.
+	\item \textbf{Repudiation} – Denying that an action was performed, complicating accountability without strong logging or signatures.
+	\item \textbf{Information disclosure} – Exposing confidential information to unauthorized entities through interception, leakage, or misconfiguration.
+	\item \textbf{Denial of service (DoS)} – Disrupting or degrading system availability by overwhelming resources or exploiting weaknesses.
+	\item \textbf{Elevation of privilege} – Gaining access rights beyond those initially granted, enabling attackers to perform restricted operations.
+\end{description}
+
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.75\linewidth]{DesignAndImplementation/android_application.png}
-	\captionof{figure}{\label{fig:}Android application Diagram}
+	\includegraphics[width=0.8\textwidth]{Security/STRIDE.png}
+	\caption{STRIDE security model \cite{practicaldevsecops_stride}}
+	\label{fig:stride_model}
+\end{figure}
+
+\quad Building on this framework, the subsections that follow apply STRIDE to the proposed architecture. \textbf{\Cref{sec:threat_model}} introduces the Threat Model, defining the adversary’s capabilities and the assets under protection. \textbf{\Cref{sec:authz_trust_model}} presents the Authentication, Authorization, and Trust Model, showing how identities and entitlements are enforced and how revocation is managed. \textbf{\Cref{sec:forward_secrecy_stream_integrity}} addresses Forward Secrecy and Stream Integrity, detailing the mechanisms that preserve confidentiality and authenticity across epochs and network topologies. Finally, \textbf{\Cref{sec:double_signature_schema}} expands on the Double Signature Schema, which integrates accountability in mesh retransmissions without weakening the server’s authority over content authenticity.
+
+\subsection{Threat Model}
+\label{sec:threat_model}
+
+\quad The system assumes an adversary with complete control over the network channel, including the ability to observe, delay, drop, reorder, replay, or inject packets, as illustrated in \textbf{\Cref{fig:security_flow}}. Malicious entities may operate as compromised fog nodes, dishonest clients, or external attackers attempting to subvert cryptographic protocols. Within STRIDE, threats manifest as follows: spoofing through rogue certificates or impersonation; tampering by modifying payloads, FEC symbols, or retransmission requests; repudiation when clients deny having sent feedback or retransmissions; information disclosure through passive capture or memory scraping of keys; denial of service via signature flooding, resource exhaustion, or malformed parity injections; and elevation of privilege by misusing certificate attributes to exceed entitlements.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{Security/security_flow.png}
+	\caption{Security flows between server and client}
+	\label{fig:security_flow}
+\end{figure}
+
+\quad To counter these adversaries, the system enforces strict certificate validation, authenticated encryption, structural validation of matrices, rate-limiting of feedback and retransmissions, and continuous observability of anomalies. Key compromise is contained to limit its effects: a leaked client key permits only hop-level impersonation, a leaked server encryption key exposes at most two epochs due to rotation, and a leaked server signing key requires immediate revocation but leaves archived signatures valid. Because session keys are embedded into encrypted payloads, exposure is strictly bounded to “current plus next,” and structural Reed–Solomon checks discard malformed matrices before costly decryption.
+
+\subsection{Authentication, Authorization, and Trust Model}
+\label{sec:authz_trust_model}
+
+\quad Authentication and authorization protect against spoofing and privilege escalation, relying on trust anchors in a private Certification Authority (CA) whose public key is embedded in all clients. During initialization, servers obtain elliptic-curve certificates through authenticated Certificate Signing Requests (CSRs), while clients receive short-lived certificates over TLS-authenticated channels, the system avoids dependence on external Certificate Revocation Lists (CRLs) or the Online Certificate Status Protocol (OCSP), both of which are mechanisms for checking whether certificates have been revoked, to eliminate latency and availability risks tied to third-party validation services. Instead, revocation is enforced locally by rejecting future TLS or UDP sessions from denied identities, short validity intervals further mitigate impersonation by stale or revoked certificates, \textbf{\Cref{fig:cert_exchange}} shows the certificate exchange data structures, including client requests, server-issued certificates, and validation responses. These structures enforce trust anchors and prevent spoofing.
+
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.95\textwidth]{Security/cert_exchange.png}
+	\caption{Certificate request and validation messages}
+	\label{fig:cert_exchange}
 \end{figure}
 
 
-\paragraph{Android Rust Linker}
-\label{sec:android rust linker}
+\quad Authorization is policy-driven: issued certificates bind client identities to permissions enforced by the server. Feedback paths are cryptographically bound to identities through ECDSA signatures over monotonic counters, preventing replay and repudiation, reports with out-of-order counters are dropped, ensuring that only fresh feedback influences retransmission, observability supports trust by logging certificate issuance, signature verification, and counter violations. These logs feed anomaly detection and provide accountability in cases of denial of service or repudiation, ensuring that malicious activity leaves an auditable trail.
 
-The Android Rust linker acts as the bridge between the abstract client library and the Android JNI. It leverages the org.mozilla.rust-android-gradle.rust-android plugin to automate compilation and linking, provided that the aarch64-linux-android toolchains are installed locally. This integration allows the client library to be embedded seamlessly into an Android application without manual configuration.
+\subsection{Forward Secrecy and Stream Integrity}
+\label{sec:forward_secrecy_stream_integrity}
 
-Because JNI calls are costly, their use is minimized and never employed for transferring large amounts of data. Instead, JNI handles control operations such as starting and stopping the client, initializing logging to adb logcat, retrieving client metrics, dynamically adding or removing sockets, and managing threads. Decoded data from the client is not transferred directly through JNI but is instead passed to the Java layer using a file descriptor, which avoids overhead and preserves performance.
+\quad To mitigate information disclosure, transport confidentiality relies on TLS with ephemeral elliptic-curve key exchange, ensuring that long-term keys cannot decrypt past sessions, while at the application layer symmetric content keys rotate by epoch and are embedded in encrypted payloads, with endpoints retaining only the current and next epoch and securely erasing expired keys to reduce exposure. \textbf{\Cref{fig:key_rotation}} shows the data structures that support this mechanism, including session keys, certificates, and auxiliary metadata exchanged between clients and servers. These structures enforce that only valid epoch keys are distributed and embedded into payloads, ensuring bounded forward secrecy.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.85\textwidth]{Security/key_rotation.png}
+	\caption{Data structures for key rotation and forward secrecy}
+	\label{fig:key_rotation}
+\end{figure}
+
+\quad Stream packets follow an encrypt–then–sign model: the server encrypts each cleartext payload with AES-256-CBC under the current key and then signs the resulting transmission packet. This layered scheme guarantees authenticity after decryption, since both encrypted payloads and their signatures are validated together, Reed–Solomon parity symbols and retransmissions are also signed, preventing attackers from injecting forged or malformed shards. Structural consistency checks discard corrupted matrices early to conserve resources and mitigate denial-of-service attempts. \textbf{\Cref{fig:packet_protection}} illustrates the packet-level data structures, including transmission packets, retransmission packets, and XOR recovery blocks, each bound to signatures that ensure the integrity of both primary and recovery streams.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\textwidth]{Security/packet_protection.png}
+	\caption{Data structures for transmission and retransmission packet integrity}
+	\label{fig:packet_protection}
+\end{figure}
+
+\quad A residual weakness is that AES-CBC with static IVs leaks equality patterns within an epoch, although the surrounding signatures detect tampering, migrating to per-packet AEAD with unique nonces (AES-GCM or ChaCha20-Poly1305) would strengthen confidentiality while simplifying the \textbf{\nameref{sec:double_signature_schema}} requirements.
+
+
+\subsection{Double Signature Schema}
+\label{sec:double_signature_schema}
+
+\quad Accountability within the mesh addresses repudiation and denial of service without compromising end-to-end authenticity, the server produces a payload signature that authoritatively authenticates content, while retransmitting clients may attach a hop-level signature that authenticates the forwarding act. Verification order enforces that the server’s payload signature is always checked first, ensuring that mesh signatures cannot override server authority. 
+
+\quad The double signature schema enforces accountability within the mesh without weakening end-to-end authenticity, the server generates a payload signature that authoritatively authenticates content, while forwarding clients append a hop-level signature that authenticates their retransmission. Verification order ensures that the server’s payload signature is always validated first, preventing mesh-level signatures from overriding server authority, this separation guarantees that only the server can originate valid content, while clients remain accountable for their forwarding behavior.
+
+\quad Retransmission and recovery integrate directly with this schema, when a client authenticates a received packet, it signs the packet with its private key before forwarding, peers verify the hop signature and query the server to confirm certificate validity. During recovery, Reed–Solomon decoding reconstructs missing packets, which are then re-signed before being reinserted into the stream, \textbf{\Cref{fig:erasure_packet}} illustrates this process, showing how both original and parity packets carry signatures and how reconstructed packets obtain a fresh signature.
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1\linewidth]{DesignAndImplementation/erasure_packet.png}
+	\caption{Erasure Packet Flow}
+	\label{fig:erasure_packet}
+\end{figure}
+
+\newpage
+
+\section{Conclusion}
+\label{sec:design and implementation conclusion}
+
+
+\quad The \textbf{\nameref{Design and Implementation}} chapter consolidates the transition from requirements to a functioning prototype, showing how architectural choices and mechanisms come together into a coherent system. The requirements outlined in \textbf{\Cref{sec:requirements}} defined the scope and guided development, while the architecture in \textbf{\Cref{sec:system architecture}} established the modular pipeline that underpins secure and resilient streaming. Mobile edge offloading in \textbf{\Cref{sec:mobile edge cloud offloading}} extended this foundation with mechanisms to reduce latency and balance computation across distributed resources, and the frontend in \textbf{\Cref{sec:frontend implementation}} demonstrated how the framework integrates into practical applications. Security analysis in \textbf{\Cref{Security}} explains the adversarial model, the trust and authorization framework, and the cryptographic mechanisms that preserve confidentiality, authenticity, and accountability across the system. 
+
+\quad Together, these chapters form a layered framework that evolves from abstract requirements to a deployable solution, preparing the ground for the evaluation in \textbf{\Cref{Evaluation}}, where the system will be tested under controlled scenarios to measure performance, reliability, scalability, and to validate that the implemented mechanisms fulfill the defined requirements.
