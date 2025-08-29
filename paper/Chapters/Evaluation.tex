@@ -1,19 +1,17 @@
-% Chapter Template
-
-% Main chapter title
-%\chapter[toc version]{doc version}
+%% Chapter Template
+%
+%% Main chapter title
+%%\chapter[toc version]{doc version}
 \chapter{Evaluation}
 \label{Evaluation}
+%
 
-\quad This chapter evaluates the proposed livestreaming framework by testing the implemented system under controlled and realistic network conditions, the goal is to collect quantitative data that demonstrates how the architecture performs, building on the design and mechanisms described in \textbf{\Cref{Design and Implementation}}.
-
-\quad The analysis begins by outlining the experimental setup, including hardware platforms, network configurations, and test scenarios. Because of limited physical equipment, part of the evaluation relies on simulated tests that reproduce large-scale conditions, and the other ia a real-world experiment is conducted using the Android implementation from \textbf{\Cref{sec:android frontend}} to confirm the feasibility of client offloading in practice.
-
+\quad This chapter evaluates the proposed livestreaming framework under controlled and realistic network conditions. The objective is to collect quantitative data that demonstrates how the architecture performs, extending the mechanisms introduced in \textbf{\Cref{Design and Implementation}} into practice. To achieve this, \textbf{\Cref{sec:evaluation environment}} first describes the experimental setup, including hardware platforms, containerized network configurations, and monitoring tools. \textbf{\Cref{sec:simulated results}} presents results from the simulated scenarios, highlighting the effects of retransmission, forward error correction, and reinforcement learning. \textbf{\Cref{sec:deployment results}} reports findings from real-world tests using the \textbf{\nameref{sec:android frontend}}, focusing on the feasibility of fog offloading. Finally, \textbf{\Cref{sec:discussion}} analyzes the outcomes across both environments and relates them to the system’s design goals.
 
 \section{Evaluation Environment}
 \label{sec:evaluation environment}
 
-\quad The evaluation was conducted inside a containerized environment designed for reproducibility and scalability, where the streaming server, Restreamer, multiple client replicas, and the monitoring stack each ran inside Docker containers connected to a shared bridge network \textbf{\Cref{fig:deployment}}, deployed on a \textbf{Razer Blade 15 Advanced Model (Mid 2021)} equipped with an Intel i7-11800H CPU (16 threads, up to 4.6,GHz), an NVIDIA RTX 3070 Mobile GPU, 64GB of RAM, and running Manjaro Linux with kernel version 6.6.99.
+\quad The evaluation was conducted in a Docker-based containerized environment designed for reproducibility and scalability, where the \nameref{sec:streaming server}, Restreamer, multiple client replicas, and the monitoring stack each ran inside containers connected to a shared bridge network \textbf{\Cref{fig:deployment}}. The system was deployed on a \textbf{Razer Blade 15 Advanced Model (Mid 2021)} equipped with an Intel i7-11800H CPU (16 threads, up to 4.6\,GHz), an NVIDIA RTX 3070 Mobile GPU, 64GB of RAM, and running Manjaro Linux with kernel version 6.6.99, because of limited physical equipment, part of the evaluation relies on simulated tests that reproduce large-scale conditions, while the remainder consists of a real-world experiment using the Android implementation from \textbf{\Cref{sec:android frontend}} to confirm the feasibility of client offloading in practice.
 
 \begin{figure}[H]
 	\centering
@@ -22,11 +20,10 @@
 	\label{fig:deployment}
 \end{figure}
 
-
 The roles of these components within the environment can be described as follows:
 
 \begin{itemize}
-	\item \textbf{Restreamer} ingested a live video source and re-encoded it into a format suitable for multicast delivery. This ensured a consistent input stream across experiments and isolated results from variability in video input.  
+	\item \textbf{Restreamer} \cite{restreamer} ingested a live video source and re-encoded it into a format suitable for multicast delivery, this ensured a consistent input stream across experiments and isolated results from variability in video input, as shown in \Cref{fig:restreamer}.  
 	
 	\begin{figure}[H]
 		\centering
@@ -35,7 +32,7 @@ The roles of these components within the environment can be described as follows
 		\label{fig:restreamer}
 	\end{figure}
 	
-	\item \textbf{tcgui} configured packet loss on the host-side \texttt{vethXXX} interfaces of the client containers. A Bash script automated this by scanning for containers with the prefix \texttt{iris-client-*}, mapping each client’s \texttt{eth0} to its paired veth device, assigning a random packet loss rate, and posting the configuration to the \texttt{tcgui} HTTP API. This ensured that every client container experienced a reproducible but randomized loss pattern at its ingress interface, \textbf{\Cref{fig:tcgui}} illustrates the \texttt{tcgui} interface for manual rule application, while \textbf{\Cref{alg:packet loss script}} presents the automation script.
+	\item \textbf{tcgui} \cite{tcgui} configured packet loss on the host-side \texttt{vethXXX} interfaces of the client containers. A Bash script automated this by scanning for containers with the prefix \texttt{iris-client-*}, mapping each client’s \texttt{eth0} to its paired veth device, assigning a random packet loss rate, and posting the configuration to the \texttt{tcgui} HTTP API, this ensured that every client container experienced a reproducible but randomized loss pattern at its ingress interface. The graphical interface was used during development to validate configurations, while the script was employed during evaluation to guarantee consistency across runs, \Cref{fig:tcgui} illustrates the \texttt{tcgui} interface for manual rule application, while \Cref{fig:random loss script} presents the automation script.
 	
 	
 	\begin{figure}[H]
@@ -45,16 +42,16 @@ The roles of these components within the environment can be described as follows
 		\label{fig:tcgui}
 	\end{figure}
 	
+	\item \textbf{Prometheus} \cite{prometheus} operated by periodically scraping data from an exporter embedded in the streaming server, storing the collected time series in its database for retrieval and analysis.
 	
-	\item \textbf{Prometheus} operated by periodically scraping data from an exporter embedded in the streaming server, storing the collected time series in its database for retrieval and analysis.
-	
-	\item \textbf{Grafana} connected to Prometheus and provided interactive dashboards to visualize these server-side metrics in real time and to archive them for later analysis. Dashboards tracked bandwidth usage, retransmission activity, and playback stability across all experiments.  
+	\item \textbf{Grafana}~\cite{grafana} connected to Prometheus and provided interactive dashboards to visualize these server-side metrics in real time and to archive them for later analysis. Dashboards tracked bandwidth usage, retransmission activity, and playback stability across all experiments, as illustrated in \Cref{fig:grafana dashboard}.
+
 \end{itemize}
 
 \section{Simulated Results}
+\label{sec:simulated results}
 
-\quad The evaluation covers multiple scenarios that toggle retransmission, forward error correction (FEC), artificial intelligence (AI) control, and fog offloading. Table~\ref{tab:scenarios} summarizes their composition. All scenarios used a fixed \(10 \times 10\) FEC matrix configuration to ensure comparability of results.  
-
+\quad The evaluation covers multiple scenarios that toggle retransmission, forward error correction (FEC), artificial intelligence (AI) control, and fog offloading. \textbf{\Cref{tab:scenarios}} summarizes their composition. 
 
 \begin{table}[H]
 	\centering
@@ -63,169 +60,101 @@ The roles of these components within the environment can be described as follows
 		\hline
 		baseline                      & Off                      & None            & Off         & Off          \\
 		ret\_on-fec\_off-ai\_off      & On                       & None            & Off         & Off          \\
-		RL\_ret\_on-fog\_on           & On                       & None            & RL          & On           \\
-		ret\_off-fec\_off-ai\_on      & Off                      & None            & On          & Off          \\
+		RL\_ret\_on-fog\_on           & On                       & None            & Off         & On           \\
+		ret\_off-fec\_off-ai\_on      & Off                      & AI              & On          & Off          \\
 		ret\_off-fec\_2x2-ai\_off     & Off                      & 2x2             & Off         & Off          \\
 		ret\_off-fec\_1x1-ai\_off     & Off                      & 1x1             & Off         & Off          \\
-		ret\_on-fec\_off-ai\_on       & On                       & None            & On          & Off          \\
-		RL\_baseline                  & Off                      & None            & RL          & Off          \\
+		ret\_on-fec\_off-ai\_on       & On                       & AI              & On          & Off          \\
+		RL\_baseline                  & Off                      & None            & Off         & Off          \\
 		ret\_on-fec\_2x2-ai\_off      & On                       & 2x2             & Off         & Off         
 	\end{tabular}
-	\caption{Composition of scenarios by retransmission}
-	\label{tab:scenario_composition}
+	\caption{Composition of scenarios by retransmission, FEC, AI, and fog offloading.}
+	\label{tab:scenarios}
 \end{table}
 
-
+\quad To ensure fair comparison across experiments, all scenarios employed a fixed \(10 \times 10\) data matrix configuration, a \textbf{\nameref{sec:streaming server}} configuration example is shown in \textbf{\Cref{fig:server config}}.  
 
 
 \subsection{Simulated Baseline}
 
-%\quad In the baseline trace, the sender rate averages 2661 kbps while the data source rate remains near 2129 kbps. Protocol overhead stabilizes at 20.0\%, with only minor fluctuations between 17.8\% and 22.3\%. Average packet loss across clients is 2.40\% (\Cref{fig:packet_loss}), and total missed deadlines reach 19,580 (\Cref{fig:missed_deadlines}). Because no forward error correction (FEC) is applied, the sender--source rate gap reflects retransmissions and control traffic only. The stability of both metrics indicates a steady channel with modest headroom.
-\quad The baseline trace shows a sender rate of 2661 kbps against a source rate of 2129 kbps, producing a stable 20.0\% overhead (Figure~\ref{fig:overhead}). Average packet loss reaches 2.40\% across clients (Figure~\ref{fig:loss}), while missed deadlines total 19,580 (Figure~\ref{fig:deadlines}). With no FEC applied, the sender–source gap reflects only retransmissions and control traffic, confirming a steady but modestly provisioned channel.  
+\quad The baseline trace shows a sender rate of 2661 kbps against a source rate of 2129 kbps, producing a stable 20.0\% overhead (\textbf{\Cref{fig:overhead}}). Average packet loss reaches 2.40\% across clients (\textbf{\Cref{fig:packet_loss}}), while missed deadlines total 19,580 (\textbf{\Cref{fig:missed_deadlines}}). Because no FEC was applied, the difference between sender and source rates results solely from protocol overhead introduced by metadata, signatures, and padding, indicating a steady channel with modest but consistent headroom.
 
 \subsection{Impact of Forward Error Correction}
 
-%\paragraph{1x1 FEC}
-%\quad With \texttt{ret\_off-fec\_1x1-ai\_off}, the sender rate increases to 3012 kbps, while the source rate remains constant at 2140 kbps. Protocol overhead rises to 34.5\% (\Cref{fig:overhead}), about 14 percentage points higher than baseline. Average packet loss decreases to 3.73\% (\Cref{fig:packet_loss}), and missed deadlines climb to 33,437 (\Cref{fig:missed_deadlines}). The higher overhead reflects parity signaling that expands total throughput without raising application demand.
+\quad With 1x1 FEC (\texttt{ret\_off-fec\_1x1-ai\_off}), the sender rate increases to 3012 kbps while the source rate remains 2140 kbps. Overhead rises to 34.5\% (\textbf{\Cref{fig:overhead}}), roughly 14\% above baseline. Packet loss decreases to 3.73\% (\textbf{\Cref{fig:packet_loss}}), while missed deadlines climb to 33,437 (\textbf{\Cref{fig:missed_deadlines}}).
 
-%\paragraph{2x2 FEC}
-%\quad In the stronger \texttt{ret\_off-fec\_2x2-ai\_off} case, sender rate grows further to 3854 kbps (\Cref{fig:egress}), overhead rises to 44.7\% (\Cref{fig:overhead}), and packet loss reaches 3.65\% (\Cref{fig:packet_loss}). Missed deadlines total 27,730 (\Cref{fig:missed_deadlines}). Compared to baseline, overhead expands by nearly 25 percentage points, confirming that stronger coding consumes more capacity. The near-constant source rate proves that the sender’s extra throughput carries redundancy instead of additional payload.
+\quad With stronger 2x2 FEC (\texttt{ret\_off-fec\_2x2-ai\_off}), sender rate grows to 3854 kbps, overhead reaches 44.7\% (\textbf{\Cref{fig:overhead}}), and packet loss is 3.65\% (\textbf{\Cref{fig:packet_loss}}). Missed deadlines fall slightly to 27,730 (\textbf{\Cref{fig:missed_deadlines}}). Compared to baseline, overhead expands by nearly 25\%, confirming that stronger coding consumes more bandwidth without significant reliability gains.  
 
-\quad With 1x1 FEC (\texttt{ret\_off-fec\_1x1-ai\_off}), the sender rate increases to 3012 kbps while the source rate remains 2140 kbps. Overhead rises to 34.5\% (Figure~\ref{fig:overhead}), roughly 14 percentage points above baseline. Packet loss decreases to 3.73\% (Figure~\ref{fig:loss}), while missed deadlines climb to 33,437 (Figure~\ref{fig:deadlines}).  
-
-\quad With stronger 2x2 FEC (\texttt{ret\_off-fec\_2x2-ai\_off}), sender rate grows to 3854 kbps, overhead reaches 44.7\%, and packet loss is 3.65\%. Missed deadlines fall slightly to 27,730. Compared to baseline, overhead expands by nearly 25 percentage points, confirming that stronger coding consumes more bandwidth without significant reliability gains. The constant source rate across both FEC cases shows that extra throughput carries only redundancy.  
-
-
-
-\subsection{Reinforcement Learning Adaptation}
-
-%\quad The \texttt{ret\_off-fec\_off-ai\_on} scenario exhibits an aggressive adaptation pattern. The sender rate doubles to 5489 kbps (\Cref{fig:egress}), while the data source rate stays at 2125 kbps. Protocol overhead escalates to 57.5\% (\Cref{fig:overhead}), roughly 38 percentage points above baseline and 13 points above 2x2 FEC. Packet loss rises slightly to 2.76\% (\Cref{fig:packet_loss}), while total missed deadlines climb to 30,166 (\Cref{fig:missed_deadlines}). The AI controller achieves higher throughput by injecting additional redundancy and control signaling, improving robustness at the expense of efficiency.
-
-%\quad When retransmission is enabled without FEC but with AI on (\texttt{ret\_on--fec\_off--ai\_on}), sender rate and overhead reach comparable levels (\Cref{fig:overhead}, \Cref{fig:egress}), showing that AI dynamics dominate protocol behavior irrespective of retransmission.
-
-\quad In the \texttt{ret\_off-fec\_off-ai\_on} scenario, sender rate doubles to 5489 kbps while the source rate remains at 2125 kbps. Overhead escalates to 57.5\%, almost 40 points above baseline (Figure~\ref{fig:overhead}). Packet loss rises slightly to 2.76\%, and missed deadlines reach 30,166. The AI controller improves robustness but at the cost of excessive redundancy. Enabling retransmission with AI (\texttt{ret\_on-fec\_off-ai\_on}) produces comparable trends, showing that AI dominates protocol behavior regardless of retransmission.  
 
 \subsection{Retransmission Effects}
 
-%\quad Retransmission alone, without FEC or AI, holds sender rates near 2675 kbps (\Cref{fig:egress}) with overhead at 20.1\% (\Cref{fig:overhead}). Packet loss improves slightly to 1.85\% (\Cref{fig:packet_loss}), and total missed deadlines reduce to 9538 (\Cref{fig:missed_deadlines}), about half of the baseline. This demonstrates that retransmission enhances timeliness without inflating overhead.
+\quad Retransmission alone (\texttt{ret\_on-fec\_off-ai\_off}) keeps sender rates at 2675 kbps with overhead at 20.1\%. Packet loss improves to 1.85\% (\textbf{\Cref{fig:packet_loss}}), and missed deadlines fall to 9538 (\textbf{\Cref{fig:missed_deadlines}}), about half of the baseline. This shows that retransmission improve delivery withou increasing overhead.  
 
-%\quad Combining retransmission with strong FEC (\texttt{ret\_on-fec\_2x2-ai\_off}) yields a sender rate of 3838 kbps and overhead of 44.8\%, closely mirroring the non-retransmission 2x2 case (\Cref{fig:overhead}, \Cref{fig:egress}). Packet loss, however, jumps to 6.44\% (\Cref{fig:packet_loss}), and deadlines missed reach 42,377 (\Cref{fig:missed_deadlines}). Retransmission smooths overhead oscillations but does not significantly reduce losses in high-load conditions.
+\quad When retransmission combines with strong FEC (\texttt{ret\_on-fec\_2x2-ai\_off}), sender rate and overhead resemble the 2x2 FEC case (\textbf{\Cref{fig:overhead}}), but packet loss increases to 6.44\% (\textbf{\Cref{fig:packet_loss}}) and missed deadlines surge to 42,377 (\textbf{\Cref{fig:missed_deadlines}}). Retransmission smooths the fluctuations but does not counteract the inefficiency of heavy coding.
 
-\quad Retransmission alone (\texttt{ret\_on-fec\_off-ai\_off}) keeps sender rates at 2675 kbps with overhead at 20.1\%, nearly identical to baseline. Packet loss improves to 1.85\%, and missed deadlines fall sharply to 9538, about half of the baseline. This shows that retransmission enhances timeliness without inflating overhead.  
+\subsection{Reinforcement Learning Adaptation}
 
-\quad When retransmission combines with strong FEC (\texttt{ret\_on-fec\_2x2-ai\_off}), sender rate and overhead resemble the 2x2 FEC case, but packet loss increases to 6.44\% and missed deadlines surge to 42,377. Retransmission smooths fluctuations but does not counteract the inefficiency of heavy coding.  
-
-
+\quad In the \texttt{ret\_off-fec\_off-ai\_on} scenario, sender rate doubles to 5489 kbps while the source rate remains at 2125 kbps. Overhead escalates to 57.5\%, almost 40\% above baseline (\textbf{\Cref{fig:overhead}}). Packet loss rises slightly to 2.76\% (\textbf{\Cref{fig:packet_loss}}), and missed deadlines reach 30,166 (\textbf{\Cref{fig:missed_deadlines}}). The AI controller improves robustness but at the cost of excessive redundancy. Enabling retransmission with AI (\texttt{ret\_on-fec\_off-ai\_on}) produces comparable trends, showing that AI dominates protocol behavior regardless of retransmission.  
 
 \section{Deployment Results}
+\label{sec:deployment results}
 
-%\subsection{Real World Baseline}
+\quad The deployment experiments complement the simulated scenarios by validating the framework under real operating conditions. All configurations follow the same composition summarized in \textbf{\Cref{tab:scenarios}}, and the data matrix remains fixed at \(10 \times 10\) to ensure comparability with the earlier tests. In contrast to the containerized environment, these results rely on the \textbf{\nameref{sec:android frontend}}, which provides a practical mobile client and enables testing of fog offloading mechanisms on real devices. The experiments were conducted using an Asus RT-AC3200 access point running firmware version 3.0.0.4.382.52651, and mobile clients were Google Pixel 7a devices running Android build AP2A.240605.024. The goal is to confirm that the mechanisms designed in \textbf{\Cref{sec:mesh networking}} also operate efficiently when executed in practice.
+
 \subsection{Deployment Baseline}
-\quad In \texttt{RL\_baseline}, sender rate averages 2696 kbps, source rate 2143 kbps, and overhead remains low at 20.0\%. Packet loss is minimized to 1.80\%, and missed deadlines drop sharply to 9464. This indicates that reinforcement learning stabilizes performance while keeping overhead efficiency similar to baseline.  
 
-%\subsection{Real World with Fog}
+\quad In the real-world baseline scenario (\texttt{RL\_baseline}), the sender rate averages 2696 kbps, the source rate 2143 kbps, and overhead remains low at 20.0\% (\textbf{\Cref{fig:overhead}}), while packet loss is minimized to 1.80\% (\textbf{\Cref{fig:packet_loss}}) and missed deadlines total 9464 (\textbf{\Cref{fig:missed_deadlines}}).
+
 \subsection{Fog Offloading}
-\quad In \texttt{RL\_ret\_on-fog\_on}, sender rate rises modestly to 2695 kbps, source rate to 2154 kbps, and overhead stays close to 20.1\%. Packet loss is 2.50\%, and missed deadlines fall further to 1915. The RL controller achieves robustness comparable to AI-driven scenarios but without the steep overhead penalties.
 
-In the real-world baseline (\texttt{RL\_baseline}), sender rate averages 2696 kbps, source rate 2143 kbps, and overhead remains at 20.0\%. Packet loss drops to 1.80\%, and missed deadlines reduce to 9464. This confirms that reinforcement learning stabilizes performance without overhead penalties.  
-
-With fog offloading (\texttt{RL\_ret\_on-fog\_on}), sender rate holds at 2695 kbps, source rate rises to 2154 kbps, and overhead stays at 20.1\%. Packet loss is 2.50\%, and missed deadlines fall further to 1915. Fog-assisted RL achieves robustness comparable to AI scenarios but without high overhead.  
-
+\quad With fog offloading (\texttt{RL\_ret\_on-fog\_on}), the sender rate holds at 2695 kbps, the source rate rises slightly to 2154 kbps, and overhead remains stable at 20.1\% (\textbf{\Cref{fig:overhead}}), packet loss increases marginally to 2.50\% (\textbf{\Cref{fig:packet_loss}}), but missed deadlines drop significant to 1915 (\textbf{\Cref{fig:missed_deadlines}}), showing that offloading improves playback continuity under real operating conditions.
 
 
 \begin{figure}[H]
 	\centering
 	\includegraphics[width=1\textwidth]{Evaluation/Sem Título.png}
-	\caption{Performance metrics across different streaming scenarios, including sender and source rates, overhead, packet loss, missed deadlines, and FEC configuration.}
-	\label{tab:streaming_scenarios}
+	\caption{Performance metrics across different streaming scenarios.}
+	\label{fig:streaming_scenarios}
 \end{figure}
-
-
-
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{Evaluation/chart(3).png}
-	\caption{Average packet loss (\%) across clients by scenario}
+	\includegraphics[width=0.9\textwidth]{Evaluation/packet_loss.png}
+	\caption{Average packet loss (\%) across clients by scenario.}
 	\label{fig:packet_loss}
 \end{figure}
 
-
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{Evaluation/chart(5).png}
-	\caption{Total missed deadlines across clients by scenario}
+	\includegraphics[width=0.9\textwidth]{Evaluation/missed_deadlines.png}
+	\caption{Total missed deadlines across clients by scenario.}
 	\label{fig:missed_deadlines}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{Evaluation/chart(4).png}
-	\caption{Average protocol overhead (\%) across scenarios}
+	\includegraphics[width=0.9\textwidth]{Evaluation/overhead.png}
+	\caption{Average protocol overhead (\%) across scenarios.}
 	\label{fig:overhead}
 \end{figure}
 
 \begin{figure}[H]
 	\centering
-	\includegraphics[width=0.9\textwidth]{Evaluation/output.png}
-	\caption{Average packet loss (\%) across clients by scenario}
+	\includegraphics[width=0.9\textwidth]{Evaluation/egress.png}
+	\caption{Total egress across scenarios (mean multicast sender rate).}
 	\label{fig:egress}
 \end{figure}
 
 \section{Discussion}
+\label{sec:discussion}
 
-%Three insights emerge from the data. First, static FEC increased overhead without improving reliability, often worsening playback continuity. Second, retransmissions alone provided the best trade-off, reducing packet loss to below 2\% with moderate bandwidth. Third, reinforcement learning improved efficiency compared to fixed FEC when retransmissions were enabled, but it did not outperform the retransmissions-only case.  
+\quad The results show that static FEC, while simple to deploy, delivered poor efficiency under the observed Wi-Fi loss patterns, moving from no FEC to 1x1 and then 2x2 product codes increased overhead from a protocol baseline of roughly 20\% to 34.5\% and 44.7\% respectively, (\textbf{\Cref{fig:overhead}}), and didnt reduce packet loss or deadline misses to competitive levels (\textbf{\Cref{fig:packet_loss}}, \textbf{\Cref{fig:missed_deadlines}}), this demonstrates that product codes still encounter deadlock configurations when bursts intersect row and column parities, making the added redundancy insufficient to improve delivery.
 
-%Unicast dominated retransmission traffic, with multicast contributing less than 17\%, suggesting that further tuning of coding and multicast selection thresholds could yield stronger gains.
+\quad Targeted recovery via retransmission, coordinated by the scheduler in \textbf{\Cref{sec:network scheduler framework}}, produced the most favorable simulated trade-off, keeping sender rate and overhead aligned with baseline (\textbf{\Cref{fig:overhead}}), retransmission cut average loss to 1.85\% and halved missed deadlines to 9538 (\textbf{\Cref{fig:packet_loss}}, \textbf{\Cref{fig:missed_deadlines}}). This outcome is consistent with a design that reacts to actual erasures instead of protecting every packet in advance, the multicast–unicast cycle selected actions from the live NC matrix and enforced per-client and aggregate budgets, which limited waste and focused bandwidth where it changed outcomes. The aggregate egress remained stable (\textbf{\Cref{fig:egress}}), confirming that the gain came from smarter allocation rather than higher send rate, however, retransmission traffic was dominated by unicast, with multicast contributing under one fifth of recovery, so there is headroom to increase coding gains by raising XOR parity opportunities or adjusting selection thresholds to favor beneficial overlaps.
 
+\quad The learning-driven configuration in \textbf{\Cref{sec:reinforcement learning}} adapted aggressively but not efficiently, in the simulated \texttt{ret\_off-fec\_off-ai\_on} case, sender rate doubled and overhead rose to 57.5\% (\textbf{\Cref{fig:overhead}}) while packet-level reliability changed little and deadline misses remained high (\textbf{\Cref{fig:packet_loss}}, \textbf{\Cref{fig:missed_deadlines}}). Discretized loss bins and a reward that penalizes loss more than redundancy steered the policy toward sustained parity increases, which improved resilience on paper but paid for it with redundant traffic that did not convert into packet recovery. 
 
-\quad The results reveal several insights. First, static FEC consumed substantial bandwidth without improving reliability, often worsening playback continuity. Second, retransmission alone provided the most efficient trade-off, cutting packet loss below 2\% and halving missed deadlines with only marginal overhead. Third, reinforcement learning improved efficiency compared to static FEC, but it did not outperform the retransmissions-only case.  
+\quad The real-world baseline held the protocol overhead near 20\% with 1.80\% loss and 9464 missed deadlines, closely matching the simulated retransmission-only efficiency point (\textbf{\Cref{fig:overhead}}, \textbf{\Cref{fig:packet_loss}}, \textbf{\Cref{fig:missed_deadlines}}). Enabling fog offloading kept overhead stable at 20.1\% and sender egress unchanged (\textbf{\Cref{fig:overhead}}, \textbf{\Cref{fig:egress}}) yet dropped missed deadlines to 1915, a large reduction despite a modest increase in raw loss to 2.50\% (\textbf{\Cref{fig:packet_loss}}, \textbf{\Cref{fig:missed_deadlines}}). This pattern indicates that mesh-assisted recovery shortened the path to missing packets enough to meet playback deadlines even when link losses persisted, which is exactly the role anticipated in \textbf{\nameref{sec:mobile edge cloud offloading}}. Because server overhead measures only the ratio between source and transmitted payloads, the stability of \textbf{\Cref{fig:overhead}} shows that offloading shifted recovery work to nearby devices instead of pushing more redundancy through the access point.
 
-\quad Most importantly, the real-world evaluation confirmed that fog offloading was both functional and beneficial. In the \texttt{RL\_ret\_on-fog\_on} scenario, missed deadlines dropped to just 1915, an 80\% reduction compared to the \texttt{RL\_baseline}, while overhead remained nearly identical at 20.1\%. This demonstrates that offloading improved timeliness and playback stability without the steep bandwidth penalties seen in AI-driven or FEC-heavy configurations. The results validate the design goal of leveraging nearby devices and fog resources to enhance performance under realistic conditions.  
+\quad Taken together, the evidence supports three conclusions. Static FEC proved ineffective under these conditions because constant redundancy and matrix latency failed to translate bandwidth into timely delivery. In contrast, the scheduler’s retransmission loop achieved the best efficiency by keeping overhead at baseline levels while reducing deadline misses through targeted recovery with budget controls. Fog offloading further strengthened the system by adding a low-latency recovery path, preserving server-side efficiency while sharply reducing deadline failures. Overall, the results indicate a clear operating point for dense Wi-Fi deployments: retransmission should be preferred over static FEC, coding should be applied opportunistically when overlap justifies the added cost, and fog offloading should be used to recover time-critical packets locally when infrastructure links cannot keep pace.
 
-\quad Unicast dominated retransmission traffic, with multicast contributing less than 17\%, suggesting that further tuning of coding thresholds could yield additional efficiency gains. 
-
-
-%% ----------------------------------------------------------------------------------------------------------%%
-%\section{Experimental setup and methodology}
-%\label{sec:methodology}
-%% ----------------------------------------------------------------------------------------------------------%%
-
-%\quad Each experiment begins by deploying a single server container streaming a fixed-bitrate video source and a configurable number of client containers. The clients join the session, authenticate, and begin receiving the multicast stream with retransmissions enabled. For every test scenario, baseline runs without impairment are first executed to establish reference values for throughput, packet loss, and latency. Afterward, controlled impairments are introduced using \texttt{tc}, with parameters adjusted to represent realistic ranges of wireless behavior.
-
-%\quad The experiments are repeated multiple times under identical configurations to reduce variability and ensure statistical validity. Collected metrics include total bandwidth usage at the server, per-client recovery rate, average retransmission latency, reinforcement learning adaptation time, and the overall playback continuity as perceived at the client. These values are aggregated through Prometheus and visualized in Grafana, from which average, minimum, and maximum results are derived.
-
-%\quad Test scenarios are grouped according to whether edge-cloud offloading and mesh retransmissions are enabled, allowing a direct comparison between purely infrastructure-based delivery and cooperative client recovery.
-
-%%% ----------------------------------------------------------------------------------------------------------%%
-%\section{Comparative evaluation without edge-cloud}
-%%% ----------------------------------------------------------------------------------------------------------%%
-%
-%\quad In the first set of experiments, only the server and clients participate, with retransmissions handled exclusively through the central scheduler. The objective is to quantify the overhead of redundancy and the effectiveness of the reinforcement learning module when adapting to varying loss conditions.
-%
-%\quad Bandwidth usage is measured by comparing raw server output under different levels of loss and redundancy, including cases with fixed FEC parameters and cases where the reinforcement learning agent dynamically adjusts row and column protection. These measurements establish whether adaptive redundancy achieves lower overhead while maintaining acceptable playback quality.
-%
-%\quad The impact of the reinforcement learning agent is evaluated by gradually increasing packet loss from 1\% to 20\%. Metrics focus on how quickly the agent adjusts parity levels, how much bandwidth overhead is introduced, and whether playback continuity is preserved. The results are compared against static redundancy configurations to highlight the efficiency gains of adaptive learning.
-
-
-%\subsection{Bandwidth usage}
-%\label{sec:bandwidth usage without edge-cloud}
-
-%\subsection{Impact of the Reinforcement Learning Agent}
-%\label{sec:impact of the reinforcement learning agent without edge-cloud}
-
-%%% ----------------------------------------------------------------------------------------------------------%%
-%\section{Comparative evaluation with edge-cloud}
-%%% ----------------------------------------------------------------------------------------------------------%%
-%
-%\quad The second set of experiments extends the setup with cooperative mesh retransmissions between clients. Here, the goal is to demonstrate whether peer-assisted recovery reduces server bandwidth usage and improves resilience when clients experience heterogeneous loss conditions.
-%
-%\quad Bandwidth usage is measured both at the server and within the mesh. The results are compared to infrastructure-only delivery, quantifying the degree of offloading achieved. Special attention is given to scenarios where subsets of clients face higher loss rates than others, since these highlight the advantage of distributing recovery across peers.
-%
-%\quad The impact of the reinforcement learning agent in the presence of mesh retransmissions is evaluated to understand whether adaptation remains effective when recovery occurs at both the server and peer level. Metrics capture the balance between server-provided redundancy and peer-sourced retransmissions, demonstrating how the scheduler integrates with the mesh.
-
-%\subsection{Bandwidth usage}
-%\label{sec:bandwidth usage with edge-cloud}
-
-%\subsection{Impact of the Reinforcement Learning Agent}
-%\label{sec:impact of the reinforcement learning agent witho edge-cloud}

@@ -37,21 +37,6 @@ The pseudocode notation is built around six primary constructs:
 
 \quad Subprocedures are invoked using the keyword \texttt{CALL}, and exception handling is represented with \texttt{BEGIN}, \texttt{EXCEPTION}, and \texttt{END}.  
 
-\subsection{Examples}
-The following example illustrates the recommended style:  
-
-\begin{verbatim}
-	SET moveCount to 1
-	FOR each row on the board
-	FOR each column on the board
-	IF gameBoard position (row, column) is occupied THEN
-	CALL findAdjacentTiles with row, column
-	INCREMENT moveCount
-	END IF
-	END FOR
-	END FOR
-\end{verbatim}
-
 \section{Algorithms}
 \label{appendix:supporting-algorithms}
 
@@ -159,7 +144,7 @@ flow of the exposition without interrupting the reader’s focus.
 	\centering
 	\includegraphics[width=1\textwidth]{Appendix/packet_loss_script.png}
 	\caption{Script to apply random packet loss to containers}
-	\label{fig:random-loss}
+	\label{fig:random loss script}
 \end{figure}
 
 

@@ -13,7 +13,6 @@
 \setcounter {tocdepth}{-1}
 \contentsline {chapter}{Table of Contents}{v}{dummy.4}%
 \setcounter {tocdepth}{3}
-\vspace {0.3cm}
 \contentsline {chapter}{List of Tables}{vii}{dummy.5}%
 \contentsline {chapter}{List of Figures}{viii}{dummy.6}%
 \vspace {0.3cm}
@@ -62,23 +61,21 @@
 \contentsline {chapter}{\numberline {5}Evaluation}{47}{chapter.5}%
 \contentsline {section}{\numberline {5.1}Evaluation Environment}{47}{section.5.1}%
 \contentsline {section}{\numberline {5.2}Simulated Results}{49}{section.5.2}%
-\contentsline {subsection}{\numberline {5.2.1}Simulated Baseline}{49}{subsection.5.2.1}%
+\contentsline {subsection}{\numberline {5.2.1}Simulated Baseline}{50}{subsection.5.2.1}%
 \contentsline {subsection}{\numberline {5.2.2}Impact of Forward Error Correction}{50}{subsection.5.2.2}%
-\contentsline {subsection}{\numberline {5.2.3}Reinforcement Learning Adaptation}{50}{subsection.5.2.3}%
-\contentsline {subsection}{\numberline {5.2.4}Retransmission Effects}{50}{subsection.5.2.4}%
+\contentsline {subsection}{\numberline {5.2.3}Retransmission Effects}{50}{subsection.5.2.3}%
+\contentsline {subsection}{\numberline {5.2.4}Reinforcement Learning Adaptation}{51}{subsection.5.2.4}%
 \contentsline {section}{\numberline {5.3}Deployment Results}{51}{section.5.3}%
 \contentsline {subsection}{\numberline {5.3.1}Deployment Baseline}{51}{subsection.5.3.1}%
 \contentsline {subsection}{\numberline {5.3.2}Fog Offloading}{51}{subsection.5.3.2}%
 \contentsline {section}{\numberline {5.4}Discussion}{53}{section.5.4}%
-\contentsline {chapter}{\numberline {6}Conclusion}{55}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Summary}{55}{section.6.1}%
-\contentsline {section}{\numberline {6.2}Future Work}{55}{section.6.2}%
+\contentsline {chapter}{\numberline {6}Conclusion}{56}{chapter.6}%
+\contentsline {section}{\numberline {6.1}Future Work}{56}{section.6.1}%
 \vspace {0.5cm}
-\contentsline {chapter}{Bibliography}{55}{dummy.7}%
-\contentsline {section}{\numberline {.1}Pseudocode Standard}{61}{section.Alph0.1}%
-\contentsline {subsection}{\numberline {.1.1}Structured Constructs}{61}{subsection.Alph0.1.1}%
-\contentsline {subsection}{\numberline {.1.2}Formatting Guidelines}{61}{subsection.Alph0.1.2}%
-\contentsline {subsection}{\numberline {.1.3}Examples}{62}{subsection.Alph0.1.3}%
-\contentsline {section}{\numberline {.2}Algorithms}{62}{section.Alph0.2}%
-\contentsline {section}{\numberline {.3}Evaluation Appendix}{65}{section.Alph0.3}%
+\contentsline {chapter}{Bibliography}{57}{dummy.7}%
+\contentsline {section}{\numberline {.1}Pseudocode Standard}{63}{section.Alph0.1}%
+\contentsline {subsection}{\numberline {.1.1}Structured Constructs}{63}{subsection.Alph0.1.1}%
+\contentsline {subsection}{\numberline {.1.2}Formatting Guidelines}{63}{subsection.Alph0.1.2}%
+\contentsline {section}{\numberline {.2}Algorithms}{64}{section.Alph0.2}%
+\contentsline {section}{\numberline {.3}Evaluation Appendix}{67}{section.Alph0.3}%
 \contentsfinish 

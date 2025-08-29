@@ -24,45 +24,45 @@ I'm skipping whatever remains of this entry
 Warning--empty journal in rs_error_bounds
 
 Done.
-You've used 39 entries,
+You've used 44 entries,
             4087 wiz_defined-function locations,
-            1041 strings with 13925 characters,
-and the built_in function-call counts, 21285 in all, are:
-= -- 1829
-> -- 351
+            1058 strings with 14344 characters,
+and the built_in function-call counts, 22934 in all, are:
+= -- 1957
+> -- 359
 < -- 106
-+ -- 195
-- -- 70
-* -- 917
-:= -- 3650
-add.period$ -- 82
-call.type$ -- 39
-change.case$ -- 55
++ -- 201
+- -- 71
+* -- 966
+:= -- 3921
+add.period$ -- 92
+call.type$ -- 44
+change.case$ -- 65
 chr.to.int$ -- 240
-cite$ -- 40
-duplicate$ -- 1611
-empty$ -- 1754
-format.name$ -- 78
-if$ -- 4800
+cite$ -- 45
+duplicate$ -- 1769
+empty$ -- 1932
+format.name$ -- 79
+if$ -- 5178
 int.to.chr$ -- 0
-int.to.str$ -- 39
-missing$ -- 331
-newline$ -- 176
-num.names$ -- 38
-pop$ -- 777
+int.to.str$ -- 44
+missing$ -- 367
+newline$ -- 191
+num.names$ -- 39
+pop$ -- 885
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 1673
+skip$ -- 1806
 stack$ -- 0
-substring$ -- 649
-swap$ -- 1172
+substring$ -- 664
+swap$ -- 1252
 text.length$ -- 26
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 39
+type$ -- 44
 warning$ -- 1
-while$ -- 75
-width$ -- 41
-write$ -- 423
+while$ -- 76
+width$ -- 46
+write$ -- 460
 (There was 1 error message)

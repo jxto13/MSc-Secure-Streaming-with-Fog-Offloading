@@ -247,6 +247,26 @@ A.~Shokrollahi, ``Raptor codes,'' in \emph{IEEE Transactions on Information
   \url{https://www.practical-devsecops.com/what-is-stride-threat-model/}
 \BIBentrySTDinterwordspacing
 
+\bibitem{restreamer}
+``Restreamer by datarhei: Live video streaming server,''
+  \url{https://datarhei.github.io/restreamer/}, accessed: 2025-08-29.
+
+\bibitem{tcgui}
+``tcgui: A gui for linux traffic control,''
+  \url{https://github.com/dswd/tcgui}, accessed: 2025-08-29.
+
+\bibitem{prometheus}
+``Prometheus monitoring system,'' \url{https://prometheus.io/}, accessed:
+  2025-08-29.
+
+\bibitem{grafana}
+``Grafana labs – analytics and monitoring,'' \url{https://grafana.com/},
+  accessed: 2025-08-29.
+
+\bibitem{libp2p}
+{Protocol Labs}, ``libp2p: A modular network stack,'' \url{https://libp2p.io/},
+  2025, accessed: 2025-08-29.
+
 \bibitem{dalbey2003pseudocode}
 J.~Dalbey, ``Pseudocode standard,''
   \url{https://users.csc.calpoly.edu/~jdalbey/SWE/pdl_std.html}, 2003,

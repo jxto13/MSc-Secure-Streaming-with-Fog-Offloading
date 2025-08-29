@@ -67,8 +67,10 @@
 \tableofcontents % Write out the Table of Contents
 
 \addtocontents{toc}{\protect\setcounter{tocdepth}{3}}
-\addvspacetoc{0.3cm}
-
+%\addvspacetoc{0.3cm}
+%\makeatletter
+%\renewcommand{\l@figure}{\@dottedtocline{1}{0em}{3em}}
+%\makeatother
 \listoftables % Write out the List of Tables
 
 \listoffigures % Write out the List of Figures
