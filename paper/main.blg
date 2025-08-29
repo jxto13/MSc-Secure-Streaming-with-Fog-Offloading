@@ -3,89 +3,66 @@ Capacity: max_strings=200000, hash_size=200000, hash_prime=170003
 The top-level auxiliary file: main.aux
 Reallocating 'name_of_file' (item size: 1) to 10 items.
 The style file: IEEEtranN.bst
-I found no \bibdata command---while reading file main.aux
+Reallocating 'name_of_file' (item size: 1) to 13 items.
 Reallocating 'singl_function' (item size: 4) to 100 items.
 Reallocating 'singl_function' (item size: 4) to 100 items.
 Reallocating 'singl_function' (item size: 4) to 100 items.
 Reallocating 'wiz_functions' (item size: 4) to 6000 items.
 Reallocating 'singl_function' (item size: 4) to 100 items.
-Warning--I didn't find a database entry for "abiresearch2025"
-Warning--I didn't find a database entry for "cisco2024"
-Warning--I didn't find a database entry for "newscast2025"
-Warning--I didn't find a database entry for "stadiumtech2022"
-Warning--I didn't find a database entry for "cisco2022"
-Warning--I didn't find a database entry for "extreme2022"
-Warning--I didn't find a database entry for "ieee8022021"
-Warning--I didn't find a database entry for "wyebot2025"
-Warning--I didn't find a database entry for "iplook2024"
-Warning--I didn't find a database entry for "iotngin2022"
-Warning--I didn't find a database entry for "rfpage2024"
-Warning--I didn't find a database entry for "springer2023"
-Warning--I didn't find a database entry for "crowdsourcing2020"
-Warning--I didn't find a database entry for "jung2017rust"
-Warning--I didn't find a database entry for "matsakis2014rust"
-Warning--I didn't find a database entry for "sharma2020comparison"
-Warning--I didn't find a database entry for "schulzrinne1996rtp"
-Warning--I didn't find a database entry for "srt2021"
-Warning--I didn't find a database entry for "alvestrand2018rtc"
-Warning--I didn't find a database entry for "iso13818"
-Warning--I didn't find a database entry for "80211n_loss"
-Warning--I didn't find a database entry for "prompeg"
-Warning--I didn't find a database entry for "smpte2022"
-Warning--I didn't find a database entry for "rfc6865"
-Warning--I didn't find a database entry for "fec_video_study"
-Warning--I didn't find a database entry for "rs_intro"
-Warning--I didn't find a database entry for "fec_overhead_study"
-Warning--I didn't find a database entry for "2d_fec_bounds"
-Warning--I didn't find a database entry for "limit_fec"
-Warning--I didn't find a database entry for "huawei_afec"
-Warning--I didn't find a database entry for "rs_error_bounds"
-Warning--I didn't find a database entry for "raptor_vs_rs"
-Warning--I didn't find a database entry for "shokrollahi2006raptor"
+Database file #1: Bibliography.bib
+Warning--entry type for "abiresearch2025" isn't style-file defined
+--line 157 of file Bibliography.bib
+Warning--entry type for "newscast2025" isn't style-file defined
+--line 197 of file Bibliography.bib
+Repeated entry---line 1033 of file Bibliography.bib
+ : @misc{alvestrand2018rtc
+ :                        ,
+I'm skipping whatever remains of this entry
 -- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
 -- http://www.michaelshell.org/tex/ieeetran/bibtex/
 -- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
+Warning--empty journal in rs_error_bounds
 
 Done.
-You've used 0 entries,
+You've used 39 entries,
             4087 wiz_defined-function locations,
-            853 strings with 7684 characters,
-and the built_in function-call counts, 104 in all, are:
-= -- 0
-> -- 0
-< -- 0
-+ -- 0
-- -- 0
-* -- 19
-:= -- 27
-add.period$ -- 0
-call.type$ -- 0
-change.case$ -- 0
-chr.to.int$ -- 0
-cite$ -- 0
-duplicate$ -- 0
-empty$ -- 1
-format.name$ -- 0
-if$ -- 3
+            1041 strings with 13925 characters,
+and the built_in function-call counts, 21285 in all, are:
+= -- 1829
+> -- 351
+< -- 106
++ -- 195
+- -- 70
+* -- 917
+:= -- 3650
+add.period$ -- 82
+call.type$ -- 39
+change.case$ -- 55
+chr.to.int$ -- 240
+cite$ -- 40
+duplicate$ -- 1611
+empty$ -- 1754
+format.name$ -- 78
+if$ -- 4800
 int.to.chr$ -- 0
-int.to.str$ -- 0
-missing$ -- 0
-newline$ -- 23
-num.names$ -- 0
-pop$ -- 0
+int.to.str$ -- 39
+missing$ -- 331
+newline$ -- 176
+num.names$ -- 38
+pop$ -- 777
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 1
+skip$ -- 1673
 stack$ -- 0
-substring$ -- 0
-swap$ -- 0
-text.length$ -- 0
+substring$ -- 649
+swap$ -- 1172
+text.length$ -- 26
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 0
-warning$ -- 0
-while$ -- 0
-width$ -- 0
-write$ -- 22
+type$ -- 39
+warning$ -- 1
+while$ -- 75
+width$ -- 41
+write$ -- 423
 (There was 1 error message)

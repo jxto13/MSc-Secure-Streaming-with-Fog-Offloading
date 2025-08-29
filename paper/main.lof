@@ -36,8 +36,13 @@
 \contentsline {figure}{\numberline {5.1}{\ignorespaces Containerized deployment of server, clients, and monitoring stack.}}{47}{figure.caption.44}%
 \contentsline {figure}{\numberline {5.2}{\ignorespaces Restreamer interface providing the test video source for the evaluation.}}{48}{figure.caption.45}%
 \contentsline {figure}{\numberline {5.3}{\ignorespaces tcgui interface for configuring delay, jitter, and packet loss on client veth interfaces.}}{48}{figure.caption.46}%
-\contentsline {figure}{\numberline {5.4}{\ignorespaces Reinforcement learning FEC levels (row and column) over time.}}{50}{figure.caption.47}%
-\contentsline {figure}{\numberline {5.5}{\ignorespaces Total server egress per scenario.}}{51}{figure.caption.48}%
-\contentsline {figure}{\numberline {5.6}{\ignorespaces Breakdown of retransmissions into unicast and multicast for ret\_on scenarios.}}{51}{figure.caption.49}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces Performance metrics across different streaming scenarios, including sender and source rates, overhead, packet loss, missed deadlines, and FEC configuration.}}{51}{figure.caption.48}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces Average packet loss (\%) across clients by scenario}}{52}{figure.caption.49}%
+\contentsline {figure}{\numberline {5.6}{\ignorespaces Total missed deadlines across clients by scenario}}{52}{figure.caption.50}%
+\contentsline {figure}{\numberline {5.7}{\ignorespaces Average protocol overhead (\%) across scenarios}}{53}{figure.caption.51}%
+\contentsline {figure}{\numberline {5.8}{\ignorespaces Average packet loss (\%) across clients by scenario}}{53}{figure.caption.52}%
 \addvspace {10\p@ }
+\contentsline {figure}{\numberline {1}{\ignorespaces Script to apply random packet loss to containers}}{65}{figure.caption.55}%
+\contentsline {figure}{\numberline {2}{\ignorespaces Server config example}}{66}{figure.caption.56}%
+\contentsline {figure}{\numberline {3}{\ignorespaces Grafana dashboard from one scenario}}{67}{figure.caption.57}%
 \contentsfinish 
