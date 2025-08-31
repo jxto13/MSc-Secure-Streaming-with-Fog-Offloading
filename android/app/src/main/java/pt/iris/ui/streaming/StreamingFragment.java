@@ -84,13 +84,13 @@ public class StreamingFragment extends Fragment {
                         .show();
             }
         });
-        
+
         // Update adapter when network connections change
         streamingViewModel.getWifiAwareConnections().observe(getViewLifecycleOwner(), adapter::updateConnections);
-        
+
         // Update adapter when session info changes
         streamingViewModel.getWifiAwareSessionInfo().observe(getViewLifecycleOwner(), adapter::updateSessionInfo);
-        
+
         // Update adapter based on stream connection state
         streamingViewModel.getIsStreamConnected().observe(getViewLifecycleOwner(), isConnected -> {
             Log.d(TAG, "Stream connection state changed: " + isConnected);
@@ -99,7 +99,7 @@ public class StreamingFragment extends Fragment {
     }
 
 
-    
+
     private void setupUI() {
         // Stream URI connection controls
         binding.btnConnectStream.setOnClickListener(v -> {
@@ -108,7 +108,7 @@ public class StreamingFragment extends Fragment {
                 Toast.makeText(getContext(), "Please enter a stream URI", Toast.LENGTH_SHORT).show();
                 return;
             }
-            
+
             try {
                 Uri streamUri = Uri.parse(uriText);
                 streamingViewModel.connectToStream(requireContext(), streamUri);
@@ -121,11 +121,13 @@ public class StreamingFragment extends Fragment {
         });
 
         binding.btnDisconnectStream.setOnClickListener(v -> {
+
+
             streamingViewModel.disconnectStream();
             binding.playerView.setPlayer(null); // Remove player from view
             updateStreamButtons(false);
 
-            
+
             Toast.makeText(getContext(), "Stream disconnected and cleaned up", Toast.LENGTH_SHORT).show();
         });
 
@@ -147,7 +149,7 @@ public class StreamingFragment extends Fragment {
             binding.totalBytesText.setText(String.format("Total: %.2f MB", stats.totalBytesReceived / 1024.0 / 1024.0));
             binding.bitrateText.setText(String.format("Bitrate: %.1f kbps", stats.currentBitrate / 1000.0));
             binding.packetLossText.setText(String.format("Loss: %.2f%%", stats.packetLossRate));
-            
+
             // Display WiFi Aware specific data path stats in the stats section
             if (stats.wifiAwareDataPaths != null && !stats.wifiAwareDataPaths.equals("N/A")) {
                 binding.dataPathStatsText.setText("NAN Paths: " + stats.wifiAwareDataPaths);
@@ -162,7 +164,7 @@ public class StreamingFragment extends Fragment {
         streamingViewModel.getIsPlayerReady().observe(getViewLifecycleOwner(), isReady -> {
             binding.playerStatusText.setText(isReady ? "Status: Playing" : "Status: Loading...");
             binding.playerStatusText.setTextColor(getResources().getColor(
-                    isReady ? android.R.color.holo_green_dark : android.R.color.holo_orange_dark, 
+                    isReady ? android.R.color.holo_green_dark : android.R.color.holo_orange_dark,
                     null));
         });
 
@@ -196,19 +198,19 @@ public class StreamingFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        
+
         // Make sure the ViewModel releases resources
         if (streamingViewModel != null) {
             streamingViewModel.stopStreaming();
         }
-        
+
         binding = null;
     }
-    
+
     @Override
     public void onDestroy() {
         super.onDestroy();
-        
+
         // Final cleanup to ensure Rust client is stopped
         try {
             pt.iris.services.RustService.stopClient();

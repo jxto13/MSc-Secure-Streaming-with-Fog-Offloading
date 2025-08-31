@@ -5,7 +5,7 @@ mod retransmission_manager;
 mod session;
 mod utils;
 
-use crossbeam_channel::{unbounded, Receiver, Sender};
+use crossbeam_channel::{unbounded, Receiver, RecvTimeoutError, Sender};
 use iris_shared::compression::compress_data;
 use prost::Message;
 
@@ -522,6 +522,48 @@ impl Client {
                     error!("Failed to send UDP message: {}", e);
                 }
             }
+
+            // loop {
+            //     if shutdown_flag.load(Ordering::Relaxed) {
+            //         info!("Client report thread shutting down gracefully");
+            //         break;
+            //     }
+
+            //     match client_report_receiver.recv_timeout(Duration::from_millis(200)) {
+            //         Ok(report) => {
+            //             // handle report as before
+            //             for item in &report.reports {
+            //                 let indexes = Client::find_zero_indices(&item.bitmap);
+            //                 for index in indexes {
+            //                     let packet = MeshPacket {
+            //                         ttl: 3,
+            //                         packet_type: Some(PacketType::Request(RetransmissionRequest {
+            //                             matrix: item.matrix_index as i32,
+            //                             packet: index as i32,
+            //                         })),
+            //                     };
+            //                     if let Err(e) = retransmission_manager_sender.send(packet.clone()) {
+            //                         error!("Failed to send retransmission request: {}", e);
+            //                     }
+            //                 }
+            //             }
+
+            //             let compressed = compress_data(&report.encode_to_vec());
+            //             if let Err(e) = socket.send_to(&compressed, &report_sink_dst) {
+            //                 error!("Failed to send UDP message: {}", e);
+            //             }
+            //         }
+            //         Err(RecvTimeoutError::Timeout) => {
+            //             // loop and check shutdown_flag again
+            //             continue;
+            //         }
+            //         Err(RecvTimeoutError::Disconnected) => {
+            //             info!("Client report channel closed; exiting report thread");
+            //             break;
+            //         }
+            //     }
+            // }
+
             info!("Report thread shutting down");
         });
 

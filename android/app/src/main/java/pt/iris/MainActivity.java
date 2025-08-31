@@ -181,6 +181,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Prepare Rust service (start when needed)
         serviceIntent = new Intent(this, RustService.class);
+        RustService.startService();
 
         initializeWifiAwareNetwork(wifiAwareEnabled);
 
@@ -221,9 +222,7 @@ public class MainActivity extends AppCompatActivity {
             // Initialize the Wi-Fi Aware functionality
             wifiAwareNetwork.initialize();
 
-            // Start mesh network socket and logging
-            RustService.startService();
-            
+
             // Store in AppContainer for access by other components
             AppContainer.getInstance().setNetworkInitializer(wifiAwareNetwork);
 

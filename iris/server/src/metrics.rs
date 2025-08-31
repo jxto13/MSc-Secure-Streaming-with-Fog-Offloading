@@ -29,6 +29,7 @@ macro_rules! client_metrics {
 client_metrics!(
     UnicastRate,
     PacketLoss,
+    MissedDeadlines,
     LatencyEstimate,
     MulticastRetransmissions,
     UnicastRetransmissions,
@@ -58,6 +59,9 @@ impl Metrics {
         for metric in ClientMetric::iter() {
             let (name, help) = match metric {
                 ClientMetric::UnicastRate => ("unicast_rate_client", "Unicast rate per client"),
+                ClientMetric::MissedDeadlines => {
+                    ("missed_deadlines_client", "Missed deadlines per client")
+                }
                 ClientMetric::PacketLoss => ("packet_loss_client", "Packet loss per client"),
                 ClientMetric::LatencyEstimate => (
                     "latency_estimate_client",

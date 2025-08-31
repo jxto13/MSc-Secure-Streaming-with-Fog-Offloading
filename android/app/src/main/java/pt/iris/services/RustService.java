@@ -6,6 +6,7 @@ import android.os.IBinder;
 
 import android.net.wifi.WifiManager;
 import android.content.Context;
+import android.util.Log;
 
 public class RustService extends Service {
 
@@ -38,6 +39,7 @@ public class RustService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         super.onStartCommand(intent, flags, startId);
+
         // Service startup logic can be added here if needed
         return START_STICKY; // consider using STICKY for resilience
     }

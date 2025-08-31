@@ -236,6 +236,16 @@ impl ClientSessions {
         (missing_packets as f32 / total_expected_packets as f32) * 100.0
     }
 
+    pub fn get_missed_deadlines(&self, client: &RefMulti<'_, Vec<u8>, ClientData>) -> usize {
+        let mut total_missed_deadlines = 0;
+
+        for report in &client.value().reports {
+            total_missed_deadlines += find_zero_indices(&report.bitmap).len();
+        }
+
+        total_missed_deadlines
+    }
+
     pub fn get_client_packet_loss(&self, client: &RefMulti<'_, Vec<u8>, ClientData>) -> f64 {
         let client_data = client.value();
         let mut missing_packets = 0; // Deduplicated packets
@@ -312,6 +322,12 @@ impl ClientSessions {
                 .client_metric(ClientMetric::UnicastRate)
                 .with_label_values(&[&client_id_hex])
                 .set(self.get_client_unicast_rate(&client));
+
+            // Set missed deadlines for client
+            metrics
+                .client_metric(ClientMetric::MissedDeadlines)
+                .with_label_values(&[&client_id_hex])
+                .set(self.get_missed_deadlines(&client) as f64);
 
             // Set packet loss for client
             metrics

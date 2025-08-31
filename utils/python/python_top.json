@@ -1,0 +1,5 @@
+{
+  "iris-client-1": { "delay_ms": 80, "loss_pct": 10.0 },
+  "iris-client-2": { "delay_ms": 80, "loss_pct": 20.0 },
+  "default": { "delay_ms": 0, "loss_pct": 0 }
+}

@@ -15,7 +15,7 @@ fi
 
 # Parse arguments: MIN_LOSS and MAX_LOSS
 MIN_LOSS=${1:-0}
-MAX_LOSS=${2:-40}
+MAX_LOSS=${2:-100}
 
 echo "Scanning for containers named '${PREFIX}-*'..."
 

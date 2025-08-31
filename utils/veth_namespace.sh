@@ -44,6 +44,9 @@ NS2="myns2"
 BRIDGE="br0"
 BRNS="brns"
 
+AWARE1_IP="10.250.1.1/30"
+AWARE2_IP="10.250.1.2/30"
+
 # IP configuration
 IP_HOST="192.168.15.1/24"
 IP_NS1="192.168.15.2/24"
@@ -116,27 +119,36 @@ function start_network() {
 }
 
 function add_aware_link() {
-    echo "[+] Adding aware1 <-> aware2 veth link between namespaces..."
+    echo "[+] Adding ${LINK1} <-> ${LINK2} veth link between namespaces..."
     sudo ip link add ${LINK1} type veth peer name ${LINK2}
     sudo ip link set ${LINK1} netns ${NS1}
     sudo ip link set ${LINK2} netns ${NS2}
 
+    # Bring links up
     sudo ip netns exec ${NS1} ip link set ${LINK1} up
     sudo ip netns exec ${NS2} ip link set ${LINK2} up
 
+    # Assign IPv4 addresses
+    sudo ip netns exec ${NS1} ip addr add ${AWARE1_IP} dev ${LINK1}
+    sudo ip netns exec ${NS2} ip addr add ${AWARE2_IP} dev ${LINK2}
+
+    # Optional: ensure ARP and IPv4 forwarding states are sane on endpoints
+    sudo ip netns exec ${NS1} sysctl -q net.ipv4.conf.${LINK1}.arp_accept=1
+    sudo ip netns exec ${NS2} sysctl -q net.ipv4.conf.${LINK2}.arp_accept=1
+
     echo "[+] aware link created."
-    echo "  - myns1: ${IP_NS1}"
-    echo "  - myns2: ${IP_NS2}"
+    echo "  - ${NS1}:${LINK1} -> ${AWARE1_IP}"
+    echo "  - ${NS2}:${LINK2} -> ${AWARE2_IP}"
+    echo "  - Test: sudo ip netns exec ${NS1} ping -c1 ${AWARE2_IP%/*}"
 }
 
-
-# Function to remove aware1/aware2 veth link between namespaces
 function stop_aware_link() {
-    echo "[+] Removing aware1 <-> aware2 veth link between namespaces..."
-    sudo ip netns exec ${NS1} ip link delete aware1 2>/dev/null || true
-    sudo ip netns exec ${NS2} ip link delete aware2 2>/dev/null || true
+    echo "[+] Removing ${LINK1} <-> ${LINK2} veth link between namespaces..."
+    sudo ip netns exec ${NS1} ip link delete ${LINK1} 2>/dev/null || true
+    sudo ip netns exec ${NS2} ip link delete ${LINK2} 2>/dev/null || true
     echo "[+] aware link removed (if it existed)."
 }
+
 
 function stop_network() {
     echo "[+] Cleaning up..."

@@ -177,7 +177,7 @@
                 "input": [
                     {
                         "id": "input_0",
-                        "address": "testsrc2=rate=25:size=1920x1080",
+                        "address": "testsrc2=rate=25:size=1280x720",
                         "options": [
                             "-f",
                             "lavfi",
@@ -296,8 +296,8 @@
                 "limit_memory_bytes": 0,
                 "limit_waitfor_seconds": 5
             },
-            "created_at": 1754876775,
-            "updated_at": 1754876775,
+            "created_at": 1756338213,
+            "updated_at": 1756338213,
             "order": "start"
         },
         "restreamer-ui:ingest:875aa91b-1ac0-4cce-b68d-a7e09fe51e35_snapshot": {
@@ -349,8 +349,8 @@
                 "limit_memory_bytes": 0,
                 "limit_waitfor_seconds": 0
             },
-            "created_at": 1754876775,
-            "updated_at": 1754876775,
+            "created_at": 1756338213,
+            "updated_at": 1756338213,
             "order": "start"
         }
     },
@@ -927,7 +927,7 @@
                         {
                             "inputs": [
                                 {
-                                    "address": "testsrc2=rate=25:size=1920x1080",
+                                    "address": "testsrc2=rate=25:size=1280x720",
                                     "options": [
                                         "-f",
                                         "lavfi",
@@ -944,7 +944,7 @@
                                 "ratio": "2/3",
                                 "rule": "S23/B3",
                                 "scale": "1920x1080",
-                                "size": "1920x1080",
+                                "size": "1280x720",
                                 "source": "testsrc2"
                             },
                             "streams": [
@@ -956,7 +956,7 @@
                                     "duration_sec": 0,
                                     "format": "lavfi",
                                     "fps": 25,
-                                    "height": 1080,
+                                    "height": 720,
                                     "index": 0,
                                     "language": "und",
                                     "layout": "",
@@ -964,8 +964,8 @@
                                     "sampling_hz": 0,
                                     "stream": 0,
                                     "type": "video",
-                                    "url": "testsrc2=rate=25:size=1920x1080",
-                                    "width": 1920
+                                    "url": "testsrc2=rate=25:size=1280x720",
+                                    "width": 1280
                                 }
                             ],
                             "type": "virtualvideo"
@@ -973,7 +973,7 @@
                         {
                             "inputs": [
                                 {
-                                    "address": "anullsrc=r=44100:cl=stereo",
+                                    "address": "anoisesrc=r=44100:color=white:amplitude=1",
                                     "options": [
                                         "-f",
                                         "lavfi"
@@ -988,26 +988,26 @@
                                 "frequency": 440,
                                 "layout": "stereo",
                                 "sampling": "44100",
-                                "source": "silence"
+                                "source": "noise"
                             },
                             "streams": [
                                 {
-                                    "bitrate_kbps": 705,
-                                    "channels": 2,
-                                    "codec": "pcm_u8",
-                                    "coder": "pcm_u8",
+                                    "bitrate_kbps": 2822,
+                                    "channels": 1,
+                                    "codec": "pcm_f64le",
+                                    "coder": "pcm_f64le",
                                     "duration_sec": 0,
                                     "format": "lavfi",
                                     "fps": 0,
                                     "height": 0,
                                     "index": 0,
                                     "language": "und",
-                                    "layout": "stereo",
+                                    "layout": "mono",
                                     "pix_fmt": "",
                                     "sampling_hz": 44100,
                                     "stream": 0,
                                     "type": "audio",
-                                    "url": "anullsrc=r=44100:cl=stereo",
+                                    "url": "anoisesrc=r=44100:color=white:amplitude=1",
                                     "width": 0
                                 }
                             ],
@@ -1018,7 +1018,7 @@
                         {
                             "channels": 0,
                             "codec": "h264",
-                            "height": 1080,
+                            "height": 720,
                             "index": 0,
                             "layout": "",
                             "pix_fmt": "",
@@ -1026,7 +1026,7 @@
                             "stream": 0,
                             "type": "video",
                             "url": "",
-                            "width": 1920
+                            "width": 1280
                         },
                         {
                             "channels": 0,

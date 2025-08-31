@@ -2,11 +2,13 @@
 pub mod android {
     use std::io::Write;
     use std::os::fd::{FromRawFd, RawFd};
+    use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::{Arc, RwLock};
     use std::thread;
+    use std::time::Duration;
 
     use jni::objects::{JClass, JString};
-    use jni::sys::jint;
+    use jni::sys::{jboolean, jint, JNI_FALSE, JNI_TRUE};
     use jni::JNIEnv;
     use log::info;
     use once_cell::sync::OnceCell;
@@ -14,19 +16,18 @@ pub mod android {
 
     use iris_client::mesh_networking::Node;
 
-    // Static variable to hold the iris client instance
+    // Global Iris client
     static CLIENT: OnceCell<Arc<RwLock<Option<iris_client::Client>>>> = OnceCell::new();
 
-    // Thread handles to keep track of multiple spawned threads
-    static THREAD_HANDLES: OnceCell<Arc<RwLock<Vec<std::thread::JoinHandle<()>>>>> =
-        OnceCell::new();
-
-    /// Initializes the logging system for Android.
+    // Android logging init
     static INIT: Once = Once::new();
 
+    // Mesh node
     static MESH_NETWORK_NODE: OnceCell<Arc<Node>> = OnceCell::new();
 
-    // Initialize the mesh networking module
+    // Global cancel flag
+    static SHUTDOWN: OnceCell<Arc<AtomicBool>> = OnceCell::new();
+
     pub fn init_mesh_networking() {
         let node = Node::new();
         if MESH_NETWORK_NODE.set(node).is_err() {
@@ -36,17 +37,14 @@ pub mod android {
         }
     }
 
-    /// Initializes the logging system and panic hook for Android.
     fn init_logging() {
         INIT.call_once(|| {
-            // Initialize Android logger
             android_logger::init_once(
                 android_logger::Config::default()
                     .with_max_level(log::LevelFilter::Trace)
                     .with_tag("IrisClient"),
             );
 
-            // Set up panic hook to log panics to Android logger
             std::panic::set_hook(Box::new(|panic_info| {
                 let payload = if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
                     s
@@ -57,23 +55,28 @@ pub mod android {
                 };
 
                 let location = if let Some(location) = panic_info.location() {
-                    format!(" at {}:{}:{}", location.file(), location.line(), location.column())
+                    format!(
+                        " at {}:{}:{}",
+                        location.file(),
+                        location.line(),
+                        location.column()
+                    )
                 } else {
                     String::new()
                 };
 
                 log::error!("PANIC: {}{}", payload, location);
 
-                // Try to get thread info
                 let binding = std::thread::current();
                 let thread_name = binding.name().unwrap_or("unnamed");
                 log::error!("Panic occurred in thread: {}", thread_name);
 
-                // Log environment variable hint for backtrace
-                log::error!("To enable backtrace, set RUST_BACKTRACE=1 environment variable before starting the application");
+                log::error!(
+                    "To enable backtrace, set RUST_BACKTRACE=1 before starting the application"
+                );
             }));
 
-            log::info!("IrisClient logging and panic handling initialized for Android");            
+            log::info!("IrisClient logging and panic handling initialized for Android");
         });
     }
 
@@ -82,171 +85,203 @@ pub mod android {
         _env: JNIEnv,
         _class: JClass,
     ) {
-        // Initialize the mesh networking node and logging
         init_logging();
         init_mesh_networking();
+
+        let _ = CLIENT.set(Arc::new(RwLock::new(None)));
+        let _ = SHUTDOWN.set(Arc::new(AtomicBool::new(false)));
+
+        if let Some(tok) = SHUTDOWN.get() {
+            tok.store(false, Ordering::SeqCst);
+        }
     }
 
-    /// Starts the mesh networking node and its tasks.
     #[no_mangle]
     pub extern "system" fn Java_pt_iris_services_RustService_startClient(
         mut env: JNIEnv,
         _class: JClass,
         fd: jint,
         stream_url: JString,
-    ) -> jni::sys::jboolean {
+    ) -> jboolean {
         info!("Rust client is starting...");
 
-        let fd = fd as RawFd;
+        // Refuse double start
+        if let Some(client_holder) = CLIENT.get() {
+            if let Ok(g) = client_holder.read() {
+                if g.is_some() {
+                    log::error!("Client already running; stop it before starting again");
+                    return JNI_FALSE;
+                }
+            }
+        }
 
-        // Convert JString to Rust String
+        // Ensure globals
+        let client_holder = CLIENT.get().cloned().unwrap_or_else(|| {
+            let _ = CLIENT.set(Arc::new(RwLock::new(None)));
+            CLIENT.get().unwrap().clone()
+        });
+
+        let shutdown = SHUTDOWN.get().cloned().unwrap_or_else(|| {
+            let _ = SHUTDOWN.set(Arc::new(AtomicBool::new(false)));
+            SHUTDOWN.get().unwrap().clone()
+        });
+        shutdown.store(false, Ordering::SeqCst);
+
+        // Inputs
+        let fd = fd as RawFd;
         let url_str: String = match env.get_string(&stream_url) {
             Ok(s) => s.into(),
             Err(e) => {
                 log::error!("Failed to convert stream URL from Java: {}", e);
-                return jni::sys::JNI_FALSE;
+                return JNI_FALSE;
             }
         };
-
         info!("Starting client with URL: {}", url_str);
 
-        // Try to start the client and send result
+        // Start client
         let mut client = iris_client::Client::new();
-
-        match client.start(&url_str) {
-            Ok(data_receiver) => {
+        let data_receiver = match client.start(&url_str) {
+            Ok(rx) => {
                 info!("Successfully connected to server");
-
-                // Initialize CLIENT static if not already done
-                if CLIENT.get().is_none() {
-                    let _ = CLIENT.set(Arc::new(RwLock::new(None)));
-                }
-                if THREAD_HANDLES.get().is_none() {
-                    let _ = THREAD_HANDLES.set(Arc::new(RwLock::new(Vec::new())));
-                }
-
-                // Store the client
-                if let Some(client_holder) = CLIENT.get() {
-                    if let Ok(mut guard) = client_holder.write() {
-                        *guard = Some(client);
-                    }
-                }
-
-                let handle = thread::spawn(move || {
-                    // SAFETY: fd must be valid and owned by Java
-                    let file = unsafe { std::fs::File::from_raw_fd(fd) };
-
-                    // Clone so Rust can write, but Java still owns fd
-                    let mut writer = match file.try_clone() {
-                        Ok(f) => f,
-                        Err(e) => {
-                            eprintln!("Failed to clone fd: {:?}", e);
-                            return;
-                        }
-                    };
-                    // Don't close the original fd owned by Java
-                    std::mem::forget(file); // avoid closing fd
-
-                    // Loop over incoming data
-                    for item in data_receiver {
-                        if let Err(e) = writer.write_all(&item) {
-                            eprintln!("Write error: {:?}", e);
-                            break;
-                        }
-                    }
-                    log::error!("Client stream ended for URL: {}", url_str);
-                });
-
-                // Store the thread handle in the vector
-                if let Some(handles_holder) = THREAD_HANDLES.get() {
-                    if let Ok(mut guard) = handles_holder.write() {
-                        guard.push(handle);
-                    }
-                }
+                rx
             }
             Err(e) => {
                 log::error!("Failed to start iris client with URL {}: {:?}", url_str, e);
+                return JNI_FALSE;
             }
+        };
+
+        // Store client
+        if let Ok(mut guard) = client_holder.write() {
+            *guard = Some(client);
+        } else {
+            log::error!("Failed to acquire write lock on client holder");
+            return JNI_FALSE;
         }
 
-        // Get safe holder of client
-        if let Some(client_holder) = CLIENT.get() {
-            if let Ok(guard) = client_holder.read() {
-                if let Some(client) = guard.as_ref() {
-                    let retransmission_manager = client.get_retransmission_manager();
+        // Data forwarding thread (detached)
+        {
+            let shutdown_clone = shutdown.clone();
+            let url_for_log = url_str.clone();
 
-                    // Get the mesh networking node
-                    let node = match MESH_NETWORK_NODE.get() {
-                        Some(node) => node.clone(),
-                        None => {
-                            log::error!("Mesh networking node is not initialized");
-                            return jni::sys::JNI_FALSE;
+            let _ = thread::Builder::new()
+                .name("iris_data_forward".to_string())
+                .spawn(move || {
+                    // SAFETY: fd is provided by Java. Avoid closing it on this side.
+                    let file = unsafe { std::fs::File::from_raw_fd(fd) };
+
+                    let mut writer = match file.try_clone() {
+                        Ok(f) => f,
+                        Err(e) => {
+                            log::error!("Failed to clone fd: {:?}", e);
+                            // Prevent closing Java's fd
+                            std::mem::forget(file);
+                            return;
                         }
                     };
+                    // Do not close Java-owned fd
+                    std::mem::forget(file);
 
-                    // Get the IPC channels from Node to RetransmissionManager
-                    let ipc_channels = node.get_ipc_channels();
-
-                    let handle = thread::spawn({
-                        let ipc_channels = Arc::clone(&ipc_channels);
-                        move || {
-                            // Correct channel mapping:
-                            // - rx.0 is what retransmission manager uses to send TO mesh (mesh receives via rx.1)
-                            // - tx.1 is what retransmission manager uses to receive FROM mesh (mesh sends via tx.0)
-                            retransmission_manager
-                                .middleware(ipc_channels.rx.0.clone(), &ipc_channels.tx.1);
+                    for item in data_receiver {
+                        if shutdown_clone.load(Ordering::Relaxed) {
+                            break;
                         }
-                    });
-
-                    // Store the thread handle in the vector
-                    if let Some(handles_holder) = THREAD_HANDLES.get() {
-                        if let Ok(mut guard) = handles_holder.write() {
-                            guard.push(handle);
+                        if let Err(e) = writer.write_all(&item) {
+                            log::error!("Write error: {:?}", e);
+                            break;
                         }
                     }
-                } else {
-                    log::error!("Iris client is not initialized");
-                }
-            } else {
-                log::error!("Failed to acquire read lock on client");
-            }
-        } else {
-            log::error!("Iris client holder is not initialized");
+
+                    let _ = writer.flush();
+                    log::info!("Client stream ended for URL: {}", url_for_log);
+                });
         }
 
-        jni::sys::JNI_TRUE
+        // Retransmission middleware thread (detached)
+        {
+            let (retransmission_manager, ipc_channels) = {
+                let guard = client_holder.read();
+                if let Ok(g) = guard {
+                    if let Some(cl) = g.as_ref() {
+                        let rm = cl.get_retransmission_manager();
+                        let node = match MESH_NETWORK_NODE.get() {
+                            Some(node) => node.clone(),
+                            None => {
+                                log::error!("Mesh networking node is not initialized");
+                                return JNI_FALSE;
+                            }
+                        };
+                        let ipc = node.get_ipc_channels();
+                        (rm, ipc)
+                    } else {
+                        log::error!("Iris client is not initialized after start");
+                        return JNI_FALSE;
+                    }
+                } else {
+                    log::error!("Failed to acquire read lock on client");
+                    return JNI_FALSE;
+                }
+            };
+
+            let shutdown_clone = shutdown.clone();
+
+            let _ = thread::Builder::new()
+                .name("iris_middleware".to_string())
+                .spawn(move || {
+                    // Cancel-aware wrapper around blocking middleware
+                    let rx_to_mesh = ipc_channels.rx.0.clone();
+                    let from_mesh_rx_ref = ipc_channels.tx.1.clone();
+
+                    if shutdown_clone.load(Ordering::Relaxed) {
+                        drop(rx_to_mesh);
+                        return;
+                    }
+
+                    let watcher_cancel = shutdown_clone.clone();
+                    let watcher_tx = rx_to_mesh.clone();
+                    let _watcher = thread::spawn(move || {
+                        while !watcher_cancel.load(Ordering::Relaxed) {
+                            thread::sleep(Duration::from_millis(50));
+                        }
+                        drop(watcher_tx);
+                    });
+
+                    retransmission_manager.middleware(rx_to_mesh, &from_mesh_rx_ref);
+                    log::info!("middleware exited");
+                });
+        }
+
+        JNI_TRUE
     }
 
     #[no_mangle]
     pub extern "system" fn Java_pt_iris_services_RustService_stopClient(
         _env: JNIEnv,
         _class: JClass,
-    ) {
+    ) -> jboolean {
         log::info!("Stopping iris client...");
 
-        // Shutdown the client first
+        // Trip cancel so outer loops break
+        if let Some(tok) = SHUTDOWN.get() {
+            tok.store(true, Ordering::SeqCst);
+        }
+
+        // Ask client to shut down, which closes channels and unblocks threads
         if let Some(client_holder) = CLIENT.get() {
             if let Ok(mut guard) = client_holder.write() {
                 if let Some(client) = guard.take() {
                     client.shutdown();
                     log::info!("Iris client shutdown requested");
                 }
+            } else {
+                log::error!("Failed to acquire write lock on client during shutdown");
             }
         }
 
-        // Wait for all threads to finish
-        if let Some(handles_holder) = THREAD_HANDLES.get() {
-            if let Ok(mut guard) = handles_holder.write() {
-                while let Some(handle) = guard.pop() {
-                    match handle.join() {
-                        Ok(_) => log::info!("Thread joined successfully"),
-                        Err(e) => log::error!("Error joining thread: {:?}", e),
-                    }
-                }
-            }
-        }
-
+        // Keep SHUTDOWN=true long enough for detached threads to notice.
+        // Do not immediately reset to false here. Reset on next start.
         log::info!("Iris client shutdown complete");
+        JNI_TRUE
     }
 
     #[no_mangle]
@@ -255,7 +290,6 @@ pub mod android {
         _class: JClass,
         ip_address: JString,
     ) {
-        // Convert JString to Rust String
         let ip_str: String = match env.get_string(&ip_address) {
             Ok(s) => s.into(),
             Err(e) => {
@@ -266,7 +300,6 @@ pub mod android {
 
         log::info!("Adding socket for IP: {}", ip_str);
 
-        // Get node instance
         let node = match MESH_NETWORK_NODE.get() {
             Some(node) => node.clone(),
             None => {
@@ -275,7 +308,6 @@ pub mod android {
             }
         };
 
-        // Add socket to the node
         match node.add_socket_sync(&ip_str) {
             Ok(_) => log::info!("Successfully added socket for IP: {}", ip_str),
             Err(e) => log::error!("Failed to add socket for IP {}: {:?}", ip_str, e),
@@ -287,14 +319,11 @@ pub mod android {
         _env: JNIEnv,
         _class: JClass,
     ) -> f64 {
-        // SAFETY: CLIENT is a static variable, so we can safely access it
         if let Some(client_holder) = CLIENT.get() {
             if let Ok(guard) = client_holder.read() {
                 if let Some(client) = guard.as_ref() {
-                    // Get the packet loss percentage from the client
                     client.get_packet_loss_percentage()
                 } else {
-                    log::error!("Iris client is not initialized");
                     0.0
                 }
             } else {

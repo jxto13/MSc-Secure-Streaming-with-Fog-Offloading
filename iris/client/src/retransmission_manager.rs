@@ -42,7 +42,7 @@ impl RetransmissionManager {
             requests_channel,
             data_sender,
             cached_buffer: Mutex::new(VecDeque::new()),
-            max_cache_size: Mutex::new(50), // Keep up to 50 matrices in cache (configurable)
+            max_cache_size: Mutex::new(100), // Keep up to 100 matrices in cache (configurable)
         }
     }
 

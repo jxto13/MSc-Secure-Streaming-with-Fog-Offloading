@@ -22,10 +22,10 @@ data_source = "mpegts"
 ip_source = "0.0.0.0:1234"
 
 # Multicast Config
-interface = "host-br" 
+# interface = "host-br" 
 # interface = "wlp92s0"
 # interface = "eth0"
-# interface = "enp0s20f0u3u1u2"
+interface = "enp0s20f0u3"
 
 ip_multicast = "239.255.0.1"
 port_multicast = 50050 # port for multicast stream
@@ -38,7 +38,7 @@ col = 10
 row_fec = 0 # can be 0 if network loss allows it
 col_fec = 0 # can be 0 if network loss allows it
 
-epoch = 20 # number of matrix to rotate encryption key
+epoch = 50 # number of matrix to rotate encryption key
 
 # This is the protocol defined, this is optimized for MTU 1500, can be easily changed with another MTU size
 data_size = 940 # 188 x 5, this is 5 ts packets
@@ -50,7 +50,7 @@ mtu_size = 1500 # default in most AP or routers
 wifi_multicast = true
 wifi_unicast = true
 unicast_bitrate = 10000 # kbit/s, this is the bitrate for unicast retransmissions per client, this is the maximum bitrate that the server will use to retransmit data to clients
-interval = 75 # in miliseconds, reduced from 100ms to speed up retransmission response time
+interval = 50 # in miliseconds, reduced from 100ms to speed up retransmission response time
 port = 50053 # port for report sink, this is the port that the clients will send reports to the server
 
 [reinforcement_learning]
@@ -65,8 +65,8 @@ exploration_rate = 0.1 # epsilon
 port = 9186 # bind prometheus to all interfaces
 
 [settings]
-timeout_clients = 10000 # in miliseconds
+timeout_clients = 20000 # in miliseconds
 buffer_size = 64 # size of the ring buffer that stores matrixes
-client_reporting_interval = 125 # in miliseconds (reduced to 125ms for faster feedback and better timing alignment)
+client_reporting_interval = 100 # in miliseconds (reduced to 100ms for faster feedback and better timing alignment)
 client_sliding_window = 8 # number of reports that will be send to the server before the client decodes the data to application layer
-# Total client decode time = 125ms * 8 = 1000ms (allowing more time for retransmissions to complete)
+# Total client decode time = 100ms * 8 = 800ms (allowing more time for retransmissions to complete)
