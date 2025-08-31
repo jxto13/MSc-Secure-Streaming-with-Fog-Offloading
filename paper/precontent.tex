@@ -23,7 +23,7 @@
 
 \quad I would like to express my sincere gratitude to Professor Rolando Martins for his invaluable guidance, expertise, and support throughout this research endeavor. Special appreciation extends to the Faculty of Sciences at the University of Porto for providing the research environment and resources necessary for this investigation, the technical infrastructure and laboratory facilities.
 
-\quad Additionally, gratitude is expressed to my family and friends who provided constant encouragement and support throughout the completion of this thesis. Although I struggled with school for much of my academic life, my family never stopped believing in me, and their unwavering support and love made this achievement possible.
+\quad Additionally, I am deeply grateful to my family and friends whose constant encouragement and unwavering support sustained me through the challenges of this thesis. In particular, I thank my mother for her endless patience and belief in me, my sister for her constant encouragement and love, and my niece for bringing joy and lightness during difficult moments. I am also grateful for the quiet companionship of my dog and cat, who reminded me of the value of simple moments of peace during long hours of work. To all of them, I dedicate this accomplishment, as it reflects not only my effort but also the love, strength, and support they have always given me.
 
 \end{acknowledgements}
 \addtocontents{toc}{\protect\setcounter{tocdepth}{3}}
@@ -43,8 +43,14 @@
         keywords={fog computing, otimização Wi-Fi, transmissão segura, sistema IRIS, segurança de redes}]
 \begin{otherlanguage}{portuguese}
 
+\quad Este trabalho investiga a viabilidade de um sistema de transmissão de video que utiliza \textit{fog offloading} em segurança para aumentar a fiabilidade e a eficiência em ambientes Wi-Fi de grande densidade. As infraestruturas sem fios existentes revelam dificuldades em cenários de elevada densidade, em que o unicast consome largura de banda excessiva e o multicast não assegura fiabilidade nem proteção de conteúdo. Para responder a este problema, foi desenvolvido um sistema que integra retransmissões adaptativas com codificação, aprendizagem por reforço para controlo dinâmico da redundância e \textit{offloading} entre dispositivos, explarando a tecnologia do \textit{Wi-Fi Aware}, sustentado por um modelo criptográfico e dupla assinatura para manter segurança onde possível.
+
+\quad O sistema foi implementado em Rust, com arquitetura modular, e estendido a Android através de um frontend específico para testes reais. Os resultados em simulação mostraram que os esquemas FEC estáticos introduzem grande \textit{overhead} sem ganhos proporcionais, enquanto as retransmissões reduziram para metade as falhas de prazos sem custos adicionais. A aprendizagem por reforço demonstrou potencial de adaptação, mas gerou redundância excessiva no modelo testado. Em cenários reais, o \textit{offloading em fog} reduziu as falhas de prazo em cerca de 80\% mantendo o mesmo consumo de largura de banda.
+
+\quad Apesar dos desafios em equilibrar eficiência de codificação com garantias criptográficas, o sistema proposto mostrou-se escalável e seguro para transmissão em direto em cenários de elevada densidade. Os resultados confirmam que o agendamento de retransmissões em conjunto com \textit{offloading} constitui uma solução prática para eventos como estádios, concertos e grandes espaços públicos.
 
 
+	
 \end{otherlanguage}
 \end{abstract}
 \addtocontents{toc}{\protect\setcounter{tocdepth}{3}}
@@ -53,8 +59,14 @@
 %-------------------------------------------------------------------------
 \addtocontents{toc}{\protect\setcounter{tocdepth}{-1}}
 \begin{abstract}[
-	keywords={fog computing, otimização Wi-Fi, transmissão segura, sistema IRIS, segurança de redes}]
+	keywords={fog computing, reliable multicast, forward error correction, live streaming, cybersecurity, wifi-aware}]
+	
+\quad This research investigates the feasibility of designing a secure livestreaming framework that leverages fog offloading to improve reliability and efficiency in dense Wi-Fi environments. Existing wireless infrastructures struggle to sustain live video delivery in high-density scenarios, as unicast consumes excessive bandwidth and multicast lacks reliability and content protection. To address this, the study developed a system that integrates adaptive retransmissions with coding, reinforcement learning for redundancy control, and peer-to-peer offloading over Wi-Fi Aware, secured through forward secrecy and a double-signature schema.
 
+\quad The framework was implemented in safe Rust with modular architecture and extended to Android through a dedicated frontend for real-world testing. Simulated results showed that static FEC introduced significant overhead without proportional gains, while adaptive retransmissions halved deadline misses without additional cost. Reinforcement learning demonstrated adaptability but generated excess redundancy under the tested reward function. Real-world deployment with fog offloading confirmed its effectiveness, reducing deadline failures by almost 80\% while maintaining baseline bandwidth usage.
+
+\quad Despite challenges in balancing coding efficiency with cryptographic protection, the proposed system proved scalable and secure for live video delivery in high-density scenarios. The findings confirm that retransmission scheduling combined with secure fog offloading offers a practical solution for environments such as stadiums, concerts, and large public events.
+	
 \end{abstract}
 \addtocontents{toc}{\protect\setcounter{tocdepth}{3}}
 

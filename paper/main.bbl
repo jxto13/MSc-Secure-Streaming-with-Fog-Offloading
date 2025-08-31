@@ -117,6 +117,83 @@ D.~Schmitz and T.~Springer, ``Crowdcloud: Core concepts for a crowdsourced
   \url{https://link.springer.com/article/10.1007/s10586-018-2843-2}
 \BIBentrySTDinterwordspacing
 
+\bibitem{ferreira2019realtime}
+D.~Ferreira, R.~A. Costa, and J.~Barros, ``Real-time network coding for live
+  streaming in hyper-dense wifi spaces,'' \emph{IEEE Journal on Selected Areas
+  in Communications}, vol.~32, no.~4, pp. 773--781, 2014.
+
+\bibitem{amaldi2010amuse}
+E.~Amaldi \emph{et~al.}, ``Amuse: Scalable multicast in wireless lans,'' in
+  \emph{Proceedings of ...}, 2010.
+
+\bibitem{perkins2003rfc5109}
+C.~Perkins, ``Rtp payload for redundant audio data,'' IETF, Tech. Rep. RFC
+  5109, 2003.
+
+\bibitem{smpte2022}
+{Society of Motion Picture and Television Engineers}, \emph{SMPTE ST 2022-1:
+  Forward Error Correction for Real-Time Video/Audio Transport Over IP
+  Networks}, SMPTE Std., 2007.
+
+\bibitem{perkins2019flexfec}
+C.~Perkins \emph{et~al.}, ``Rtp payload format for flexible forward error
+  correction (fec),'' IETF, Tech. Rep. RFC 8627, 2019.
+
+\bibitem{westerlund2009fec}
+M.~Westerlund, ``Forward error correction for rtp media streams,'' Master's
+  thesis, University of Helsinki, 2009.
+
+\bibitem{fonnes2018fec}
+S.~Fonnes, ``Evaluation of flexible fec in wi-fi multicast,'' Master's thesis,
+  NTNU, 2018.
+
+\bibitem{qureshi2011benefit}
+A.~Qureshi \emph{et~al.}, ``An efficient network coding based retransmission
+  algorithm for wireless multicast,'' in \emph{Proceedings of ...}, 2011.
+
+\bibitem{adalier2009interleaving}
+M.~Adalier, ``Performance of interleaving for wireless multicast,'' in
+  \emph{Proceedings of ...}, 2009.
+
+\bibitem{chen2018rlafec}
+Y.~Chen \emph{et~al.}, ``Rl-afec: Reinforcement learning for adaptive forward
+  error correction in video streaming,'' in \emph{Proceedings of ...}, 2018.
+
+\bibitem{baugher2004srtp}
+M.~Baugher \emph{et~al.}, ``The secure real-time transport protocol (srtp),''
+  IETF, Tech. Rep. RFC 3711, 2004.
+
+\bibitem{wing2004ekt}
+D.~Wing \emph{et~al.}, ``Encrypted key transport for secure rtp,'' IETF, Tech.
+  Rep., 2004, internet-Draft.
+
+\bibitem{rescorla2018tls13}
+E.~Rescorla, ``The transport layer security (tls) protocol version 1.3,'' IETF,
+  Tech. Rep. RFC 8446, 2018.
+
+\bibitem{sha2016wifidirect}
+\BIBentryALTinterwordspacing
+H.~Sha and A.~G. Tasiopoulos, ``A collaborative video download application
+  based on wi-fi direct,'' in \emph{Wired/Wireless Internet Communications},
+  ser. LNCS.\hskip 1em plus 0.5em minus 0.4em\relax Springer, 2016. [Online].
+  Available: \url{https://discovery.ucl.ac.uk/1501851/}
+\BIBentrySTDinterwordspacing
+
+\bibitem{poderys2017overlay}
+\BIBentryALTinterwordspacing
+J.~Poderys and J.~Soler, ``Streaming multimedia via overlay networks using
+  wi-fi peer-to-peer connections,'' in \emph{Proc. IEEE Int. Symp. on
+  Multimedia (ISM)}, 2017. [Online]. Available:
+  \url{https://orbit.dtu.dk/files/138453688/PID5043953.pdf}
+\BIBentrySTDinterwordspacing
+
+\bibitem{androidWFD}
+\BIBentryALTinterwordspacing
+{Android Open Source Project}, ``Wi-fi direct (wi-fi p2p) on android,''
+  Developer documentation, 2025. [Online]. Available:
+  \url{https://source.android.com/docs/core/connect/wifi-direct}
+\BIBentrySTDinterwordspacing
+
 \bibitem{jung2017rust}
 R.~Jung, J.-H. Jourdan, R.~Krebbers, and D.~Dreyer, ``Rustbelt: Securing the
   foundations of the rust programming language,'' \emph{Proceedings of the ACM
@@ -153,10 +230,12 @@ H.~Alvestrand, ``Overview: Real-time protocols for browser-based
   \url{https://www.rfc-editor.org/rfc/rfc8825}
 \BIBentrySTDinterwordspacing
 
-\bibitem{iso13818}
-\emph{ISO/IEC 13818-1: Information Technology — Generic Coding of Moving
-  Pictures and Associated Audio Information: Systems}, ISO/IEC Std., 2019,
-  mPEG-2 Transport Stream specification.
+\bibitem{castr_mpegts}
+\BIBentryALTinterwordspacing
+{Castr Team}. (2023) What is mpeg transport stream (mpeg-ts)? Accessed:
+  2025-08-31. [Online]. Available:
+  \url{https://castr.com/blog/mpeg-transport-stream-mpeg-ts/}
+\BIBentrySTDinterwordspacing
 
 \bibitem{80211n_loss}
 {IEEE 802.11 Working Group}, ``Ieee 802.11n: Wireless lan medium access control
@@ -167,11 +246,6 @@ H.~Alvestrand, ``Overview: Real-time protocols for browser-based
 {Pro-MPEG Forum}, ``Pro-mpeg code of practice \#3 release 2: Transmission of
   professional mpeg-2 transport streams over ip networks,'' 2004, available at:
   \url{https://www.pro-mpeg.org/}.
-
-\bibitem{smpte2022}
-{Society of Motion Picture and Television Engineers}, \emph{SMPTE ST 2022-1:
-  Forward Error Correction for Real-Time Video/Audio Transport Over IP
-  Networks}, SMPTE Std., 2007.
 
 \bibitem{rfc6865}
 \BIBentryALTinterwordspacing

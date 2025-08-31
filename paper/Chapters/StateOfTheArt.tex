@@ -11,16 +11,62 @@
 % For referencing this chapter elsewhere, use \ref{ChapterTemplate}
 \label{State of the Art}
 
+\quad Reliable live streaming over dense Wi-Fi faces inherent challenges in scalability, latency, and security. As user density grows, unicast delivery wastes bandwidth, while multicast lacks built-in reliability and protection, so researchers have therefore explored different strategies to balance efficient delivery with timely recovery and trust, ranging from coding-based multicast to feedback optimization, FEC standards, adaptive learning, and peer offloading.
 
+\quad Research has taken several directions, Real-time network coding over multicast replaced per-receiver retransmissions with coded repair packets that many users can decode simultaneously, Ferreira et al.\cite{ferreira2019realtime} designed a scheme that incorporated playout deadlines and aggregated sparse feedback, reporting significant bandwidth gains over multiple unicast in crowded tests, this confirmed that multicast with real-time coding scales but left security and device-to-device offload unaddressed.
+
+\quad Feedback overhead emerged as another bottleneck, AMuSe\cite{amaldi2010amuse} addressed this by electing a small set of nodes to report channel conditions, allowing the sender to adapt rate and recovery without per-receiver state, this reduced control traffic and solved scalability at the control layer but did not integrate coding or content protection.
+
+\quad In parallel, Forward Error Correction (FEC) standards evolved, RTP XOR FEC (RFC 5109) and SMPTE 2022-1~\cite{perkins2003rfc5109,smpte2022} protected headers and payload with fixed redundancy, while FlexFEC (RFC 8627)~\cite{perkins2019flexfec} introduced scalable parity later adopted in WebRTC, these approaches fit existing media stacks but treat receivers independently and cannot exploit cross-receiver coding gains.
+
+\quad Evaluations highlight the cost of these trade-offs, Westerlund~\cite{westerlund2009fec} showed how RTP FEC introduces latency–overhead compromises, while Fonnes~\cite{fonnes2018fec} found that flexible FEC reduced losses from sixteen to one percent under a 160\,ms repair window but reduced redundanc. These studies quantify performance but lack adaptive mechanisms.
+
+\quad Network coding for retransmission offers another perspective, Qureshi et al.~\cite{qureshi2011benefit} proposed the BENEFIT algorithm, which greedily selects XOR combinations to improve throughput and decoding delay. Packet interleaving~\cite{adalier2009interleaving} likewise mitigates burst losses without extra bits, but buffering prevents strict real-time use, both approaches show the value of coding-aware recovery but neglect security.
+
+\quad More recently, reinforcement learning introduced adaptivity, Chen et al.~\cite{chen2018rlafec} presented RL-AFEC, which selects Reed–Solomon parity per frame to maximize perceptual quality with lower overhead than static FEC, their results confirm learning potential, but the evaluation focused on unicast simulations and did not cover multicast structure or secure delivery.
+
+\quad Security protocols such as SRTP with DTLS keying, EKT, and TLS~1.3~\cite{baugher2004srtp,wing2004ekt,rescorla2018tls13} ensure confidentiality and group keying, but none address integrity and trust for coded multicast with untrusted helpers. At the same time, offloading protocols such as Wi-Fi Direct have been used for collaborative video download and peer-to-peer multimedia streaming \cite{sha2016wifidirect,poderys2017overlay,androidWFD}, these systems demonstrate that local peer offloading can reduce infrastructure load, yet they do not integrate coding or security mechanisms.
+
+\quad To highlight the strengths and limitations of existing approaches, the works reviewed are compared against seven criteria that directly impact the feasibility of reliable multicast and secure offloading: reliability, deadline awareness, scalability, adaptivity, edge offload, security, and deployment evidence. \textbf{\Cref{tab:related-work}} presents this comparison.
+
+\begingroup
+\setlength{\tabcolsep}{3pt}
+\renewcommand{\arraystretch}{1.15}
+\small
+\begin{table}[h]
+	\centering
+	\resizebox{\textwidth}{!}{%
+		\begin{tabular}{|l|c|c|c|c|c|c|c|}
+			\hline
+			\textbf{Work} & \textbf{Mechanism} & \textbf{Deadlines} & \textbf{Scale} & \textbf{Adaptivity} & \textbf{Edge} & \textbf{Sec.} & \textbf{Evidence} \\
+			\hline
+			Real-time NC \cite{ferreira2019realtime} & Coded multicast & Yes & High & Greedy sched. & No & No & Testbed \\
+			AMuSe \cite{amaldi2010amuse} & Leader feedback & No & Very high & Rate tuning & No & No & ORBIT \\
+			RFC 5109 \cite{perkins2003rfc5109} & XOR FEC & Indir. & Med. & Static & No & No & Deployed \\
+			FlexFEC \cite{perkins2019flexfec} & Flexible FEC & Indir. & High & Matrix sizing & No & No & Standard \\
+			SMPTE 2022-1 \cite{smpte2022} & 2-D parity & Indir. & Med. & Fixed & No & No & Studio \\
+			BENEFIT \cite{qureshi2011benefit} & NC retransmit & Partial & Med. & Tunable & No & No & Sim. \\
+			Interleaving \cite{adalier2009interleaving} & Time diversity & Buffered & N/A & Fixed & No & No & Proto. \\
+			RL-AFEC \cite{chen2018rlafec} & RL FEC & Frame & Per-recv. & Adaptive & No & No & Sim. \\
+			Wi-Fi Direct \cite{sha2016wifidirect,poderys2017overlay,androidWFD} & P2P offload & App-level & Local groups & Heuristic & Yes & App-dep. & Proto./Field \\
+			\hline
+		\end{tabular}%
+	}
+	\caption{Comparison of related works by key criteria.}
+	\label{tab:related-work}
+\end{table}
+\endgroup
+
+\quad In summary, prior work addresses only parts of the problem. Coding-based multicast achieves scalability under deadlines but ignores secure offloading. Feedback schemes reduce control traffic but cannot ensure recovery within deadlines. FEC standards integrate with media stacks but waste coding opportunities across receivers. Interleaving mitigates burst loss but adds delay. Reinforcement learning adapts redundancy but overlooks multicast structure and group security. Offloading with Wi-Fi Direct enables device-to-device distribution but lacks coding and strong protection.
 
 \section{Identified Research Gap}
 
-Despite significant advances in both low-latency live streaming and fog computing, the current state of the art falls short of fully integrating secure fog offloading within time-critical streaming workflows. In particular, existing systems commonly exhibit the following limitations:
+\quad Building on the analysis in \textbf{\Cref{State of the Art}}, no existing system combines coding-aware multicast, adaptive FEC, secure peer offload, and modern cryptography into a single framework, particularly when extended to fog computing. Despite advances in low-latency streaming and distributed offloading, current approaches remain limited in integrating secure fog execution into time-critical workflows. In particular, existing systems commonly exhibit the following limitations:
 
-\begin{enumerate}
-	\item Lack of mechanisms for verifiable and trustworthy execution of security-critical operations—such as encryption, key management, and license enforcement—on fog nodes, which may be vulnerable to compromise or tampering.
-	\item Insufficient strategies to balance strong cryptographic protection with the diverse computational and energy constraints inherent to heterogeneous fog and edge hardware, leading to trade-offs that often degrade either security or performance.
-	\item Difficulty in consistently maintaining stringent latency requirements, especially in the presence of frequent cryptographic key rotations, real-time authorization processes, and license renewals that introduce additional delay and complexity.
-\end{enumerate}
+\begin{itemize}
+	\item Multicast schemes incorporate coding or feedback reduction but omit mechanisms for secure offloading to untrusted peers or fog nodes.
+	\item FEC standards and adaptive methods enhance reliability but treat receivers independently and do not exploit cross-receiver coding opportunities in multicast groups.
+	\item Fog and peer-to-peer offloading reduce server load but lack integration with coding-aware recovery and strong cryptographic guarantees, making them unsuitable for deadline-sensitive live streaming.
+\end{itemize}
 
-Addressing these gaps is essential for enabling practical, scalable, and secure live streaming architectures that leverage the benefits of fog computing without compromising user experience or content protection guarantees. Motivated by this challenge, this thesis proposes a novel architecture that integrates secure fog offloading with low-latency live streaming, combining verified execution, adaptive cryptographic methods, and latency-aware security workflows to overcome the shortcomings of existing approaches.
+\quad Addressing these gaps is essential for enabling practical, scalable, and secure live streaming architectures that leverage the benefits of fog computing without compromising user experience or content protection guarantees. Motivated by this challenge, this thesis proposes a novel architecture that integrates secure fog offloading with low-latency live streaming, combining verified execution, adaptive cryptographic methods, and latency-aware security workflows to overcome the shortcomings of existing approaches.

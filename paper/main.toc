@@ -19,63 +19,62 @@
 \contentsline {chapter}{\numberline {1}Introduction}{1}{chapter.1}%
 \contentsline {section}{\numberline {1.1}Motivation \& Approach}{2}{section.1.1}%
 \contentsline {section}{\numberline {1.2}Document Structure}{3}{section.1.2}%
-\contentsline {chapter}{\numberline {2}Background Work}{4}{chapter.2}%
-\contentsline {chapter}{\numberline {3}State of the Art}{5}{chapter.3}%
-\contentsline {section}{\numberline {3.1}Identified Research Gap}{5}{section.3.1}%
-\contentsline {chapter}{\numberline {4}Design and Implementation}{6}{chapter.4}%
-\contentsline {section}{\numberline {4.1}Requirements}{6}{section.4.1}%
-\contentsline {section}{\numberline {4.2}System Architecture}{8}{section.4.2}%
-\contentsline {subsection}{\numberline {4.2.1}Streaming Server}{9}{subsection.4.2.1}%
-\contentsline {subsubsection}{\numberline {4.2.1.1}Source Stream Handler}{10}{subsubsection.4.2.1.1}%
-\contentsline {paragraph}{Two-Dimensional Product Reed–Solomon FEC}{11}{paragraph*.7}%
-\contentsline {paragraph}{Reed--Solomon Encoding.}{11}{paragraph*.8}%
-\contentsline {paragraph}{Constructing the Product Code.}{11}{paragraph*.9}%
-\contentsline {paragraph}{Bandwidth Overhead Analysis.}{12}{paragraph*.10}%
-\contentsline {paragraph}{Error-Correction Efficiency.}{12}{paragraph*.11}%
-\contentsline {paragraph}{Overhead Efficiency Comparison.}{13}{paragraph*.12}%
-\contentsline {paragraph}{Latency and Buffering Trade-offs.}{13}{paragraph*.13}%
-\contentsline {paragraph}{Packet interleave \& transmission ordering}{13}{paragraph*.14}%
-\contentsline {subsubsection}{\numberline {4.2.1.2}Reinforcement Learning}{14}{subsubsection.4.2.1.2}%
-\contentsline {subsubsection}{\numberline {4.2.1.3}Membership Manager}{16}{subsubsection.4.2.1.3}%
-\contentsline {paragraph}{Report Sink}{17}{paragraph*.16}%
-\contentsline {subsubsection}{\numberline {4.2.1.4}Network Scheduler Framework}{18}{subsubsection.4.2.1.4}%
-\contentsline {paragraph}{Network coding in multicast}{19}{paragraph*.19}%
-\contentsline {paragraph}{Multicast phase}{19}{paragraph*.21}%
-\contentsline {paragraph}{Unicast phase}{20}{paragraph*.22}%
-\contentsline {subsection}{\numberline {4.2.2}Client Library}{22}{subsection.4.2.2}%
-\contentsline {subsubsection}{\numberline {4.2.2.1}Decoder}{23}{subsubsection.4.2.2.1}%
-\contentsline {subsubsection}{\numberline {4.2.2.2}Retransmission Manager}{25}{subsubsection.4.2.2.2}%
-\contentsline {subsection}{\numberline {4.2.3}Conclusion}{27}{subsection.4.2.3}%
-\contentsline {section}{\numberline {4.3}Mobile edge cloud offloading}{27}{section.4.3}%
-\contentsline {subsection}{\numberline {4.3.1}Wi-Fi Aware}{28}{subsection.4.3.1}%
-\contentsline {paragraph}{Android Implementation}{31}{paragraph*.31}%
-\contentsline {subsection}{\numberline {4.3.2}Mesh Networking}{33}{subsection.4.3.2}%
-\contentsline {section}{\numberline {4.4}Frontend implementation}{36}{section.4.4}%
-\contentsline {subsection}{\numberline {4.4.1}Android Frontend}{36}{subsection.4.4.1}%
-\contentsline {section}{\numberline {4.5}Security}{40}{section.4.5}%
-\contentsline {subsection}{\numberline {4.5.1}Threat Model}{41}{subsection.4.5.1}%
-\contentsline {subsection}{\numberline {4.5.2}Authentication, Authorization, and Trust Model}{42}{subsection.4.5.2}%
-\contentsline {subsection}{\numberline {4.5.3}Forward Secrecy and Stream Integrity}{43}{subsection.4.5.3}%
-\contentsline {subsection}{\numberline {4.5.4}Double Signature Schema}{44}{subsection.4.5.4}%
-\contentsline {section}{\numberline {4.6}Conclusion}{46}{section.4.6}%
-\contentsline {chapter}{\numberline {5}Evaluation}{47}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Evaluation Environment}{47}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Simulated Results}{49}{section.5.2}%
-\contentsline {subsection}{\numberline {5.2.1}Simulated Baseline}{50}{subsection.5.2.1}%
-\contentsline {subsection}{\numberline {5.2.2}Impact of Forward Error Correction}{50}{subsection.5.2.2}%
-\contentsline {subsection}{\numberline {5.2.3}Retransmission Effects}{50}{subsection.5.2.3}%
-\contentsline {subsection}{\numberline {5.2.4}Reinforcement Learning Adaptation}{51}{subsection.5.2.4}%
-\contentsline {section}{\numberline {5.3}Deployment Results}{51}{section.5.3}%
-\contentsline {subsection}{\numberline {5.3.1}Deployment Baseline}{51}{subsection.5.3.1}%
-\contentsline {subsection}{\numberline {5.3.2}Fog Offloading}{51}{subsection.5.3.2}%
-\contentsline {section}{\numberline {5.4}Discussion}{53}{section.5.4}%
-\contentsline {chapter}{\numberline {6}Conclusion}{56}{chapter.6}%
-\contentsline {section}{\numberline {6.1}Future Work}{56}{section.6.1}%
+\contentsline {chapter}{\numberline {2}State of the Art}{4}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Identified Research Gap}{6}{section.2.1}%
+\contentsline {chapter}{\numberline {3}Design and Implementation}{7}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Requirements}{7}{section.3.1}%
+\contentsline {section}{\numberline {3.2}System Architecture}{9}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Streaming Server}{10}{subsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.1.1}Source Stream Handler}{11}{subsubsection.3.2.1.1}%
+\contentsline {paragraph}{Two-Dimensional Product Reed–Solomon FEC}{12}{paragraph*.8}%
+\contentsline {paragraph}{Reed--Solomon Encoding.}{12}{paragraph*.9}%
+\contentsline {paragraph}{Constructing the Product Code.}{12}{paragraph*.10}%
+\contentsline {paragraph}{Bandwidth Overhead Analysis.}{13}{paragraph*.11}%
+\contentsline {paragraph}{Error-Correction Efficiency.}{13}{paragraph*.12}%
+\contentsline {paragraph}{Overhead Efficiency Comparison.}{14}{paragraph*.13}%
+\contentsline {paragraph}{Latency and Buffering Trade-offs.}{14}{paragraph*.14}%
+\contentsline {paragraph}{Packet interleave \& transmission ordering}{14}{paragraph*.15}%
+\contentsline {subsubsection}{\numberline {3.2.1.2}Reinforcement Learning}{15}{subsubsection.3.2.1.2}%
+\contentsline {subsubsection}{\numberline {3.2.1.3}Membership Manager}{17}{subsubsection.3.2.1.3}%
+\contentsline {paragraph}{Report Sink}{18}{paragraph*.17}%
+\contentsline {subsubsection}{\numberline {3.2.1.4}Network Scheduler Framework}{19}{subsubsection.3.2.1.4}%
+\contentsline {paragraph}{Network coding in multicast}{20}{paragraph*.20}%
+\contentsline {paragraph}{Multicast phase}{20}{paragraph*.22}%
+\contentsline {paragraph}{Unicast phase}{21}{paragraph*.23}%
+\contentsline {subsection}{\numberline {3.2.2}Client Library}{23}{subsection.3.2.2}%
+\contentsline {subsubsection}{\numberline {3.2.2.1}Decoder}{24}{subsubsection.3.2.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.2.2}Retransmission Manager}{26}{subsubsection.3.2.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}Conclusion}{28}{subsection.3.2.3}%
+\contentsline {section}{\numberline {3.3}Mobile edge cloud offloading}{28}{section.3.3}%
+\contentsline {subsection}{\numberline {3.3.1}Wi-Fi Aware}{29}{subsection.3.3.1}%
+\contentsline {paragraph}{Android Implementation}{32}{paragraph*.32}%
+\contentsline {subsection}{\numberline {3.3.2}Mesh Networking}{34}{subsection.3.3.2}%
+\contentsline {section}{\numberline {3.4}Frontend implementation}{37}{section.3.4}%
+\contentsline {subsection}{\numberline {3.4.1}Android Frontend}{37}{subsection.3.4.1}%
+\contentsline {section}{\numberline {3.5}Security}{41}{section.3.5}%
+\contentsline {subsection}{\numberline {3.5.1}Threat Model}{42}{subsection.3.5.1}%
+\contentsline {subsection}{\numberline {3.5.2}Authentication, Authorization, and Trust Model}{43}{subsection.3.5.2}%
+\contentsline {subsection}{\numberline {3.5.3}Forward Secrecy and Stream Integrity}{44}{subsection.3.5.3}%
+\contentsline {subsection}{\numberline {3.5.4}Double Signature Schema}{45}{subsection.3.5.4}%
+\contentsline {section}{\numberline {3.6}Conclusion}{47}{section.3.6}%
+\contentsline {chapter}{\numberline {4}Evaluation}{48}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Evaluation Environment}{48}{section.4.1}%
+\contentsline {section}{\numberline {4.2}Simulated Results}{50}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Simulated Baseline}{51}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Impact of Forward Error Correction}{51}{subsection.4.2.2}%
+\contentsline {subsection}{\numberline {4.2.3}Retransmission Effects}{51}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.4}Reinforcement Learning Adaptation}{52}{subsection.4.2.4}%
+\contentsline {section}{\numberline {4.3}Deployment Results}{52}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Deployment Baseline}{52}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Fog Offloading}{52}{subsection.4.3.2}%
+\contentsline {section}{\numberline {4.4}Discussion}{54}{section.4.4}%
+\contentsline {chapter}{\numberline {5}Conclusion}{57}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Future Work}{57}{section.5.1}%
 \vspace {0.5cm}
-\contentsline {chapter}{Bibliography}{57}{dummy.7}%
-\contentsline {section}{\numberline {.1}Pseudocode Standard}{63}{section.Alph0.1}%
-\contentsline {subsection}{\numberline {.1.1}Structured Constructs}{63}{subsection.Alph0.1.1}%
-\contentsline {subsection}{\numberline {.1.2}Formatting Guidelines}{63}{subsection.Alph0.1.2}%
-\contentsline {section}{\numberline {.2}Algorithms}{64}{section.Alph0.2}%
-\contentsline {section}{\numberline {.3}Evaluation Appendix}{67}{section.Alph0.3}%
+\contentsline {chapter}{Bibliography}{58}{dummy.7}%
+\contentsline {section}{\numberline {.1}Pseudocode Standard}{65}{section.Alph0.1}%
+\contentsline {subsection}{\numberline {.1.1}Structured Constructs}{65}{subsection.Alph0.1.1}%
+\contentsline {subsection}{\numberline {.1.2}Formatting Guidelines}{65}{subsection.Alph0.1.2}%
+\contentsline {section}{\numberline {.2}Algorithms}{66}{section.Alph0.2}%
+\contentsline {section}{\numberline {.3}Evaluation Appendix}{69}{section.Alph0.3}%
 \contentsfinish 

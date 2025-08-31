@@ -18,51 +18,107 @@ Repeated entry---line 1033 of file Bibliography.bib
  : @misc{alvestrand2018rtc
  :                        ,
 I'm skipping whatever remains of this entry
+Repeated entry---line 1401 of file Bibliography.bib
+ : @misc{smpte2022
+ :                ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1557 of file Bibliography.bib
+ : @inproceedings{ferreira2019realtime
+ :                                    ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1571 of file Bibliography.bib
+ : @inproceedings{amaldi2010amuse
+ :                               ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1585 of file Bibliography.bib
+ : @techreport{perkins2003rfc5109
+ :                               ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1601 of file Bibliography.bib
+ : @techreport{perkins2019flexfec
+ :                               ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1633 of file Bibliography.bib
+ : @standard{smpte2022
+ :                    ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1645 of file Bibliography.bib
+ : @inproceedings{qureshi2011benefit
+ :                                  ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1659 of file Bibliography.bib
+ : @inproceedings{adalier2009interleaving
+ :                                       ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1673 of file Bibliography.bib
+ : @mastersthesis{westerlund2009fec
+ :                                 ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1687 of file Bibliography.bib
+ : @mastersthesis{fonnes2018fec
+ :                             ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1701 of file Bibliography.bib
+ : @inproceedings{chen2018rlafec
+ :                              ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1715 of file Bibliography.bib
+ : @techreport{baugher2004srtp
+ :                            ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1731 of file Bibliography.bib
+ : @techreport{wing2004ekt
+ :                        ,
+I'm skipping whatever remains of this entry
+Repeated entry---line 1749 of file Bibliography.bib
+ : @techreport{rescorla2018tls13
+ :                              ,
+I'm skipping whatever remains of this entry
 -- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
 -- http://www.michaelshell.org/tex/ieeetran/bibtex/
 -- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
 Warning--empty journal in rs_error_bounds
 
 Done.
-You've used 44 entries,
+You've used 59 entries,
             4087 wiz_defined-function locations,
-            1058 strings with 14344 characters,
-and the built_in function-call counts, 22934 in all, are:
-= -- 1957
-> -- 359
-< -- 106
-+ -- 201
-- -- 71
-* -- 966
-:= -- 3921
-add.period$ -- 92
-call.type$ -- 44
-change.case$ -- 65
-chr.to.int$ -- 240
-cite$ -- 45
-duplicate$ -- 1769
-empty$ -- 1932
-format.name$ -- 79
-if$ -- 5178
+            1126 strings with 16100 characters,
+and the built_in function-call counts, 29934 in all, are:
+= -- 2545
+> -- 472
+< -- 120
++ -- 258
+- -- 97
+* -- 1257
+:= -- 5192
+add.period$ -- 125
+call.type$ -- 59
+change.case$ -- 82
+chr.to.int$ -- 261
+cite$ -- 60
+duplicate$ -- 2349
+empty$ -- 2592
+format.name$ -- 114
+if$ -- 6756
 int.to.chr$ -- 0
-int.to.str$ -- 44
-missing$ -- 367
-newline$ -- 191
-num.names$ -- 39
-pop$ -- 885
+int.to.str$ -- 59
+missing$ -- 492
+newline$ -- 244
+num.names$ -- 55
+pop$ -- 1175
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 1806
+skip$ -- 2363
 stack$ -- 0
-substring$ -- 664
-swap$ -- 1252
-text.length$ -- 26
+substring$ -- 730
+swap$ -- 1616
+text.length$ -- 33
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 44
+type$ -- 59
 warning$ -- 1
-while$ -- 76
-width$ -- 46
-write$ -- 460
-(There was 1 error message)
+while$ -- 95
+width$ -- 61
+write$ -- 604
+(There were 15 error messages)

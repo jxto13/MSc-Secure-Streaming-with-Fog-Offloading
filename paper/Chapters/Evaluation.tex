@@ -32,7 +32,7 @@ The roles of these components within the environment can be described as follows
 		\label{fig:restreamer}
 	\end{figure}
 	
-	\item \textbf{tcgui} \cite{tcgui} configured packet loss on the host-side \texttt{vethXXX} interfaces of the client containers. A Bash script automated this by scanning for containers with the prefix \texttt{iris-client-*}, mapping each client’s \texttt{eth0} to its paired veth device, assigning a random packet loss rate, and posting the configuration to the \texttt{tcgui} HTTP API, this ensured that every client container experienced a reproducible but randomized loss pattern at its ingress interface. The graphical interface was used during development to validate configurations, while the script was employed during evaluation to guarantee consistency across runs, \Cref{fig:tcgui} illustrates the \texttt{tcgui} interface for manual rule application, while \Cref{fig:random loss script} presents the automation script.
+	\item \textbf{tcgui} \cite{tcgui} configured packet loss on the host-side \texttt{vethXXX} interfaces of the client containers. A Bash script automated this by scanning for containers with the prefix \texttt{iris-client-*}, mapping each client’s \texttt{eth0} to its paired veth device, assigning a random packet loss rate, and posting the configuration to the \texttt{tcgui} HTTP API, this ensured that every client container experienced a reproducible but randomized loss pattern at its ingress interface. The graphical interface was used during development to validate configurations, while the script was employed during evaluation to guarantee consistency across runs, \textbf{\Cref{fig:tcgui}} illustrates the \texttt{tcgui} interface for manual rule application, while \textbf{\Cref{fig:random loss script}} presents the automation script.
 	
 	
 	\begin{figure}[H]
@@ -44,7 +44,7 @@ The roles of these components within the environment can be described as follows
 	
 	\item \textbf{Prometheus} \cite{prometheus} operated by periodically scraping data from an exporter embedded in the streaming server, storing the collected time series in its database for retrieval and analysis.
 	
-	\item \textbf{Grafana}~\cite{grafana} connected to Prometheus and provided interactive dashboards to visualize these server-side metrics in real time and to archive them for later analysis. Dashboards tracked bandwidth usage, retransmission activity, and playback stability across all experiments, as illustrated in \Cref{fig:grafana dashboard}.
+	\item \textbf{Grafana}~\cite{grafana} connected to Prometheus and provided interactive dashboards to visualize these server-side metrics in real time and to archive them for later analysis. Dashboards tracked bandwidth usage, retransmission activity, and playback stability across all experiments, as illustrated in \textbf{\Cref{fig:grafana dashboard}}.
 
 \end{itemize}
 

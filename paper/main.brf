@@ -16,46 +16,70 @@
 \backcite {rfpage2024}{{1}{1}{chapter.1}}
 \backcite {springer2023}{{1}{1}{chapter.1}}
 \backcite {crowdsourcing2020}{{1}{1}{chapter.1}}
-\backcite {jung2017rust}{{8}{4.2}{section.4.2}}
-\backcite {matsakis2014rust}{{8}{4.2}{section.4.2}}
-\backcite {sharma2020comparison}{{8}{4.2}{section.4.2}}
-\backcite {schulzrinne1996rtp}{{10}{4.2.1.1}{subsubsection.4.2.1.1}}
-\backcite {srt2021}{{10}{4.2.1.1}{subsubsection.4.2.1.1}}
-\backcite {alvestrand2018rtc}{{10}{4.2.1.1}{subsubsection.4.2.1.1}}
-\backcite {iso13818}{{10}{4.2.1.1}{subsubsection.4.2.1.1}}
-\backcite {80211n_loss}{{10}{4.2.1.1}{subsubsection.4.2.1.1}}
-\backcite {prompeg}{{11}{4.2.1.1}{paragraph*.7}}
-\backcite {smpte2022}{{11}{4.2.1.1}{paragraph*.7}}
-\backcite {rfc6865}{{11}{4.2.1.1}{paragraph*.7}}
-\backcite {fec_video_study}{{11}{4.2.1.1}{paragraph*.7}}
-\backcite {rs_intro}{{11}{4.2.1.1}{equation.4.3}}
-\backcite {fec_overhead_study}{{12}{4.2.1.1}{paragraph*.10}}
-\backcite {2d_fec_bounds}{{12}{4.2.1.1}{equation.4.7}}
-\backcite {limit_fec}{{12}{4.2.1.1}{equation.4.7}}
-\backcite {huawei_afec}{{12}{4.2.1.1}{equation.4.7}}
-\backcite {rs_error_bounds}{{12}{4.2.1.1}{paragraph*.11}}
-\backcite {2d_fec_bounds}{{13}{4.2.1.1}{equation.4.9}}
-\backcite {raptor_vs_rs}{{13}{4.2.1.1}{paragraph*.12}}
-\backcite {shokrollahi2006raptor}{{13}{4.2.1.1}{paragraph*.12}}
-\backcite {smpte2022}{{13}{4.2.1.1}{equation.4.10}}
-\backcite {fec_video_study}{{13}{4.2.1.1}{equation.4.10}}
-\backcite {wifi_aware_specification}{{28}{4.3}{section.4.3}}
-\backcite {wifi_aware_specification}{{29}{4.11}{figure.caption.28}}
-\backcite {wifi_aware_specification}{{30}{4.12}{figure.caption.29}}
-\backcite {wifi_aware_specification}{{30}{4.13}{figure.caption.30}}
-\backcite {android_wifi_aware_overview}{{31}{4.3.1}{paragraph*.31}}
-\backcite {android_wifi_aware_overview}{{31}{4.3.1}{paragraph*.31}}
-\backcite {android_wifi_aware_overview}{{31}{4.3.1}{paragraph*.31}}
-\backcite {android_wifi_aware_overview}{{31}{4.3.1}{paragraph*.31}}
-\backcite {android_wifi_aware_hal}{{31}{4.3.1}{paragraph*.31}}
-\backcite {android_wifi_aware_hal}{{31}{4.3.1}{paragraph*.31}}
-\backcite {android_wifi_aware_source}{{32}{4.3.1}{paragraph*.31}}
-\backcite {android_wifi_aware_source}{{32}{4.14}{figure.caption.32}}
-\backcite {practicaldevsecops_stride}{{40}{4.5}{section.4.5}}
-\backcite {practicaldevsecops_stride}{{40}{4.22}{figure.caption.38}}
-\backcite {restreamer}{{48}{5.1}{figure.caption.44}}
-\backcite {tcgui}{{48}{5.1}{figure.caption.45}}
-\backcite {prometheus}{{49}{5.1}{figure.caption.46}}
-\backcite {grafana}{{49}{5.1}{figure.caption.46}}
-\backcite {libp2p}{{57}{6.1}{section.6.1}}
-\backcite {dalbey2003pseudocode}{{63}{.1}{section.Alph0.1}}
+\backcite {ferreira2019realtime}{{4}{2}{chapter.2}}
+\backcite {amaldi2010amuse}{{4}{2}{chapter.2}}
+\backcite {perkins2003rfc5109}{{4}{2}{chapter.2}}
+\backcite {smpte2022}{{4}{2}{chapter.2}}
+\backcite {perkins2019flexfec}{{4}{2}{chapter.2}}
+\backcite {westerlund2009fec}{{4}{2}{chapter.2}}
+\backcite {fonnes2018fec}{{4}{2}{chapter.2}}
+\backcite {qureshi2011benefit}{{4}{2}{chapter.2}}
+\backcite {adalier2009interleaving}{{4}{2}{chapter.2}}
+\backcite {chen2018rlafec}{{5}{2}{chapter.2}}
+\backcite {baugher2004srtp}{{5}{2}{chapter.2}}
+\backcite {rescorla2018tls13}{{5}{2}{chapter.2}}
+\backcite {sha2016wifidirect}{{5}{2}{chapter.2}}
+\backcite {androidWFD}{{5}{2}{chapter.2}}
+\backcite {ferreira2019realtime}{{5}{\caption@xref {??}{ on input line 54}}{table.caption.4}}
+\backcite {amaldi2010amuse}{{5}{\caption@xref {??}{ on input line 54}}{table.caption.4}}
+\backcite {perkins2003rfc5109}{{5}{\caption@xref {??}{ on input line 54}}{table.caption.4}}
+\backcite {perkins2019flexfec}{{5}{\caption@xref {??}{ on input line 54}}{table.caption.4}}
+\backcite {smpte2022}{{5}{\caption@xref {??}{ on input line 54}}{table.caption.4}}
+\backcite {qureshi2011benefit}{{5}{\caption@xref {??}{ on input line 54}}{table.caption.4}}
+\backcite {adalier2009interleaving}{{5}{\caption@xref {??}{ on input line 54}}{table.caption.4}}
+\backcite {chen2018rlafec}{{5}{\caption@xref {??}{ on input line 54}}{table.caption.4}}
+\backcite {sha2016wifidirect}{{5}{\caption@xref {??}{ on input line 54}}{table.caption.4}}
+\backcite {androidWFD}{{5}{\caption@xref {??}{ on input line 54}}{table.caption.4}}
+\backcite {jung2017rust}{{9}{3.2}{section.3.2}}
+\backcite {matsakis2014rust}{{9}{3.2}{section.3.2}}
+\backcite {sharma2020comparison}{{9}{3.2}{section.3.2}}
+\backcite {schulzrinne1996rtp}{{11}{3.2.1.1}{subsubsection.3.2.1.1}}
+\backcite {srt2021}{{11}{3.2.1.1}{subsubsection.3.2.1.1}}
+\backcite {alvestrand2018rtc}{{11}{3.2.1.1}{subsubsection.3.2.1.1}}
+\backcite {castr_mpegts}{{11}{3.2.1.1}{subsubsection.3.2.1.1}}
+\backcite {80211n_loss}{{11}{3.2.1.1}{subsubsection.3.2.1.1}}
+\backcite {smpte2022}{{12}{3.2.1.1}{paragraph*.8}}
+\backcite {prompeg}{{12}{3.2.1.1}{paragraph*.8}}
+\backcite {rfc6865}{{12}{3.2.1.1}{paragraph*.8}}
+\backcite {fec_video_study}{{12}{3.2.1.1}{paragraph*.8}}
+\backcite {rs_intro}{{12}{3.2.1.1}{equation.3.3}}
+\backcite {fec_overhead_study}{{13}{3.2.1.1}{paragraph*.11}}
+\backcite {2d_fec_bounds}{{13}{3.2.1.1}{equation.3.7}}
+\backcite {limit_fec}{{13}{3.2.1.1}{equation.3.7}}
+\backcite {huawei_afec}{{13}{3.2.1.1}{equation.3.7}}
+\backcite {rs_error_bounds}{{13}{3.2.1.1}{paragraph*.12}}
+\backcite {2d_fec_bounds}{{14}{3.2.1.1}{equation.3.9}}
+\backcite {raptor_vs_rs}{{14}{3.2.1.1}{paragraph*.13}}
+\backcite {shokrollahi2006raptor}{{14}{3.2.1.1}{paragraph*.13}}
+\backcite {smpte2022}{{14}{3.2.1.1}{equation.3.10}}
+\backcite {fec_video_study}{{14}{3.2.1.1}{equation.3.10}}
+\backcite {wifi_aware_specification}{{29}{3.3}{section.3.3}}
+\backcite {wifi_aware_specification}{{30}{3.11}{figure.caption.29}}
+\backcite {wifi_aware_specification}{{31}{3.12}{figure.caption.30}}
+\backcite {wifi_aware_specification}{{31}{3.13}{figure.caption.31}}
+\backcite {android_wifi_aware_overview}{{32}{3.3.1}{paragraph*.32}}
+\backcite {android_wifi_aware_overview}{{32}{3.3.1}{paragraph*.32}}
+\backcite {android_wifi_aware_overview}{{32}{3.3.1}{paragraph*.32}}
+\backcite {android_wifi_aware_overview}{{32}{3.3.1}{paragraph*.32}}
+\backcite {android_wifi_aware_hal}{{32}{3.3.1}{paragraph*.32}}
+\backcite {android_wifi_aware_hal}{{32}{3.3.1}{paragraph*.32}}
+\backcite {android_wifi_aware_source}{{33}{3.3.1}{paragraph*.32}}
+\backcite {android_wifi_aware_source}{{33}{3.14}{figure.caption.33}}
+\backcite {practicaldevsecops_stride}{{41}{3.5}{section.3.5}}
+\backcite {practicaldevsecops_stride}{{41}{3.22}{figure.caption.39}}
+\backcite {restreamer}{{49}{4.1}{figure.caption.45}}
+\backcite {tcgui}{{49}{4.1}{figure.caption.46}}
+\backcite {prometheus}{{50}{4.1}{figure.caption.47}}
+\backcite {grafana}{{50}{4.1}{figure.caption.47}}
+\backcite {libp2p}{{58}{5.1}{section.5.1}}
+\backcite {dalbey2003pseudocode}{{65}{.1}{section.Alph0.1}}
