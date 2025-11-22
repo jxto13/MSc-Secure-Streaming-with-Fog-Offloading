@@ -27,6 +27,10 @@
 
 \quad Security protocols such as SRTP with DTLS keying, EKT, and TLS~1.3~\cite{baugher2004srtp,wing2004ekt,rescorla2018tls13} ensure confidentiality and group keying, but none address integrity and trust for coded multicast with untrusted helpers. At the same time, offloading protocols such as Wi-Fi Direct have been used for collaborative video download and peer-to-peer multimedia streaming \cite{sha2016wifidirect,poderys2017overlay,androidWFD}, these systems demonstrate that local peer offloading can reduce infrastructure load, yet they do not integrate coding or security mechanisms.
 
+\quad Building on these foundations, IRIS by Martins et al.~\cite{martins2018iris} demonstrated how coding-aware retransmissions can be integrated with adaptive FEC, multipath scheduling, and predictive feedback to deliver reliable live streaming in dense deployments. IRIS combined interleaved Reed–Solomon coding with a Random-Forest based predictor to anticipate losses, while a multipath scheduler balanced Wi-Fi multicast, Wi-Fi unicast, and cellular links without requiring modifications to client OS or access point firmware. It was designed with security primitives, including PKI, rotating symmetric keys, and a double-signature scheme, which preserved confidentiality and integrity even during device-to-device offloading. Comparative experiments against commercial platforms such as HLS \cite{pantos2017hls}, Cisco StadiumVision~\cite{ciscoStadiumVision}, and Streambolico~\cite{streambolico2014} showed that IRIS reduced infrastructural Wi-Fi traffic by up to an order of magnitude, sustained sub-second startup latency, and maintained negligible deadline misses even under loss rates exceeding 40\%.
+
+\quad Hyrax, developed by INESC TEC~\cite{inesctec_hyrax}, extended the concept of mobile edge cloud computing by leveraging smartphones as cooperative compute and relay nodes. The framework showed that devices could offload resource-intensive tasks to nearby peers or cloud infrastructure, proving the feasibility of opportunistic clusters to improve performance and reduce latency. By building a working mobile cloud platform, INESC TEC demonstrated how distributed resources could be orchestrated in real deployments. While these results highlighted the potential of edge offloading for scalable computation, Hyrax was not designed for time-critical video delivery, nor did it integrate coding-aware recovery or security guarantees, leaving it unsuitable for reliable multicast streaming in untrusted dense environments.
+
 \quad To highlight the strengths and limitations of existing approaches, the works reviewed are compared against seven criteria that directly impact the feasibility of reliable multicast and secure offloading: reliability, deadline awareness, scalability, adaptivity, edge offload, security, and deployment evidence. \textbf{\Cref{tab:related-work}} presents this comparison.
 
 \begingroup
@@ -49,6 +53,9 @@
 			Interleaving \cite{adalier2009interleaving} & Time diversity & Buffered & N/A & Fixed & No & No & Proto. \\
 			RL-AFEC \cite{chen2018rlafec} & RL FEC & Frame & Per-recv. & Adaptive & No & No & Sim. \\
 			Wi-Fi Direct \cite{sha2016wifidirect,poderys2017overlay,androidWFD} & P2P offload & App-level & Local groups & Heuristic & Yes & App-dep. & Proto./Field \\
+			IRIS \cite{martins2018iris} & NC + FEC + multipath & Yes & High & Predictive & Yes & Yes & Testbed/Field \\
+			Hyrax \cite{inesctec_hyrax} & Mobile edge cloud & No & Opportunistic & Resource aware & Yes & No & Proto./Field \\
+			
 			\hline
 		\end{tabular}%
 	}
@@ -57,16 +64,17 @@
 \end{table}
 \endgroup
 
-\quad In summary, prior work addresses only parts of the problem. Coding-based multicast achieves scalability under deadlines but ignores secure offloading. Feedback schemes reduce control traffic but cannot ensure recovery within deadlines. FEC standards integrate with media stacks but waste coding opportunities across receivers. Interleaving mitigates burst loss but adds delay. Reinforcement learning adapts redundancy but overlooks multicast structure and group security. Offloading with Wi-Fi Direct enables device-to-device distribution but lacks coding and strong protection.
+\quad In summary, prior work addresses only parts of the problem. Coding-based multicast achieves scalability under deadlines but ignores secure offloading. Feedback schemes reduce control traffic but cannot ensure recovery within deadlines. FEC standards integrate with media stacks but waste coding opportunities across receivers. Interleaving mitigates burst loss but adds delay. Reinforcement learning adapts redundancy but overlooks multicast structure and group security. Offloading with Wi-Fi Direct enables device-to-device distribution but lacks coding and strong protection. IRIS demonstrates that coding-aware recovery, adaptivity, multipath delivery, and security can be combined in real deployments, but it requires specialized mechanisms that may not generalize to all platforms. Hyrax shows that edge offloading with opportunistic clusters is feasible, yet it does not address time-critical video delivery or integrate coding-based reliability, making it unsuitable for secure multicast streaming in dense environments.
 
 \section{Identified Research Gap}
 
 \quad Building on the analysis in \textbf{\Cref{State of the Art}}, no existing system combines coding-aware multicast, adaptive FEC, secure peer offload, and modern cryptography into a single framework, particularly when extended to fog computing. Despite advances in low-latency streaming and distributed offloading, current approaches remain limited in integrating secure fog execution into time-critical workflows. In particular, existing systems commonly exhibit the following limitations:
 
 \begin{itemize}
-	\item Multicast schemes incorporate coding or feedback reduction but omit mechanisms for secure offloading to untrusted peers or fog nodes.
-	\item FEC standards and adaptive methods enhance reliability but treat receivers independently and do not exploit cross-receiver coding opportunities in multicast groups.
-	\item Fog and peer-to-peer offloading reduce server load but lack integration with coding-aware recovery and strong cryptographic guarantees, making them unsuitable for deadline-sensitive live streaming.
+	\item Existing multicast and coding-based schemes are tailored to specific wireless environments and do not generalize to heterogeneous fog deployments that span multiple access technologies and administrative domains.
+	\item FEC standards and adaptive redundancy mechanisms improve packet recovery but do not integrate with cryptographic primitives that ensure verifiable integrity and confidentiality under cooperative, coded multicast.
+	\item Peer-to-peer and fog offloading frameworks demonstrate feasibility of resource sharing, yet they lack mechanisms for verifiable execution, trust establishment across untrusted nodes, and latency-aware integration with security protocols.
 \end{itemize}
+
 
 \quad Addressing these gaps is essential for enabling practical, scalable, and secure live streaming architectures that leverage the benefits of fog computing without compromising user experience or content protection guarantees. Motivated by this challenge, this thesis proposes a novel architecture that integrates secure fog offloading with low-latency live streaming, combining verified execution, adaptive cryptographic methods, and latency-aware security workflows to overcome the shortcomings of existing approaches.

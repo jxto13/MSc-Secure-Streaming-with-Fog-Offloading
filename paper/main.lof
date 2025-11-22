@@ -4,44 +4,44 @@
 \addvspace {10\p@ }
 \addvspace {10\p@ }
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {3.1}{\ignorespaces Sytem Overall Architecture}}{10}{figure.caption.7}%
-\contentsline {figure}{\numberline {3.2}{\ignorespaces Data Layout}}{15}{figure.caption.16}%
-\contentsline {figure}{\numberline {3.3}{\ignorespaces Scheduler alternates between multicast and unicast rounds.}}{19}{figure.caption.18}%
-\contentsline {figure}{\numberline {3.4}{\ignorespaces Client feedback streams populate the NC matrix with aligned rows.}}{20}{figure.caption.19}%
-\contentsline {figure}{\numberline {3.5}{\ignorespaces A single coded multicast restores different packets at different receivers.}}{20}{figure.caption.21}%
-\contentsline {figure}{\numberline {3.6}{\ignorespaces Greedy ranking with an XOR replacement step.}}{22}{figure.caption.24}%
-\contentsline {figure}{\numberline {3.7}{\ignorespaces Streaming Server Diagram}}{23}{figure.caption.25}%
-\contentsline {figure}{\numberline {3.8}{\ignorespaces Decoder Flowchart Diagram}}{25}{figure.caption.26}%
-\contentsline {figure}{\numberline {3.9}{\ignorespaces Edge Client Diagram}}{26}{figure.caption.27}%
-\contentsline {figure}{\numberline {3.10}{\ignorespaces Simplified view of the Retransmission Manager and its interactions with decoder, cache, and mesh network.}}{27}{figure.caption.28}%
-\contentsline {figure}{\numberline {3.11}{\ignorespaces NAN cluster topology, adapted from the Wi-Fi Aware Specification v4.0 \cite {wifi_aware_specification}.}}{30}{figure.caption.29}%
-\contentsline {figure}{\numberline {3.12}{\ignorespaces Functional architecture of Wi-Fi Aware, adapted from the Wi-Fi Aware Specification v4.0 \cite {wifi_aware_specification}.}}{31}{figure.caption.30}%
-\contentsline {figure}{\numberline {3.13}{\ignorespaces Relationship between NAN Device Links (NDLs) and NAN Data Paths (NDPs), adapted from the Wi-Fi Aware Specification v4.0 \cite {wifi_aware_specification}.}}{31}{figure.caption.31}%
-\contentsline {figure}{\numberline {3.14}{\ignorespaces Android Wi-Fi stack showing the interaction between applications, the framework, and the Wi-Fi Aware HAL \cite {android_wifi_aware_source}.}}{33}{figure.caption.33}%
-\contentsline {figure}{\numberline {3.15}{\ignorespaces Internal architecture of a mesh node, showing its sockets, runtime tasks, channels, and interaction with the retransmission manager.}}{35}{figure.caption.34}%
-\contentsline {figure}{\numberline {3.16}{\ignorespaces Example of mesh-enabled streaming: clients A–D remain connected to the Wi-Fi access point while forming peer-to-peer (P2P) links for cooperative retransmissions.}}{36}{figure.caption.35}%
-\contentsline {figure}{\numberline {3.17}{\ignorespaces Android application Diagram}}{38}{figure.caption.36}%
-\contentsline {figure}{\numberline {3.18}{\ignorespaces Streaming screen with session controls, playback, statistics, and peer connections.}}{39}{figure.caption.37}%
-\contentsline {figure}{\numberline {3.19}{\ignorespaces Expanded peer view showing detailed Wi-Fi Aware connection information.}}{39}{figure.caption.37}%
-\contentsline {figure}{\numberline {3.20}{\ignorespaces Navigation drawer providing access to application views.}}{40}{figure.caption.38}%
-\contentsline {figure}{\numberline {3.21}{\ignorespaces Settings screen with Wi-Fi Aware configuration and additional options.}}{40}{figure.caption.38}%
-\contentsline {figure}{\numberline {3.22}{\ignorespaces STRIDE security model \cite {practicaldevsecops_stride}}}{41}{figure.caption.39}%
-\contentsline {figure}{\numberline {3.23}{\ignorespaces Security flows between server and client}}{42}{figure.caption.40}%
-\contentsline {figure}{\numberline {3.24}{\ignorespaces Certificate request and validation messages}}{43}{figure.caption.41}%
-\contentsline {figure}{\numberline {3.25}{\ignorespaces Data structures for key rotation and forward secrecy}}{44}{figure.caption.42}%
-\contentsline {figure}{\numberline {3.26}{\ignorespaces Data structures for transmission and retransmission packet integrity}}{45}{figure.caption.43}%
-\contentsline {figure}{\numberline {3.27}{\ignorespaces Erasure Packet Flow}}{46}{figure.caption.44}%
+\contentsline {figure}{\numberline {3.1}{\ignorespaces Sytem Overall Architecture}}{11}{figure.caption.7}%
+\contentsline {figure}{\numberline {3.2}{\ignorespaces Data Layout}}{16}{figure.caption.16}%
+\contentsline {figure}{\numberline {3.3}{\ignorespaces Scheduler alternates between multicast and unicast rounds.}}{20}{figure.caption.18}%
+\contentsline {figure}{\numberline {3.4}{\ignorespaces Client feedback streams populate the NC matrix with aligned rows.}}{21}{figure.caption.19}%
+\contentsline {figure}{\numberline {3.5}{\ignorespaces A single coded multicast restores different packets at different receivers.}}{21}{figure.caption.21}%
+\contentsline {figure}{\numberline {3.6}{\ignorespaces Greedy ranking with an XOR replacement step.}}{23}{figure.caption.24}%
+\contentsline {figure}{\numberline {3.7}{\ignorespaces Streaming Server Diagram}}{24}{figure.caption.25}%
+\contentsline {figure}{\numberline {3.8}{\ignorespaces Decoder Flowchart Diagram}}{26}{figure.caption.26}%
+\contentsline {figure}{\numberline {3.9}{\ignorespaces Edge Client Diagram}}{27}{figure.caption.27}%
+\contentsline {figure}{\numberline {3.10}{\ignorespaces Simplified view of the Retransmission Manager and its interactions with decoder, cache, and mesh network.}}{28}{figure.caption.28}%
+\contentsline {figure}{\numberline {3.11}{\ignorespaces NAN cluster topology, adapted from the Wi-Fi Aware Specification v4.0 \cite {wifi_aware_specification}.}}{31}{figure.caption.29}%
+\contentsline {figure}{\numberline {3.12}{\ignorespaces Functional architecture of Wi-Fi Aware, adapted from the Wi-Fi Aware Specification v4.0 \cite {wifi_aware_specification}.}}{32}{figure.caption.30}%
+\contentsline {figure}{\numberline {3.13}{\ignorespaces Relationship between NAN Device Links (NDLs) and NAN Data Paths (NDPs), adapted from the Wi-Fi Aware Specification v4.0 \cite {wifi_aware_specification}.}}{32}{figure.caption.31}%
+\contentsline {figure}{\numberline {3.14}{\ignorespaces Android Wi-Fi stack showing the interaction between applications, the framework, and the Wi-Fi Aware HAL \cite {android_wifi_aware_source}.}}{34}{figure.caption.33}%
+\contentsline {figure}{\numberline {3.15}{\ignorespaces Internal architecture of a mesh node, showing its sockets, runtime tasks, channels, and interaction with the retransmission manager.}}{36}{figure.caption.34}%
+\contentsline {figure}{\numberline {3.16}{\ignorespaces Example of mesh-enabled streaming: clients A–D remain connected to the Wi-Fi access point while forming peer-to-peer (P2P) links for cooperative retransmissions.}}{37}{figure.caption.35}%
+\contentsline {figure}{\numberline {3.17}{\ignorespaces Android application Diagram}}{39}{figure.caption.36}%
+\contentsline {figure}{\numberline {3.18}{\ignorespaces Streaming screen with session controls, playback, statistics, and peer connections.}}{40}{figure.caption.37}%
+\contentsline {figure}{\numberline {3.19}{\ignorespaces Expanded peer view showing detailed Wi-Fi Aware connection information.}}{40}{figure.caption.37}%
+\contentsline {figure}{\numberline {3.20}{\ignorespaces Navigation drawer providing access to application views.}}{41}{figure.caption.38}%
+\contentsline {figure}{\numberline {3.21}{\ignorespaces Settings screen with Wi-Fi Aware configuration and additional options.}}{41}{figure.caption.38}%
+\contentsline {figure}{\numberline {3.22}{\ignorespaces STRIDE security model \cite {practicaldevsecops_stride}}}{42}{figure.caption.39}%
+\contentsline {figure}{\numberline {3.23}{\ignorespaces Security flows between server and client}}{43}{figure.caption.40}%
+\contentsline {figure}{\numberline {3.24}{\ignorespaces Certificate request and validation messages}}{44}{figure.caption.41}%
+\contentsline {figure}{\numberline {3.25}{\ignorespaces Data structures for key rotation and forward secrecy}}{45}{figure.caption.42}%
+\contentsline {figure}{\numberline {3.26}{\ignorespaces Data structures for transmission and retransmission packet integrity}}{46}{figure.caption.43}%
+\contentsline {figure}{\numberline {3.27}{\ignorespaces Erasure Packet Flow}}{47}{figure.caption.44}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {4.1}{\ignorespaces Containerized deployment of server, clients, and monitoring stack.}}{48}{figure.caption.45}%
-\contentsline {figure}{\numberline {4.2}{\ignorespaces Restreamer interface providing the test video source for the evaluation.}}{49}{figure.caption.46}%
-\contentsline {figure}{\numberline {4.3}{\ignorespaces tcgui interface for configuring delay, jitter, and packet loss on client veth interfaces.}}{50}{figure.caption.47}%
-\contentsline {figure}{\numberline {4.4}{\ignorespaces Performance metrics across different streaming scenarios.}}{53}{figure.caption.49}%
-\contentsline {figure}{\numberline {4.5}{\ignorespaces Average packet loss (\%) across clients by scenario.}}{53}{figure.caption.50}%
-\contentsline {figure}{\numberline {4.6}{\ignorespaces Total missed deadlines across clients by scenario.}}{53}{figure.caption.51}%
-\contentsline {figure}{\numberline {4.7}{\ignorespaces Average protocol overhead (\%) across scenarios.}}{54}{figure.caption.52}%
-\contentsline {figure}{\numberline {4.8}{\ignorespaces Total egress across scenarios (mean multicast sender rate).}}{54}{figure.caption.53}%
+\contentsline {figure}{\numberline {4.1}{\ignorespaces Containerized deployment of server, clients, and monitoring stack.}}{49}{figure.caption.45}%
+\contentsline {figure}{\numberline {4.2}{\ignorespaces Restreamer interface providing the test video source for the evaluation.}}{50}{figure.caption.46}%
+\contentsline {figure}{\numberline {4.3}{\ignorespaces tcgui interface for configuring delay, jitter, and packet loss on client veth interfaces.}}{51}{figure.caption.47}%
+\contentsline {figure}{\numberline {4.4}{\ignorespaces Performance metrics across different streaming scenarios.}}{54}{figure.caption.49}%
+\contentsline {figure}{\numberline {4.5}{\ignorespaces Average packet loss (\%) across clients by scenario.}}{54}{figure.caption.50}%
+\contentsline {figure}{\numberline {4.6}{\ignorespaces Total missed deadlines across clients by scenario.}}{54}{figure.caption.51}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Average protocol overhead (\%) across scenarios.}}{55}{figure.caption.52}%
+\contentsline {figure}{\numberline {4.8}{\ignorespaces Total egress across scenarios (mean multicast sender rate).}}{55}{figure.caption.53}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {1}{\ignorespaces Script to apply random packet loss to containers}}{69}{figure.caption.56}%
-\contentsline {figure}{\numberline {2}{\ignorespaces Server config example}}{70}{figure.caption.57}%
-\contentsline {figure}{\numberline {3}{\ignorespaces Grafana dashboard from one scenario}}{71}{figure.caption.58}%
+\contentsline {figure}{\numberline {1}{\ignorespaces Script to apply random packet loss to containers}}{71}{figure.caption.56}%
+\contentsline {figure}{\numberline {2}{\ignorespaces Server config example}}{72}{figure.caption.57}%
+\contentsline {figure}{\numberline {3}{\ignorespaces Grafana dashboard from one scenario}}{73}{figure.caption.58}%
 \contentsfinish 

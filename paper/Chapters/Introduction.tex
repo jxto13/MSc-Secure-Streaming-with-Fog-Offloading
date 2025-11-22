@@ -21,21 +21,23 @@
 
 \quad The proliferation of powerful mobile devices with diverse wireless capabilities presents an opportunity for crowdsourcing network resources through device-to-device (D2D) communication \cite{iplook2024, iotngin2022}, enabling direct data transmission between neighboring devices without relying on base station infrastructure, potentially improving spectrum efficiency, reducing latency, and offloading traffic from traditional access points \cite{rfpage2024}, this is called Mobile crowdsourcing, and has emerged as a paradigm for exploiting devices to create communication networks \cite{springer2023}, this approach can complement traditional infrastructure by creating opportunistic edge clouds that leverage any peer-to-peer technologies to form mesh networks capable of content distribution and retransmission \cite{crowdsourcing2020}. However, this crowdsourcing approach and mesh networks introduces new challenges for security and authentication that traditional centralized systems do not face, stream integrity must be maintained even when content is distributed through untrusted mobile devices, requiring robust authentication and authorization mechanisms, additionally the inherent unreliability of wireless multicast necessitates sophisticated forward error correction (FEC) and retransmission strategies to ensure quality of experience for end users. 
 
-\section{Motivation \& Approach}
+\section{Contributions}
 
 \quad Given these challenges and opportunities, this work addresses the fundamental question: Can we design a secure, reliable live streaming system that significantly reduces infrastructure bandwidth requirements in high-density scenarios while maintaining quality of experience through opportunistic mobile edge cloud offloading? 
 
 Our approach combines several key innovations: 
 
 \begin{itemize}
-	\item Adaptive application-level forward error correction with packet interleaving to handle bursty wireless losses.
-	\item Multipath scheduling framework that seamlessly integrates Wi-Fi multicast and unicast.
-	\item Machine learning-based prediction service for efficient bandwidth optimization.
-	\item Double-signature scheme to guarantee stream integrity in crowdsourced environments.
+	\item Cross-compilable runtime architecture designed for seamless deployment across heterogeneous mobile and embedded platforms.
+	\item Agnostic mesh networking layer that supports multiple wireless technologies and dynamically adapts to link availability.
+	\item Unified scheduling engine capable of coordinating concurrent multicast, unicast, and peer-to-peer flows.
+	\item Modular cryptographic framework that integrates modern primitives without binding to specific transport stacks.
+	\item Edge-aware orchestration layer that enables opportunistic computation and forwarding across diverse device classes.
 	\item Opportunistic mobile edge cloud offloading via device-to-device communication over Wi-Fi Aware.
 \end{itemize}
 
-\quad The system is implemented entirely at the application layer, leveraging modular architectural designs that support live multicast streaming without requiring hardware upgrades or firmware changes to existing wireless access points or mobile devices, this approach ensures practical deployment in real-world scenarios like live events with thousands of concurrent users.
+
+\quad The system is implemented entirely at the application layer, developed using the Rust programming language with strict adherence to its memory safety and concurrency model, which mitigates common vulnerabilities while preserving performance. It leverages modular architectural designs that support live multicast streaming without requiring hardware upgrades or firmware changes to existing wireless access points or mobile devices, ensuring practical deployment in real-world scenarios like live events with thousands of concurrent users.
 
 \quad Through comprehensive evaluation, including simulations and real-world testing in edge-assisted setups, we demonstrate that our approach can achieve a significant reduction in infrastructure Wi-Fi bandwidth usage while maintaining quality-of-service (QoS) for end user. 
 

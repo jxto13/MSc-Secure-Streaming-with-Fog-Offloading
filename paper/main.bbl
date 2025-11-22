@@ -194,6 +194,37 @@ J.~Poderys and J.~Soler, ``Streaming multimedia via overlay networks using
   \url{https://source.android.com/docs/core/connect/wifi-direct}
 \BIBentrySTDinterwordspacing
 
+\bibitem{martins2018iris}
+J.~Martins, N.~Ribeiro, R.~L. Aguiar, and F.~Silva, ``Iris: Reliable and secure
+  multicast for mobile live streaming in large-scale wireless networks,'' in
+  \emph{Proceedings of the 2018 IEEE International Symposium on a World of
+  Wireless, Mobile and Multimedia Networks (WoWMoM)}.\hskip 1em plus 0.5em
+  minus 0.4em\relax IEEE, 2018, pp. 1--9.
+
+\bibitem{pantos2017hls}
+\BIBentryALTinterwordspacing
+R.~Pantos and W.~May, ``Http live streaming,'' IETF Internet-Draft,
+  draft-pantos-http-live-streaming-23, 2017. [Online]. Available:
+  \url{https://datatracker.ietf.org/doc/html/draft-pantos-http-live-streaming-23}
+\BIBentrySTDinterwordspacing
+
+\bibitem{ciscoStadiumVision}
+\BIBentryALTinterwordspacing
+{Cisco Systems}, ``Cisco stadiumvision overview,'' 2019, product documentation.
+  [Online]. Available:
+  \url{https://www.cisco.com/c/en/us/solutions/sports-entertainment/stadiumvision.html}
+\BIBentrySTDinterwordspacing
+
+\bibitem{streambolico2014}
+P.~Sim{\~o}es, P.~Neves, M.~Luis, and N.~Ribeiro, ``Streambolico: Enabling
+  mobile video sharing in wireless lans,'' in \emph{Proceedings of the 2014
+  IEEE International Conference on Communications (ICC)}, 2014, pp. 372--377.
+
+\bibitem{inesctec_hyrax}
+{INESC TEC}, ``Hyrax,''
+  \url{https://www.inesctec.pt/pt/tecnologias/hyrax#content}, accessed:
+  2025-09-29.
+
 \bibitem{jung2017rust}
 R.~Jung, J.-H. Jourdan, R.~Krebbers, and D.~Dreyer, ``Rustbelt: Securing the
   foundations of the rust programming language,'' \emph{Proceedings of the ACM
