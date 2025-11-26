@@ -1,0 +1,2141 @@
+This is LuaHBTeX, Version 1.22.0 (TeX Live 2026/dev/Arch Linux)  (format=lualatex 2025.7.8)  24 NOV 2025 18:27
+ restricted system commands enabled.
+**Evaluation.tex
+(./Evaluation.tex
+LaTeX2e <2024-11-01> patch level 2
+L3 programming layer <2025-01-18>
+Lua module: luaotfload 2024-12-03 v3.29 Lua based OpenType font support
+Lua module: lualibs 2023-07-13 v2.76 ConTeXt Lua standard libraries.
+Lua module: lualibs-extended 2023-07-13 v2.76 ConTeXt Lua libraries -- extended 
+collection.
+luaotfload | conf : Root cache directory is "/home/jx23/.texlive/texmf-var/luate
+x-cache/generic/names".
+luaotfload | init : Loading fontloader "fontloader-2023-12-28.lua" from kpse-res
+olved path "/usr/share/texmf-dist/tex/luatex/luaotfload/fontloader-2023-12-28.lu
+a".
+Lua-only attribute luaotfload@noligature = 1
+luaotfload | init : Context OpenType loader version 3.134
+Inserting `luaotfload.node_processor' in `pre_linebreak_filter'.
+Inserting `luaotfload.node_processor' in `hpack_filter'.
+Inserting `luaotfload.glyph_stream' in `glyph_stream_provider'.
+Inserting `luaotfload.define_font' in `define_font'.
+Lua-only attribute luaotfload_color_attribute = 2
+luaotfload | conf : Root cache directory is "/home/jx23/.texlive/texmf-var/luate
+x-cache/generic/names".
+Inserting `luaotfload.harf.strip_prefix' in `find_opentype_file'.
+Inserting `luaotfload.harf.strip_prefix' in `find_truetype_file'.
+Removing  `luaotfload.glyph_stream' from `glyph_stream_provider'.
+Inserting `luaotfload.harf.glyphstream' in `glyph_stream_provider'.
+Inserting `luaotfload.harf.finalize_vlist' in `post_linebreak_filter'.
+Inserting `luaotfload.harf.finalize_hlist' in `hpack_filter'.
+Inserting `luaotfload.cleanup_files' in `wrapup_run'.
+Inserting `luaotfload.harf.finalize_unicode' in `finish_pdffile'.
+Inserting `luaotfload.glyphinfo' in `glyph_info'.
+Lua-only attribute luaotfload.letterspace_done = 3
+Inserting `luaotfload.aux.set_sscale_dimens' in `luaotfload.patch_font'.
+Inserting `luaotfload.aux.set_font_index' in `luaotfload.patch_font'.
+Inserting `luaotfload.aux.patch_cambria_domh' in `luaotfload.patch_font'.
+Inserting `luaotfload.aux.fixup_fontdata' in `luaotfload.patch_font_unsafe'.
+Inserting `luaotfload.aux.set_capheight' in `luaotfload.patch_font'.
+Inserting `luaotfload.aux.set_xheight' in `luaotfload.patch_font'.
+Inserting `luaotfload.rewrite_fontname' in `luaotfload.patch_font'.
+Inserting `tracingstacklevels' in `input_level_string'.
+! Undefined control sequence.
+l.5 \chapter
+            {Evaluation}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.5 \chapter{E
+              valuation}
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 5--8
+[]Evaluation
+ []
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.9 \quad
+          This chapter evaluates the proposed livestreaming framework under ...
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+luaotfload | db : Font names database loaded from /home/jx23/.texlive/texmf-var/
+luatex-cache/generic/names/luaotfload-names.luc.gz
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.9 ...n \textbf{\Cref{Design and Implementation}}
+                                                   into practice. To achieve...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.9 ... \textbf{\Cref{sec:evaluation environment}}
+                                                   first describes the exper...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.9 ...ools. \textbf{\Cref{sec:simulated results}}
+                                                   presents results from the...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.9 ...ing. \textbf{\Cref{sec:deployment results}}
+                                                   reports findings from rea...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \nameref 
+                         
+l.9 ...the \textbf{\nameref{sec:android frontend}}
+                                                  , focusing on the feasibil...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.9 ...ng. Finally, \textbf{\Cref{sec:discussion}}
+                                                   analyzes the outcomes acr...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 9--10
+[]
+ []
+
+
+Overfull \hbox (17.92001pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 De-
+ []
+
+
+Overfull \hbox (19.87pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 sign
+ []
+
+
+Overfull \hbox (18.37pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 and
+ []
+
+
+Overfull \hbox (17.77pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 Im-
+ []
+
+
+Overfull \hbox (18.68001pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 ple-
+ []
+
+
+Overfull \hbox (25.07pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 men-
+ []
+
+
+Overfull \hbox (13.89pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 ta-
+ []
+
+
+Overfull \hbox (19.8pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 tion
+ []
+
+
+Overfull \hbox (41.42001pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 sec:eval-
+ []
+
+
+Overfull \hbox (10.22pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 u-
+ []
+
+
+Overfull \hbox (9.42pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 a-
+ []
+
+
+Overfull \hbox (19.8pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 tion
+ []
+
+
+Overfull \hbox (15.49pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 en-
+ []
+
+
+Overfull \hbox (13.09001pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 vi-
+ []
+
+
+Overfull \hbox (20.71pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 ron-
+ []
+
+
+Overfull \hbox (25.39pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 ment
+ []
+
+
+Overfull \hbox (39.25pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 sec:sim-
+ []
+
+
+Overfull \hbox (10.22pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 u-
+ []
+
+
+Overfull \hbox (24.91pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 lated
+ []
+
+
+Overfull \hbox (13.84001pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 re-
+ []
+
+
+Overfull \hbox (23.12999pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 sults
+ []
+
+
+Overfull \hbox (33.6pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 sec:de-
+ []
+
+
+Overfull \hbox (24.91pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 ploy-
+ []
+
+
+Overfull \hbox (25.39pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 ment
+ []
+
+
+Overfull \hbox (13.84001pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 re-
+ []
+
+
+Overfull \hbox (23.12999pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 sults
+ []
+
+
+Overfull \hbox (33.92pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 sec:an-
+ []
+
+
+Overfull \hbox (26.46pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 droid
+ []
+
+
+Overfull \hbox (24.22pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 fron-
+ []
+
+
+Overfull \hbox (22.52pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 tend\nullfont ,
+ []
+
+
+Overfull \hbox (36.06pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 sec:dis-
+ []
+
+
+Overfull \hbox (19.87pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 cus-
+ []
+
+
+Overfull \hbox (19.87pt too wide) in paragraph at lines 9--10
+\TU/lmr/bx/n/10 sion
+ []
+
+! Undefined control sequence.
+l.11 \section
+             {Evaluation Environment}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.11 \section{E
+               valuation Environment}
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 11--13
+[]Evaluation
+ []
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.14 \quad
+           The evaluation was conducted in a Docker-based containerized envi...
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+! Undefined control sequence.
+l.14 ...bility and scalability, where the \nameref
+                                                  {sec:streaming server}, Re...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.14 ...dge network \textbf{\Cref{fig:deployment}}
+                                                  . The system was deployed ...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.14 ... from \textbf{\Cref{sec:android frontend}}
+                                                   to confirm the feasibilit...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 14--15
+[]
+ []
+
+
+Overfull \hbox (30.82pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 fig:de-
+ []
+
+
+Overfull \hbox (24.91pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 ploy-
+ []
+
+
+Overfull \hbox (25.39pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 ment\nullfont .
+ []
+
+
+Overfull \hbox (29.34001pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 Razer
+ []
+
+
+Overfull \hbox (28.62pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 Blade
+ []
+
+
+Overfull \hbox (11.5pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 15
+ []
+
+
+Overfull \hbox (18.59pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 Ad-
+ []
+
+
+Overfull \hbox (34.18001pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 vanced
+ []
+
+
+Overfull \hbox (31.84001pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 Model
+ []
+
+
+Overfull \hbox (24.97pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 (Mid
+ []
+
+
+Overfull \hbox (27.47pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 2021)
+ []
+
+
+Overfull \hbox (33.92pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 sec:an-
+ []
+
+
+Overfull \hbox (26.46pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 droid
+ []
+
+
+Overfull \hbox (24.22pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 fron-
+ []
+
+
+Overfull \hbox (22.52pt too wide) in paragraph at lines 14--15
+\TU/lmr/bx/n/10 tend
+ []
+
+
+! LaTeX Error: Environment figure undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.16 \begin{figure}
+                   [H]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.16 \begin{figure}[
+                    H]
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+! Undefined control sequence.
+l.18 	\includegraphics
+                      [width=0.95\textwidth]{Evaluation/system.png}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing number, treated as zero.
+<to be read again> 
+                   ]
+l.18 	\includegraphics[width=0.95\textwidth]
+                                            {Evaluation/system.png}
+A number should have been here; I inserted `0'.
+(If you can't figure out why I needed to see a number,
+look up `weird error' in the index to The TeXbook.)
+
+! Illegal unit of measure (pt inserted).
+<to be read again> 
+                   ]
+l.18 	\includegraphics[width=0.95\textwidth]
+                                            {Evaluation/system.png}
+Dimensions can be in units of em, ex, in, pt, pc,
+cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
+I'll assume that you meant to say pt, for printer's points.
+To recover gracefully from this error, it's best to
+delete the erroneous units; e.g., type `2' to delete
+two letters. (See Chapter 27 of The TeXbook.)
+
+
+! LaTeX Error: \caption outside float.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.19 	\caption
+              {Containerized deployment of server, clients, and monitoring s...
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+! LaTeX Error: \begin{document} ended by \end{figure}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.21 \end{figure}
+                 
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 16--22
+[][H]
+ []
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.23 T
+      he roles of these components within the environment can be described a...
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 23--24
+[]The
+ []
+
+
+! LaTeX Error: Missing \begin{document}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.25 \begin{itemize}
+                    
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 25--25
+[] 
+ []
+
+\citation{restreamer}
+! Undefined control sequence.
+<write> ...: Citation `\@citeb ' on page \thepage 
+                                                  \space undefined\on@line .
+l.26 	\item \textbf{Restreamer} \cite{restreamer}
+                                                  ingested a live video sour...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+LaTeX Warning: Citation `restreamer' on page  undefined on input line 26.
+
+! Undefined control sequence.
+l.26 ...iability in video input, as shown in \Cref
+                                                  {fig:restreamer}.
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+Overfull \hbox (17.73001pt too wide) in paragraph at lines 26--27
+\TU/lmr/bx/n/10 Re-
+ []
+
+
+Overfull \hbox (44.20001pt too wide) in paragraph at lines 26--27
+\TU/lmr/bx/n/10 streamer
+ []
+
+
+Overfull \hbox (5.43pt too wide) in paragraph at lines 26--27
+[[]]
+ []
+
+
+! LaTeX Error: Environment figure undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.28 	\begin{figure}
+                    [H]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Undefined control sequence.
+l.30 		\includegraphics
+                       [width=0.95\textwidth]{Evaluation/restreamer.png}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing number, treated as zero.
+<to be read again> 
+                   ]
+l.30 		\includegraphics[width=0.95\textwidth]
+                                             {Evaluation/restreamer.png}
+A number should have been here; I inserted `0'.
+(If you can't figure out why I needed to see a number,
+look up `weird error' in the index to The TeXbook.)
+
+! Illegal unit of measure (pt inserted).
+<to be read again> 
+                   ]
+l.30 		\includegraphics[width=0.95\textwidth]
+                                             {Evaluation/restreamer.png}
+Dimensions can be in units of em, ex, in, pt, pc,
+cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
+I'll assume that you meant to say pt, for printer's points.
+To recover gracefully from this error, it's best to
+delete the erroneous units; e.g., type `2' to delete
+two letters. (See Chapter 27 of The TeXbook.)
+
+
+! LaTeX Error: \caption outside float.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.31 		\caption
+               {Restreamer interface providing the test video source for the...
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+! LaTeX Error: \begin{itemize} on input line 25 ended by \end{figure}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.33 	\end{figure}
+                  
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+\citation{tcgui}
+! Undefined control sequence.
+<write> ...: Citation `\@citeb ' on page \thepage 
+                                                  \space undefined\on@line .
+l.35 	\item \textbf{tcgui} \cite{tcgui}
+                                        configured packet loss on the host-s...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+LaTeX Warning: Citation `tcgui' on page  undefined on input line 35.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.35 ...ncy across runs, \textbf{\Cref{fig:tcgui}}
+                                                   illustrates the \texttt{t...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.35 ...ile \textbf{\Cref{fig:random loss script}}
+                                                   presents the automation s...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+Overfull \hbox (24.91pt too wide) in paragraph at lines 35--36
+\TU/lmr/bx/n/10 tcgui
+ []
+
+
+Overfull \hbox (5.43pt too wide) in paragraph at lines 35--36
+[[]]
+ []
+
+
+Overfull \hbox (36.75pt too wide) in paragraph at lines 35--36
+\TU/lmtt/m/n/10 vethXXX
+ []
+
+
+Overfull \hbox (26.25pt too wide) in paragraph at lines 35--36
+\TU/lmtt/m/n/10 iris-
+ []
+
+
+Overfull \hbox (36.75pt too wide) in paragraph at lines 35--36
+\TU/lmtt/m/n/10 client-
+ []
+
+
+Overfull \hbox (5.25pt too wide) in paragraph at lines 35--36
+\TU/lmtt/m/n/10 *\nullfont ,
+ []
+
+
+Overfull \hbox (21.0pt too wide) in paragraph at lines 35--36
+\TU/lmtt/m/n/10 eth0
+ []
+
+
+Overfull \hbox (26.25pt too wide) in paragraph at lines 35--36
+\TU/lmtt/m/n/10 tcgui
+ []
+
+
+Overfull \hbox (40.24pt too wide) in paragraph at lines 35--36
+\TU/lmr/bx/n/10 fig:tcgui
+ []
+
+
+Overfull \hbox (26.25pt too wide) in paragraph at lines 35--36
+\TU/lmtt/m/n/10 tcgui
+ []
+
+
+Overfull \hbox (35.88pt too wide) in paragraph at lines 35--36
+\TU/lmr/bx/n/10 fig:ran-
+ []
+
+
+Overfull \hbox (21.72pt too wide) in paragraph at lines 35--36
+\TU/lmr/bx/n/10 dom
+ []
+
+
+Overfull \hbox (18.01999pt too wide) in paragraph at lines 35--36
+\TU/lmr/bx/n/10 loss
+ []
+
+
+Overfull \hbox (28.44pt too wide) in paragraph at lines 35--36
+\TU/lmr/bx/n/10 script
+ []
+
+
+! LaTeX Error: Environment figure undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.38 	\begin{figure}
+                    [H]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Undefined control sequence.
+l.40 		\includegraphics
+                       [width=0.80\textwidth]{Evaluation/tcgui.png}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing number, treated as zero.
+<to be read again> 
+                   ]
+l.40 		\includegraphics[width=0.80\textwidth]
+                                             {Evaluation/tcgui.png}
+A number should have been here; I inserted `0'.
+(If you can't figure out why I needed to see a number,
+look up `weird error' in the index to The TeXbook.)
+
+! Illegal unit of measure (pt inserted).
+<to be read again> 
+                   ]
+l.40 		\includegraphics[width=0.80\textwidth]
+                                             {Evaluation/tcgui.png}
+Dimensions can be in units of em, ex, in, pt, pc,
+cm, mm, dd, cc, nd, nc, bp, or sp; but yours is a new one!
+I'll assume that you meant to say pt, for printer's points.
+To recover gracefully from this error, it's best to
+delete the erroneous units; e.g., type `2' to delete
+two letters. (See Chapter 27 of The TeXbook.)
+
+
+! LaTeX Error: \caption outside float.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.41 		\caption
+               {tcgui interface for configuring delay, jitter, and packet lo...
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+! LaTeX Error: \begin{itemize} on input line 25 ended by \end{figure}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.43 	\end{figure}
+                  
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+\citation{prometheus}
+! Undefined control sequence.
+<write> ...: Citation `\@citeb ' on page \thepage 
+                                                  \space undefined\on@line .
+l.45 	\item \textbf{Prometheus} \cite{prometheus}
+                                                  operated by periodically s...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+LaTeX Warning: Citation `prometheus' on page  undefined on input line 45.
+
+
+Overfull \hbox (60.26001pt too wide) in paragraph at lines 45--46
+\TU/lmr/bx/n/10 Prometheus
+ []
+
+
+Overfull \hbox (5.43pt too wide) in paragraph at lines 45--46
+[[]]
+ []
+
+\citation{grafana}
+! Undefined control sequence.
+<write> ...: Citation `\@citeb ' on page \thepage 
+                                                  \space undefined\on@line .
+l.47 	\item \textbf{Grafana}~\cite{grafana}
+                                            connected to Prometheus and prov...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+LaTeX Warning: Citation `grafana' on page  undefined on input line 47.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.47 ...d in \textbf{\Cref{fig:grafana dashboard}}
+                                                  .
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+Overfull \hbox (45.87997pt too wide) in paragraph at lines 47--48
+\TU/lmr/bx/n/10 Grafana\nullfont [[]]
+ []
+
+
+Overfull \hbox (52.48999pt too wide) in paragraph at lines 47--48
+\TU/lmr/bx/n/10 fig:grafana
+ []
+
+
+Overfull \hbox (26.73999pt too wide) in paragraph at lines 47--48
+\TU/lmr/bx/n/10 dash-
+ []
+
+
+Overfull \hbox (29.18001pt too wide) in paragraph at lines 47--48
+\TU/lmr/bx/n/10 board\nullfont . 
+ []
+
+! Undefined control sequence.
+l.51 \section
+             {Simulated Results}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 51--53
+[]Simulated
+ []
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.54 ... offloading. \textbf{\Cref{tab:scenarios}}
+                                                   summarizes their composit...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 54--55
+[]
+ []
+
+
+Overfull \hbox (38.39pt too wide) in paragraph at lines 54--55
+\TU/lmr/bx/n/10 tab:sce-
+ []
+
+
+Overfull \hbox (20.55pt too wide) in paragraph at lines 54--55
+\TU/lmr/bx/n/10 nar-
+ []
+
+
+Overfull \hbox (13.48pt too wide) in paragraph at lines 54--55
+\TU/lmr/bx/n/10 ios
+ []
+
+
+! LaTeX Error: Environment table undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.56 \begin{table}
+                  [H]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <7> on input line 58.
+LaTeX Font Info:    External font `cmex10' loaded for size
+(Font)              <5> on input line 58.
+
+! LaTeX Error: \caption outside float.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.71 	\caption
+              {Composition of scenarios by retransmission, FEC, AI, and fog ...
+You're in trouble here.  Try typing  <return>  to proceed.
+If that doesn't work, type  X <return>  to quit.
+
+
+! LaTeX Error: \begin{document} ended by \end{table}.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.73 \end{table}
+                
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 56--74
+[][H]
+ []
+
+
+Overfull \hbox (177.72008pt too wide) in paragraph at lines 56--74
+[]
+ []
+
+! Undefined control sequence.
+<recently read> \nameref 
+                         
+l.75 ... a \textbf{\nameref{sec:streaming server}}
+                                                   configuration example is ...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.75 ...shown in \textbf{\Cref{fig:server config}}
+                                                  .
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 75--76
+[]
+ []
+
+
+Overfull \hbox (17.77783pt too wide) in paragraph at lines 75--76
+\OT1/cmr/m/n/10 10 \OMS/cmsy/m/n/10 
+ []
+
+
+Overfull \hbox (10.00003pt too wide) in paragraph at lines 75--76
+\OT1/cmr/m/n/10 10$
+ []
+
+
+Overfull \hbox (56.13pt too wide) in paragraph at lines 75--76
+\TU/lmr/bx/n/10 sec:stream-
+ []
+
+
+Overfull \hbox (15.33pt too wide) in paragraph at lines 75--76
+\TU/lmr/bx/n/10 ing
+ []
+
+
+Overfull \hbox (30.31001pt too wide) in paragraph at lines 75--76
+\TU/lmr/bx/n/10 server
+ []
+
+
+Overfull \hbox (45.64001pt too wide) in paragraph at lines 75--76
+\TU/lmr/bx/n/10 fig:server
+ []
+
+
+Overfull \hbox (21.08pt too wide) in paragraph at lines 75--76
+\TU/lmr/bx/n/10 con-
+ []
+
+
+Overfull \hbox (12.14pt too wide) in paragraph at lines 75--76
+\TU/lmr/bx/n/10 fig\nullfont . 
+ []
+
+! Undefined control sequence.
+l.78 \subsection
+                {Simulated Baseline}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+
+Overfull \hbox (20.0pt too wide) in paragraph at lines 78--79
+[]Simulated
+ []
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.80 ...0\% overhead (\textbf{\Cref{fig:overhead}}
+                                                  ). Average packet loss rea...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.80 ...s clients (\textbf{\Cref{fig:packet_loss}}
+                                                  ), while missed deadlines ...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.80 ...s clients (\textbf{\Cref{fig:packet_loss}}
+                                                  ), while missed deadlines ...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \Cref {fig:packet_loss}
+                                  
+l.80 ...s clients (\textbf{\Cref{fig:packet_loss}}
+                                                  ), while missed deadlines ...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+<recently read> \egroup 
+                        
+l.80 ...s clients (\textbf{\Cref{fig:packet_loss}}
+                                                  ), while missed deadlines ...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Undefined control sequence.
+<argument> \bfseries \Cref 
+                           {fig:missed_deadlines}
+l.80 ...,580 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Because no FEC was appl...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.80 ...,580 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Because no FEC was appl...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \bfseries \Cref {fig:missed_deadlines}
+                                                 
+l.80 ...,580 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Because no FEC was appl...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\mbox  #1->\leavevmode \hbox {#1}
+                                 
+l.80 ...,580 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Because no FEC was appl...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\nfss@text #1->{\mbox {#1}}
+                           
+l.80 ...,580 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Because no FEC was appl...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.81 
+     
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Undefined control sequence.
+l.82 \subsection
+                {Impact of Forward Error Correction}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+LaTeX Font Info:    Font shape `TU/lmtt/bx/n' in size <10> not available
+(Font)              Font shape `TU/lmtt/b/n' tried instead on input line 84.
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.84 ...es to 34.5\% (\textbf{\Cref{fig:overhead}}
+                                                  ), roughly 14\% above base...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.84 ...to 3.73\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), while missed deadlines ...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.84 ...to 3.73\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), while missed deadlines ...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \Cref {fig:packet_loss}
+                                  
+l.84 ...to 3.73\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), while missed deadlines ...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+<recently read> \egroup 
+                        
+l.84 ...to 3.73\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), while missed deadlines ...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Undefined control sequence.
+<argument> \bfseries \Cref 
+                           {fig:missed_deadlines}
+l.84 ...,437 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ).
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.84 ...,437 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ).
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \bfseries \Cref {fig:missed_deadlines}
+                                                 
+l.84 ...,437 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ).
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\mbox  #1->\leavevmode \hbox {#1}
+                                 
+l.84 ...,437 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ).
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\nfss@text #1->{\mbox {#1}}
+                           
+l.84 ...,437 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ).
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.85 
+     
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.86 ...aches 44.7\% (\textbf{\Cref{fig:overhead}}
+                                                  ), and packet loss is 3.65...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.86 ...is 3.65\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ). Missed deadlines fall s...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.86 ...is 3.65\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ). Missed deadlines fall s...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \Cref {fig:packet_loss}
+                                  
+l.86 ...is 3.65\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ). Missed deadlines fall s...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+<recently read> \egroup 
+                        
+l.86 ...is 3.65\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ). Missed deadlines fall s...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Undefined control sequence.
+<argument> \bfseries \Cref 
+                           {fig:missed_deadlines}
+l.86 ...,730 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Compared to baseline, o...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.86 ...,730 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Compared to baseline, o...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \bfseries \Cref {fig:missed_deadlines}
+                                                 
+l.86 ...,730 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Compared to baseline, o...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\mbox  #1->\leavevmode \hbox {#1}
+                                 
+l.86 ...,730 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Compared to baseline, o...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\nfss@text #1->{\mbox {#1}}
+                           
+l.86 ...,730 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Compared to baseline, o...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.87 
+     
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Undefined control sequence.
+l.89 \subsection
+                {Retransmission Effects}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.91 ...to 1.85\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), and missed deadlines fa...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.91 ...to 1.85\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), and missed deadlines fa...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \Cref {fig:packet_loss}
+                                  
+l.91 ...to 1.85\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), and missed deadlines fa...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+<recently read> \egroup 
+                        
+l.91 ...to 1.85\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), and missed deadlines fa...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Undefined control sequence.
+<argument> \bfseries \Cref 
+                           {fig:missed_deadlines}
+l.91 ...9538 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ), about half of the basel...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.91 ...9538 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ), about half of the basel...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \bfseries \Cref {fig:missed_deadlines}
+                                                 
+l.91 ...9538 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ), about half of the basel...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\mbox  #1->\leavevmode \hbox {#1}
+                                 
+l.91 ...9538 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ), about half of the basel...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\nfss@text #1->{\mbox {#1}}
+                           
+l.91 ...9538 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ), about half of the basel...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.92 
+     
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.93 ...2x2 FEC case (\textbf{\Cref{fig:overhead}}
+                                                  ), but packet loss increas...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.93 ...to 6.44\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ) and missed deadlines sur...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.93 ...to 6.44\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ) and missed deadlines sur...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \Cref {fig:packet_loss}
+                                  
+l.93 ...to 6.44\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ) and missed deadlines sur...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+<recently read> \egroup 
+                        
+l.93 ...to 6.44\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ) and missed deadlines sur...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Undefined control sequence.
+<argument> \bfseries \Cref 
+                           {fig:missed_deadlines}
+l.93 ...,377 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Retransmission smooths ...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.93 ...,377 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Retransmission smooths ...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \bfseries \Cref {fig:missed_deadlines}
+                                                 
+l.93 ...,377 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Retransmission smooths ...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\mbox  #1->\leavevmode \hbox {#1}
+                                 
+l.93 ...,377 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Retransmission smooths ...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\nfss@text #1->{\mbox {#1}}
+                           
+l.93 ...,377 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). Retransmission smooths ...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.94 
+     
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Undefined control sequence.
+l.95 \subsection
+                {Reinforcement Learning Adaptation}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.97 ...ove baseline (\textbf{\Cref{fig:overhead}}
+                                                  ). Packet loss rises sligh...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.97 ...to 2.76\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), and missed deadlines re...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.97 ...to 2.76\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), and missed deadlines re...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \Cref {fig:packet_loss}
+                                  
+l.97 ...to 2.76\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), and missed deadlines re...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+<recently read> \egroup 
+                        
+l.97 ...to 2.76\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), and missed deadlines re...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Undefined control sequence.
+<argument> \bfseries \Cref 
+                           {fig:missed_deadlines}
+l.97 ...,166 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). The AI controller impro...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.97 ...,166 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). The AI controller impro...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \bfseries \Cref {fig:missed_deadlines}
+                                                 
+l.97 ...,166 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). The AI controller impro...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\mbox  #1->\leavevmode \hbox {#1}
+                                 
+l.97 ...,166 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). The AI controller impro...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\nfss@text #1->{\mbox {#1}}
+                           
+l.97 ...,166 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ). The AI controller impro...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.98 
+     
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Undefined control sequence.
+l.99 \section
+             {Deployment Results}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.102 ...mmarized in \textbf{\Cref{tab:scenarios}}
+                                                  , and the data matrix rema...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \nameref 
+                         
+l.102 ...e \textbf{\nameref{sec:android frontend}}
+                                                  , which provides a practic...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.102 ...ed in \textbf{\Cref{sec:mesh networking}}
+                                                   also operate efficiently ...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+l.104 \subsection
+                 {Deployment Baseline}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.106 ...w at 20.0\% (\textbf{\Cref{fig:overhead}}
+                                                  ), while packet loss is mi...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.106 ...o 1.80\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ) and missed deadlines tot...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.106 ...o 1.80\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ) and missed deadlines tot...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \Cref {fig:packet_loss}
+                                  
+l.106 ...o 1.80\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ) and missed deadlines tot...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+<recently read> \egroup 
+                        
+l.106 ...o 1.80\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ) and missed deadlines tot...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Undefined control sequence.
+<argument> \bfseries \Cref 
+                           {fig:missed_deadlines}
+l.106 ...464 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ).
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.106 ...464 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ).
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \bfseries \Cref {fig:missed_deadlines}
+                                                 
+l.106 ...464 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ).
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\mbox  #1->\leavevmode \hbox {#1}
+                                 
+l.106 ...464 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ).
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\nfss@text #1->{\mbox {#1}}
+                           
+l.106 ...464 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ).
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.107 
+      
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Undefined control sequence.
+l.108 \subsection
+                 {Fog Offloading}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.110 ...e at 20.1\% (\textbf{\Cref{fig:overhead}}
+                                                  ), packet loss increases m...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Undefined control sequence.
+<recently read> \Cref 
+                      
+l.110 ...o 2.50\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), but missed deadlines dr...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.110 ...o 2.50\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), but missed deadlines dr...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \Cref {fig:packet_loss}
+                                  
+l.110 ...o 2.50\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), but missed deadlines dr...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+<recently read> \egroup 
+                        
+l.110 ...o 2.50\% (\textbf{\Cref{fig:packet_loss}}
+                                                  ), but missed deadlines dr...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Undefined control sequence.
+<argument> \bfseries \Cref 
+                           {fig:missed_deadlines}
+l.110 ...915 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ), showing that offloading...
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.110 ...915 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ), showing that offloading...
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+! Extra }, or forgotten $.
+<argument> \bfseries \Cref {fig:missed_deadlines}
+                                                 
+l.110 ...915 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ), showing that offloading...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\mbox  #1->\leavevmode \hbox {#1}
+                                 
+l.110 ...915 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ), showing that offloading...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Extra }, or forgotten $.
+\nfss@text #1->{\mbox {#1}}
+                           
+l.110 ...915 (\textbf{\Cref{fig:missed_deadlines}}
+                                                  ), showing that offloading...
+I've deleted a group-closing symbol because it seems to be
+spurious, as in `$x}$'. But perhaps the } is legitimate and
+you forgot something else, as in `\hbox{$x}'. In such cases
+the way to recover is to insert both the forgotten and the
+deleted material, e.g., by typing `I$}'.
+
+! Missing $ inserted.
+<inserted text> 
+                $
+l.111 
+      
+I've inserted a begin-math/end-math symbol since I think
+you left one out. Proceed, with fingers crossed.
+
+
+! LaTeX Error: Environment figure undefined.
+
+See the LaTeX manual or LaTeX Companion for explanation.
+Type  H <return>  for immediate help.
+ ...                                              
+                                                  
+l.113 \begin{figure}
+                    [H]
+Your command was ignored.
+Type  I <command> <return>  to replace it with another command,
+or  <return>  to continue without it.
+
+! Undefined control sequence.
+l.115 	\includegraphics
+                       [width=1\textwidth]{Evaluation/Sem Título.png}
+The control sequence at the end of the top line
+of your error message was never \def'ed. If you have
+misspelled it (e.g., `\hobx'), type `I' and the correct
+spelling (e.g., `I\hbox'). Otherwise just continue,
+and I'll forget about whatever was undefined.
+
+! Missing number, treated as zero.
+<to be read again> 
+                   ]
+l.115 	\includegraphics[width=1\textwidth]
+                                          {Evaluation/Sem Título.png}
+A number should have been here; I inserted `0'.
+(If you can't figure out why I needed to see a number,
+look up `weird error' in the index to The TeXbook.)
+
+! Illegal unit of measure (pt inserted).
+<to be read again> 
+                   ]
+l.115 	\includegraphics[width=1\textwidth]
+                                          {Evaluation/Sem Título.png}
+(That makes 100 errors; please try again.)
+
+Here is how much of LuaTeX's memory you used:
+ 42 strings out of 475506
+ 100000,552014 words of node,token memory allocated
+ 71611 words of node memory still in use:
+   246 hlist, 23 vlist, 34 rule, 62 disc, 19 local_par, 25 dir, 21 math, 1495 gl
+ue, 257 kern, 87 penalty, 315 noad, 315 math_char, 8 sub_mlist, 7220 glyph, 354 
+attribute, 44 glue_spec, 354 attribute_list, 25 temp, 8 write nodes
+   avail lists: 2:1,3:115,4:62,8:119,9:1,10:61
+ 23168 multiletter control sequences out of 65536+600000
+ 28 fonts using 1729239 bytes
+ 19i,25n,30p,1069b,713s stack positions out of 10000i,1000n,20000p,200000b,200000s
+!  ==> Fatal error occurred, no output PDF file produced!

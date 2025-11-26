@@ -1,0 +1,1785 @@
+This is LuaHBTeX, Version 1.22.0 (TeX Live 2026/dev/Arch Linux)  (format=lualatex 2025.7.8)  25 NOV 2025 11:40
+ restricted system commands enabled.
+**main.tex
+(./main.tex
+LaTeX2e <2024-11-01> patch level 2
+L3 programming layer <2025-01-18>
+Lua module: luaotfload 2024-12-03 v3.29 Lua based OpenType font support
+Lua module: lualibs 2023-07-13 v2.76 ConTeXt Lua standard libraries.
+Lua module: lualibs-extended 2023-07-13 v2.76 ConTeXt Lua libraries -- extended 
+collection.
+luaotfload | conf : Root cache directory is "/home/jx23/.texlive/texmf-var/luate
+x-cache/generic/names".
+luaotfload | init : Loading fontloader "fontloader-2023-12-28.lua" from kpse-res
+olved path "/usr/share/texmf-dist/tex/luatex/luaotfload/fontloader-2023-12-28.lu
+a".
+Lua-only attribute luaotfload@noligature = 1
+luaotfload | init : Context OpenType loader version 3.134
+Inserting `luaotfload.node_processor' in `pre_linebreak_filter'.
+Inserting `luaotfload.node_processor' in `hpack_filter'.
+Inserting `luaotfload.glyph_stream' in `glyph_stream_provider'.
+Inserting `luaotfload.define_font' in `define_font'.
+Lua-only attribute luaotfload_color_attribute = 2
+luaotfload | conf : Root cache directory is "/home/jx23/.texlive/texmf-var/luate
+x-cache/generic/names".
+Inserting `luaotfload.harf.strip_prefix' in `find_opentype_file'.
+Inserting `luaotfload.harf.strip_prefix' in `find_truetype_file'.
+Removing  `luaotfload.glyph_stream' from `glyph_stream_provider'.
+Inserting `luaotfload.harf.glyphstream' in `glyph_stream_provider'.
+Inserting `luaotfload.harf.finalize_vlist' in `post_linebreak_filter'.
+Inserting `luaotfload.harf.finalize_hlist' in `hpack_filter'.
+Inserting `luaotfload.cleanup_files' in `wrapup_run'.
+Inserting `luaotfload.harf.finalize_unicode' in `finish_pdffile'.
+Inserting `luaotfload.glyphinfo' in `glyph_info'.
+Lua-only attribute luaotfload.letterspace_done = 3
+Inserting `luaotfload.aux.set_sscale_dimens' in `luaotfload.patch_font'.
+Inserting `luaotfload.aux.set_font_index' in `luaotfload.patch_font'.
+Inserting `luaotfload.aux.patch_cambria_domh' in `luaotfload.patch_font'.
+Inserting `luaotfload.aux.fixup_fontdata' in `luaotfload.patch_font_unsafe'.
+Inserting `luaotfload.aux.set_capheight' in `luaotfload.patch_font'.
+Inserting `luaotfload.aux.set_xheight' in `luaotfload.patch_font'.
+Inserting `luaotfload.rewrite_fontname' in `luaotfload.patch_font'.
+Inserting `tracingstacklevels' in `input_level_string'. (/usr/share/texmf-dist/
+tex/latex/beamer/beamer.cls
+Document Class: beamer 2025/02/04 v3.72 A class for typesetting presentations
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasemodes.sty
+(/usr/share/texmf-dist/tex/latex/etoolbox/etoolbox.sty
+Package: etoolbox 2025/02/11 v2.5l e-TeX tools for LaTeX (JAW)
+\etb@tempcnta=\count194
+)
+\beamer@tempbox=\box52
+\beamer@tempcount=\count195
+\c@beamerpauses=\count196
+
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasedecode.sty
+\beamer@slideinframe=\count197
+\beamer@minimum=\count198
+\beamer@decode@box=\box53
+)
+\beamer@commentbox=\box54
+\beamer@modecount=\count199
+)
+(/usr/share/texmf-dist/tex/generic/iftex/iftex.sty
+Package: iftex 2024/12/12 v1.0g TeX engine tests
+)
+\headdp=\dimen140
+\footheight=\dimen141
+\sidebarheight=\dimen142
+\beamer@tempdim=\dimen143
+\beamer@finalheight=\dimen144
+\beamer@animht=\dimen145
+\beamer@animdp=\dimen146
+\beamer@animwd=\dimen147
+\beamer@leftmargin=\dimen148
+\beamer@rightmargin=\dimen149
+\beamer@leftsidebar=\dimen150
+\beamer@rightsidebar=\dimen151
+\beamer@boxsize=\dimen152
+\beamer@vboxoffset=\dimen153
+\beamer@descdefault=\dimen154
+\beamer@descriptionwidth=\dimen155
+\beamer@lastskip=\skip49
+\beamer@areabox=\box55
+\beamer@animcurrent=\box56
+\beamer@animshowbox=\box57
+\beamer@sectionbox=\box58
+\beamer@logobox=\box59
+\beamer@linebox=\box60
+\beamer@sectioncount=\count266
+\beamer@subsubsectionmax=\count267
+\beamer@subsectionmax=\count268
+\beamer@sectionmax=\count269
+\beamer@totalheads=\count270
+\beamer@headcounter=\count271
+\beamer@partstartpage=\count272
+\beamer@sectionstartpage=\count273
+\beamer@subsectionstartpage=\count274
+\beamer@animationtempa=\count275
+\beamer@animationtempb=\count276
+\beamer@xpos=\count277
+\beamer@ypos=\count278
+\beamer@ypos@offset=\count279
+\beamer@showpartnumber=\count280
+\beamer@currentsubsection=\count281
+\beamer@coveringdepth=\count282
+\beamer@sectionadjust=\count283
+\beamer@toclastsection=\count284
+\beamer@tocsectionnumber=\count285
+
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbaseoptions.sty
+(/usr/share/texmf-dist/tex/latex/graphics/keyval.sty
+Package: keyval 2022/05/29 v1.15 key=value parser (DPC)
+\KV@toks@=\toks17
+))
+\beamer@paperwidth=\skip50
+\beamer@paperheight=\skip51
+
+(/usr/share/texmf-dist/tex/latex/geometry/geometry.sty
+Package: geometry 2020/01/02 v5.9 Page Geometry
+
+(/usr/share/texmf-dist/tex/generic/iftex/ifvtex.sty
+Package: ifvtex 2019/10/25 v1.7 ifvtex legacy package. Use iftex instead.
+)
+\Gm@cnth=\count286
+\Gm@cntv=\count287
+\c@Gm@tempcnt=\count288
+\Gm@bindingoffset=\dimen156
+\Gm@wd@mp=\dimen157
+\Gm@odd@mp=\dimen158
+\Gm@even@mp=\dimen159
+\Gm@layoutwidth=\dimen160
+\Gm@layoutheight=\dimen161
+\Gm@layouthoffset=\dimen162
+\Gm@layoutvoffset=\dimen163
+\Gm@dimlist=\toks18
+)
+(/usr/share/texmf-dist/tex/latex/pgf/math/pgfmath.sty
+(/usr/share/texmf-dist/tex/latex/pgf/utilities/pgfrcs.sty
+(/usr/share/texmf-dist/tex/generic/pgf/utilities/pgfutil-common.tex
+\pgfutil@everybye=\toks19
+\pgfutil@tempdima=\dimen164
+\pgfutil@tempdimb=\dimen165
+)
+(/usr/share/texmf-dist/tex/generic/pgf/utilities/pgfutil-latex.def
+\pgfutil@abb=\box61
+)
+(/usr/share/texmf-dist/tex/generic/pgf/utilities/pgfrcs.code.tex
+(/usr/share/texmf-dist/tex/generic/pgf/pgf.revision.tex)
+Package: pgfrcs 2023-01-15 v3.1.10 (3.1.10)
+))
+(/usr/share/texmf-dist/tex/latex/pgf/utilities/pgfkeys.sty
+(/usr/share/texmf-dist/tex/generic/pgf/utilities/pgfkeys.code.tex
+\pgfkeys@pathtoks=\toks20
+\pgfkeys@temptoks=\toks21
+
+(/usr/share/texmf-dist/tex/generic/pgf/utilities/pgfkeyslibraryfiltered.code.te
+x
+\pgfkeys@tmptoks=\toks22
+))) (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmath.code.tex
+(/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathutil.code.tex
+\pgf@x=\dimen166
+\pgf@xa=\dimen167
+\pgf@xb=\dimen168
+\pgf@xc=\dimen169
+\pgf@y=\dimen170
+\pgf@ya=\dimen171
+\pgf@yb=\dimen172
+\pgf@yc=\dimen173
+\c@pgf@counta=\count289
+\c@pgf@countb=\count290
+\c@pgf@countc=\count291
+\c@pgf@countd=\count292
+)
+(/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathparser.code.tex
+\pgfmath@dimen=\dimen174
+\pgfmath@count=\count293
+\pgfmath@box=\box62
+\pgfmath@toks=\toks23
+\pgfmath@stack@operand=\toks24
+\pgfmath@stack@operation=\toks25
+)
+(/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.code.tex)
+(/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.basic.code.tex)
+(/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.trigonometric.code
+.tex)
+(/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.random.code.tex)
+(/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.comparison.code.te
+x) (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.base.code.tex)
+(/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.round.code.tex)
+(/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.misc.code.tex)
+(/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfunctions.integerarithmetics
+.code.tex) (/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathcalc.code.tex)
+(/usr/share/texmf-dist/tex/generic/pgf/math/pgfmathfloat.code.tex
+\c@pgfmathroundto@lastzeros=\count294
+)))
+(/usr/share/texmf-dist/tex/latex/base/size11.clo
+File: size11.clo 2024/06/29 v1.4n Standard LaTeX file (size option)
+luaotfload | db : Font names database loaded from /home/jx23/.texlive/texmf-var/
+luatex-cache/generic/names/luaotfload-names.luc.gz)
+(/usr/share/texmf-dist/tex/latex/pgf/basiclayer/pgfcore.sty
+(/usr/share/texmf-dist/tex/latex/graphics/graphicx.sty
+Package: graphicx 2021/09/16 v1.2d Enhanced LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf-dist/tex/latex/graphics/graphics.sty
+Package: graphics 2024/08/06 v1.4g Standard LaTeX Graphics (DPC,SPQR)
+
+(/usr/share/texmf-dist/tex/latex/graphics/trig.sty
+Package: trig 2023/12/02 v1.11 sin cos tan (DPC)
+)
+(/usr/share/texmf-dist/tex/latex/graphics-cfg/graphics.cfg
+File: graphics.cfg 2016/06/04 v1.11 sample graphics configuration
+)
+Package graphics Info: Driver file: luatex.def on input line 106.
+
+(/usr/share/texmf-dist/tex/latex/graphics-def/luatex.def
+File: luatex.def 2024/04/13 v1.2e Graphics/color driver for luatex
+))
+\Gin@req@height=\dimen175
+\Gin@req@width=\dimen176
+)
+(/usr/share/texmf-dist/tex/latex/pgf/systemlayer/pgfsys.sty
+(/usr/share/texmf-dist/tex/generic/pgf/systemlayer/pgfsys.code.tex
+Package: pgfsys 2023-01-15 v3.1.10 (3.1.10)
+\pgf@x=\dimen177
+\pgf@y=\dimen178
+\pgf@xa=\dimen179
+\pgf@ya=\dimen180
+\pgf@xb=\dimen181
+\pgf@yb=\dimen182
+\pgf@xc=\dimen183
+\pgf@yc=\dimen184
+\pgf@xd=\dimen185
+\pgf@yd=\dimen186
+\w@pgf@writea=\write3
+\r@pgf@reada=\read2
+\c@pgf@counta=\count295
+\c@pgf@countb=\count296
+\c@pgf@countc=\count297
+\c@pgf@countd=\count298
+\t@pgf@toka=\toks26
+\t@pgf@tokb=\toks27
+\t@pgf@tokc=\toks28
+\pgf@sys@id@count=\count299
+
+(/usr/share/texmf-dist/tex/generic/pgf/systemlayer/pgf.cfg
+File: pgf.cfg 2023-01-15 v3.1.10 (3.1.10)
+)
+Driver file for pgf: pgfsys-luatex.def
+
+(/usr/share/texmf-dist/tex/generic/pgf/systemlayer/pgfsys-luatex.def
+File: pgfsys-luatex.def 2023-01-15 v3.1.10 (3.1.10)
+
+(/usr/share/texmf-dist/tex/generic/pgf/systemlayer/pgfsys-common-pdf.def
+File: pgfsys-common-pdf.def 2023-01-15 v3.1.10 (3.1.10)
+)))
+(/usr/share/texmf-dist/tex/generic/pgf/systemlayer/pgfsyssoftpath.code.tex
+File: pgfsyssoftpath.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgfsyssoftpath@smallbuffer@items=\count300
+\pgfsyssoftpath@bigbuffer@items=\count301
+)
+(/usr/share/texmf-dist/tex/generic/pgf/systemlayer/pgfsysprotocol.code.tex
+File: pgfsysprotocol.code.tex 2023-01-15 v3.1.10 (3.1.10)
+))
+(/usr/share/texmf-dist/tex/latex/xcolor/xcolor.sty
+Package: xcolor 2024/09/29 v3.02 LaTeX color extensions (UK)
+
+(/usr/share/texmf-dist/tex/latex/graphics-cfg/color.cfg
+File: color.cfg 2016/01/02 v1.6 sample color configuration
+)
+Package xcolor Info: Driver file: luatex.def on input line 274.
+
+(/usr/share/texmf-dist/tex/latex/graphics/mathcolor.ltx)
+Package xcolor Info: Model `cmy' substituted by `cmy0' on input line 1349.
+Package xcolor Info: Model `hsb' substituted by `rgb' on input line 1353.
+Package xcolor Info: Model `RGB' extended on input line 1365.
+Package xcolor Info: Model `HTML' substituted by `rgb' on input line 1367.
+Package xcolor Info: Model `Hsb' substituted by `hsb' on input line 1368.
+Package xcolor Info: Model `tHsb' substituted by `hsb' on input line 1369.
+Package xcolor Info: Model `HSB' substituted by `hsb' on input line 1370.
+Package xcolor Info: Model `Gray' substituted by `gray' on input line 1371.
+Package xcolor Info: Model `wave' substituted by `hsb' on input line 1372.
+)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcore.code.tex
+Package: pgfcore 2023-01-15 v3.1.10 (3.1.10)
+
+(/usr/share/texmf-dist/tex/generic/pgf/math/pgfint.code.tex)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepoints.code.tex
+File: pgfcorepoints.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgf@picminx=\dimen187
+\pgf@picmaxx=\dimen188
+\pgf@picminy=\dimen189
+\pgf@picmaxy=\dimen190
+\pgf@pathminx=\dimen191
+\pgf@pathmaxx=\dimen192
+\pgf@pathminy=\dimen193
+\pgf@pathmaxy=\dimen194
+\pgf@xx=\dimen195
+\pgf@xy=\dimen196
+\pgf@yx=\dimen197
+\pgf@yy=\dimen198
+\pgf@zx=\dimen199
+\pgf@zy=\dimen256
+)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathconstruct.code.tex
+File: pgfcorepathconstruct.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgf@path@lastx=\dimen257
+\pgf@path@lasty=\dimen258
+) (/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathusage.code.tex
+File: pgfcorepathusage.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgf@shorten@end@additional=\dimen259
+\pgf@shorten@start@additional=\dimen260
+)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcorescopes.code.tex
+File: pgfcorescopes.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgfpic=\box63
+\pgf@hbox=\box64
+\pgf@layerbox@main=\box65
+\pgf@picture@serial@count=\count302
+)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcoregraphicstate.code.tex
+File: pgfcoregraphicstate.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgflinewidth=\dimen261
+)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcoretransformations.code.t
+ex
+File: pgfcoretransformations.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgf@pt@x=\dimen262
+\pgf@pt@y=\dimen263
+\pgf@pt@temp=\dimen264
+) (/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcorequick.code.tex
+File: pgfcorequick.code.tex 2023-01-15 v3.1.10 (3.1.10)
+)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreobjects.code.tex
+File: pgfcoreobjects.code.tex 2023-01-15 v3.1.10 (3.1.10)
+)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepathprocessing.code.te
+x
+File: pgfcorepathprocessing.code.tex 2023-01-15 v3.1.10 (3.1.10)
+) (/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcorearrows.code.tex
+File: pgfcorearrows.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgfarrowsep=\dimen265
+)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreshade.code.tex
+File: pgfcoreshade.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgf@max=\dimen266
+\pgf@sys@shading@range@num=\count303
+\pgf@shadingcount=\count304
+)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreimage.code.tex
+File: pgfcoreimage.code.tex 2023-01-15 v3.1.10 (3.1.10)
+)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcoreexternal.code.tex
+File: pgfcoreexternal.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgfexternal@startupbox=\box66
+)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcorelayers.code.tex
+File: pgfcorelayers.code.tex 2023-01-15 v3.1.10 (3.1.10)
+)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcoretransparency.code.tex
+File: pgfcoretransparency.code.tex 2023-01-15 v3.1.10 (3.1.10)
+) (/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcorepatterns.code.tex
+File: pgfcorepatterns.code.tex 2023-01-15 v3.1.10 (3.1.10)
+)
+(/usr/share/texmf-dist/tex/generic/pgf/basiclayer/pgfcorerdf.code.tex
+File: pgfcorerdf.code.tex 2023-01-15 v3.1.10 (3.1.10)
+)))
+(/usr/share/texmf-dist/tex/latex/pgf/utilities/xxcolor.sty
+Package: xxcolor 2003/10/24 ver 0.1
+\XC@nummixins=\count305
+\XC@countmixins=\count306
+)
+(/usr/share/texmf-dist/tex/latex/base/atbegshi-ltx.sty
+Package: atbegshi-ltx 2021/01/10 v1.0c Emulation of the original atbegshi
+package with kernel methods
+)
+(/usr/share/texmf-dist/tex/latex/hyperref/hyperref.sty
+Package: hyperref 2024-11-05 v7.01l Hypertext links for LaTeX
+
+(/usr/share/texmf-dist/tex/latex/kvsetkeys/kvsetkeys.sty
+Package: kvsetkeys 2022-10-05 v1.19 Key value parser (HO)
+)
+(/usr/share/texmf-dist/tex/generic/kvdefinekeys/kvdefinekeys.sty
+Package: kvdefinekeys 2019-12-19 v1.6 Define keys (HO)
+)
+(/usr/share/texmf-dist/tex/generic/pdfescape/pdfescape.sty
+Package: pdfescape 2019/12/09 v1.15 Implements pdfTeX's escape features (HO)
+
+(/usr/share/texmf-dist/tex/generic/ltxcmds/ltxcmds.sty
+Package: ltxcmds 2023-12-04 v1.26 LaTeX kernel commands for general use (HO)
+)
+(/usr/share/texmf-dist/tex/generic/pdftexcmds/pdftexcmds.sty
+Package: pdftexcmds 2020-06-27 v0.33 Utility functions of pdfTeX for LuaTeX (HO
+)
+
+(/usr/share/texmf-dist/tex/generic/infwarerr/infwarerr.sty
+Package: infwarerr 2019/12/03 v1.5 Providing info/warning/error messages (HO)
+)
+Package pdftexcmds Info: \pdf@primitive is available.
+Package pdftexcmds Info: \pdf@ifprimitive is available.
+Package pdftexcmds Info: \pdfdraftmode found.
+\pdftexcmds@toks=\toks29
+))
+(/usr/share/texmf-dist/tex/latex/hycolor/hycolor.sty
+Package: hycolor 2020-01-27 v1.10 Color options for hyperref/bookmark (HO)
+)
+(/usr/share/texmf-dist/tex/latex/hyperref/nameref.sty
+Package: nameref 2023-11-26 v2.56 Cross-referencing by name of section
+
+(/usr/share/texmf-dist/tex/latex/refcount/refcount.sty
+Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
+)
+(/usr/share/texmf-dist/tex/generic/gettitlestring/gettitlestring.sty
+Package: gettitlestring 2019/12/15 v1.6 Cleanup title references (HO)
+
+(/usr/share/texmf-dist/tex/latex/kvoptions/kvoptions.sty
+Package: kvoptions 2022-06-15 v3.15 Key value format for package options (HO)
+))
+\c@section@level=\count307
+)
+(/usr/share/texmf-dist/tex/generic/stringenc/stringenc.sty
+Package: stringenc 2019/11/29 v1.12 Convert strings between diff. encodings (HO
+)
+)
+\@linkdim=\dimen267
+\Hy@linkcounter=\count308
+\Hy@pagecounter=\count309
+
+(/usr/share/texmf-dist/tex/latex/hyperref/pd1enc.def
+File: pd1enc.def 2024-11-05 v7.01l Hyperref: PDFDocEncoding definition (HO)
+)
+(/usr/share/texmf-dist/tex/generic/intcalc/intcalc.sty
+Package: intcalc 2019/12/15 v1.3 Expandable calculations with integers (HO)
+)
+\Hy@SavedSpaceFactor=\count310
+
+(/usr/share/texmf-dist/tex/latex/hyperref/puenc.def
+File: puenc.def 2024-11-05 v7.01l Hyperref: PDF Unicode definition (HO)
+)
+Package hyperref Info: Option `bookmarks' set `true' on input line 4040.
+Package hyperref Info: Option `bookmarksopen' set `true' on input line 4040.
+Package hyperref Info: Option `implicit' set `false' on input line 4040.
+Package hyperref Info: Hyper figures OFF on input line 4157.
+Package hyperref Info: Link nesting OFF on input line 4162.
+Package hyperref Info: Hyper index ON on input line 4165.
+Package hyperref Info: Plain pages OFF on input line 4172.
+Package hyperref Info: Backreferencing OFF on input line 4177.
+Package hyperref Info: Implicit mode OFF; no redefinition of LaTeX internals.
+Package hyperref Info: Bookmarks ON on input line 4424.
+\c@Hy@tempcnt=\count311
+
+(/usr/share/texmf-dist/tex/latex/url/url.sty
+\Urlmuskip=\muskip17
+Package: url 2013/09/16  ver 3.4  Verb mode for urls, etc.
+)
+LaTeX Info: Redefining \url on input line 4763.
+\XeTeXLinkMargin=\dimen268
+
+(/usr/share/texmf-dist/tex/generic/bitset/bitset.sty
+Package: bitset 2019/12/09 v1.3 Handle bit-vector datatype (HO)
+
+(/usr/share/texmf-dist/tex/generic/bigintcalc/bigintcalc.sty
+Package: bigintcalc 2019/12/15 v1.5 Expandable calculations on big integers (HO
+)
+))
+\Fld@menulength=\count312
+\Field@Width=\dimen269
+\Fld@charsize=\dimen270
+Package hyperref Info: Hyper figures OFF on input line 6042.
+Package hyperref Info: Link nesting OFF on input line 6047.
+Package hyperref Info: Hyper index ON on input line 6050.
+Package hyperref Info: backreferencing OFF on input line 6057.
+Package hyperref Info: Link coloring OFF on input line 6062.
+Package hyperref Info: Link coloring with OCG OFF on input line 6067.
+Package hyperref Info: PDF/A mode OFF on input line 6072.
+\Hy@abspage=\count313
+
+
+Package hyperref Message: Stopped early.
+
+)
+Package hyperref Info: Driver (autodetected): hluatex.
+ (/usr/share/texmf-dist/tex/latex/hyperref/hluatex.def
+File: hluatex.def 2024-11-05 v7.01l Hyperref driver for luaTeX
+
+(/usr/share/texmf-dist/tex/latex/base/atveryend-ltx.sty
+Package: atveryend-ltx 2020/08/19 v1.0a Emulation of the original atveryend pac
+kage
+with kernel methods
+)
+\Fld@listcount=\count314
+\c@bookmark@seq@number=\count315
+
+(/usr/share/texmf-dist/tex/latex/rerunfilecheck/rerunfilecheck.sty
+Package: rerunfilecheck 2022-07-10 v1.10 Rerun checks for auxiliary files (HO)
+
+(/usr/share/texmf-dist/tex/generic/uniquecounter/uniquecounter.sty
+Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
+)
+Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
+85.
+))
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbaserequires.sty
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasecompatibility.sty)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasefont.sty
+(/usr/share/texmf-dist/tex/latex/amsfonts/amssymb.sty
+Package: amssymb 2013/01/14 v3.01 AMS font symbols
+
+(/usr/share/texmf-dist/tex/latex/amsfonts/amsfonts.sty
+Package: amsfonts 2013/01/14 v3.01 Basic AMSFonts support
+\@emptytoks=\toks30
+\symAMSa=\mathgroup4
+\symAMSb=\mathgroup5
+LaTeX Font Info:    Redeclaring math symbol \hbar on input line 98.
+LaTeX Font Info:    Overwriting math alphabet `\mathfrak' in version `bold'
+(Font)                  U/euf/m/n --> U/euf/b/n on input line 106.
+)))
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasetranslator.sty
+(/usr/share/texmf-dist/tex/latex/translator/translator.sty
+Package: translator 2021-05-31 v1.12d Easy translation of strings in LaTeX
+))
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasemisc.sty)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasetwoscreens.sty)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbaseoverlay.sty
+\beamer@argscount=\count316
+\beamer@lastskipcover=\skip52
+\beamer@trivlistdepth=\count317
+)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasetitle.sty)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasesection.sty
+\c@lecture=\count318
+\c@part=\count319
+\c@section=\count320
+\c@subsection=\count321
+\c@subsubsection=\count322
+)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbaseframe.sty
+\beamer@framebox=\box67
+\beamer@frametitlebox=\box68
+\beamer@zoombox=\box69
+\beamer@zoomcount=\count323
+\beamer@zoomframecount=\count324
+\beamer@frametextheight=\dimen271
+\c@subsectionslide=\count325
+\beamer@frametopskip=\skip53
+\beamer@framebottomskip=\skip54
+\beamer@frametopskipautobreak=\skip55
+\beamer@framebottomskipautobreak=\skip56
+\beamer@envbody=\toks31
+\framewidth=\dimen272
+\c@framenumber=\count326
+)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbaseverbatim.sty
+\beamer@verbatimfileout=\write4
+)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbaseframesize.sty
+\beamer@splitbox=\box70
+\beamer@autobreakcount=\count327
+\beamer@autobreaklastheight=\dimen273
+\beamer@frametitletoks=\toks32
+\beamer@framesubtitletoks=\toks33
+)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbaseframecomponents.sty
+\beamer@footins=\box71
+)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasecolor.sty)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasenotes.sty
+\beamer@frameboxcopy=\box72
+)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasetoc.sty)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasetemplates.sty
+\beamer@sbttoks=\toks34
+
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbaseauxtemplates.sty
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbaseboxes.sty
+\bmb@box=\box73
+\bmb@colorbox=\box74
+\bmb@boxwidth=\dimen274
+\bmb@boxheight=\dimen275
+\bmb@prevheight=\dimen276
+\bmb@temp=\dimen277
+\bmb@dima=\dimen278
+\bmb@dimb=\dimen279
+\bmb@prevheight=\dimen280
+)
+\beamer@blockheadheight=\dimen281
+))
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbaselocalstructure.sty
+(/usr/share/texmf-dist/tex/latex/tools/enumerate.sty
+Package: enumerate 2023/07/04 v3.00 enumerate extensions (DPC)
+\@enLab=\toks35
+)
+\beamer@bibiconwidth=\skip57
+\c@figure=\count328
+\c@table=\count329
+\abovecaptionskip=\skip58
+\belowcaptionskip=\skip59
+)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasenavigation.sty
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasenavigationsymbols.tex)
+\beamer@section@min@dim=\dimen282
+)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasetheorems.sty
+(/usr/share/texmf-dist/tex/latex/amsmath/amsmath.sty
+Package: amsmath 2024/11/05 v2.17t AMS math features
+\@mathmargin=\skip60
+
+For additional information on amsmath, use the `?' option.
+(/usr/share/texmf-dist/tex/latex/amsmath/amstext.sty
+Package: amstext 2021/08/26 v2.01 AMS text
+
+(/usr/share/texmf-dist/tex/latex/amsmath/amsgen.sty
+File: amsgen.sty 1999/11/30 v2.0 generic functions
+\@emptytoks=\toks36
+\ex@=\dimen283
+))
+(/usr/share/texmf-dist/tex/latex/amsmath/amsbsy.sty
+Package: amsbsy 1999/11/29 v1.2d Bold Symbols
+\pmbraise@=\dimen284
+)
+(/usr/share/texmf-dist/tex/latex/amsmath/amsopn.sty
+Package: amsopn 2022/04/08 v2.04 operator names
+)
+\inf@bad=\count330
+LaTeX Info: Redefining \frac on input line 235.
+\uproot@=\count331
+\leftroot@=\count332
+LaTeX Info: Redefining \overline on input line 398.
+LaTeX Info: Redefining \colon on input line 409.
+\classnum@=\count333
+\DOTSCASE@=\count334
+LaTeX Info: Redefining \ldots on input line 495.
+LaTeX Info: Redefining \dots on input line 498.
+LaTeX Info: Redefining \cdots on input line 619.
+\Mathstrutbox@=\box75
+\strutbox@=\box76
+LaTeX Info: Redefining \big on input line 721.
+LaTeX Info: Redefining \Big on input line 722.
+LaTeX Info: Redefining \bigg on input line 723.
+LaTeX Info: Redefining \Bigg on input line 724.
+\big@size=\dimen285
+LaTeX Font Info:    Redeclaring font encoding OML on input line 742.
+LaTeX Font Info:    Redeclaring font encoding OMS on input line 743.
+\macc@depth=\count335
+LaTeX Info: Redefining \bmod on input line 904.
+LaTeX Info: Redefining \pmod on input line 909.
+LaTeX Info: Redefining \smash on input line 939.
+LaTeX Info: Redefining \relbar on input line 969.
+LaTeX Info: Redefining \Relbar on input line 970.
+\c@MaxMatrixCols=\count336
+\dotsspace@=\muskip18
+\c@parentequation=\count337
+\dspbrk@lvl=\count338
+\tag@help=\toks37
+\row@=\count339
+\column@=\count340
+\maxfields@=\count341
+\andhelp@=\toks38
+\eqnshift@=\dimen286
+\alignsep@=\dimen287
+\tagshift@=\dimen288
+\tagwidth@=\dimen289
+\totwidth@=\dimen290
+\lineht@=\dimen291
+\@envbody=\toks39
+\multlinegap=\skip61
+\multlinetaggap=\skip62
+\mathdisplay@stack=\toks40
+LaTeX Info: Redefining \[ on input line 2953.
+LaTeX Info: Redefining \] on input line 2954.
+)
+(/usr/share/texmf-dist/tex/latex/amscls/amsthm.sty
+Package: amsthm 2020/05/29 v2.20.6
+\thm@style=\toks41
+\thm@bodyfont=\toks42
+\thm@headfont=\toks43
+\thm@notefont=\toks44
+\thm@headpunct=\toks45
+\thm@preskip=\skip63
+\thm@postskip=\skip64
+\thm@headsep=\skip65
+\dth@everypar=\toks46
+)
+\c@theorem=\count342
+)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerbasethemes.sty))
+(/usr/share/texmf-dist/tex/latex/beamer/beamerthemedefault.sty
+(/usr/share/texmf-dist/tex/latex/beamer/beamerfontthemedefault.sty)
+(/usr/share/texmf-dist/tex/latex/beamer/beamercolorthemedefault.sty)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerinnerthemedefault.sty
+\beamer@dima=\dimen292
+\beamer@dimb=\dimen293
+)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerouterthemedefault.sty)))
+(/usr/share/texmf-dist/tex/latex/caption/caption.sty
+Package: caption 2023/08/05 v3.6o Customizing captions (AR)
+
+(/usr/share/texmf-dist/tex/latex/caption/caption3.sty
+Package: caption3 2023/07/31 v2.4d caption3 kernel (AR)
+\caption@tempdima=\dimen294
+\captionmargin=\dimen295
+\caption@leftmargin=\dimen296
+\caption@rightmargin=\dimen297
+\caption@width=\dimen298
+\caption@indent=\dimen299
+\caption@parindent=\dimen300
+\caption@hangindent=\dimen301
+Package caption Info: beamer document class detected.
+
+(/usr/share/texmf-dist/tex/latex/caption/caption-beamer.sto
+File: caption-beamer.sto 2022/01/06 v2.0c Adaption of the caption package to th
+e beamer document classes (AR)
+))
+\c@caption@flags=\count343
+\c@continuedfloat=\count344
+Package caption Info: hyperref package is loaded.
+Package caption Info: Hyperref support is turned off
+(caption)             because hyperref has stopped early.
+)
+(/usr/share/texmf-dist/tex/latex/psnfss/pifont.sty
+Package: pifont 2020/03/25 PSNFSS-v9.3 Pi font support (SPQR) 
+LaTeX Font Info:    Trying to load font information for U+pzd on input line 63.
+
+
+(/usr/share/texmf-dist/tex/latex/psnfss/upzd.fd
+File: upzd.fd 2001/06/04 font definitions for U/pzd.
+)
+LaTeX Font Info:    Trying to load font information for U+psy on input line 64.
+
+
+(/usr/share/texmf-dist/tex/latex/psnfss/upsy.fd
+File: upsy.fd 2001/06/04 font definitions for U/psy.
+))
+(/usr/share/texmf-dist/tex/latex/pgf/frontendlayer/tikz.sty
+(/usr/share/texmf-dist/tex/latex/pgf/basiclayer/pgf.sty
+Package: pgf 2023-01-15 v3.1.10 (3.1.10)
+
+(/usr/share/texmf-dist/tex/generic/pgf/modules/pgfmoduleshapes.code.tex
+File: pgfmoduleshapes.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgfnodeparttextbox=\box77
+)
+(/usr/share/texmf-dist/tex/generic/pgf/modules/pgfmoduleplot.code.tex
+File: pgfmoduleplot.code.tex 2023-01-15 v3.1.10 (3.1.10)
+)
+(/usr/share/texmf-dist/tex/latex/pgf/compatibility/pgfcomp-version-0-65.sty
+Package: pgfcomp-version-0-65 2023-01-15 v3.1.10 (3.1.10)
+\pgf@nodesepstart=\dimen302
+\pgf@nodesepend=\dimen303
+)
+(/usr/share/texmf-dist/tex/latex/pgf/compatibility/pgfcomp-version-1-18.sty
+Package: pgfcomp-version-1-18 2023-01-15 v3.1.10 (3.1.10)
+))
+(/usr/share/texmf-dist/tex/latex/pgf/utilities/pgffor.sty
+(/usr/share/texmf-dist/tex/generic/pgf/utilities/pgffor.code.tex
+Package: pgffor 2023-01-15 v3.1.10 (3.1.10)
+\pgffor@iter=\dimen304
+\pgffor@skip=\dimen305
+\pgffor@stack=\toks47
+\pgffor@toks=\toks48
+))
+(/usr/share/texmf-dist/tex/generic/pgf/frontendlayer/tikz/tikz.code.tex
+Package: tikz 2023-01-15 v3.1.10 (3.1.10)
+
+(/usr/share/texmf-dist/tex/generic/pgf/libraries/pgflibraryplothandlers.code.te
+x
+File: pgflibraryplothandlers.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgf@plot@mark@count=\count345
+\pgfplotmarksize=\dimen306
+)
+\tikz@lastx=\dimen307
+\tikz@lasty=\dimen308
+\tikz@lastxsaved=\dimen309
+\tikz@lastysaved=\dimen310
+\tikz@lastmovetox=\dimen311
+\tikz@lastmovetoy=\dimen312
+\tikzleveldistance=\dimen313
+\tikzsiblingdistance=\dimen314
+\tikz@figbox=\box78
+\tikz@figbox@bg=\box79
+\tikz@tempbox=\box80
+\tikz@tempbox@bg=\box81
+\tikztreelevel=\count346
+\tikznumberofchildren=\count347
+\tikznumberofcurrentchild=\count348
+\tikz@fig@count=\count349
+ (/usr/share/texmf-dist/tex/generic/pgf/modules/pgfmodulematrix.code.tex
+File: pgfmodulematrix.code.tex 2023-01-15 v3.1.10 (3.1.10)
+\pgfmatrixcurrentrow=\count350
+\pgfmatrixcurrentcolumn=\count351
+\pgf@matrix@numberofcolumns=\count352
+)
+\tikz@expandcount=\count353
+
+(/usr/share/texmf-dist/tex/generic/pgf/frontendlayer/tikz/libraries/tikzlibrary
+topaths.code.tex
+File: tikzlibrarytopaths.code.tex 2023-01-15 v3.1.10 (3.1.10)
+)))
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\\' on input line 12.
+
+(/usr/share/texmf-dist/tex/latex/beamer/beamerthemeMadrid.sty
+(/usr/share/texmf-dist/tex/latex/beamer/beamercolorthemewhale.sty)
+(/usr/share/texmf-dist/tex/latex/beamer/beamercolorthemeorchid.sty)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerinnerthemerounded.sty)
+(/usr/share/texmf-dist/tex/latex/beamer/beamerouterthemeinfolines.sty))
+(/usr/share/texmf-dist/tex/latex/l3backend/l3backend-luatex.def
+File: l3backend-luatex.def 2024-05-08 L3 backend support: PDF output (LuaTeX)
+\l__color_backend_stack_int=\count354
+Inserting `l3color' in `luaotfload.parse_color'.
+\l__pdf_internal_box=\box82
+) (./main.aux)
+\openout1 = main.aux
+
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for TU/lmr/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 45.
+LaTeX Font Info:    ... okay on input line 45.
+
+*geometry* driver: auto-detecting
+*geometry* detected driver: luatex
+*geometry* verbose mode - [ preamble ] result:
+* driver: luatex
+* paper: custom
+* layout: <same size as paper>
+* layoutoffset:(h,v)=(0.0pt,0.0pt)
+* modes: includehead includefoot 
+* h-part:(L,W,R)=(10.95pt, 342.29536pt, 10.95pt)
+* v-part:(T,H,B)=(0.0pt, 273.14662pt, 0.0pt)
+* \paperwidth=364.19536pt
+* \paperheight=273.14662pt
+* \textwidth=342.29536pt
+* \textheight=244.6939pt
+* \oddsidemargin=-61.31999pt
+* \evensidemargin=-61.31999pt
+* \topmargin=-72.26999pt
+* \headheight=14.22636pt
+* \headsep=0.0pt
+* \topskip=11.0pt
+* \footskip=14.22636pt
+* \marginparwidth=4.0pt
+* \marginparsep=10.0pt
+* \columnsep=10.0pt
+* \skip\footins=10.0pt plus 4.0pt minus 2.0pt
+* \hoffset=0.0pt
+* \voffset=0.0pt
+* \mag=1000
+* \@twocolumnfalse
+* \@twosidefalse
+* \@mparswitchfalse
+* \@reversemarginfalse
+* (1in=72.27pt=25.4mm, 1cm=28.453pt)
+
+(/usr/share/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
+[Loading MPS to PDF converter (version 2006.09.02).]
+\scratchcounter=\count355
+\scratchdimen=\dimen315
+\scratchbox=\box83
+\nofMPsegments=\count356
+\nofMParguments=\count357
+\everyMPshowfont=\toks49
+\MPscratchCnt=\count358
+\MPscratchDim=\dimen316
+\MPnumerator=\count359
+\makeMPintoPDFobject=\count360
+\everyMPtoPDFconversion=\toks50
+) (/usr/share/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
+Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
+Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
+85.
+
+(/usr/share/texmf-dist/tex/latex/latexconfig/epstopdf-sys.cfg
+File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
+e
+))
+Package hyperref Info: Link coloring OFF on input line 45.
+ (./main.out)
+(./main.out)
+\@outlinefile=\write5
+
+\openout5 = main.out
+LaTeX Font Info:    Overwriting symbol font `operators' in version `normal'
+(Font)                  OT1/cmr/m/n --> OT1/cmss/m/n on input line 45.
+LaTeX Font Info:    Overwriting symbol font `operators' in version `bold'
+(Font)                  OT1/cmr/bx/n --> OT1/cmss/b/n on input line 45.
+\symnumbers=\mathgroup6
+\sympureletters=\mathgroup7
+LaTeX Font Info:    Overwriting math alphabet `\mathrm' in version `normal'
+(Font)                  OT1/cmss/m/n --> TU/lmr/m/n on input line 45.
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 45.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `normal'
+(Font)                  OT1/cmr/bx/n --> TU/lmss/b/n on input line 45.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
+(Font)                  OT1/cmr/bx/n --> TU/lmss/b/n on input line 45.
+LaTeX Font Info:    Redeclaring math alphabet \mathsf on input line 45.
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `normal'
+(Font)                  OT1/cmss/m/n --> TU/lmss/m/n on input line 45.
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
+(Font)                  OT1/cmss/bx/n --> TU/lmss/m/n on input line 45.
+LaTeX Font Info:    Redeclaring math alphabet \mathit on input line 45.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `normal'
+(Font)                  OT1/cmr/m/it --> TU/lmss/m/it on input line 45.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
+(Font)                  OT1/cmr/bx/it --> TU/lmss/m/it on input line 45.
+LaTeX Font Info:    Redeclaring math alphabet \mathtt on input line 45.
+LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `normal'
+(Font)                  OT1/cmtt/m/n --> TU/lmtt/m/n on input line 45.
+LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
+(Font)                  OT1/cmtt/m/n --> TU/lmtt/m/n on input line 45.
+LaTeX Font Info:    Overwriting symbol font `numbers' in version `bold'
+(Font)                  TU/lmss/m/n --> TU/lmss/b/n on input line 45.
+LaTeX Font Info:    Overwriting symbol font `pureletters' in version `bold'
+(Font)                  TU/lmss/m/it --> TU/lmss/b/it on input line 45.
+LaTeX Font Info:    Overwriting math alphabet `\mathrm' in version `bold'
+(Font)                  OT1/cmss/b/n --> TU/lmr/b/n on input line 45.
+LaTeX Font Info:    Overwriting math alphabet `\mathbf' in version `bold'
+(Font)                  TU/lmss/b/n --> TU/lmss/b/n on input line 45.
+LaTeX Font Info:    Overwriting math alphabet `\mathsf' in version `bold'
+(Font)                  TU/lmss/m/n --> TU/lmss/b/n on input line 45.
+LaTeX Font Info:    Overwriting math alphabet `\mathit' in version `bold'
+(Font)                  TU/lmss/m/it --> TU/lmss/b/it on input line 45.
+LaTeX Font Info:    Overwriting math alphabet `\mathtt' in version `bold'
+(Font)                  TU/lmtt/m/n --> TU/lmtt/b/n on input line 45.
+
+(/usr/share/texmf-dist/tex/latex/translator/translator-basic-dictionary-English
+.dict
+Dictionary: translator-basic-dictionary, Language: English 
+)
+(/usr/share/texmf-dist/tex/latex/translator/translator-bibliography-dictionary-
+English.dict
+Dictionary: translator-bibliography-dictionary, Language: English 
+)
+(/usr/share/texmf-dist/tex/latex/translator/translator-environment-dictionary-E
+nglish.dict
+Dictionary: translator-environment-dictionary, Language: English 
+)
+(/usr/share/texmf-dist/tex/latex/translator/translator-months-dictionary-Englis
+h.dict
+Dictionary: translator-months-dictionary, Language: English 
+)
+(/usr/share/texmf-dist/tex/latex/translator/translator-numbers-dictionary-Engli
+sh.dict
+Dictionary: translator-numbers-dictionary, Language: English 
+)
+(/usr/share/texmf-dist/tex/latex/translator/translator-theorem-dictionary-Engli
+sh.dict
+Dictionary: translator-theorem-dictionary, Language: English 
+)
+Package caption Info: Begin \AtBeginDocument code.
+Package caption Info: End \AtBeginDocument code.
+ (./main.nav)
+LaTeX Font Info:    Trying to load font information for U+msa on input line 47.
+
+ (/usr/share/texmf-dist/tex/latex/amsfonts/umsa.fd
+File: umsa.fd 2013/01/14 v3.01 AMS symbols A
+)
+LaTeX Font Info:    Trying to load font information for U+msb on input line 47.
+
+
+(/usr/share/texmf-dist/tex/latex/amsfonts/umsb.fd
+File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
+LaTeX Font Info:    Font shape `TU/lmss/m/it' in size <10.95> not available
+(Font)              Font shape `TU/lmss/m/sl' tried instead on input line 47.
+LaTeX Font Info:    Font shape `TU/lmss/m/it' in size <8> not available
+(Font)              Font shape `TU/lmss/m/sl' tried instead on input line 47.
+LaTeX Font Info:    Font shape `TU/lmss/m/it' in size <6> not available
+(Font)              Font shape `TU/lmss/m/sl' tried instead on input line 47.
+LaTeX Font Info:    Font shape `TU/lmss/m/it' in size <5> not available
+(Font)              Font shape `TU/lmss/m/sl' tried instead on input line 47.
+
+
+<fcup-identidade-logotipo-cores.png, id=99, 481.8pt x 202.356pt>
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 47.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[1
+
+{/var/lib/texmf/fonts/map/pdftex/updmap/pdftex.map}<./fcup-identidade-logotipo-c
+ores.png>]
+<high-density-environments.jpg, id=136, 587.19376pt x 382.42876pt>
+File: high-density-environments.jpg Graphic file (type jpg)
+<use high-density-environments.jpg>
+Package luatex.def Info: high-density-environments.jpg  used on input line 59.
+(luatex.def)             Requested size: 256.0748pt x 166.7753pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 59.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[2
+
+<./high-density-environments.jpg>]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 71.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[3
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 71.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[4
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 71.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[5
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 71.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[6
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 101.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[7
+
+]
+<storage-fog_computing_mobile.png, id=321, 466.74374pt x 354.32375pt>
+File: storage-fog_computing_mobile.png Graphic file (type png)
+<use storage-fog_computing_mobile.png>
+Package luatex.def Info: storage-fog_computing_mobile.png  used on input line 1
+14.
+(luatex.def)             Requested size: 199.16928pt x 151.19923pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 114.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[8
+
+<./storage-fog_computing_mobile.png>]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 128.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[9
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 128.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[10
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 128.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[11
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 128.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[12
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 128.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[13
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 145.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[14
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 145.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[15
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 145.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[16
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 145.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[17
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 145.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[18
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 145.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[19
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 145.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[20
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 145.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[21
+
+]
+<Rust_vs_C.jpg, id=727, 602.25pt x 401.24907pt>
+File: Rust_vs_C.jpg Graphic file (type jpg)
+<use Rust_vs_C.jpg>
+Package luatex.def Info: Rust_vs_C.jpg  used on input line 157.
+(luatex.def)             Requested size: 284.52756pt x 189.57281pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 157.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[22
+
+<./Rust_vs_C.jpg>]
+<system.png, id=758, 1347.0325pt x 1248.665pt>
+File: system.png Graphic file (type png)
+<use system.png>
+Package luatex.def Info: system.png  used on input line 167.
+(luatex.def)             Requested size: 227.62204pt x 210.99368pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 167.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[23
+
+<./system.png>]
+<matrix_layout.png, id=791, 1023.825pt x 522.95375pt>
+File: matrix_layout.png Graphic file (type png)
+<use matrix_layout.png>
+Package luatex.def Info: matrix_layout.png  used on input line 184.
+(luatex.def)             Requested size: 284.52756pt x 145.33284pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 184.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[24
+
+<./matrix_layout.png>]
+File: matrix_layout.png Graphic file (type png)
+<use matrix_layout.png>
+Package luatex.def Info: matrix_layout.png  used on input line 184.
+(luatex.def)             Requested size: 284.52756pt x 145.33284pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 184.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[25
+
+]
+File: matrix_layout.png Graphic file (type png)
+<use matrix_layout.png>
+Package luatex.def Info: matrix_layout.png  used on input line 184.
+(luatex.def)             Requested size: 284.52756pt x 145.33284pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 184.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[26
+
+]
+<q_learning_algorithm.jpg, id=883, 353.6412pt x 252.945pt>
+File: q_learning_algorithm.jpg Graphic file (type jpg)
+<use q_learning_algorithm.jpg>
+Package luatex.def Info: q_learning_algorithm.jpg  used on input line 193.
+(luatex.def)             Requested size: 284.52756pt x 203.51802pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 193.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[27
+
+<./q_learning_algorithm.jpg>]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 218.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[28
+
+]
+<client_feedback.png, id=949, 980.91469pt x 373.395pt>
+File: client_feedback.png Graphic file (type png)
+<use client_feedback.png>
+Package luatex.def Info: client_feedback.png  used on input line 237.
+(luatex.def)             Requested size: 284.52756pt x 108.30457pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 237.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[29
+
+<./client_feedback.png>]
+File: client_feedback.png Graphic file (type png)
+<use client_feedback.png>
+Package luatex.def Info: client_feedback.png  used on input line 237.
+(luatex.def)             Requested size: 284.52756pt x 108.30457pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 237.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[30
+
+]
+File: client_feedback.png Graphic file (type png)
+<use client_feedback.png>
+Package luatex.def Info: client_feedback.png  used on input line 237.
+(luatex.def)             Requested size: 284.52756pt x 108.30457pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 237.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[31
+
+]
+File: client_feedback.png Graphic file (type png)
+<use client_feedback.png>
+Package luatex.def Info: client_feedback.png  used on input line 237.
+(luatex.def)             Requested size: 284.52756pt x 108.30457pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 237.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[32
+
+]
+<phase_advance.png, id=1068, 572.1375pt x 188.20313pt>
+File: phase_advance.png Graphic file (type png)
+<use phase_advance.png>
+Package luatex.def Info: phase_advance.png  used on input line 253.
+(luatex.def)             Requested size: 284.52756pt x 93.59589pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 253.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[33
+
+<./phase_advance.png>]
+File: phase_advance.png Graphic file (type png)
+<use phase_advance.png>
+Package luatex.def Info: phase_advance.png  used on input line 253.
+(luatex.def)             Requested size: 284.52756pt x 93.59589pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 253.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[34
+
+]
+File: phase_advance.png Graphic file (type png)
+<use phase_advance.png>
+Package luatex.def Info: phase_advance.png  used on input line 253.
+(luatex.def)             Requested size: 284.52756pt x 93.59589pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 253.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[35
+
+]
+<multicast_phase.png, id=1155, 860.46469pt x 339.51843pt>
+File: multicast_phase.png Graphic file (type png)
+<use multicast_phase.png>
+Package luatex.def Info: multicast_phase.png  used on input line 264.
+(luatex.def)             Requested size: 341.43306pt x 134.72221pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 264.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[36
+
+<./multicast_phase.png>]
+<decoder_flowchart.png, id=1187, 770.88pt x 738.76pt>
+File: decoder_flowchart.png Graphic file (type png)
+<use decoder_flowchart.png>
+Package luatex.def Info: decoder_flowchart.png  used on input line 277.
+(luatex.def)             Requested size: 199.16928pt x 190.8669pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 277.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[37
+
+<./decoder_flowchart.png>]
+<client_manager.png, id=1218, 330.23375pt x 568.1225pt>
+File: client_manager.png Graphic file (type png)
+<use client_manager.png>
+Package luatex.def Info: client_manager.png  used on input line 289.
+(luatex.def)             Requested size: 113.81102pt x 195.79442pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 289.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[38
+
+<./client_manager.png>]
+<nan_cluster.png, id=1249, 438.8897pt x 247.67531pt>
+File: nan_cluster.png Graphic file (type png)
+<use nan_cluster.png>
+Package luatex.def Info: nan_cluster.png  used on input line 302.
+(luatex.def)             Requested size: 284.52756pt x 160.56754pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 302.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[39
+
+<./nan_cluster.png>]
+<mesh_p2p.png, id=1281, 563.10374pt x 553.06625pt>
+File: mesh_p2p.png Graphic file (type png)
+<use mesh_p2p.png>
+Package luatex.def Info: mesh_p2p.png  used on input line 312.
+(luatex.def)             Requested size: 199.16928pt x 195.61835pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 312.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[40
+
+<./mesh_p2p.png>]
+<mesh_networking.png, id=1315, 1176.395pt x 558.085pt>
+File: mesh_networking.png Graphic file (type png)
+<use mesh_networking.png>
+Package luatex.def Info: mesh_networking.png  used on input line 322.
+(luatex.def)             Requested size: 312.9803pt x 148.4794pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 322.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[41
+
+<./mesh_networking.png>]
+<app_1.png, id=1347, 1084.05pt x 2409.0pt>
+File: app_1.png Graphic file (type png)
+<use app_1.png>
+Package luatex.def Info: app_1.png  used on input line 344.
+(luatex.def)             Requested size: 93.52422pt x 207.85887pt.
+<app_2.png, id=1348, 1084.05pt x 2409.0pt>
+File: app_2.png Graphic file (type png)
+<use app_2.png>
+Package luatex.def Info: app_2.png  used on input line 344.
+(luatex.def)             Requested size: 93.52422pt x 207.85887pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 344.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[42
+
+<./app_1.png><./app_2.png>]
+<erasure_packet.png, id=1380, 1777.64125pt x 1069.9975pt>
+File: erasure_packet.png Graphic file (type png)
+<use erasure_packet.png>
+Package luatex.def Info: erasure_packet.png  used on input line 362.
+(luatex.def)             Requested size: 284.52756pt x 171.25208pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 362.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[43
+
+<./erasure_packet.png>]
+File: erasure_packet.png Graphic file (type png)
+<use erasure_packet.png>
+Package luatex.def Info: erasure_packet.png  used on input line 362.
+(luatex.def)             Requested size: 284.52756pt x 171.25208pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 362.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[44
+
+]
+File: erasure_packet.png Graphic file (type png)
+<use erasure_packet.png>
+Package luatex.def Info: erasure_packet.png  used on input line 362.
+(luatex.def)             Requested size: 284.52756pt x 171.25208pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 362.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[45
+
+]
+<security_flow.png, id=1471, 924.45375pt x 212.795pt>
+File: security_flow.png Graphic file (type png)
+<use security_flow.png>
+Package luatex.def Info: security_flow.png  used on input line 373.
+(luatex.def)             Requested size: 312.9803pt x 72.04411pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 373.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[46
+
+<./security_flow.png>]
+<system_deployment.png, id=1502, 1265.72874pt x 493.845pt>
+File: system_deployment.png Graphic file (type png)
+<use system_deployment.png>
+Package luatex.def Info: system_deployment.png  used on input line 386.
+(luatex.def)             Requested size: 312.9803pt x 122.11209pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 386.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[47
+
+<./system_deployment.png>]
+<1.png, id=1535, 1927.95282pt x 1096.84781pt>
+File: 1.png Graphic file (type png)
+<use 1.png>
+Package luatex.def Info: 1.png  used on input line 397.
+(luatex.def)             Requested size: 341.43306pt x 194.24414pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 397.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[48
+
+<./1.png>]
+<2.png, id=1570, 1927.95282pt x 737.75626pt>
+File: 2.png Graphic file (type png)
+<use 2.png>
+Package luatex.def Info: 2.png  used on input line 407.
+(luatex.def)             Requested size: 341.43306pt x 130.65152pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 407.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[49
+
+<./2.png>]
+<3.png, id=1604, 1927.95282pt x 1170.62344pt>
+File: 3.png Graphic file (type png)
+<use 3.png>
+Package luatex.def Info: 3.png  used on input line 417.
+(luatex.def)             Requested size: 341.43306pt x 207.3093pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 417.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[50
+
+<./3.png>]
+<4.png, id=1637, 1927.95282pt x 703.12688pt>
+File: 4.png Graphic file (type png)
+<use 4.png>
+Package luatex.def Info: 4.png  used on input line 427.
+(luatex.def)             Requested size: 341.43306pt x 124.51889pt.
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 427.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[51
+
+<./4.png>]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 453.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[52
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 464.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[53
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 464.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[54
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 474.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[55
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 474.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[56
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 498.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[57
+
+]
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 512.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[58
+
+]
+<libp2p.png, id=1879, 1027.84pt x 1027.84pt>
+File: libp2p.png Graphic file (type png)
+<use libp2p.png>
+Package luatex.def Info: libp2p.png  used on input line 523.
+(luatex.def)             Requested size: 227.62204pt x 227.61543pt.
+
+Overfull \vbox (7.21497pt too high) detected at line 523
+ []
+
+
+
+File: fcup-identidade-logotipo-cores.png Graphic file (type png)
+<use fcup-identidade-logotipo-cores.png>
+Package luatex.def Info: fcup-identidade-logotipo-cores.png  used on input line
+ 523.
+(luatex.def)             Requested size: 33.86913pt x 14.22636pt.
+[59
+
+<./libp2p.png>]
+\tf@nav=\write6
+
+\openout6 = main.nav
+\tf@toc=\write7
+
+\openout7 = main.toc
+\tf@snm=\write8
+
+\openout8 = main.snm
+ (./main.aux)
+ ***********
+LaTeX2e <2024-11-01> patch level 2
+L3 programming layer <2025-01-18>
+ ***********
+
+
+Package rerunfilecheck Warning: File `main.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+Package rerunfilecheck Info: Checksums for `main.out':
+(rerunfilecheck)             Before: 1C1E171371BBAEF0466B141F0A197DAB;2102
+(rerunfilecheck)             After:  D94A94EAC2F11394515228AFD56645E0;2101.
+)
+
+Here is how much of LuaTeX's memory you used:
+ 27119 strings out of 475506
+ 100000,1144653 words of node,token memory allocated
+ 1651 words of node memory still in use:
+   29 hlist, 9 vlist, 6 rule, 1 disc, 3 local_par, 47 glue, 10 kern, 16 penalty,
+ 12 glyph, 62 attribute, 61 glue_spec, 62 attribute_list, 4 write, 1 pdf_literal
+, 18 pdf_colorstack, 1 pdf_setmatrix, 1 pdf_save, 1 pdf_restore nodes
+   avail lists: 2:824,3:501,4:312,5:228,6:69,7:2386,8:56,9:667,10:14,11:170
+ 49017 multiletter control sequences out of 65536+600000
+ 53 fonts using 3937063 bytes
+ 101i,15n,101p,431b,625s stack positions out of 10000i,1000n,20000p,200000b,200000s
+
+warning  (pdf backend): unreferenced destination with name 'Navigation60'
+
+warning  (pdf backend): unreferenced destination with name 'Outline0.7.1.59'
+
+warning  (pdf backend): unreferenced destination with name 'Outline0.6.4.54'
+
+warning  (pdf backend): unreferenced destination with name 'Outline0.6.3.53'
+
+warning  (pdf backend): unreferenced destination with name 'Outline0.6.2.49'
+
+warning  (pdf backend): unreferenced destination with name 'Outline0.6.1.48'
+
+warning  (pdf backend): unreferenced destination with name 'Outline0.2.4.38'
+
+warning  (pdf backend): unreferenced destination with name 'Outline0.2.3.25'
+
+warning  (pdf backend): unreferenced destination with name 'Outline0.2.2.23'
+
+warning  (pdf backend): unreferenced destination with name 'Outline0.2.1.15'
+
+warning  (pdf backend): unreferenced destination with name 'Outline0.1.1.10'
+</usr/share/texmf-dist/fonts/opentype/public/lm/lmsans10-oblique.otf></usr/share
+/texmf-dist/fonts/opentype/public/lm/lmsans10-bold.otf></usr/share/texmf-dist/fo
+nts/opentype/public/lm/lmsans8-regular.otf></usr/share/texmf-dist/fonts/opentype
+/public/lm/lmsans10-regular.otf></usr/share/texmf-dist/fonts/opentype/public/lm/
+lmsans12-regular.otf></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmex1
+0.pfb></usr/share/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/sha
+re/texmf-dist/fonts/type1/public/amsfonts/cm/cmss10.pfb></usr/share/texmf-dist/f
+onts/type1/public/amsfonts/cm/cmsy10.pfb></usr/share/texmf-dist/fonts/type1/urw/
+zapfding/uzdr.pfb>
+Output written on main.pdf (59 pages, 2759919 bytes).
+
+PDF statistics: 1965 PDF objects out of 2073 (max. 8388607)
+ 1739 compressed objects within 18 object streams
+ 148 named destinations out of 1000 (max. 131072)
+ 240 words of extra memory for PDF output out of 10000 (max. 100000000)
+

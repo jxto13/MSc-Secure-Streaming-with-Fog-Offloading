@@ -1,0 +1,18 @@
+\beamer@sectionintoc {1}{Introduction}{2}{0}{1}
+\beamer@subsectionintoc {1}{1}{Goals}{9}{0}{1}
+\beamer@sectionintoc {2}{Architecture}{14}{0}{2}
+\beamer@subsectionintoc {2}{1}{Requirements}{14}{0}{2}
+\beamer@subsectionintoc {2}{2}{Architecture}{22}{0}{2}
+\beamer@subsectionintoc {2}{3}{Streaming Server}{24}{0}{2}
+\beamer@subsectionintoc {2}{4}{Client Library}{37}{0}{2}
+\beamer@sectionintoc {3}{Mobile edge cloud offloading}{39}{0}{3}
+\beamer@sectionintoc {4}{Frontend Implementation}{42}{0}{4}
+\beamer@sectionintoc {5}{Security}{43}{0}{5}
+\beamer@sectionintoc {6}{Evaluation}{47}{0}{6}
+\beamer@subsectionintoc {6}{1}{Environment}{47}{0}{6}
+\beamer@subsectionintoc {6}{2}{Data Collection}{48}{0}{6}
+\beamer@subsectionintoc {6}{3}{Parameters}{52}{0}{6}
+\beamer@subsectionintoc {6}{4}{Results}{53}{0}{6}
+\beamer@sectionintoc {7}{Conclusion}{57}{0}{7}
+\beamer@subsectionintoc {7}{1}{Contributions}{58}{0}{7}
+\beamer@sectionintoc {8}{Future Work}{59}{0}{8}

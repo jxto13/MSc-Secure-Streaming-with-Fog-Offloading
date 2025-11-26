@@ -1,0 +1,120 @@
+{
+    "InternalPDFViewer": {
+        "Embedded": true,
+        "File": "main.pdf"
+    },
+    "Session": {
+        "Bookmarks": [
+        ],
+        "CurrentFile": "Chapters/Conclusion.tex",
+        "FileVersion": 1,
+        "Files": [
+            {
+                "Col": 0,
+                "EditorGroup": 0,
+                "FileName": "main.tex",
+                "FirstLine": 22,
+                "FoldedLines": "",
+                "Line": 44
+            },
+            {
+                "Col": 0,
+                "EditorGroup": 0,
+                "FileName": "precontent.tex",
+                "FirstLine": 63,
+                "FoldedLines": "",
+                "Line": 87
+            },
+            {
+                "Col": 0,
+                "EditorGroup": 0,
+                "FileName": "Chapters/Introduction.tex",
+                "FirstLine": 8,
+                "FoldedLines": "",
+                "Line": 43
+            },
+            {
+                "Col": 0,
+                "EditorGroup": 0,
+                "FileName": "Chapters/Background.tex",
+                "FirstLine": 0,
+                "FoldedLines": "",
+                "Line": 4
+            },
+            {
+                "Col": 0,
+                "EditorGroup": 0,
+                "FileName": "Chapters/StateOfTheArt.tex",
+                "FirstLine": 25,
+                "FoldedLines": "",
+                "Line": 0
+            },
+            {
+                "Col": 0,
+                "EditorGroup": 0,
+                "FileName": "Chapters/DesignAndImplementation.tex",
+                "FirstLine": 572,
+                "FoldedLines": "",
+                "Line": 858
+            },
+            {
+                "Col": 0,
+                "EditorGroup": 0,
+                "FileName": "Chapters/Evaluation.tex",
+                "FirstLine": 89,
+                "FoldedLines": "",
+                "Line": 159
+            },
+            {
+                "Col": 0,
+                "EditorGroup": 0,
+                "FileName": "Chapters/Conclusion.tex",
+                "FirstLine": 17,
+                "FoldedLines": "",
+                "Line": 28
+            },
+            {
+                "Col": 0,
+                "EditorGroup": 0,
+                "FileName": "preamble.tex",
+                "FirstLine": 42,
+                "FoldedLines": "",
+                "Line": 6
+            },
+            {
+                "Col": 0,
+                "EditorGroup": 0,
+                "FileName": "Appendices/Appendix.tex",
+                "FirstLine": 0,
+                "FoldedLines": "",
+                "Line": 2
+            },
+            {
+                "Col": 70,
+                "EditorGroup": 0,
+                "FileName": "Bibliography.bib",
+                "FirstLine": 0,
+                "FoldedLines": "",
+                "Line": 56
+            },
+            {
+                "Col": 0,
+                "EditorGroup": 0,
+                "FileName": "main.bbl",
+                "FirstLine": 192,
+                "FoldedLines": "",
+                "Line": 211
+            },
+            {
+                "Col": 0,
+                "EditorGroup": 0,
+                "FileName": "../../../../../usr/share/texmf-dist/tex/latex/base/inputenc.sty",
+                "FirstLine": 0,
+                "FoldedLines": "",
+                "Line": 0
+            }
+        ],
+        "MasterFile": "main.tex",
+        "VerticalSplit": false
+    }
+}
