@@ -19,7 +19,7 @@
 
 \quad In parallel, Forward Error Correction (FEC) standards evolved, RTP XOR FEC (RFC 5109) and SMPTE 2022-1~\cite{perkins2003rfc5109,smpte2022} protected headers and payload with fixed redundancy, while FlexFEC (RFC 8627)~\cite{perkins2019flexfec} introduced scalable parity later adopted in WebRTC, these approaches fit existing media stacks but treat receivers independently and cannot exploit cross-receiver coding gains.
 
-\quad Evaluations highlight the cost of these trade-offs, Westerlund~\cite{westerlund2009fec} showed how RTP FEC introduces latency–overhead compromises, while Fonnes~\cite{fonnes2018fec} found that flexible FEC reduced losses from sixteen to one percent under a 160\,ms repair window but reduced redundanc. These studies quantify performance but lack adaptive mechanisms.
+% \quad Evaluations highlight the cost of these trade-offs, Westerlund~\cite{westerlund2009fec} showed how RTP FEC introduces latency–overhead compromises, while Fonnes~\cite{fonnes2018fec} found that flexible FEC reduced losses from sixteen to one percent under a 160\,ms repair window but reduced redundanc. These studies quantify performance but lack adaptive mechanisms.
 
 \quad Network coding for retransmission offers another perspective, Qureshi et al.~\cite{qureshi2011benefit} proposed the BENEFIT algorithm, which greedily selects XOR combinations to improve throughput and decoding delay. Packet interleaving~\cite{adalier2009interleaving} likewise mitigates burst losses without extra bits, but buffering prevents strict real-time use, both approaches show the value of coding-aware recovery but neglect security.
 
@@ -27,42 +27,131 @@
 
 \quad Security protocols such as SRTP with DTLS keying, EKT, and TLS~1.3~\cite{baugher2004srtp,wing2004ekt,rescorla2018tls13} ensure confidentiality and group keying, but none address integrity and trust for coded multicast with untrusted helpers. At the same time, offloading protocols such as Wi-Fi Direct have been used for collaborative video download and peer-to-peer multimedia streaming \cite{sha2016wifidirect,poderys2017overlay,androidWFD}, these systems demonstrate that local peer offloading can reduce infrastructure load, yet they do not integrate coding or security mechanisms.
 
-\quad Building on these foundations, IRIS by Martins et al.~\cite{martins2018iris} demonstrated how coding-aware retransmissions can be integrated with adaptive FEC, multipath scheduling, and predictive feedback to deliver reliable live streaming in dense deployments. IRIS combined interleaved Reed–Solomon coding with a Random-Forest based predictor to anticipate losses, while a multipath scheduler balanced Wi-Fi multicast, Wi-Fi unicast, and cellular links without requiring modifications to client OS or access point firmware. It was designed with security primitives, including PKI, rotating symmetric keys, and a double-signature scheme, which preserved confidentiality and integrity even during device-to-device offloading. Comparative experiments against commercial platforms such as HLS \cite{pantos2017hls}, Cisco StadiumVision~\cite{ciscoStadiumVision}, and Streambolico~\cite{streambolico2014} showed that IRIS reduced infrastructural Wi-Fi traffic by up to an order of magnitude, sustained sub-second startup latency, and maintained negligible deadline misses even under loss rates exceeding 40\%.
+\quad Building on these foundations, IRIS by Martins et al.~\cite{martins2018iris} demonstrated how coding-aware retransmissions can be integrated with adaptive FEC, multipath scheduling, and predictive feedback to deliver reliable live streaming in dense deployments. IRIS combined interleaved Reed–Solomon coding with a Random-Forest based predictor to anticipate losses, while a multipath scheduler balanced Wi-Fi multicast, Wi-Fi unicast, and cellular links without requiring modifications to client OS or access point firmware. It was designed with security primitives, including PKI, rotating symmetric keys, and a double-signature scheme, which preserved confidentiality and integrity even during device-to-device offloading. Comparative experiments against commercial platforms such as HLS \cite{pantos2017hls} and Cisco StadiumVision~\cite{ciscoStadiumVision} showed that IRIS reduced infrastructural Wi-Fi traffic by up to an order of magnitude, sustained sub-second startup latency, and maintained negligible deadline misses even under loss rates exceeding 40\%.
 
 \quad Hyrax, developed by INESC TEC~\cite{inesctec_hyrax}, extended the concept of mobile edge cloud computing by leveraging smartphones as cooperative compute and relay nodes. The framework showed that devices could offload resource-intensive tasks to nearby peers or cloud infrastructure, proving the feasibility of opportunistic clusters to improve performance and reduce latency. By building a working mobile cloud platform, INESC TEC demonstrated how distributed resources could be orchestrated in real deployments. While these results highlighted the potential of edge offloading for scalable computation, Hyrax was not designed for time-critical video delivery, nor did it integrate coding-aware recovery or security guarantees, leaving it unsuitable for reliable multicast streaming in untrusted dense environments.
 
-\quad To highlight the strengths and limitations of existing approaches, the works reviewed are compared against seven criteria that directly impact the feasibility of reliable multicast and secure offloading: reliability, deadline awareness, scalability, adaptivity, edge offload, security, and deployment evidence. \textbf{\Cref{tab:related-work}} presents this comparison.
+\quad To highlight the strengths and limitations of existing approaches, the works reviewed are compared against seven criteria that directly impact the feasibility of reliable multicast and secure offloading: reliability, deadline awareness, scalability, adaptivity, edge offload, security, and deployment evidence.
 
-\begingroup
-\setlength{\tabcolsep}{3pt}
-\renewcommand{\arraystretch}{1.15}
-\small
+% -----------------------------------------------
+% TABLE 1 — Mechanisms and deadlines
+% -----------------------------------------------
+\begin{table}[H]
+	\centering
+	\caption{Mechanisms and deadline-awareness}
+	\label{tab:rw-feature-mech}
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|l|c|c|}
+		\hline
+		\textbf{Work} & \textbf{Mechanism} & \textbf{Deadlines} \\
+		\hline
+		Real-time NC \cite{ferreira2019realtime} & Coded multicast & Yes \\
+		AMuSe \cite{amaldi2010amuse} & Leader feedback & No \\
+		RFC 5109 \cite{perkins2003rfc5109} & XOR FEC & Indir. \\
+		FlexFEC \cite{perkins2019flexfec} & Flexible FEC & Indir. \\
+		SMPTE 2022-1 \cite{smpte2022} & 2-D parity & Indir. \\
+		BENEFIT \cite{qureshi2011benefit} & NC retransmit & Partial \\
+		Interleaving \cite{adalier2009interleaving} & Time diversity & Buffered \\
+		RL-AFEC \cite{chen2018rlafec} & RL FEC & Frame \\
+		Wi-Fi Direct \cite{sha2016wifidirect,poderys2017overlay,androidWFD} & P2P offload & App-level \\
+		IRIS \cite{martins2018iris} & NC + FEC + multipath & Yes \\
+		Hyrax \cite{inesctec_hyrax} & Mobile edge cloud & No \\
+		\hline
+	\end{tabular}
+\end{table}
+
+
+% -----------------------------------------------
+% TABLE 2 — Scalability and adaptivity
+% -----------------------------------------------
+\begin{table}[H]
+	\centering
+	\caption{Scalability and adaptivity}
+	\label{tab:rw-feature-scale}
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|l|c|c|}
+		\hline
+		\textbf{Work} & \textbf{Scale} & \textbf{Adaptivity} \\
+		\hline
+		Real-time NC \cite{ferreira2019realtime} & High & Greedy sched. \\
+		AMuSe \cite{amaldi2010amuse} & Very high & Rate tuning \\
+		RFC 5109 \cite{perkins2003rfc5109} & Med. & Static \\
+		FlexFEC \cite{perkins2019flexfec} & High & Matrix sizing \\
+		SMPTE 2022-1 \cite{smpte2022} & Med. & Fixed \\
+		BENEFIT \cite{qureshi2011benefit} & Med. & Tunable \\
+		Interleaving \cite{adalier2009interleaving} & N/A & Fixed \\
+		RL-AFEC \cite{chen2012018rlafec} & Per-recv. & Adaptive \\
+		Wi-Fi Direct \cite{sha2016wifidirect,poderys2017overlay,androidWFD} & Local groups & Heuristic \\
+		IRIS \cite{martins2018iris} & High & Predictive \\
+		Hyrax \cite{inesctec_hyrax} & Opportunistic & Resource aware \\
+		\hline
+	\end{tabular}
+\end{table}
+
+
+% -----------------------------------------------
+% TABLE 3 — Edge offloading and security
+% -----------------------------------------------
+\begin{table}[H]
+	\centering
+	\caption{Edge offloading and security support}
+	\label{tab:rw-feature-edge}
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|l|c|c|}
+		\hline
+		\textbf{Work} & \textbf{Edge Offload} & \textbf{Security} \\
+		\hline
+		Real-time NC \cite{ferreira2019realtime} & No & No \\
+		AMuSe \cite{amaldi2010amuse} & No & No \\
+		RFC 5109 \cite{perkins2003rfc5109} & No & No \\
+		FlexFEC \cite{perkins2019flexfec} & No & No \\
+		SMPTE 2022-1 \cite{smpte2022} & No & No \\
+		BENEFIT \cite{qureshi2011benefit} & No & No \\
+		Interleaving \cite{adalier2009interleaving} & No & No \\
+		RL-AFEC \cite{chen2018rlafec} & No & No \\
+		Wi-Fi Direct \cite{sha2016wifidirect,poderys2017overlay,androidWFD} & Yes & App-dep. \\
+		IRIS \cite{martins2018iris} & Yes & Yes \\
+		Hyrax \cite{inesctec_hyrax} & Yes & No \\
+		\hline
+	\end{tabular}
+\end{table}
+
+
+% -----------------------------------------------
+% TABLE 4 — Deployment evidence
+% -----------------------------------------------
 \begin{table}[h]
 	\centering
-	\resizebox{\textwidth}{!}{%
-		\begin{tabular}{|l|c|c|c|c|c|c|c|}
-			\hline
-			\textbf{Work} & \textbf{Mechanism} & \textbf{Deadlines} & \textbf{Scale} & \textbf{Adaptivity} & \textbf{Edge} & \textbf{Sec.} & \textbf{Evidence} \\
-			\hline
-			Real-time NC \cite{ferreira2019realtime} & Coded multicast & Yes & High & Greedy sched. & No & No & Testbed \\
-			AMuSe \cite{amaldi2010amuse} & Leader feedback & No & Very high & Rate tuning & No & No & ORBIT \\
-			RFC 5109 \cite{perkins2003rfc5109} & XOR FEC & Indir. & Med. & Static & No & No & Deployed \\
-			FlexFEC \cite{perkins2019flexfec} & Flexible FEC & Indir. & High & Matrix sizing & No & No & Standard \\
-			SMPTE 2022-1 \cite{smpte2022} & 2-D parity & Indir. & Med. & Fixed & No & No & Studio \\
-			BENEFIT \cite{qureshi2011benefit} & NC retransmit & Partial & Med. & Tunable & No & No & Sim. \\
-			Interleaving \cite{adalier2009interleaving} & Time diversity & Buffered & N/A & Fixed & No & No & Proto. \\
-			RL-AFEC \cite{chen2018rlafec} & RL FEC & Frame & Per-recv. & Adaptive & No & No & Sim. \\
-			Wi-Fi Direct \cite{sha2016wifidirect,poderys2017overlay,androidWFD} & P2P offload & App-level & Local groups & Heuristic & Yes & App-dep. & Proto./Field \\
-			IRIS \cite{martins2018iris} & NC + FEC + multipath & Yes & High & Predictive & Yes & Yes & Testbed/Field \\
-			Hyrax \cite{inesctec_hyrax} & Mobile edge cloud & No & Opportunistic & Resource aware & Yes & No & Proto./Field \\
-			
-			\hline
-		\end{tabular}%
-	}
-	\caption{Comparison of related works by key criteria.}
-	\label{tab:related-work}
+	\caption{Deployment maturity and evaluation evidence}
+	\label{tab:rw-feature-evidence}
+	\small
+	\renewcommand{\arraystretch}{1.15}
+	\setlength{\tabcolsep}{4pt}
+	\begin{tabular}{|l|c|}
+		\hline
+		\textbf{Work} & \textbf{Evidence} \\
+		\hline
+		Real-time NC \cite{ferreira2019realtime} & Testbed \\
+		AMuSe \cite{amaldi2010amuse} & ORBIT \\
+		RFC 5109 \cite{perkins2003rfc5109} & Deployed \\
+		FlexFEC \cite{perkins2019flexfec} & Standard \\
+		SMPTE 2022-1 \cite{smpte2022} & Studio \\
+		BENEFIT \cite{qureshi2011benefit} & Sim. \\
+		Interleaving \cite{adalier2009interleaving} & Proto. \\
+		RL-AFEC \cite{chen2018rlafec} & Sim. \\
+		Wi-Fi Direct \cite{sha2016wifidirect,poderys2017overlay,androidWFD} & Proto./Field \\
+		IRIS \cite{martins2018iris} & Testbed/Field \\
+		Hyrax \cite{inesctec_hyrax} & Proto./Field \\
+		\hline
+	\end{tabular}
 \end{table}
-\endgroup
+
 
 \quad In summary, prior work addresses only parts of the problem. Coding-based multicast achieves scalability under deadlines but ignores secure offloading. Feedback schemes reduce control traffic but cannot ensure recovery within deadlines. FEC standards integrate with media stacks but waste coding opportunities across receivers. Interleaving mitigates burst loss but adds delay. Reinforcement learning adapts redundancy but overlooks multicast structure and group security. Offloading with Wi-Fi Direct enables device-to-device distribution but lacks coding and strong protection. IRIS demonstrates that coding-aware recovery, adaptivity, multipath delivery, and security can be combined in real deployments, but it requires specialized mechanisms that may not generalize to all platforms. Hyrax shows that edge offloading with opportunistic clusters is feasible, yet it does not address time-critical video delivery or integrate coding-based reliability, making it unsuitable for secure multicast streaming in dense environments.
 

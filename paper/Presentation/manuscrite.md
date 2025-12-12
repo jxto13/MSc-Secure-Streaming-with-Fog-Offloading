@@ -1,5 +1,3 @@
-
-
 Boa tarde a todos, o meu nome é Joaquim e vou vos apresentar a minha dissertação titulada "Secure Livestreaming with Fog Offloading".
 Vou comecar por descrever que problema tenta resolver, referir outros trabalhos semelhantes e introduzir os seus requerimentos e objetivos.
 
@@ -28,8 +26,6 @@ Para tentar cumprir estes objetivos, os seguintes requerimentos foram postos:
 - existencia de metricas e informacao para resoluçao de problemas e analise
 
 - assegurar que o sistema funciona sobre mas condiçoes
-  
-  
 
 A linguagem escolhida para desenvolver este projeto foi Rust, devido a sua segurança de memoria em relaçao ao C++, e mantem um bom desempenho.
 
@@ -53,10 +49,6 @@ Um cliente android foi desenvolvido encapsular todos estes componentes, a interf
 
 Na parte da segurança, o uso do modelo PKI foi utilizado, cada servidor tem um CA que  todos os clientes confiam, e que cada um tem um certificado assinado por essa CA.
 
-Como o uso de chaves publicas é muito grande, para encriptaçao da stream foi usado chaves simetricas que mudam apos um numero de epochs.
-
- 
-
-
+Como o uso de chaves publicas é muito grande, para encriptaçao da stream foi usado chaves simetricas que mudam apos um numero defenidos de epochs.
 
 

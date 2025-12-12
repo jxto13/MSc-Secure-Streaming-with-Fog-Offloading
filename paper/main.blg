@@ -8,116 +8,114 @@ Reallocated singl_function (elt_size=8) to 100 items from 50.
 Reallocated wiz_functions (elt_size=8) to 6000 items from 3000.
 Reallocated singl_function (elt_size=8) to 100 items from 50.
 Database file #1: Bibliography.bib
-Warning--entry type for "abiresearch2025" isn't style-file defined
---line 133 of file Bibliography.bib
-Warning--entry type for "newscast2025" isn't style-file defined
---line 153 of file Bibliography.bib
-Repeated entry---line 571 of file Bibliography.bib
+I was expecting a `,' or a `}'---line 348 of file Bibliography.bib
+ :  
+ :  url ={https://en.wikipedia.org/wiki/SMPTE_2022}
+(Error may have been on previous line)
+I'm skipping whatever remains of this entry
+Repeated entry---line 378 of file Bibliography.bib
+ : @book{rs_intro
+ :               ,
+I'm skipping whatever remains of this entry
+I was expecting a `,' or a `}'---line 533 of file Bibliography.bib
+ :  
+ :  note         = {arXiv:1409.0252 [cs.SE]},
+(Error may have been on previous line)
+I'm skipping whatever remains of this entry
+Repeated entry---line 616 of file Bibliography.bib
  : @misc{alvestrand2018rtc
  :                        ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 755 of file Bibliography.bib
+I was expecting a `,' or a `}'---line 760 of file Bibliography.bib
+ :  
+ :  url = {https://www.rfc-editor.org/rfc/rfc8627.html}
+(Error may have been on previous line)
+I'm skipping whatever remains of this entry
+Repeated entry---line 763 of file Bibliography.bib
  : @misc{smpte2022
  :                ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 833 of file Bibliography.bib
- : @inproceedings{ferreira2019realtime
- :                                    ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 840 of file Bibliography.bib
- : @inproceedings{amaldi2010amuse
- :                               ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 847 of file Bibliography.bib
+Repeated entry---line 887 of file Bibliography.bib
  : @techreport{perkins2003rfc5109
  :                               ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 855 of file Bibliography.bib
+Repeated entry---line 896 of file Bibliography.bib
  : @techreport{perkins2019flexfec
  :                               ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 871 of file Bibliography.bib
+Repeated entry---line 912 of file Bibliography.bib
  : @standard{smpte2022
  :                    ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 877 of file Bibliography.bib
+Repeated entry---line 918 of file Bibliography.bib
  : @inproceedings{qureshi2011benefit
  :                                  ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 884 of file Bibliography.bib
+Repeated entry---line 925 of file Bibliography.bib
  : @inproceedings{adalier2009interleaving
  :                                       ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 891 of file Bibliography.bib
- : @mastersthesis{westerlund2009fec
- :                                 ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 898 of file Bibliography.bib
- : @mastersthesis{fonnes2018fec
- :                             ,
-I'm skipping whatever remains of this entry
-Repeated entry---line 905 of file Bibliography.bib
+Repeated entry---line 946 of file Bibliography.bib
  : @inproceedings{chen2018rlafec
  :                              ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 912 of file Bibliography.bib
+Repeated entry---line 953 of file Bibliography.bib
  : @techreport{baugher2004srtp
  :                            ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 920 of file Bibliography.bib
+Repeated entry---line 961 of file Bibliography.bib
  : @techreport{wing2004ekt
  :                        ,
 I'm skipping whatever remains of this entry
-Repeated entry---line 929 of file Bibliography.bib
+Repeated entry---line 970 of file Bibliography.bib
  : @techreport{rescorla2018tls13
  :                              ,
 I'm skipping whatever remains of this entry
-Warning--I didn't find a database entry for "cuervo2010hyrax"
 -- IEEEtran.bst version 1.14 (2015/08/26) by Michael Shell.
 -- http://www.michaelshell.org/tex/ieeetran/bibtex/
 -- See the "IEEEtran_bst_HOWTO.pdf" manual for usage information.
 Warning--empty journal in rs_error_bounds
 
 Done.
-You've used 64 entries,
+You've used 58 entries,
             4087 wiz_defined-function locations,
-            1152 strings with 17106 characters,
-and the built_in function-call counts, 32893 in all, are:
-= -- 2777
-> -- 535
-< -- 134
-+ -- 290
-- -- 109
-* -- 1384
-:= -- 5656
-add.period$ -- 136
-call.type$ -- 64
-change.case$ -- 89
-chr.to.int$ -- 297
-cite$ -- 65
-duplicate$ -- 2573
-empty$ -- 2865
-format.name$ -- 129
-if$ -- 7442
+            1141 strings with 17704 characters,
+and the built_in function-call counts, 29084 in all, are:
+= -- 2445
+> -- 533
+< -- 95
++ -- 281
+- -- 115
+* -- 1213
+:= -- 5042
+add.period$ -- 123
+call.type$ -- 58
+change.case$ -- 73
+chr.to.int$ -- 201
+cite$ -- 59
+duplicate$ -- 2241
+empty$ -- 2472
+format.name$ -- 137
+if$ -- 6530
 int.to.chr$ -- 0
-int.to.str$ -- 64
-missing$ -- 539
-newline$ -- 263
-num.names$ -- 60
-pop$ -- 1304
+int.to.str$ -- 58
+missing$ -- 491
+newline$ -- 279
+num.names$ -- 53
+pop$ -- 1271
 preamble$ -- 1
 purify$ -- 0
 quote$ -- 2
-skip$ -- 2591
+skip$ -- 2287
 stack$ -- 0
-substring$ -- 823
-swap$ -- 1770
-text.length$ -- 35
+substring$ -- 591
+swap$ -- 1571
+text.length$ -- 28
 text.prefix$ -- 0
 top$ -- 5
-type$ -- 64
+type$ -- 58
 warning$ -- 1
-while$ -- 108
-width$ -- 66
-write$ -- 652
+while$ -- 84
+width$ -- 60
+write$ -- 626
 (There were 15 error messages)

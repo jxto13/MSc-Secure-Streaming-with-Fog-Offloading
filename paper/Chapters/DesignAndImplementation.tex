@@ -113,7 +113,7 @@
 \paragraph{Two-Dimensional Product Reed–Solomon FEC}
 \label{sec:2d_fec}
 
-Two-dimensional (2-D) \emph{product} Forward Error Correction (FEC) was developed to overcome the limitations of one-dimensional parity schemes in the transport of real-time video over IP networks\,\cite{prompeg,smpte2022}. In this approach, incoming data is first buffered and placed \emph{row-major order} into a rectangular matrix of \(D\) rows and \(L\) columns, \((n_{\mathrm r},k_{\mathrm r})\) Reed--Solomon (RS) code is then applied independently to each row, while an \((n_{\mathrm c},k_{\mathrm c})\) RS code is applied to each column resulting in a \emph{product code} offering two layers of redundancy (\textbf{\Cref{fig:data layout 2d}}): row codes provide efficient correction for random single-packet losses, while column codes are particularly effective against long burst losses that span multiple consecutive packets\,\cite{rfc6865,fec_video_study}.
+Two-dimensional (2-D) \emph{product} Forward Error Correction (FEC) was developed to overcome the limitations of one-dimensional parity schemes in the transport of real-time video over IP networks\,\cite{prompeg,smpte2022}. In this approach, incoming data is first buffered and placed \emph{row-major order} into a rectangular matrix of \(D\) rows and \(L\) columns, \((n_{\mathrm r},k_{\mathrm r})\) Reed--Solomon (RS) code is then applied independently to each row, while an \((n_{\mathrm c},k_{\mathrm c})\) RS code is applied to each column resulting in a \emph{product code} offering two layers of redundancy (\textbf{\Cref{fig:data layout 2d}}): row codes provide efficient correction for random single-packet losses, while column codes are particularly effective against long burst losses that span multiple consecutive packets\,\cite{rfc6865}.
 
 \paragraph{Reed--Solomon Encoding.}
 An \(\mathrm{RS}(n,k)\) code over \(\mathrm{GF}(2^{m})\) treats each packet as a symbol of \(m\) bits. Let the source message be represented by  
@@ -185,11 +185,11 @@ For a \(10 \times 10\) matrix, deadlock configurations make up just 1.23\% of al
 \label{sec:overhead efficiency comparison}
 
 Compared to other FEC methods, 2-D Reed--Solomon offers superior bandwidth efficiency for moderate protection levels, but at the cost of quadratic computational scaling.  
-For equivalent \(\approx 4\%\) overhead, an \(\mathrm{RS}(169,163)\) code with interleaving requires 44\% more bandwidth than Raptor codes to achieve the same resilience at 2\% packet loss\cite{raptor_vs_rs}.  
+For equivalent \(\approx 4\%\) overhead, an \(\mathrm{RS}(169,163)\) code with interleaving requires 44\% more bandwidth than Raptor codes to achieve the same resilience at 2\% packet loss \cite{raptor_vs_rs}.  
 Moreover, Reed–Solomon (RS) decoding complexity grows as 
 \(\mathcal{O}(k^2)\), where \(k\) denotes the number of source symbols. 
 In practice, RS decoding requires approximately \(2\text{--}10\times\) more 
-processing resources than Raptor codes when \(k < 250\) ~\cite{shokrollahi2006raptor}.
+processing resources than Raptor codes when \(k < 250\) ~\cite{raptor_vs_rs}.
 
 \paragraph{Latency and Buffering Trade-offs.}
 \label{sec:latency buffering tradeoffs}
